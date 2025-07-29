@@ -31,14 +31,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { PropertyListing, PropertySearchFilters } from '@/types/property';
+import { PropertyListing, PropertySearchFilters, PropertyType } from '@/types/property';
+import { User } from '@/types/auth';
 import { searchProperties, getFeaturedProperties } from '@/lib/property-services';
 
 interface PropertyListingsProps {
   initialFilters?: PropertySearchFilters;
   onPropertySelect?: (property: PropertyListing) => void;
   showFeatured?: boolean;
-  user?: any; // User from auth system
+  user?: User; // User from auth system
   onSignUpPrompt?: () => void;
 }
 
@@ -84,7 +85,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     }
   }, [showFeatured, filters.country]);
 
-  const updateFilter = (key: keyof PropertySearchFilters, value: any) => {
+  const updateFilter = (key: keyof PropertySearchFilters, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -300,7 +301,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               <div key={type} className="flex items-center space-x-2">
                 <Checkbox
                   id={type}
-                  checked={filters.propertyType?.includes(type as any) || false}
+                  checked={filters.propertyType?.includes(type as PropertyType) || false}
                   onCheckedChange={(checked) => {
                     if (checked) {
                       updateFilter('propertyType', [...(filters.propertyType || []), type]);

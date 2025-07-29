@@ -1,4 +1,4 @@
-import type { RegistrationData, CreditScoreData, OTPVerification } from '@/types/auth';
+import type { RegistrationData, CreditScoreData, OTPVerification, BuyerVerificationData, SellerVerificationData, PropertyInfo } from '@/types/auth';
 import { calculateAge, validateSAID, validateZimID } from './validations';
 
 // Mock delay helper
@@ -73,34 +73,34 @@ export const creditScoreService = {
 
     // Only calculate credit score for buyers (tenants)
     if (data.buyerData) {
-      const tenantData = data as any; // Type assertion for tenant-specific properties
+      const tenantData = data as RegistrationData & { buyerData: BuyerVerificationData };
 
       // Income factor
-      if (tenantData.monthlyIncome > 50000) {
+      if (tenantData.buyerData.monthlyIncome && tenantData.buyerData.monthlyIncome > 50000) {
         factors.income = 100;
-      } else if (tenantData.monthlyIncome > 20000) {
+      } else if (tenantData.buyerData.monthlyIncome && tenantData.buyerData.monthlyIncome > 20000) {
         factors.income = 75;
-      } else if (tenantData.monthlyIncome > 10000) {
+      } else if (tenantData.buyerData.monthlyIncome && tenantData.buyerData.monthlyIncome > 10000) {
         factors.income = 50;
-      } else if (tenantData.monthlyIncome > 5000) {
+      } else if (tenantData.buyerData.monthlyIncome && tenantData.buyerData.monthlyIncome > 5000) {
         factors.income = 25;
       }
 
       // Employment stability
-      if (tenantData.employmentStatus === 'permanent') {
+      if (tenantData.buyerData.employmentStatus === 'permanent') {
         factors.employment = 75;
-      } else if (tenantData.employmentStatus === 'contract') {
+      } else if (tenantData.buyerData.employmentStatus === 'contract') {
         factors.employment = 50;
-      } else if (tenantData.employmentStatus === 'self-employed') {
+      } else if (tenantData.buyerData.employmentStatus === 'self-employed') {
         factors.employment = 40;
       } else {
         factors.employment = 20;
       }
     } else {
       // For landlords, base score on property portfolio value
-      const landlordData = data as any;
-      if (landlordData.properties && landlordData.properties.length > 0) {
-        const totalValue = landlordData.properties.reduce((sum: number, prop: any) => sum + (prop.estimatedValue || 0), 0);
+      const landlordData = data as RegistrationData & { sellerData: SellerVerificationData };
+      if (landlordData.sellerData.properties && landlordData.sellerData.properties.length > 0) {
+        const totalValue = landlordData.sellerData.properties.reduce((sum: number, prop: PropertyInfo) => sum + (prop.estimatedValue || 0), 0);
         if (totalValue > 5000000) {
           factors.income = 100;
         } else if (totalValue > 2000000) {
@@ -152,7 +152,17 @@ export const documentService = {
   async processDocument(file: File, documentType: 'id' | 'income' | 'bank'): Promise<{
     success: boolean;
     confidence: number;
-    extractedData?: any;
+    extractedData?: {
+      idNumber?: string;
+      fullName?: string;
+      dateOfBirth?: string;
+      monthlyIncome?: number;
+      employer?: string;
+      position?: string;
+      accountNumber?: string;
+      bankName?: string;
+      balance?: number;
+    };
     error?: string;
   }> {
     await delay(3000); // Simulate processing time

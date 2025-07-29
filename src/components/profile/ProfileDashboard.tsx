@@ -49,7 +49,8 @@ import {
   getBuyerVerificationSteps, 
   getSellerVerificationSteps,
   type User as UserType,
-  type UserRole 
+  type UserRole,
+  type VerificationStep
 } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 
@@ -1413,7 +1414,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   );
 
   const VerificationStepCard: React.FC<{
-    step: any;
+    step: VerificationStep;
     role: 'buyer' | 'seller';
     index: number;
   }> = ({ step, role, index }) => (

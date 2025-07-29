@@ -212,7 +212,7 @@ export const KYCPage: React.FC<KYCPageProps> = ({
             <div className="flex items-center space-x-2">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
                 className="px-3 py-2 border border-slate-300 rounded-md text-sm"
               >
                 <option value="all">All Status</option>
@@ -222,7 +222,7 @@ export const KYCPage: React.FC<KYCPageProps> = ({
               </select>
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
+                onChange={(e) => setTypeFilter(e.target.value as 'all' | 'buyer' | 'seller')}
                 className="px-3 py-2 border border-slate-300 rounded-md text-sm"
               >
                 <option value="all">All Types</option>
