@@ -1516,7 +1516,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                   viewport={{ once: true }}
                   className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20"
                 >
-                  <h4 className="text-lg font-semibold text-white mb-3">What if I can't afford the payments?</h4>
+                  <h4 className="text-lg font-semibold text-white mb-3">What if I can&apos;t afford the payments?</h4>
                   <p className="text-slate-300 text-sm">
                     You can walk away anytime during the rent period with no penalty - it's just like regular renting.
                   </p>

@@ -59,6 +59,13 @@ export const AuthSystem: React.FC = () => {
     console.log('AuthSystem modal state:', { showRegister, isAuthenticated });
   }, [showRegister, isAuthenticated]);
 
+  // If authenticated and user is agent, redirect to agent dashboard
+  React.useEffect(() => {
+    if (isAuthenticated && user && user.roles.includes('agent')) {
+      router.push('/agent-dashboard');
+    }
+  }, [isAuthenticated, user, router]);
+
   const handleSwitchToRegister = () => {
     setShowRegister(true);
   };
@@ -87,13 +94,6 @@ export const AuthSystem: React.FC = () => {
     // For now, just simulate the verification
     startVerification(type, step);
   };
-
-  // If authenticated and user is agent, redirect to agent dashboard
-  React.useEffect(() => {
-    if (isAuthenticated && user && user.roles.includes('agent')) {
-      router.push('/agent-dashboard');
-    }
-  }, [isAuthenticated, user, router]);
 
   // If authenticated and user is admin, show admin dashboard
   if (isAuthenticated && user && user.roles.includes('admin')) {

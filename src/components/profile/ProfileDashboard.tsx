@@ -1131,7 +1131,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   // Recalculate these when user or forceUpdate changes
   const buyerSteps = React.useMemo(() => getBuyerVerificationSteps(user), [user, forceUpdate]);
   const sellerSteps = React.useMemo(() => getSellerVerificationSteps(user), [user, forceUpdate]);
-  const recommendations = React.useMemo(() => useSmartRecommendations(user, selectedRole), [user, selectedRole, forceUpdate]);
+  const recommendations = useSmartRecommendations(user, selectedRole);
 
   // Check if this is user's first visit
   React.useEffect(() => {
