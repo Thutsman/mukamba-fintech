@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="900" height="450" viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="64.3" fill="#009963"/>
+  <rect width="900" height="64.3" y="64.3" fill="#ffd200"/>
+  <rect width="900" height="64.3" y="128.6" fill="#d40000"/>
+  <rect width="900" height="64.3" y="192.9" fill="#000000"/>
+  <rect width="900" height="64.3" y="257.2" fill="#d40000"/>
+  <rect width="900" height="64.3" y="321.5" fill="#ffd200"/>
+  <rect width="900" height="64.3" y="385.8" fill="#009963"/>
+  <polygon points="0,0 350,225 0,450" fill="#ffffff"/>
+  <polygon points="50,0 400,225 50,450" fill="#d40000"/>
+  <polygon points="100,0 450,225 100,450" fill="#000000"/>
+  <path d="M 125,225 L 175,225 L 150,175 Z" fill="#ffd200"/>
+</svg> 
