@@ -886,7 +886,7 @@ export const getPropertyStats = (country: PropertyCountry): PropertyStats => {
   };
 };
 
-// Rent-to-buy calculation function
+// Rent-to-buy calculation function (original)
 export const calculateRentToBuy = (
   monthlyRent: number,
   purchasePrice: number,
@@ -908,5 +908,29 @@ export const calculateRentToBuy = (
     monthlyRent,
     purchasePrice,
     timeframe
+  };
+};
+
+// Enhanced rent-to-buy calculation function
+export const calculateRentToBuyEnhanced = (params: {
+  monthlyRent: number;
+  propertyPrice: number;
+  downPayment: number;
+  interestRate: number;
+  loanTerm: number;
+}) => {
+  const { monthlyRent, propertyPrice, downPayment, interestRate, loanTerm } = params;
+  const loanAmount = propertyPrice - downPayment;
+  const monthlyRate = interestRate / 100 / 12;
+  const numberOfPayments = loanTerm * 12;
+  const monthlyMortgage = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+  const totalRentYear = monthlyRent * 12;
+  const totalMortgageYear = monthlyMortgage * 12;
+  return {
+    monthlyMortgage,
+    totalRentYear,
+    totalMortgageYear,
+    savingsPerYear: totalRentYear - totalMortgageYear,
+    breakEvenPoint: downPayment / Math.max(totalRentYear - totalMortgageYear, 1)
   };
 }; 

@@ -95,45 +95,48 @@ export const AuthSystem: React.FC = () => {
     startVerification(type, step);
   };
 
-  // If authenticated and user is admin, show admin dashboard
-  if (isAuthenticated && user && user.roles.includes('admin')) {
-    return (
-      <AdminDashboard 
-        user={user}
-        onLogout={handleLogout}
-        onBackToUserView={() => {
-          // For now, just logout and go back to user view
-          // In a real app, you might want to switch to a different user account
-          handleLogout();
-        }}
-      />
-    );
-  }
+  // Render logic - all conditional returns moved to the end
+  const renderContent = () => {
+    // If authenticated and user is admin, show admin dashboard
+    if (isAuthenticated && user && user.roles.includes('admin')) {
+      return (
+        <AdminDashboard 
+          user={user}
+          onLogout={handleLogout}
+          onBackToUserView={() => {
+            // For now, just logout and go back to user view
+            // In a real app, you might want to switch to a different user account
+            handleLogout();
+          }}
+        />
+      );
+    }
 
-  // If authenticated and viewing profile
-  if (isAuthenticated && user && currentView === 'profile') {
-    return (
-      <ProfileDashboard 
-        user={user} 
-        onStartVerification={handleStartVerification}
-        onLogout={handleLogout}
-        onBackToHome={() => {
-          setCurrentView('properties');
-          if (isNewUser) {
-            markUserAsReturning(); // Mark user as no longer new when they navigate away from profile
-          }
-        }}
-        onProfileSettings={() => {
-          // This could open a profile settings modal in the future
-          alert('Profile settings coming soon!');
-        }}
-        isNewUser={isNewUser}
-      />
-    );
-  }
+    // If authenticated and viewing profile
+    if (isAuthenticated && user && currentView === 'profile') {
+      return (
+        <ProfileDashboard 
+          user={user} 
+          onStartVerification={handleStartVerification}
+          onLogout={handleLogout}
+          onBackToHome={() => {
+            setCurrentView('properties');
+            if (isNewUser) {
+              markUserAsReturning(); // Mark user as no longer new when they navigate away from profile
+            }
+          }}
+          onProfileSettings={() => {
+            // This could open a profile settings modal in the future
+            alert('Profile settings coming soon!');
+          }}
+          isNewUser={isNewUser}
+        />
+      );
+    }
 
-  return (
-    <div className="relative">
+    // Default view - main application
+    return (
+      <div className="relative">
       {/* Hero Section - Now compact and at top */}
       <div className="bg-gradient-to-br from-red-50 via-white to-red-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -339,4 +342,7 @@ export const AuthSystem: React.FC = () => {
       </AnimatePresence>
     </div>
   );
+  };
+
+  return renderContent();
 }; 
