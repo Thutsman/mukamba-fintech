@@ -42,16 +42,24 @@ interface PropertyListingsProps {
   onSignUpPrompt?: () => void;
 }
 
+// Default filter values
+const defaultFilters: PropertySearchFilters = {
+  country: 'ZW', // Default to Zimbabwe
+  sortBy: 'date-newest'
+};
+
 export const PropertyListings: React.FC<PropertyListingsProps> = ({
-  initialFilters = {},
+  initialFilters,
   onPropertySelect,
   showFeatured = true,
   user,
   onSignUpPrompt
 }) => {
-  const [filters, setFilters] = React.useState<PropertySearchFilters>(initialFilters);
-  const [properties, setProperties] = React.useState<Property[]>([]);
-  const [featuredProperties, setFeaturedProperties] = React.useState<Property[]>([]);
+  const [filters, setFilters] = React.useState<PropertySearchFilters>(
+    initialFilters ? { ...defaultFilters, ...initialFilters } : defaultFilters
+  );
+  const [properties, setProperties] = React.useState<PropertyListing[]>([]);
+  const [featuredProperties, setFeaturedProperties] = React.useState<PropertyListing[]>([]);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -72,16 +80,16 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   // Load featured properties
   React.useEffect(() => {
     if (showFeatured) {
-      setFeaturedProperties(getFeaturedProperties());
+      setFeaturedProperties(getFeaturedProperties(filters.country));
     }
-  }, [showFeatured]);
+  }, [showFeatured, filters.country]);
 
   const updateFilter = (key: keyof PropertySearchFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
-    setFilters({});
+    setFilters(defaultFilters);
   };
 
   const toggleSaveProperty = (propertyId: string) => {
@@ -110,7 +118,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     }).format(amount);
   };
 
-  const PropertyCard: React.FC<{ property: Property; index: number }> = ({ property, index }) => (
+  const PropertyCard: React.FC<{ property: PropertyListing; index: number }> = ({ property, index }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -123,25 +131,25 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         {/* Property Image */}
         <div className="relative overflow-hidden">
           <img
-            src={property.featuredImage}
+            src={property.media.mainImage}
             alt={property.title}
             className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
           />
           
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            {property.rentToBuyOption && (
+            {property.listingType === 'rent-to-buy' && (
               <Badge className="bg-green-500 text-white">
                 Rent-to-Buy
               </Badge>
             )}
-            {property.verified && (
+            {property.seller.isVerified && (
               <Badge className="bg-blue-500 text-white">
                 <Star className="w-3 h-3 mr-1" />
                 Verified
               </Badge>
             )}
-            {property.status === 'available' && (
+            {property.status === 'active' && (
               <Badge className="bg-emerald-500 text-white">
                 Available
               </Badge>
@@ -178,11 +186,13 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           <div className="absolute bottom-4 left-4">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2">
               <div className="text-lg font-bold text-slate-800">
-                {formatCurrency(property.listPrice)}
+                {formatCurrency(property.financials.price)}
               </div>
-              <div className="text-sm text-slate-600">
-                {formatCurrency(property.monthlyRent)}/month
-              </div>
+              {property.financials.monthlyRental && (
+                <div className="text-sm text-slate-600">
+                  {formatCurrency(property.financials.monthlyRental)}/month
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -197,7 +207,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               </h3>
               <div className="flex items-center text-slate-600">
                 <MapPin className="w-4 h-4 mr-1" />
-                <span className="text-sm">{property.address}, {property.city}</span>
+                <span className="text-sm">{property.location.streetAddress}, {property.location.city}</span>
               </div>
             </div>
 
@@ -205,40 +215,40 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             <div className="flex items-center space-x-4 text-sm text-slate-600">
               <div className="flex items-center">
                 <Bed className="w-4 h-4 mr-1" />
-                {property.bedrooms} bed{property.bedrooms !== 1 ? 's' : ''}
+                {property.details.bedrooms || 0} bed{(property.details.bedrooms || 0) !== 1 ? 's' : ''}
               </div>
               <div className="flex items-center">
                 <Bath className="w-4 h-4 mr-1" />
-                {property.bathrooms} bath{property.bathrooms !== 1 ? 's' : ''}
+                {property.details.bathrooms || 0} bath{(property.details.bathrooms || 0) !== 1 ? 's' : ''}
               </div>
               <div className="flex items-center">
                 <Square className="w-4 h-4 mr-1" />
-                {property.sqft.toLocaleString()} sqft
+                {property.details.size.toLocaleString()} m²
               </div>
             </div>
 
             {/* Features */}
             <div className="flex flex-wrap gap-2">
-              {property.features.slice(0, 3).map(feature => (
-                <Badge key={feature} variant="outline" className="text-xs">
+              {property.details.features?.slice(0, 3).map((feature: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-xs">
                   {feature}
                 </Badge>
               ))}
-              {property.features.length > 3 && (
+              {property.details.features && property.details.features.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{property.features.length - 3} more
+                  +{property.details.features.length - 3} more
                 </Badge>
               )}
             </div>
 
             {/* Rent-to-Buy Info */}
-            {property.rentToBuyOption && property.rentToBuy && (
+            {property.listingType === 'rent-to-buy' && property.financials.rentCreditPercentage && (
               <div className="bg-green-50 rounded-lg p-3">
                 <div className="text-sm text-green-700 font-medium mb-1">
                   Rent-to-Buy Available
                 </div>
                 <div className="text-xs text-green-600">
-                  {property.rentToBuy.rentCreditPercentage}% rent credit • {property.rentToBuy.optionPeriod} month option
+                  {property.financials.rentCreditPercentage}% rent credit • 36 month option
                 </div>
               </div>
             )}
@@ -248,11 +258,11 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               <div className="flex items-center text-slate-600">
                 <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
                   <span className="text-xs font-medium text-red-600">
-                    {property.ownerName[0]}
+                    {property.seller.name[0]}
                   </span>
                 </div>
-                <span>{property.ownerName}</span>
-                {property.ownerVerified && (
+                <span>{property.seller.name}</span>
+                {property.seller.isVerified && (
                   <Star className="w-3 h-3 ml-1 fill-yellow-400 text-yellow-400" />
                 )}
               </div>
@@ -282,50 +292,20 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Search */}
-        <div className="space-y-2">
-          <Label>Search</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search properties, locations, features..."
-              value={filters.query || ''}
-              onChange={(e) => updateFilter('query', e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="space-y-2">
-          <Label>Location</Label>
-          <Select value={filters.city || ''} onValueChange={(value) => updateFilter('city', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select city" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Cities</SelectItem>
-              <SelectItem value="Toronto">Toronto</SelectItem>
-              <SelectItem value="Mississauga">Mississauga</SelectItem>
-              <SelectItem value="Oakville">Oakville</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Property Type */}
         <div className="space-y-2">
           <Label>Property Type</Label>
           <div className="space-y-2">
-            {['house', 'apartment', 'townhouse', 'condo', 'duplex'].map(type => (
+            {['house', 'apartment', 'townhouse', 'land', 'commercial'].map(type => (
               <div key={type} className="flex items-center space-x-2">
                 <Checkbox
                   id={type}
-                  checked={filters.type?.includes(type as any) || false}
+                  checked={filters.propertyType?.includes(type as any) || false}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      updateFilter('type', [...(filters.type || []), type]);
+                      updateFilter('propertyType', [...(filters.propertyType || []), type]);
                     } else {
-                      updateFilter('type', (filters.type || []).filter(t => t !== type));
+                      updateFilter('propertyType', (filters.propertyType || []).filter(t => t !== type));
                     }
                   }}
                 />
@@ -365,51 +345,27 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         {/* Bedrooms */}
         <div className="space-y-2">
           <Label>Bedrooms</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              placeholder="Min"
-              type="number"
-              value={filters.bedrooms?.min || ''}
-              onChange={(e) => updateFilter('bedrooms', {
-                ...filters.bedrooms,
-                min: Number(e.target.value) || 0
-              })}
-            />
-            <Input
-              placeholder="Max"
-              type="number"
-              value={filters.bedrooms?.max || ''}
-              onChange={(e) => updateFilter('bedrooms', {
-                ...filters.bedrooms,
-                max: Number(e.target.value) || 10
-              })}
-            />
-          </div>
+          <Input
+            placeholder="Number of bedrooms"
+            type="number"
+            value={filters.bedrooms || ''}
+            onChange={(e) => updateFilter('bedrooms', Number(e.target.value) || undefined)}
+          />
         </div>
 
-        {/* Special Options */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="rentToBuyOnly"
-              checked={filters.rentToBuyOnly || false}
-              onCheckedChange={(checked) => updateFilter('rentToBuyOnly', checked)}
-            />
-            <Label htmlFor="rentToBuyOnly" className="text-sm">
-              Rent-to-Buy Only
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="petFriendly"
-              checked={filters.petFriendly || false}
-              onCheckedChange={(checked) => updateFilter('petFriendly', checked)}
-            />
-            <Label htmlFor="petFriendly" className="text-sm">
-              Pet Friendly
-            </Label>
-          </div>
+        {/* Listing Type */}
+        <div className="space-y-2">
+          <Label>Listing Type</Label>
+          <Select value={filters.listingType || ''} onValueChange={(value) => updateFilter('listingType', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="sale">For Sale</SelectItem>
+              <SelectItem value="rent-to-buy">Rent-to-Buy</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Sort By */}

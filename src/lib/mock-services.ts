@@ -71,8 +71,8 @@ export const creditScoreService = {
       random: 0
     };
 
-    // Only calculate credit score for tenants
-    if (data.role === 'tenant') {
+    // Only calculate credit score for buyers (tenants)
+    if (data.buyerData) {
       const tenantData = data as any; // Type assertion for tenant-specific properties
 
       // Income factor
@@ -115,7 +115,8 @@ export const creditScoreService = {
     }
 
     // Age factor (calculated from DOB) - applies to both roles
-    const age = calculateAge(data.dateOfBirth);
+    const dateOfBirth = data.buyerData?.dateOfBirth || data.sellerData?.dateOfBirth;
+    const age = dateOfBirth ? calculateAge(dateOfBirth) : 25; // Default age if not provided
     if (age >= 25 && age <= 45) {
       factors.age = 75;
     } else if (age >= 18 && age <= 65) {
