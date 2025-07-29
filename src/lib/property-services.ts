@@ -884,4 +884,29 @@ export const getPropertyStats = (country: PropertyCountry): PropertyStats => {
     recentSales,
     activeRentToBuy
   };
+};
+
+// Rent-to-buy calculation function
+export const calculateRentToBuy = (
+  monthlyRent: number,
+  purchasePrice: number,
+  rentCreditPercentage: number = 25,
+  timeframe: number = 36
+) => {
+  const totalRentPaid = monthlyRent * timeframe;
+  const rentCredit = totalRentPaid * (rentCreditPercentage / 100);
+  const remainingBalance = purchasePrice - rentCredit;
+  const equityBuilt = rentCredit;
+  const percentageOwned = (rentCredit / purchasePrice) * 100;
+
+  return {
+    totalRentPaid,
+    rentCredit,
+    remainingBalance,
+    equityBuilt,
+    percentageOwned,
+    monthlyRent,
+    purchasePrice,
+    timeframe
+  };
 }; 

@@ -19,7 +19,7 @@ export default function AdminPage() {
           Redirecting to main application...
         </p>
         <p className="text-sm text-slate-500">
-          Use the "Sign in as Admin" option in the sign-in modal to access the admin dashboard.
+          Use the &quot;Sign in as Admin&quot; option in the sign-in modal to access the admin dashboard.
         </p>
       </div>
     </div>

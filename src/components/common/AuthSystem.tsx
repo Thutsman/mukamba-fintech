@@ -88,6 +88,13 @@ export const AuthSystem: React.FC = () => {
     startVerification(type, step);
   };
 
+  // If authenticated and user is agent, redirect to agent dashboard
+  React.useEffect(() => {
+    if (isAuthenticated && user && user.roles.includes('agent')) {
+      router.push('/agent-dashboard');
+    }
+  }, [isAuthenticated, user, router]);
+
   // If authenticated and user is admin, show admin dashboard
   if (isAuthenticated && user && user.roles.includes('admin')) {
     return (
@@ -102,13 +109,6 @@ export const AuthSystem: React.FC = () => {
       />
     );
   }
-
-  // If authenticated and user is agent, redirect to agent dashboard
-  React.useEffect(() => {
-    if (isAuthenticated && user && user.roles.includes('agent')) {
-      router.push('/agent-dashboard');
-    }
-  }, [isAuthenticated, user, router]);
 
   // If authenticated and viewing profile
   if (isAuthenticated && user && currentView === 'profile') {

@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
 import {
   Home,
   Users,
@@ -281,7 +280,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-medium">
-                    Today's Viewings
+                    Today&apos;s Viewings
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

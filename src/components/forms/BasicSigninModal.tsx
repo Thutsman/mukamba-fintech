@@ -291,7 +291,7 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
           {/* Signup Link */}
           <div className="mt-6 text-center">
             <span className="text-sm text-slate-600 dark:text-slate-400">
-              Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
             </span>
             <button
               onClick={onSwitchToSignup}

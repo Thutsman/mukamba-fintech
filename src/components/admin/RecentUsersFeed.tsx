@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 
 import type { AdminUser } from '@/types/admin';
 
-interface User extends AdminUser {}
+interface User extends AdminUser {
+  // Add any custom user properties here if needed in the future
+}
 
 interface RecentUsersFeedProps {
   users: User[];
