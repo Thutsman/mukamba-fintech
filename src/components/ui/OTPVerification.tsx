@@ -156,7 +156,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
           Verify Your {type === 'phone' ? 'Phone Number' : 'Email Address'}
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          We've sent a 6-digit code to{' '}
+                      We&apos;ve sent a 6-digit code to{' '}
           <span className="font-medium">{maskContactInfo(contactInfo, type)}</span>
         </p>
       </div>
