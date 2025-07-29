@@ -9,12 +9,8 @@ import { Button } from '@/components/ui/button';
 
 import type { AdminUser } from '@/types/admin';
 
-interface User extends AdminUser {
-  // Add any custom user properties here if needed in the future
-}
-
 interface RecentUsersFeedProps {
-  users: User[];
+  users: AdminUser[];
   onViewUser?: (userId: string) => void;
   onViewAll?: () => void;
 }
@@ -24,7 +20,7 @@ export const RecentUsersFeed: React.FC<RecentUsersFeedProps> = ({
   onViewUser,
   onViewAll 
 }) => {
-  const getStatusColor = (status: User['status']) => {
+  const getStatusColor = (status: AdminUser['status']) => {
     switch (status) {
       case 'verified':
         return 'bg-green-100 text-green-700';
@@ -39,7 +35,7 @@ export const RecentUsersFeed: React.FC<RecentUsersFeedProps> = ({
     }
   };
 
-  const getRoleColor = (role: User['role']) => {
+  const getRoleColor = (role: AdminUser['role']) => {
     switch (role) {
       case 'buyer':
         return 'bg-blue-100 text-blue-700';

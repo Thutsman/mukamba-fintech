@@ -63,7 +63,7 @@ export const creditScoreService = {
   async calculateCreditScore(data: RegistrationData): Promise<CreditScoreData> {
     await delay(2000); // Simulate API call
 
-    let score = 600; // Base score
+    const score = 600; // Base score
     const factors = {
       income: 0,
       age: 0,
