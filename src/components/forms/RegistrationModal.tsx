@@ -16,7 +16,7 @@ import { CreditScoreGenerator } from '@/components/ui/CreditScoreGenerator';
 import { OTPVerification } from '@/components/ui/OTPVerification';
 
 // Types and Validation
-import { getStepConfig, getRegistrationSteps, type RegistrationData, type CreditScoreData } from '@/types/auth';
+import { type RegistrationData } from '@/types/auth';
 import { getStepSchema } from '@/lib/validations';
 import { useAuthStore } from '@/lib/store';
 
