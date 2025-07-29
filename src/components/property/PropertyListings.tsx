@@ -31,12 +31,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Property, PropertySearchFilters } from '@/types/property';
+import { PropertyListing, PropertySearchFilters } from '@/types/property';
 import { searchProperties, getFeaturedProperties } from '@/lib/property-services';
 
 interface PropertyListingsProps {
   initialFilters?: PropertySearchFilters;
-  onPropertySelect?: (property: Property) => void;
+  onPropertySelect?: (property: PropertyListing) => void;
   showFeatured?: boolean;
   user?: any; // User from auth system
   onSignUpPrompt?: () => void;
