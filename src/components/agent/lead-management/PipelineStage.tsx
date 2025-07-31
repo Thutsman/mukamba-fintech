@@ -196,8 +196,8 @@ export const PipelineStage: React.FC<PipelineStageProps> = ({
                     lead={lead}
                     isSelected={selectedLeads.includes(lead.id)}
                     onSelect={(selected) => onLeadSelect(lead.id, selected)}
-                    onUpdate={onLeadUpdate}
-                    onContact={onLeadContact}
+                    onUpdate={(updates) => onLeadUpdate(lead.id, updates)}
+                    onContact={(method) => onLeadContact(lead.id, method)}
                     onScheduleViewing={onScheduleViewing}
                     onDragStart={() => onDragStart(lead.id, stage.id)}
                     onDragEnd={onDragEnd}
