@@ -16,8 +16,16 @@ import {
   FileCheck,
   UserCheck,
   DollarSign,
-  Star
+  Star,
+  BellRing
 } from 'lucide-react';
+
+import { PerformanceMetricsGrid } from './dashboard/PerformanceMetrics';
+import { LeadManagement } from './dashboard/LeadManagement';
+import { PropertyAnalytics } from './dashboard/PropertyAnalytics';
+import { CommunicationCenter } from './dashboard/CommunicationCenter';
+import { CalendarWidget } from './dashboard/CalendarWidget';
+import { mockData } from './dashboard/mock-data';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +34,8 @@ import { Badge } from '@/components/ui/badge';
 import { User } from '@/types/auth';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
 import { PropertyListingModal } from '@/components/forms/PropertyListingModal';
+import { LeadEntryModal } from '@/components/agent/LeadEntryModal';
+import { EarningsEntryModal } from '@/components/agent/EarningsEntryModal';
 import { useAuthStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 
@@ -34,9 +44,11 @@ interface AgentDashboardProps {
 }
 
 export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = React.useState('listings');
+  const [activeTab, setActiveTab] = React.useState('overview');
   const [showOnboarding, setShowOnboarding] = React.useState(!user.isPropertyVerified);
   const [showListingModal, setShowListingModal] = React.useState(false);
+  const [showLeadModal, setShowLeadModal] = React.useState(false);
+  const [showEarningsModal, setShowEarningsModal] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   
   const router = useRouter();
@@ -119,22 +131,55 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="listings" className="flex items-center">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview" className="flex items-center">
               <Home className="w-4 h-4 mr-2" />
-              Listings Manager
+              Overview
             </TabsTrigger>
             <TabsTrigger value="leads" className="flex items-center">
               <Users className="w-4 h-4 mr-2" />
-              Lead Engagement
+              Lead Management
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
+            <TabsTrigger value="listings" className="flex items-center">
+              <Building className="w-4 h-4 mr-2" />
+              Listings
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Messages
+              {mockData.messages.filter(m => m.isUnread).length > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {mockData.messages.filter(m => m.isUnread).length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center">
+              <Calendar className="w-4 h-4 mr-2" />
+              Calendar
             </TabsTrigger>
           </TabsList>
 
-          {/* Listings Manager Tab */}
+          {/* Overview Tab */}
+          <TabsContent value="overview">
+            <div className="space-y-8">
+              <PerformanceMetricsGrid metrics={mockData.performanceMetrics} />
+              <PropertyAnalytics data={mockData.propertyAnalytics} />
+            </div>
+          </TabsContent>
+
+          {/* Lead Management Tab */}
+          <TabsContent value="leads">
+            <LeadManagement
+              leads={mockData.leads}
+              onLeadUpdate={(leadId, updates) => {
+                console.log('Updating lead:', leadId, updates);
+                // Implement lead update logic
+              }}
+              onAddLead={() => setShowLeadModal(true)}
+            />
+          </TabsContent>
+
+          {/* Listings Tab */}
           <TabsContent value="listings">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Quick Stats */}
@@ -210,8 +255,25 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
                       Add New Listing
                     </Button>
                     <Button
+                      onClick={() => setShowLeadModal(true)}
                       variant="outline"
                       className="w-full justify-start"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Add New Lead
+                    </Button>
+                    <Button
+                      onClick={() => setShowEarningsModal(true)}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Record Earnings
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('messages')}
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
                       View Messages
@@ -227,156 +289,34 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
             </div>
           </TabsContent>
 
-          {/* Lead Engagement Tab */}
-          <TabsContent value="leads">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Lead Stats */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Lead Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Total Leads</span>
-                      <Badge variant="secondary">{mockStats.totalLeads}</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">New Inquiries</span>
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                        {mockStats.newInquiries}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Viewings Scheduled</span>
-                      <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                        {mockStats.viewingsScheduled}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Response Time */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Response Time
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900">
-                      {mockStats.averageResponseTime}
-                    </div>
-                    <p className="text-sm text-slate-600">Average Response Time</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Upcoming Viewings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Today&apos;s Viewings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Schedule Viewing
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Leads List will go here */}
-            <div className="mt-8">
-              {/* Add LeadsList component here */}
-            </div>
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <CommunicationCenter
+              messages={mockData.messages}
+              onSendMessage={(message, recipientId) => {
+                console.log('Sending message:', message, 'to:', recipientId);
+                // Implement message sending logic
+              }}
+              onMarkAsRead={(messageId) => {
+                console.log('Marking message as read:', messageId);
+                // Implement mark as read logic
+              }}
+            />
           </TabsContent>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Performance Stats */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Monthly Earnings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900">
-                      R{mockStats.monthlyEarnings.toLocaleString()}
-                    </div>
-                    <p className="text-sm text-green-600">+12% from last month</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Satisfaction Score
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900 flex items-center justify-center">
-                      {mockStats.satisfactionScore}
-                      <Star className="w-5 h-5 text-yellow-500 ml-1" />
-                    </div>
-                    <p className="text-sm text-slate-600">Based on 28 reviews</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Response Rate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900">
-                      98%
-                    </div>
-                    <p className="text-sm text-slate-600">Within 24 hours</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    Conversion Rate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900">
-                      15%
-                    </div>
-                    <p className="text-sm text-slate-600">Leads to Viewings</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Analytics Charts will go here */}
-            <div className="mt-8">
-              {/* Add AnalyticsCharts component here */}
-            </div>
+          {/* Calendar Tab */}
+          <TabsContent value="calendar">
+            <CalendarWidget
+              appointments={mockData.appointments}
+              onAddAppointment={() => {
+                console.log('Adding new appointment');
+                // Implement appointment creation logic
+              }}
+              onUpdateAppointment={(appointmentId, updates) => {
+                console.log('Updating appointment:', appointmentId, updates);
+                // Implement appointment update logic
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -399,6 +339,26 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
           // Add new listing to state/database
         }}
         country="ZW"
+      />
+
+      <LeadEntryModal
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        onComplete={(leadData) => {
+          setShowLeadModal(false);
+          console.log('New lead added:', leadData);
+          // Add new lead to state/database
+        }}
+      />
+
+      <EarningsEntryModal
+        isOpen={showEarningsModal}
+        onClose={() => setShowEarningsModal(false)}
+        onComplete={(earningsData) => {
+          setShowEarningsModal(false);
+          console.log('Earnings recorded:', earningsData);
+          // Add earnings to state/database
+        }}
       />
     </div>
   );

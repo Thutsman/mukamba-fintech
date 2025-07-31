@@ -12,6 +12,74 @@
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Custom scrollbar styles */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Force scrollbar visibility for modal content */
+.modal-scrollable::-webkit-scrollbar {
+  width: 8px !important;
+  display: block !important;
+  -webkit-appearance: none !important;
+}
+
+.modal-scrollable {
+  overflow-y: scroll !important;
+}
+
+.modal-scrollable::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}
+
+.modal-scrollable::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 4px !important;
+}
+
+.modal-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+.dark .modal-scrollable::-webkit-scrollbar-track {
+  background: #1e293b !important;
+}
+
+.dark .modal-scrollable::-webkit-scrollbar-thumb {
+  background: #475569 !important;
+}
+
+.dark .modal-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #64748b !important;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

@@ -35,7 +35,8 @@ import {
   Clock,
   Mail,
   MessageCircle,
-  Loader2
+  Loader2,
+  Building
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ import { User as UserType } from '@/types/auth';
 import { CountryToggle } from '@/components/ui/country-toggle';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
+import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
 import Image from 'next/image';
 
 // Analytics tracking function
@@ -81,6 +83,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
   const [featuredProperties, setFeaturedProperties] = React.useState<Property[]>([]);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
+  const [showAgentModal, setShowAgentModal] = React.useState(false);
   const [isSearchLoading, setIsSearchLoading] = React.useState(false);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -1329,6 +1332,27 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                       Sign In
                     </Button>
                   </div>
+                  
+                  {/* Real Estate Agent Registration */}
+                  <div className="mt-6 pt-6 border-t border-slate-200">
+                    <p className="text-sm text-slate-500 mb-3">Are you a Real Estate Agent?</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-blue-300 text-blue-700 hover:bg-blue-50" 
+                      onClick={() => {
+                        setShowAgentModal(true);
+                        trackEvent('agent_registration_opened', {
+                          source: 'saved_tab',
+                          event_category: 'conversion'
+                        });
+                      }}
+                      suppressHydrationWarning
+                    >
+                      <Building className="w-4 h-4 mr-2" />
+                      Register as Agent
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -1671,6 +1695,17 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
         onSwitchToSignup={() => {
           setShowSigninModal(false);
           setShowSignupModal(true);
+        }}
+      />
+
+      {/* Agent Onboarding Modal */}
+      <AgentOnboardingModal
+        isOpen={showAgentModal}
+        onClose={() => setShowAgentModal(false)}
+        onComplete={() => {
+          setShowAgentModal(false);
+          // Show success message or redirect
+          console.log('Agent registration completed');
         }}
       />
 

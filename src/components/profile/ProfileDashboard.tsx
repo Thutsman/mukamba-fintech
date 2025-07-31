@@ -60,6 +60,7 @@ import { IdentityVerificationModal } from '@/components/forms/IdentityVerificati
 import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
 import { PropertyDocumentationModal } from '@/components/forms/PropertyDocumentationModal';
 import { PropertyListingModal } from '@/components/forms/PropertyListingModal';
+import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
 
 interface ProfileDashboardProps {
   user: UserType;
@@ -1126,7 +1127,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const [isFirstVisit, setIsFirstVisit] = React.useState(false);
 
   // Verification Modal State
-  const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | null>(null);
+  const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | 'agent' | null>(null);
   const [selectedCountry, setSelectedCountry] = React.useState<'ZW' | 'SA'>('ZW');
 
   // Recalculate these when user or forceUpdate changes
@@ -1932,6 +1933,82 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         }}
         country={selectedCountry}
       />
+
+      <AgentOnboardingModal
+        isOpen={activeModal === 'agent'}
+        onClose={() => setActiveModal(null)}
+        onComplete={() => {
+          setActiveModal(null);
+          setSuccessMessage('Agent application submitted successfully! We will review your documents and contact you soon.');
+          setShowSuccess(true);
+          // Update user roles to include agent (this would be done after verification in real app)
+          // updateUser({ roles: [...user.roles, 'agent'] });
+        }}
+      />
+
+      {/* Real Estate Agent Registration Section */}
+      {!user.roles.includes('agent') && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+            <CardHeader>
+              <CardTitle className="flex items-center text-blue-700 dark:text-blue-300">
+                <Building className="w-5 h-5 mr-2" />
+                Become a Real Estate Agent
+                <Tooltip content="Join our network of verified real estate professionals">
+                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+                </Tooltip>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-blue-700 dark:text-blue-300 text-sm">
+                  Are you a licensed real estate agent? Join our platform to access exclusive features and connect with more clients.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-white/50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Shield className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h4 className="font-semibold text-sm mb-1">Verified Status</h4>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">EAC registration verification</p>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-white/50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <TrendingUp className="w-6 h-6 text-green-600" />
+                    </div>
+                    <h4 className="font-semibold text-sm mb-1">Enhanced Features</h4>
+                    <p className="text-xs text-green-600 dark:text-green-400">Lead management & analytics</p>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-white/50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <MessageCircle className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h4 className="font-semibold text-sm mb-1">Direct Communication</h4>
+                    <p className="text-xs text-purple-600 dark:text-purple-400">Connect with clients directly</p>
+                  </div>
+                </div>
+                
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    onClick={() => setActiveModal('agent')}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+                  >
+                    <Building className="w-4 h-4 mr-2" />
+                    Apply as Real Estate Agent
+                  </Button>
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Add Property Button (for verified sellers) */}
       {user.isPropertyVerified && (
