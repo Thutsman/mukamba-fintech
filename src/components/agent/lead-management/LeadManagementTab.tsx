@@ -37,10 +37,12 @@ export interface EnhancedLead {
 export interface PipelineStage {
   id: string;
   name: string;
+  description: string;
   leads: EnhancedLead[];
   color: string;
   bgColor: string;
   icon: React.ComponentType<{ className?: string }>;
+  totalValue: number;
   maxLeads?: number;
 }
 

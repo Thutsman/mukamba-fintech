@@ -40,6 +40,13 @@ const leadSchema = z.object({
   
   // Follow-up
   nextFollowUp: z.string().min(1, "Follow-up date is required"),
+  
+  // System fields (optional for form, will be added on submit)
+  id: z.string().optional(),
+  status: z.enum(['new', 'contacted', 'viewing', 'qualified', 'closed', 'lost']).optional(),
+  isVerified: z.boolean().optional(),
+  lastContact: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 type LeadData = z.infer<typeof leadSchema>;
