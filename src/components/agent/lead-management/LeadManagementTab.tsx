@@ -40,6 +40,7 @@ export interface PipelineStage {
   leads: EnhancedLead[];
   color: string;
   bgColor: string;
+  icon: React.ComponentType<{ className?: string }>;
   maxLeads?: number;
 }
 
