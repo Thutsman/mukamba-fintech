@@ -39,6 +39,7 @@ export interface PipelineStage {
   name: string;
   leads: EnhancedLead[];
   color: string;
+  bgColor: string;
   maxLeads?: number;
 }
 
