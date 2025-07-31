@@ -131,7 +131,7 @@ export const mockEnhancedLeads: EnhancedLead[] = [
     conversionProbability: 95,
     timeInStage: 5,
     totalTimeInPipeline: 12,
-    status: 'application',
+    status: 'qualified',
     interestedProperties: ['prop_6', 'prop_7'],
     viewingsScheduled: 3,
     viewingsCompleted: 3,
