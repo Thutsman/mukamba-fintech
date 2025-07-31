@@ -92,18 +92,7 @@ export const EnhancedLeadCard: React.FC<EnhancedLeadCardProps> = ({
 
   const healthIndicator = getHealthIndicator();
 
-  const handleDragStart = (e: React.DragEvent) => {
-    if (onDragStart) {
-      onDragStart();
-      e.dataTransfer.setData('text/plain', lead.id);
-    }
-  };
 
-  const handleDragEnd = (e: React.DragEvent) => {
-    if (onDragEnd) {
-      onDragEnd();
-    }
-  };
 
   return (
     <motion.div
@@ -112,9 +101,6 @@ export const EnhancedLeadCard: React.FC<EnhancedLeadCardProps> = ({
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ type: 'spring', stiffness: 300 }}
       className={`group cursor-pointer ${isDragging ? 'opacity-50' : ''}`}
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
     >
       <Card className={`overflow-hidden border-l-4 shadow-sm hover:shadow-md transition-all duration-300 ${priorityColors[lead.priority]}`}>
         <CardContent className="p-4">
