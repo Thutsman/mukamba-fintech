@@ -39,6 +39,10 @@ const earningsSchema = z.object({
   closingDate: z.string().min(1, "Closing date is required"),
   paymentStatus: z.enum(['paid', 'pending', 'partial']),
   notes: z.string().optional(),
+  
+  // System fields (optional for form, will be added on submit)
+  id: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 type EarningsData = z.infer<typeof earningsSchema>;
@@ -85,9 +89,9 @@ export const EarningsEntryModal: React.FC<EarningsEntryModalProps> = ({
         ...data,
         id: `earning_${Date.now()}`,
         createdAt: new Date().toISOString(),
-        dealAmount: parseFloat(data.dealAmount),
-        commissionPercentage: parseFloat(data.commissionPercentage),
-        commissionAmount: parseFloat(data.commissionAmount)
+        dealAmount: data.dealAmount,
+        commissionPercentage: data.commissionPercentage,
+        commissionAmount: data.commissionAmount
       });
       
       handleClose();
