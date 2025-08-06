@@ -36,7 +36,12 @@ import {
   Mail,
   MessageCircle,
   Loader2,
-  Building
+  Building,
+  X,
+  Eye,
+  Zap,
+  Target,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -88,6 +93,18 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
+  
+  // New state for floating navigation and enhanced search
+  const [showFloatingNav, setShowFloatingNav] = React.useState(false);
+  const [showQuickSearch, setShowQuickSearch] = React.useState(false);
+  const [searchFilters, setSearchFilters] = React.useState({
+    priceRange: '',
+    bedrooms: '',
+    propertyType: '',
+    listingType: 'rent-to-buy'
+  });
+  const [searchSuggestions, setSearchSuggestions] = React.useState<string[]>([]);
+  const [showSearchSuggestions, setShowSearchSuggestions] = React.useState(false);
 
   React.useEffect(() => {
     setFeaturedProperties(getFeaturedProperties(selectedCountry));
@@ -119,6 +136,32 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
 
     return () => clearTimeout(timer);
   }, [selectedCountry]);
+
+  // Scroll detection for floating navigation
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const heroHeight = 600; // Approximate hero section height
+      setShowFloatingNav(scrollY > heroHeight);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Search suggestions logic
+  React.useEffect(() => {
+    if (quickSearchQuery.length > 2) {
+      const cities = popularCities.map(city => city.city);
+      const suggestions = cities.filter(city => 
+        city.toLowerCase().includes(quickSearchQuery.toLowerCase())
+      );
+      setSearchSuggestions(suggestions.slice(0, 5));
+      setShowSearchSuggestions(suggestions.length > 0);
+    } else {
+      setShowSearchSuggestions(false);
+    }
+  }, [quickSearchQuery, popularCities]);
 
   const handleQuickSearch = () => {
     if (quickSearchQuery.trim()) {
@@ -215,8 +258,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
     trend?: string;
     icon: React.ComponentType<{ className?: string }>;
     color: string;
-  }> = ({ title, value, subtitle, description, trend, icon: Icon, color }) => {
+    onViewProperties: () => void;
+    propertyThumbnails: Property[];
+  }> = ({ title, value, subtitle, description, trend, icon: Icon, color, onViewProperties, propertyThumbnails }) => {
     const [count, setCount] = React.useState(0);
+    const [isHovered, setIsHovered] = React.useState(false);
     
     React.useEffect(() => {
       const numericValue = typeof value === 'number' ? value : parseInt(value.toString().replace(/[^\d]/g, ''));
@@ -246,6 +292,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
         whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 300 }}
         className="group cursor-pointer"
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+        onClick={onViewProperties}
       >
         <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all duration-200 relative overflow-hidden min-h-[120px] sm:min-h-[140px] group-hover:border-blue-300">
           {/* Header with trend indicator */}
@@ -288,6 +337,61 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </motion.div>
           </div>
+
+          {/* Property Thumbnails */}
+          <AnimatePresence>
+            {isHovered && propertyThumbnails.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="mt-4 pt-4 border-t border-gray-100"
+              >
+                <div className="flex gap-2">
+                  {propertyThumbnails.map((property, index) => (
+                    <motion.div
+                      key={property.id}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="relative w-12 h-8 rounded overflow-hidden"
+                    >
+                      {imageLoadErrors.has(property.media.mainImage) ? (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <Home className="w-4 h-4 text-gray-400" />
+                        </div>
+                      ) : (
+                        <Image
+                          src={property.media.mainImage}
+                          alt={property.title}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                          onError={() => {
+                            setImageLoadErrors(prev => new Set(prev).add(property.media.mainImage));
+                          }}
+                        />
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewProperties();
+                    }}
+                  >
+                    See Properties
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     );
@@ -499,8 +603,219 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
     );
   };
 
+  // Enhanced search handlers
+  const handleSearchSuggestionClick = (suggestion: string) => {
+    setQuickSearchQuery(suggestion);
+    setShowSearchSuggestions(false);
+    handleQuickSearch();
+  };
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    setSearchFilters(prev => ({ ...prev, [filterType]: value }));
+  };
+
+  const handleQuickSearchToggle = () => {
+    console.log('handleQuickSearchToggle called, current state:', showQuickSearch);
+    setShowQuickSearch(!showQuickSearch);
+    if (!showQuickSearch) {
+      // Analytics tracking for quick search expansion
+      trackEvent('quick_search_expanded', {
+        event_category: 'search_interaction'
+      });
+    }
+  };
+
+  const handleCloseQuickSearch = () => {
+    console.log('handleCloseQuickSearch called, current state:', showQuickSearch);
+    setShowQuickSearch(false);
+    console.log('setShowQuickSearch(false) called');
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      {/* Floating Navigation */}
+      <AnimatePresence>
+        {showFloatingNav && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="fixed bottom-6 right-6 z-50 flex flex-col gap-3"
+          >
+            {/* Quick Search Toggle */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative"
+            >
+              <Button
+                size="icon"
+                className="w-12 h-12 bg-red-600 hover:bg-red-700 shadow-lg"
+                onClick={handleQuickSearchToggle}
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+              
+              {/* Expanded Quick Search */}
+              <AnimatePresence mode="wait">
+                {showQuickSearch && (
+                  <motion.div
+                    key="quick-search"
+                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                    transition={{ type: 'spring', stiffness: 300 }}
+                    className="absolute bottom-full right-0 mb-3 w-80 bg-white rounded-lg shadow-xl border border-slate-200 p-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-slate-800">Quick Search</h3>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-8 h-8 hover:bg-slate-100 rounded-full transition-colors duration-200 z-10 relative"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log('Close button clicked');
+                            handleCloseQuickSearch();
+                          }}
+                          aria-label="Close quick search"
+                        >
+                          <X className="w-5 h-5 text-slate-600 hover:text-slate-800" />
+                        </Button>
+                      </div>
+                      
+                      {/* Search Input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Input
+                          type="text"
+                          placeholder="Search properties..."
+                          value={quickSearchQuery}
+                          onChange={(e) => setQuickSearchQuery(e.target.value)}
+                          className="pl-10 pr-4"
+                        />
+                        
+                        {/* Search Suggestions */}
+                        <AnimatePresence>
+                          {showSearchSuggestions && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg mt-1 z-10"
+                            >
+                              {searchSuggestions.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm"
+                                  onClick={() => handleSearchSuggestionClick(suggestion)}
+                                >
+                                  <MapPin className="w-4 h-4 inline mr-2 text-slate-400" />
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      
+                      {/* Quick Filters */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={searchFilters.priceRange}
+                          onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                          className="text-xs border border-slate-200 rounded px-2 py-1"
+                        >
+                          <option value="">Price Range</option>
+                          <option value="0-50000">$0 - $50K</option>
+                          <option value="50000-100000">$50K - $100K</option>
+                          <option value="100000-200000">$100K - $200K</option>
+                          <option value="200000+">$200K+</option>
+                        </select>
+                        
+                        <select
+                          value={searchFilters.bedrooms}
+                          onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
+                          className="text-xs border border-slate-200 rounded px-2 py-1"
+                        >
+                          <option value="">Bedrooms</option>
+                          <option value="1">1 Bed</option>
+                          <option value="2">2 Beds</option>
+                          <option value="3">3 Beds</option>
+                          <option value="4+">4+ Beds</option>
+                        </select>
+                      </div>
+                      
+                      <Button
+                        onClick={handleQuickSearch}
+                        disabled={isSearchLoading}
+                        className="w-full bg-red-600 hover:bg-red-700 text-sm"
+                      >
+                        {isSearchLoading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Search className="w-4 h-4 mr-2" />
+                        )}
+                        Search Properties
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            
+            {/* View All Properties Button */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                size="icon"
+                className="w-12 h-12 bg-blue-600 hover:bg-blue-700 shadow-lg"
+                onClick={() => {
+                  setActiveTab('listings');
+                  scrollToSection('listings-section');
+                  trackEvent('floating_nav_clicked', {
+                    action: 'view_all_properties',
+                    event_category: 'navigation'
+                  });
+                }}
+              >
+                <Eye className="w-5 h-5" />
+              </Button>
+            </motion.div>
+            
+            {/* Back to Top */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                size="icon"
+                className="w-12 h-12 bg-slate-600 hover:bg-slate-700 shadow-lg"
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  trackEvent('back_to_top_clicked', {
+                    event_category: 'navigation'
+                  });
+                }}
+              >
+                <ArrowRight className="w-5 h-5 rotate-[-90deg]" />
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 overflow-hidden">
         {/* Background Pattern */}
@@ -601,17 +916,208 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               </Button>
             </motion.div>
             
+            {/* Enhanced Search Bar */}
+            <motion.div 
+              className="max-w-4xl mx-auto px-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+            >
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="space-y-4">
+                  {/* Main Search Input */}
+              <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 w-5 h-5" />
+                <Input
+                  type="text"
+                  placeholder="Search properties by location, type, or features..."
+                  value={quickSearchQuery}
+                  onChange={(e) => setQuickSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
+                      className="pl-12 pr-4 h-14 text-lg bg-white/20 border-white/30 text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                    />
+                    
+                    {/* Search Suggestions */}
+                    <AnimatePresence>
+                      {showSearchSuggestions && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg mt-2 z-20"
+                        >
+                          {searchSuggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              className="w-full px-4 py-3 text-left hover:bg-slate-50 text-slate-700 border-b border-slate-100 last:border-b-0"
+                              onClick={() => handleSearchSuggestionClick(suggestion)}
+                            >
+                              <MapPin className="w-4 h-4 inline mr-3 text-slate-400" />
+                              {suggestion}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+            </div>
+            
+                  {/* Quick Filters */}
+                  <div className="flex flex-wrap gap-3">
+                <CountryToggle
+                  value={selectedCountry}
+                  onChange={setSelectedCountry}
+                />
+                    
+                    <select
+                      value={searchFilters.priceRange}
+                      onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                      className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                    >
+                      <option value="" className="text-slate-700">Price Range</option>
+                      <option value="0-50000" className="text-slate-700">$0 - $50K</option>
+                      <option value="50000-100000" className="text-slate-700">$50K - $100K</option>
+                      <option value="100000-200000" className="text-slate-700">$100K - $200K</option>
+                      <option value="200000+" className="text-slate-700">$200K+</option>
+                    </select>
+                    
+                    <select
+                      value={searchFilters.bedrooms}
+                      onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
+                      className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                    >
+                      <option value="" className="text-slate-700">Bedrooms</option>
+                      <option value="1" className="text-slate-700">1 Bed</option>
+                      <option value="2" className="text-slate-700">2 Beds</option>
+                      <option value="3" className="text-slate-700">3 Beds</option>
+                      <option value="4+" className="text-slate-700">4+ Beds</option>
+                    </select>
+                    
+              <Button
+                onClick={handleQuickSearch}
+                disabled={isSearchLoading}
+                      className="bg-red-600 hover:bg-red-700 px-6 py-2"
+              >
+                {isSearchLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                    <Search className="w-4 h-4 mr-2" />
+                      )}
+                    Search
+                    </Button>
+                  </div>
+                </div>
+              </div>
+                  </motion.div>
+
+            {/* Quick Property Preview */}
+            <motion.div 
+              className="max-w-6xl mx-auto px-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+            >
+              <div className="text-center mb-6">
+                <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">
+                  Featured Opportunities
+                </h3>
+                <p className="text-blue-200 text-sm sm:text-base">
+                  Start browsing these pre-approved rent-to-buy properties
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
+                {featuredProperties.slice(0, 4).map((property, index) => (
+                  <motion.div
+                    key={property.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 + index * 0.1 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group cursor-pointer"
+                    onClick={() => handlePropertySelect(property)}
+                  >
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden border border-white/20 hover:bg-white/20 transition-all duration-300">
+                      {/* Property Image */}
+                      <div className="relative h-32 overflow-hidden">
+                        {imageLoadErrors.has(property.media.mainImage) ? (
+                          <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                            <Home className="w-8 h-8 text-white/50" />
+                          </div>
+                        ) : (
+                          <Image
+                            src={property.media.mainImage}
+                            alt={property.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            onError={() => {
+                              setImageLoadErrors(prev => new Set(prev).add(property.media.mainImage));
+                            }}
+                          />
+                        )}
+                        
+                        {/* Property Badges */}
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <Badge className="bg-red-500 text-white text-xs">
+                            Featured
+                          </Badge>
+                          {property.listingType === 'rent-to-buy' && (
+                            <Badge className="bg-green-500 text-white text-xs">
+                              Rent-to-Buy
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Property Details */}
+                      <div className="p-3">
+                        <h4 className="font-semibold text-white text-sm mb-1 truncate">
+                          {property.title}
+                        </h4>
+                        <p className="text-blue-200 text-xs mb-2 flex items-center">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {property.location.city}
+                        </p>
+                        <div className="flex items-center justify-between">
+                                                     <div className="text-white font-bold text-sm">
+                             {formatCurrency(property.financials.monthlyRental || 0)}/mo
+                           </div>
+                          <div className="flex items-center gap-2 text-blue-200 text-xs">
+                            <span>{property.details.bedrooms} bed</span>
+                            <span>{property.details.bathrooms} bath</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <div className="text-center mt-6">
+                <Button
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-blue-900"
+                  onClick={() => setActiveTab('listings')}
+                  suppressHydrationWarning
+                >
+                  View All Properties
+                  <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+            </motion.div>
+
             {/* Trust Badges */}
             <motion.div 
               className="flex flex-wrap justify-center gap-3 sm:gap-6 md:gap-8 px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
+              transition={{ duration: 0.8, delay: 1.0 }}
             >
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-blue-100 text-xs sm:text-sm font-medium">KYC Verified</span>
-              </div>
+          </div>
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-blue-100 text-xs sm:text-sm font-medium">Secure Transactions</span>
@@ -621,63 +1127,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 <span className="text-blue-100 text-xs sm:text-sm font-medium">Licensed Platform</span>
               </div>
             </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Search Bar */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col gap-4">
-            {/* Search Input - Full Width on Mobile */}
-            <div className="w-full">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Search properties by location, type, or features..."
-                  value={quickSearchQuery}
-                  onChange={(e) => setQuickSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
-                  className="pl-10 pr-4 w-full h-12 text-base"
-                />
-              </div>
-            </div>
-            
-            {/* Controls Row */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <CountryToggle
-                  value={selectedCountry}
-                  onChange={setSelectedCountry}
-                />
-              </div>
-              <Button
-                onClick={handleQuickSearch}
-                disabled={isSearchLoading}
-                className="bg-red-600 hover:bg-red-700 px-6 h-12 text-base font-medium relative overflow-hidden"
-              >
-                {isSearchLoading ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center"
-                  >
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Searching...
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center"
-                  >
-                    <Search className="w-4 h-4 mr-2" />
-                    Search
-                  </motion.div>
-                )}
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -802,6 +1251,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     trend="+12%"
                     icon={Home}
                     color="bg-blue-500"
+                        onViewProperties={() => {
+                          setActiveTab('listings');
+                          scrollToSection('listings-section');
+                        }}
+                        propertyThumbnails={featuredProperties.slice(0, 3)}
                   />
                   <MarketStatsCard
                     title="Rent-to-buy available"
@@ -811,6 +1265,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     trend="+25%"
                     icon={TrendingUp}
                     color="bg-green-500"
+                        onViewProperties={() => {
+                          setActiveTab('listings');
+                          scrollToSection('listings-section');
+                        }}
+                        propertyThumbnails={featuredProperties.slice(0, 3)}
                   />
                   <MarketStatsCard
                     title="Average monthly payment"
@@ -820,6 +1279,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     trend="+3%"
                     icon={DollarSign}
                     color="bg-purple-500"
+                        onViewProperties={() => {
+                          setActiveTab('listings');
+                          scrollToSection('listings-section');
+                        }}
+                        propertyThumbnails={featuredProperties.slice(0, 3)}
                   />
                   <MarketStatsCard
                     title="New opportunities"
@@ -829,6 +1293,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     trend="+18%"
                     icon={BarChart3}
                     color="bg-orange-500"
+                        onViewProperties={() => {
+                          setActiveTab('listings');
+                          scrollToSection('listings-section');
+                        }}
+                        propertyThumbnails={featuredProperties.slice(0, 3)}
                   />
                     </>
                   )}
@@ -1201,7 +1670,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
           </TabsContent>
 
           {/* Listings Tab */}
-          <TabsContent value="listings">
+          <TabsContent value="listings" id="listings-section">
             <PropertyListings
               initialFilters={{ country: selectedCountry }}
               onPropertySelect={handlePropertySelect}
@@ -1563,38 +2032,38 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
 
             {/* CTAs */}
             <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center px-4"
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              viewport={{ once: true }}
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-8 sm:mb-12 px-4 sm:px-0"
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
             >
               <Button
                 size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                onClick={() => {
-                  setShowSignupModal(true);
-                  // Analytics tracking for signup modal
-                  trackEvent('signup_modal_opened', {
-                    source: 'cta_section',
-                    event_category: 'conversion'
-                  });
-                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto"
+                onClick={() => setActiveTab('listings')}
                 suppressHydrationWarning
               >
-                <UserPlus className="w-5 h-5 mr-2" />
-                Start Your Journey
+                <Search className="w-5 h-5 mr-2" />
+                Find Zero-Down Properties
               </Button>
-              
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-slate-900 px-8 py-4 text-lg font-semibold bg-white/10 backdrop-blur-sm"
+                className="border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-sm w-full sm:w-auto"
+                suppressHydrationWarning
+              >
+                <PlusCircle className="w-5 h-5 mr-2" />
+                Sell Your Property
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-sm w-full sm:w-auto"
                 onClick={() => {
                   setShowSigninModal(true);
                   // Analytics tracking for signin modal
                   trackEvent('signin_modal_opened', {
-                    source: 'cta_section',
+                    source: 'hero_section',
                     event_category: 'conversion'
                   });
                 }}
@@ -1605,73 +2074,215 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               </Button>
             </motion.div>
 
-            {/* Contact Information */}
+            {/* Enhanced Search Bar */}
             <motion.div
+              className="max-w-4xl mx-auto px-4"
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4 sm:px-0"
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
             >
-              {/* Support Hours */}
-              <div className="text-center">
-                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-                <h4 className="text-white font-semibold mb-2">Support Hours</h4>
-                <p className="text-slate-300 text-sm">
-                  Mon-Fri: 8AM - 8PM<br />
-                  Sat: 9AM - 6PM<br />
-                  Sun: 10AM - 4PM
-                </p>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="space-y-4">
+                  {/* Main Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 w-5 h-5" />
+                    <Input
+                      type="text"
+                      placeholder="Search properties by location, type, or features..."
+                      value={quickSearchQuery}
+                      onChange={(e) => setQuickSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
+                      className="pl-12 pr-4 h-14 text-lg bg-white/20 border-white/30 text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                    />
+                    
+                    {/* Search Suggestions */}
+                    <AnimatePresence>
+                      {showSearchSuggestions && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg mt-2 z-20"
+                        >
+                          {searchSuggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              className="w-full px-4 py-3 text-left hover:bg-slate-50 text-slate-700 border-b border-slate-100 last:border-b-0"
+                              onClick={() => handleSearchSuggestionClick(suggestion)}
+                            >
+                              <MapPin className="w-4 h-4 inline mr-3 text-slate-400" />
+                              {suggestion}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
               </div>
 
-              {/* Contact Info */}
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-6 h-6 text-white" />
+                  {/* Quick Filters */}
+                  <div className="flex flex-wrap gap-3">
+                                         <CountryToggle
+                       value={selectedCountry}
+                       onChange={setSelectedCountry}
+                     />
+                    
+                    <select
+                      value={searchFilters.priceRange}
+                      onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                      className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                    >
+                      <option value="" className="text-slate-700">Price Range</option>
+                      <option value="0-50000" className="text-slate-700">$0 - $50K</option>
+                      <option value="50000-100000" className="text-slate-700">$50K - $100K</option>
+                      <option value="100000-200000" className="text-slate-700">$100K - $200K</option>
+                      <option value="200000+" className="text-slate-700">$200K+</option>
+                    </select>
+                    
+                    <select
+                      value={searchFilters.bedrooms}
+                      onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
+                      className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                    >
+                      <option value="" className="text-slate-700">Bedrooms</option>
+                      <option value="1" className="text-slate-700">1 Bed</option>
+                      <option value="2" className="text-slate-700">2 Beds</option>
+                      <option value="3" className="text-slate-700">3 Beds</option>
+                      <option value="4+" className="text-slate-700">4+ Beds</option>
+                    </select>
+                    
+                    <Button
+                      onClick={handleQuickSearch}
+                      disabled={isSearchLoading}
+                      className="bg-red-600 hover:bg-red-700 px-6 py-2"
+                    >
+                      {isSearchLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Search className="w-4 h-4 mr-2" />
+                      )}
+                      Search
+                    </Button>
                 </div>
-                <h4 className="text-white font-semibold mb-2">Get in Touch</h4>
-                <p className="text-slate-300 text-sm">
-                  support@mukamba.com<br />
-                  <span className="text-green-400">Zimbabwe:</span> +263 77 123 4567<br />
-                  <span className="text-green-400">South Africa:</span> +27 11 234 5678
-                </p>
-              </div>
-
-              {/* Live Chat */}
-              <div className="text-center">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-6 h-6 text-white" />
                 </div>
-                <h4 className="text-white font-semibold mb-2">Live Chat</h4>
-                <p className="text-slate-300 text-sm">
-                  Available 24/7<br />
-                  Average response: 2 min<br />
-                  <span className="text-green-400">● Online Now</span>
-                </p>
               </div>
             </motion.div>
 
-            {/* Trust Indicators */}
-            <motion.div
+            {/* Quick Property Preview */}
+            <motion.div 
+              className="max-w-6xl mx-auto px-4"
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              viewport={{ once: true }}
-              className="flex flex-wrap justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-white/20 px-4 sm:px-0"
             >
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <Shield className="w-4 h-4 text-green-400" />
-                <span className="text-slate-300 text-sm">Bank-Level Security</span>
+              <div className="text-center mb-6">
+                <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">
+                  Featured Opportunities
+                </h3>
+                <p className="text-blue-200 text-sm sm:text-base">
+                  Start browsing these pre-approved rent-to-buy properties
+                </p>
               </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-slate-300 text-sm">Licensed & Regulated</span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
+                {featuredProperties.slice(0, 4).map((property, index) => (
+                  <motion.div
+                    key={property.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 + index * 0.1 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group cursor-pointer"
+                    onClick={() => handlePropertySelect(property)}
+                  >
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden border border-white/20 hover:bg-white/20 transition-all duration-300">
+                      {/* Property Image */}
+                      <div className="relative h-32 overflow-hidden">
+                        {imageLoadErrors.has(property.media.mainImage) ? (
+                          <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                            <Home className="w-8 h-8 text-white/50" />
+                </div>
+                        ) : (
+                          <Image
+                            src={property.media.mainImage}
+                            alt={property.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            onError={() => {
+                              setImageLoadErrors(prev => new Set(prev).add(property.media.mainImage));
+                            }}
+                          />
+                        )}
+                        
+                        {/* Property Badges */}
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <Badge className="bg-red-500 text-white text-xs">
+                            Featured
+                          </Badge>
+                          {property.listingType === 'rent-to-buy' && (
+                            <Badge className="bg-green-500 text-white text-xs">
+                              Rent-to-Buy
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Property Details */}
+                      <div className="p-3">
+                        <h4 className="font-semibold text-white text-sm mb-1 truncate">
+                          {property.title}
+                        </h4>
+                        <p className="text-blue-200 text-xs mb-2 flex items-center">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {property.location.city}
+                        </p>
+                        <div className="flex items-center justify-between">
+                                                     <div className="text-white font-bold text-sm">
+                             {formatCurrency(property.financials.monthlyRental || 0)}/mo
+                           </div>
+                          <div className="flex items-center gap-2 text-blue-200 text-xs">
+                            <span>{property.details.bedrooms} bed</span>
+                            <span>{property.details.bathrooms} bath</span>
+                          </div>
+                        </div>
+                      </div>
               </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <Star className="w-4 h-4 text-yellow-400" />
-                <span className="text-slate-300 text-sm">4.9/5 Customer Rating</span>
+            </motion.div>
+                ))}
+              </div>
+              
+              <div className="text-center mt-6">
+                <Button
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-blue-900"
+                  onClick={() => setActiveTab('listings')}
+                  suppressHydrationWarning
+                >
+                  View All Properties
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Trust Badges */}
+            <motion.div
+              className="flex flex-wrap justify-center gap-3 sm:gap-6 md:gap-8 px-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.0 }}
+            >
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-blue-100 text-xs sm:text-sm font-medium">KYC Verified</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-blue-100 text-xs sm:text-sm font-medium">Secure Transactions</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-blue-100 text-xs sm:text-sm font-medium">Licensed Platform</span>
               </div>
             </motion.div>
           </div>

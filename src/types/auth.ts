@@ -273,6 +273,112 @@ export function getSellerVerificationSteps(user: Partial<User>): VerificationSte
   ];
 }
 
+// Enhanced verification status types
+export type VerificationStatus = 'unverified' | 'partially_verified' | 'fully_verified';
+
+// Detailed verification states for modals
+export type IdentityVerificationState = 'unverified' | 'pending' | 'verified' | 'expired' | 'rejected';
+export type FinancialVerificationState = 'unverified' | 'pending' | 'verified' | 'expired' | 'rejected';
+
+// Verification document interface
+export interface VerificationDocument {
+  id: string;
+  type: 'identity' | 'financial' | 'address' | 'income' | 'employment';
+  documentType: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: Date;
+  verifiedAt?: Date;
+  expiresAt?: Date;
+  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  rejectionReason?: string;
+}
+
+// Verification certificate interface
+export interface VerificationCertificate {
+  id: string;
+  type: 'identity' | 'financial' | 'comprehensive';
+  issuedAt: Date;
+  expiresAt: Date;
+  certificateUrl: string;
+  verificationLevel: 'basic' | 'enhanced' | 'premium';
+  features: string[];
+}
+
+export interface FinancialProfile {
+  creditScore: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  disposableIncome: number;
+  debtToIncomeRatio: number;
+  preApprovedAmount: number;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  lastUpdated: Date;
+}
+
+export interface PropertyApplication {
+  id: string;
+  propertyId: string;
+  propertyAddress: string;
+  propertyType: string;
+  applicationDate: Date;
+  status: 'pending' | 'approved' | 'rejected' | 'under_review';
+  rentAmount: number;
+  rentCreditPercentage: number;
+  estimatedMoveInDate?: Date;
+  documentsSubmitted: boolean;
+  lastUpdated: Date;
+}
+
+export interface SmartRecommendation {
+  id: string;
+  type: 'property' | 'action' | 'insight';
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  matchScore?: number;
+  estimatedMonthlyPayment?: number;
+  propertyData?: {
+    id: string;
+    address: string;
+    bedrooms: number;
+    bathrooms: number;
+    price: number;
+    imageUrl: string;
+  };
+  action?: () => void;
+}
+
+// Enhanced helper functions for verification status
+export function getVerificationStatus(user: Partial<User>): VerificationStatus {
+  const verificationCount = [
+    user.isPhoneVerified,
+    user.isIdentityVerified,
+    user.isFinanciallyVerified,
+    user.isAddressVerified
+  ].filter(Boolean).length;
+
+  if (verificationCount === 0) return 'unverified';
+  if (verificationCount < 3) return 'partially_verified';
+  return 'fully_verified';
+}
+
+export function isFullyVerified(user: Partial<User>): boolean {
+  return getVerificationStatus(user) === 'fully_verified';
+}
+
+export function getVerificationProgress(user: Partial<User>): number {
+  const totalSteps = 4; // phone, identity, financial, address
+  const completedSteps = [
+    user.isPhoneVerified,
+    user.isIdentityVerified,
+    user.isFinanciallyVerified,
+    user.isAddressVerified
+  ].filter(Boolean).length;
+  
+  return Math.round((completedSteps / totalSteps) * 100);
+}
+
 // Helper function to determine user level
 export function getUserLevel(user: Partial<User>): UserLevel {
   if (!user.email) return 'guest';

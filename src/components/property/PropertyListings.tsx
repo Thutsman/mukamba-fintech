@@ -357,12 +357,12 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         {/* Listing Type */}
         <div className="space-y-2">
           <Label>Listing Type</Label>
-          <Select value={filters.listingType || ''} onValueChange={(value) => updateFilter('listingType', value)}>
+          <Select value={filters.listingType || ''} onValueChange={(value) => updateFilter('listingType', value === 'all' ? undefined : value)}>
             <SelectTrigger>
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="sale">For Sale</SelectItem>
               <SelectItem value="rent-to-buy">Rent-to-Buy</SelectItem>
             </SelectContent>
@@ -372,18 +372,16 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         {/* Sort By */}
         <div className="space-y-2">
           <Label>Sort By</Label>
-          <Select value={filters.sortBy || ''} onValueChange={(value) => updateFilter('sortBy', value)}>
+          <Select value={filters.sortBy || ''} onValueChange={(value) => updateFilter('sortBy', value === 'default' ? 'date-newest' : value)}>
             <SelectTrigger>
               <SelectValue placeholder="Sort by..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Default</SelectItem>
-              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="date-newest">Newest First</SelectItem>
               <SelectItem value="price-asc">Price: Low to High</SelectItem>
               <SelectItem value="price-desc">Price: High to Low</SelectItem>
-              <SelectItem value="rent-asc">Rent: Low to High</SelectItem>
-              <SelectItem value="rent-desc">Rent: High to Low</SelectItem>
-              <SelectItem value="sqft-desc">Largest First</SelectItem>
+              <SelectItem value="date-oldest">Oldest First</SelectItem>
             </SelectContent>
           </Select>
         </div>

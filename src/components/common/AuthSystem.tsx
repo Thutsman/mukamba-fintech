@@ -17,9 +17,23 @@ export const AuthSystem: React.FC = () => {
   const [showRegister, setShowRegister] = React.useState(false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile'>('properties');
+  const [showSignupWidget, setShowSignupWidget] = React.useState(true);
   
   const router = useRouter();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning } = useAuthStore();
+
+  // Check localStorage for widget closed state on component mount
+  React.useEffect(() => {
+    const widgetClosed = localStorage.getItem('signupWidgetClosed');
+    if (widgetClosed === 'true') {
+      setShowSignupWidget(false);
+    }
+  }, []);
+
+  const handleCloseSignupWidget = () => {
+    setShowSignupWidget(false);
+    localStorage.setItem('signupWidgetClosed', 'true');
+  };
 
   // Automatically redirect new users to profile view
   React.useEffect(() => {
@@ -273,51 +287,63 @@ export const AuthSystem: React.FC = () => {
         </motion.div>
       ) : (
         // Unauthenticated user - show floating sign up prompt
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, type: 'spring', stiffness: 200 }}
-          className="fixed bottom-6 right-6 z-50"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 max-w-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+        showSignupWidget && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ delay: 2, type: 'spring', stiffness: 200 }}
+            className="fixed bottom-6 right-6 z-50"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 max-w-sm relative">
+              {/* Close Button */}
+              <button
+                onClick={handleCloseSignupWidget}
+                className="absolute top-2 right-2 w-6 h-6 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200 group"
+                aria-label="Close signup widget"
+              >
+                <span className="text-sm font-medium group-hover:scale-110 transition-transform duration-200">×</span>
+              </button>
+              
+              <div className="flex items-center space-x-3 pr-6">
+                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-800">
+                    Ready to get started?
+                  </p>
+                  <p className="text-xs text-slate-600">
+                    Sign up to save properties and contact owners
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-800">
-                  Ready to get started?
-                </p>
-                <p className="text-xs text-slate-600">
-                  Sign up to save properties and contact owners
-                </p>
+              <div className="flex space-x-2 mt-3">
+                <Button
+                  size="sm"
+                  onClick={() => setShowRegister(true)}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  suppressHydrationWarning
+                >
+                  Sign Up
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setShowSigninModal(true);
+                    // Analytics tracking for signin modal
+                    console.log('Sign-in modal opened from AuthSystem floating prompt');
+                  }}
+                  className="border-red-300 text-red-700"
+                  suppressHydrationWarning
+                >
+                  Sign In
+                </Button>
               </div>
             </div>
-            <div className="flex space-x-2 mt-3">
-              <Button
-                size="sm"
-                onClick={() => setShowRegister(true)}
-                className="flex-1 bg-red-600 hover:bg-red-700"
-                suppressHydrationWarning
-              >
-                Sign Up
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setShowSigninModal(true);
-                  // Analytics tracking for signin modal
-                  console.log('Sign-in modal opened from AuthSystem floating prompt');
-                }}
-                className="border-red-300 text-red-700"
-                suppressHydrationWarning
-              >
-                Sign In
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )
       )}
 
             {/* Modals */}

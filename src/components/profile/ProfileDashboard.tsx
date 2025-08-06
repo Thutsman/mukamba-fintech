@@ -48,6 +48,8 @@ import {
   getUserPermissions, 
   getBuyerVerificationSteps, 
   getSellerVerificationSteps,
+  getVerificationStatus,
+  isFullyVerified,
   type User as UserType,
   type UserRole,
   type VerificationStep
@@ -61,6 +63,7 @@ import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessment
 import { PropertyDocumentationModal } from '@/components/forms/PropertyDocumentationModal';
 import { PropertyListingModal } from '@/components/forms/PropertyListingModal';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
+import { VerifiedUserDashboard } from './VerifiedUserDashboard';
 
 interface ProfileDashboardProps {
   user: UserType;
@@ -1559,7 +1562,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
       {/* Main Content */}
     <div className="max-w-6xl mx-auto p-6 space-y-8">
-      {/* Header */}
+      {/* Header - Only show for non-verified users */}
+      {!isFullyVerified(user) && (
         <motion.div 
           id="welcome-header"
           initial={{ opacity: 0, y: 20 }}
@@ -1607,9 +1611,33 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             </motion.div>
           )}
         </motion.div>
+      )}
 
-        {/* New User Welcome Card */}
-        {isNewUser && (
+        {/* Conditional Dashboard Rendering */}
+        {isFullyVerified(user) ? (
+          <VerifiedUserDashboard
+            user={user}
+            onViewProperty={(propertyId) => {
+              console.log('View property:', propertyId);
+              // Navigate to property details
+            }}
+            onViewApplication={(applicationId) => {
+              console.log('View application:', applicationId);
+              // Navigate to application details
+            }}
+            onStartNewApplication={() => {
+              console.log('Start new application');
+              // Navigate to property search or application form
+            }}
+            onViewMarketInsights={() => {
+              console.log('View market insights');
+              // Navigate to market insights page
+            }}
+          />
+        ) : (
+          <>
+            {/* New User Welcome Card */}
+            {isNewUser && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1873,7 +1901,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         </Card>
           </motion.div>
         )}
-      </div>
+      </>
+      )}
 
       {/* Guided Tour */}
       <GuidedTour
@@ -2028,6 +2057,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </Button>
         </motion.div>
       )}
+      </div>
     </div>
   );
 }; 

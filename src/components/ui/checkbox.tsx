@@ -16,6 +16,11 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       onCheckedChange?.(e.target.checked);
     };
 
+    const handleClick = () => {
+      const newValue = !checked;
+      onCheckedChange?.(newValue);
+    };
+
     return (
       <div className="relative inline-flex items-center">
         <input
@@ -28,10 +33,13 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <div
           className={cn(
-            "h-4 w-4 shrink-0 rounded-sm border border-slate-200 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300",
+            "h-4 w-4 shrink-0 rounded-sm border border-slate-200 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 cursor-pointer",
             checked && "bg-slate-900 text-slate-50 dark:bg-slate-50 dark:text-slate-900",
             className
           )}
+          onClick={handleClick}
+          role="checkbox"
+          aria-checked={checked}
         >
           {checked && (
             <Check className="h-4 w-4 text-current" />
