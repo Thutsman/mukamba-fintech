@@ -817,19 +817,26 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
       </AnimatePresence>
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
+      <div className="relative overflow-hidden bg-slate-900">
+        {/* Full-bleed property background image */}
+        <div className="absolute inset-0 pointer-events-none">
+          <Image
+            src="/propertyimage.jpg"
+            alt=""
+            fill
+            priority
+            className="object-cover object-center md:object-[50%_40%] brightness-[0.9] contrast-110"
+            sizes="100vw"
+          />
         </div>
+        {/* Subtle gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/45" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
           <div className="text-center space-y-8">
             {/* Main Headline */}
             <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight"
+              className="font-sans text-[clamp(2rem,6vw,3.75rem)] md:text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold text-slate-50 leading-[1.1] tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -839,9 +846,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <span className="text-blue-200">Own Your Home Faster</span>
             </motion.h1>
             
+            
             {/* Subheadline */}
             <motion.p 
-              className="text-lg sm:text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto px-4"
+              className="font-sans text-[clamp(1rem,2.2vw,1.375rem)] text-slate-100 max-w-3xl mx-auto px-4 font-normal leading-[1.4] tracking-[0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -858,17 +866,17 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">500+</div>
-                <div className="text-blue-200 text-xs sm:text-sm md:text-base">Pre-Approved Properties</div>
+              <div className="text-center bg-black/35 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-50 mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">500+</div>
+                <div className="text-slate-200 text-xs sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Pre-Approved Properties</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">2,000+</div>
-                <div className="text-blue-200 text-xs sm:text-sm md:text-base">Families Who Owned Their Home</div>
+              <div className="text-center bg-black/35 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-50 mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">2,000+</div>
+                <div className="text-slate-200 text-xs sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Families Who Owned Their Home</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">25+</div>
-                <div className="text-blue-200 text-xs sm:text-sm md:text-base">Cities with Zero Down Payment</div>
+              <div className="text-center bg-black/35 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-50 mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">25+</div>
+                <div className="text-slate-200 text-xs sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Cities with Zero Down Payment</div>
               </div>
             </motion.div>
             
@@ -881,7 +889,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             >
               <Button 
                 size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto"
+                className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-[0_4px_14px_rgba(220,38,38,0.3)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5"
                 onClick={() => setActiveTab('listings')}
                 suppressHydrationWarning
               >
@@ -891,7 +899,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <Button 
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-sm w-full sm:w-auto"
+                className="border-white/30 text-white hover:bg-white/20 hover:text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
                 suppressHydrationWarning
               >
                 <PlusCircle className="w-5 h-5 mr-2" />
@@ -900,7 +908,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <Button 
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-sm w-full sm:w-auto"
+                className="border-white/30 text-white hover:bg-white/20 hover:text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
                 onClick={() => {
                   setShowSigninModal(true);
                   // Analytics tracking for signin modal
@@ -923,18 +931,18 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
             >
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="bg-white/30 backdrop-blur-xl rounded-xl p-6 border border-white/40 shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
                 <div className="space-y-4">
                   {/* Main Search Input */}
               <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 w-5 h-5" />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <Input
                   type="text"
                   placeholder="Search properties by location, type, or features..."
                   value={quickSearchQuery}
                   onChange={(e) => setQuickSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
-                      className="pl-12 pr-4 h-14 text-lg bg-white/20 border-white/30 text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                      className="pl-12 pr-4 h-14 text-lg bg-white border-slate-300 text-slate-800 placeholder-slate-500 focus:bg-white focus:border-slate-400"
                     />
                     
                     {/* Search Suggestions */}
@@ -971,7 +979,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     <select
                       value={searchFilters.priceRange}
                       onChange={(e) => handleFilterChange('priceRange', e.target.value)}
-                      className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                      className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-500 focus:border-slate-400"
                     >
                       <option value="" className="text-slate-700">Price Range</option>
                       <option value="0-50000" className="text-slate-700">$0 - $50K</option>
@@ -983,7 +991,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     <select
                       value={searchFilters.bedrooms}
                       onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
-                      className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:bg-white/30 focus:border-white/50"
+                      className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-500 focus:border-slate-400"
                     >
                       <option value="" className="text-slate-700">Bedrooms</option>
                       <option value="1" className="text-slate-700">1 Bed</option>

@@ -151,94 +151,116 @@ export const AuthSystem: React.FC = () => {
     // Default view - main application
     return (
       <div className="relative">
-      {/* Hero Section - Now compact and at top */}
-      <div className="bg-gradient-to-br from-red-50 via-white to-red-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl font-display font-bold text-red-700 dark:text-red-400 mb-4">
-              Mukamba FinTech
-            </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-400 mb-6">
-              Your gateway to rent-to-buy properties with comprehensive KYC verification
-            </p>
-
-            {!isAuthenticated && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button 
-                  onClick={() => setShowRegister(true)}
-                  className="inline-flex items-center justify-center px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  suppressHydrationWarning
-                >
-                  <UserPlus className="w-5 h-5 mr-2" />
-                  Create Account
-                </button>
-                
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setShowSigninModal(true);
-                    // Analytics tracking for signin modal
-                    console.log('Sign-in modal opened from AuthSystem header');
-                  }}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
-                  suppressHydrationWarning
-                >
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Sign In
-                </Button>
-              </div>
-            )}
-
-            {isAuthenticated && user && (
-              <div className="flex flex-col items-center space-y-4">
-                <div className="bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 border border-slate-200">
-                  <span className="text-sm text-slate-600">
-                    {isNewUser ? 'Welcome' : 'Welcome back'}, <span className="font-semibold text-slate-800">{user.firstName}</span>!
-                  </span>
-                </div>
-                
-                {/* Profile Access Buttons */}
+        {/* Compact Navigation Header */}
+        <nav className="bg-white py-4 px-6 shadow-sm border-b border-slate-200 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+              {/* Logo */}
+              <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-3">
-                  <Button
-                    onClick={() => setCurrentView('profile')}
-                    className="bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2"
-                    suppressHydrationWarning
-                  >
-                    <User className="w-4 h-4" />
-                    <span>View Profile</span>
-                  </Button>
-                  
-                  <Button
-                    onClick={handleLogout}
-                    variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-50 flex items-center space-x-2"
-                    suppressHydrationWarning
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </Button>
+                  {/* Replace the icon-based logo with an image logo */}
+                  <img 
+                    src="/logo.svg" 
+                    alt="Mukamba Fintech Logo" 
+                    className="w-10 h-10 object-contain"
+                    onError={(e) => {
+                      // Fallback to the original icon if image fails to load
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) {
+                        fallback.style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-slate-900">MUKAMBA</div>
+                  <div className="text-xs text-slate-600">FINTECH</div>
                 </div>
               </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
 
-      {/* Property Dashboard - Available to all users */}
-      <PropertyDashboard 
-        user={user || undefined}
-        onPropertySelect={(property) => {
-          console.log('Selected property:', property);
-          // For unauthenticated users, show signup prompt for advanced features
-          if (!isAuthenticated) {
-            // Could show property details but prompt to sign up for contact/save features
-          }
-        }}
-      />
+              {/* Navigation */}
+              <div className="hidden md:flex items-center space-x-8">
+                <a href="#" className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium">
+                  <User className="w-4 h-4 mr-2" />
+                  Home
+                </a>
+                <a href="#" className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium">
+                  <User className="w-4 h-4 mr-2" />
+                  Properties
+                </a>
+              </div>
+
+              {/* Authentication Buttons */}
+              <div className="flex items-center space-x-3">
+                {!isAuthenticated ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowRegister(true)}
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      suppressHydrationWarning
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Create Account
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => {
+                        setShowSigninModal(true);
+                        console.log('Sign-in modal opened from AuthSystem header');
+                      }}
+                      suppressHydrationWarning
+                    >
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCurrentView('profile')}
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      suppressHydrationWarning
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Profile
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={handleLogout}
+                      suppressHydrationWarning
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Property Dashboard - Available to all users */}
+        <PropertyDashboard 
+          user={user || undefined}
+          onPropertySelect={(property) => {
+            console.log('Selected property:', property);
+            // For unauthenticated users, show signup prompt for advanced features
+            if (!isAuthenticated) {
+              // Could show property details but prompt to sign up for contact/save features
+            }
+          }}
+        />
 
       {/* Authentication Status UI */}
       {isAuthenticated && user ? (

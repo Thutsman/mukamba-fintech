@@ -494,475 +494,7 @@ const SuccessMessage: React.FC<{
   );
 };
 
-// Profile Panel Component (existing code with contextual hints)
-const ProfilePanel: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  user: UserType;
-  onProfileSettings?: () => void;
-  onLogout?: () => void;
-}> = ({ isOpen, onClose, user, onProfileSettings, onLogout }) => {
-  const [profileImage, setProfileImage] = React.useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [isUploading, setIsUploading] = React.useState(false);
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const userLevel = getUserLevel(user);
-  const permissions = getUserPermissions(user);
-
-  const getLevelInfo = (level: typeof userLevel, user: UserType) => {
-    // Calculate actual progress based on verification status
-    const verificationSteps = [
-      user.isPhoneVerified,
-      user.isIdentityVerified,
-      user.isFinanciallyVerified,
-      user.isPropertyVerified
-    ];
-    const completedSteps = verificationSteps.filter(Boolean).length;
-    const totalSteps = verificationSteps.length;
-    const actualProgress = Math.round((completedSteps / totalSteps) * 100);
-    
-    switch (level) {
-      case 'basic':
-        return {
-          title: 'Basic Member',
-          color: 'bg-blue-500',
-          progress: Math.max(actualProgress, 25), // Minimum 25% for basic members
-          description: 'You can browse and save properties',
-          hint: 'Complete phone verification to unlock messaging features'
-        };
-      case 'verified':
-        return {
-          title: 'Verified Member',
-          color: 'bg-green-500',
-          progress: Math.max(actualProgress, 50), // Minimum 50% for verified members
-          description: 'You can contact sellers and list properties',
-          hint: 'Complete all verifications to become a Premium member'
-        };
-      case 'premium':
-        return {
-          title: 'Premium Member',
-          color: 'bg-gradient-to-r from-purple-500 to-purple-600',
-          progress: Math.max(actualProgress, 75), // Minimum 75% for premium members
-          description: 'Full access to all platform features',
-          hint: 'You have access to all platform features!'
-        };
-      default:
-        return {
-          title: 'Guest',
-          color: 'bg-gray-500',
-          progress: 0,
-          description: 'Create an account to get started',
-          hint: 'Sign up to start your verification journey'
-        };
-    }
-  };
-
-  const levelInfo = getLevelInfo(userLevel, user);
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string);
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleImageClick = () => {
-    if (!isUploading) {
-      fileInputRef.current?.click();
-    }
-  };
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    // Simulate logout delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onLogout?.();
-    onClose();
-    setIsLoggingOut(false);
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={onClose}
-          />
-
-          {/* Profile Panel */}
-          <motion.div
-            initial={{ x: '100%', opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: '100%', opacity: 0 }}
-            transition={{ 
-              type: 'spring', 
-              damping: 25, 
-              stiffness: 200,
-              opacity: { duration: 0.3 }
-            }}
-            className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-slate-900 shadow-2xl z-50 overflow-y-auto"
-          >
-            {/* Header */}
-            <motion.div 
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-6 z-10"
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Profile
-                </h2>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onClose}
-                    className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors duration-200"
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              {/* User Avatar Section */}
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-center"
-              >
-                <div className="relative inline-block">
-                  <Tooltip content="Click to upload a profile picture">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <Avatar className="w-24 h-24 mx-auto">
-                        {profileImage ? (
-                          <AvatarImage src={profileImage} alt={`${user.firstName} ${user.lastName}`} />
-                        ) : (
-                          <AvatarFallback className="bg-gradient-to-br from-red-500 to-red-600 text-white text-2xl font-bold">
-                            {user.firstName[0]}{user.lastName[0]}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                    </motion.div>
-                  </Tooltip>
-                  
-                  <motion.button
-                    onClick={handleImageClick}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    disabled={isUploading}
-                    className="absolute bottom-0 right-0 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200 disabled:opacity-50"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Camera className="w-4 h-4" />
-                    )}
-                  </motion.button>
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-                
-                <motion.div 
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="mt-4"
-                >
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {user.firstName} {user.lastName}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {user.email}
-                  </p>
-                </motion.div>
-              </motion.div>
-
-              {/* Account Level Progress with Contextual Hint */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Card className="hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center">
-                      <Shield className="w-4 h-4 mr-2" />
-                      {levelInfo.title}
-                      <Tooltip content={levelInfo.hint}>
-                        <MessageCircle className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                      </Tooltip>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Progress</span>
-                        <motion.span 
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.8 }}
-                          className="font-medium text-slate-900 dark:text-slate-100"
-                        >
-                          {levelInfo.progress}%
-                        </motion.span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-                        <motion.div 
-                          className={`${levelInfo.color} h-2 rounded-full`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${levelInfo.progress}%` }}
-                          transition={{ duration: 1.5, delay: 0.6, ease: 'easeOut' }}
-                        />
-                      </div>
-                      <motion.p 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.7 }}
-                        className="text-xs text-slate-500 dark:text-slate-400"
-                      >
-                        {levelInfo.description}
-                      </motion.p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Quick Settings */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                  Quick Settings
-                </h4>
-                <div className="space-y-3">
-                  {/* Dark Mode Toggle */}
-                  <Tooltip content="Toggle between light and dark themes">
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <motion.div
-                          animate={{ rotate: isDarkMode ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {isDarkMode ? (
-                            <Moon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                          ) : (
-                            <Sun className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                          )}
-                        </motion.div>
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                          Dark Mode
-                        </span>
-                      </div>
-                      <motion.button
-                        onClick={() => setIsDarkMode(!isDarkMode)}
-                        className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${
-                          isDarkMode ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
-                        }`}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <motion.div
-                          className="w-4 h-4 bg-white rounded-full"
-                          animate={{ x: isDarkMode ? 16 : 0 }}
-                          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                        />
-                      </motion.button>
-                    </motion.div>
-                  </Tooltip>
-
-                  {/* Notifications Toggle */}
-                  <Tooltip content="Control email and push notifications">
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <motion.div
-                          animate={{ rotate: notificationsEnabled ? 0 : -15 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Bell className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                        </motion.div>
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                          Notifications
-                        </span>
-                      </div>
-                      <motion.button
-                        onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                        className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${
-                          notificationsEnabled ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600'
-                        }`}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <motion.div
-                          className="w-4 h-4 bg-white rounded-full"
-                          animate={{ x: notificationsEnabled ? 16 : 0 }}
-                          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                        />
-                      </motion.button>
-                    </motion.div>
-                  </Tooltip>
-                </div>
-              </motion.div>
-
-              {/* Account Stats */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7 }}
-              >
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                  Account Overview
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <Tooltip content="Complete verifications to unlock more features">
-                    <motion.div 
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:shadow-md transition-shadow duration-200"
-                    >
-                      <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        Verifications
-                      </div>
-                      <motion.div 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.8, type: 'spring', stiffness: 200 }}
-                        className="text-lg font-bold text-green-700 dark:text-green-300"
-                      >
-                        {[user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified].filter(Boolean).length}/3
-                      </motion.div>
-                    </motion.div>
-                  </Tooltip>
-                  
-                  <Tooltip content="Your current Know Your Customer status">
-                    <motion.div 
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow duration-200"
-                    >
-                      <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                        KYC Status
-                      </div>
-                      <motion.div 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.9, type: 'spring', stiffness: 200 }}
-                        className="text-lg font-bold text-blue-700 dark:text-blue-300 capitalize"
-                      >
-                        {user.kycStatus}
-                      </motion.div>
-                    </motion.div>
-                  </Tooltip>
-                </div>
-              </motion.div>
-
-              {/* Action Buttons */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="space-y-3"
-              >
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    onClick={() => {
-                      onProfileSettings?.();
-                      onClose();
-                    }}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                </motion.div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Security
-                    </Button>
-                  </motion.div>
-                  
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
-                    >
-                      <HelpCircle className="w-4 h-4 mr-2" />
-                      Help
-                    </Button>
-                  </motion.div>
-                </div>
-
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    variant="ghost"
-                    className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 disabled:opacity-50"
-                  >
-                    {isLoggingOut ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Signing Out...
-                      </>
-                    ) : (
-                      <>
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              </motion.div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
+// Profile Panel removed per request
 
 // Navigation Bar Component
 const NavigationBar: React.FC<{
@@ -971,7 +503,7 @@ const NavigationBar: React.FC<{
   onProfileSettings?: () => void;
   onLogout?: () => void;
 }> = ({ user, onBackToHome, onProfileSettings, onLogout }) => {
-  const [showProfilePanel, setShowProfilePanel] = React.useState(false);
+  // Right slide-in profile panel removed
   const [notificationCount] = React.useState(3); // Mock notification count
 
   return (
@@ -1049,12 +581,11 @@ const NavigationBar: React.FC<{
                 </motion.div>
               </Tooltip>
 
-              {/* User Profile Avatar - Trigger for Panel */}
+              {/* User Profile Avatar */}
               <Tooltip content="View and manage your profile">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     variant="ghost"
-                    onClick={() => setShowProfilePanel(true)}
                     className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 p-2 transition-colors duration-200"
                   >
                     <Avatar className="w-8 h-8">
@@ -1073,14 +604,7 @@ const NavigationBar: React.FC<{
         </div>
       </motion.nav>
 
-      {/* Profile Panel */}
-      <ProfilePanel
-        isOpen={showProfilePanel}
-        onClose={() => setShowProfilePanel(false)}
-        user={user}
-        onProfileSettings={onProfileSettings}
-        onLogout={onLogout}
-      />
+      {/* Profile Panel removed */}
     </>
   );
 };
@@ -1963,20 +1487,22 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         country={selectedCountry}
       />
 
-      <AgentOnboardingModal
-        isOpen={activeModal === 'agent'}
-        onClose={() => setActiveModal(null)}
-        onComplete={() => {
-          setActiveModal(null);
-          setSuccessMessage('Agent application submitted successfully! We will review your documents and contact you soon.');
-          setShowSuccess(true);
-          // Update user roles to include agent (this would be done after verification in real app)
-          // updateUser({ roles: [...user.roles, 'agent'] });
-        }}
-      />
+      {!isFullyVerified(user) && (
+        <AgentOnboardingModal
+          isOpen={activeModal === 'agent'}
+          onClose={() => setActiveModal(null)}
+          onComplete={() => {
+            setActiveModal(null);
+            setSuccessMessage('Agent application submitted successfully! We will review your documents and contact you soon.');
+            setShowSuccess(true);
+            // Update user roles to include agent (this would be done after verification in real app)
+            // updateUser({ roles: [...user.roles, 'agent'] });
+          }}
+        />
+      )}
 
       {/* Real Estate Agent Registration Section */}
-      {!user.roles.includes('agent') && (
+      {!isFullyVerified(user) && !user.roles.includes('agent') && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

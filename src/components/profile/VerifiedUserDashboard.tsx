@@ -6,7 +6,6 @@ import {
   CheckCircle, 
   TrendingUp, 
   Home, 
-  DollarSign, 
   Calendar,
   Star,
   Award,
@@ -27,6 +26,11 @@ import {
   Bath,
   Car,
   Users,
+  User as UserIcon,
+  Bell,
+  Settings as SettingsIcon,
+  Shield,
+  HelpCircle,
   Zap,
   Sparkles,
   Trophy,
@@ -34,6 +38,7 @@ import {
   Lightbulb,
   Plus
 } from 'lucide-react';
+import { Camera as CameraIcon, Sun as SunIcon, LogOut as LogOutIcon, Pencil as PencilIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -200,7 +205,7 @@ const RecommendationCard: React.FC<{
   <motion.div
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-4 hover:shadow-lg transition-all duration-300"
+    className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6 w-full hover:shadow-lg transition-all duration-300"
   >
     <div className="flex items-start justify-between mb-3">
       <div className="flex-1">
@@ -213,9 +218,9 @@ const RecommendationCard: React.FC<{
         <p className="text-sm text-slate-600 mb-3">{recommendation.description}</p>
         
         {recommendation.propertyData && (
-          <div className="bg-white rounded-lg p-3 mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center">
+          <div className="bg-white rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 bg-slate-200 rounded-lg flex items-center justify-center">
                 <Building className="w-6 h-6 text-slate-400" />
               </div>
               <div className="flex-1">
@@ -262,39 +267,39 @@ const RecommendationCard: React.FC<{
 const FinancialSummaryCard: React.FC<{
   profile: FinancialProfile;
 }> = ({ profile }) => (
-  <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-    <CardHeader className="pb-3">
-      <CardTitle className="flex items-center gap-2 text-green-800">
+  <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 h-full">
+    <CardHeader className="pb-2">
+      <CardTitle className="flex items-center gap-2 text-green-800 text-base sm:text-lg">
         <TrendingUp className="w-5 h-5" />
         Financial Summary
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <CardContent className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-green-600 mb-1">
+          <div className="text-xl sm:text-2xl font-bold text-green-600 mb-0.5 leading-tight">
             {profile.creditScore}
           </div>
-          <div className="text-xs text-green-700">Credit Score</div>
+          <div className="text-[11px] sm:text-xs text-green-700">Credit Score</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600 mb-1">
+          <div className="text-xl sm:text-2xl font-bold text-blue-600 mb-0.5 leading-tight break-words">
             R{profile.preApprovedAmount.toLocaleString()}
           </div>
-          <div className="text-xs text-blue-700">Pre-Approved Amount</div>
+          <div className="text-[11px] sm:text-xs text-blue-700">Pre-Approved Amount</div>
         </div>
       </div>
       
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-slate-600">Monthly Income:</span>
           <span className="font-medium">R{profile.monthlyIncome.toLocaleString()}</span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-slate-600">Monthly Expenses:</span>
           <span className="font-medium">R{profile.monthlyExpenses.toLocaleString()}</span>
         </div>
-        <div className="flex justify-between text-sm border-t pt-2">
+        <div className="flex justify-between text-xs sm:text-sm border-t pt-2">
           <span className="text-slate-600">Disposable Income:</span>
           <span className="font-medium text-green-600">
             R{profile.disposableIncome.toLocaleString()}
@@ -330,44 +335,205 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 }) => {
   const verificationStatus = getVerificationStatus(user);
   const isVerified = isFullyVerified(user);
+  const [showCongratulations, setShowCongratulations] = React.useState(false);
+  const [hasCheckedStorage, setHasCheckedStorage] = React.useState(false);
+  const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
+
+  // Check if user has seen the congratulations message - only once on mount
+  React.useEffect(() => {
+    if (isVerified && !hasCheckedStorage) {
+      const hasSeenCongratulations = localStorage.getItem(`congratulations-${user.id}`);
+      if (!hasSeenCongratulations) {
+        setShowCongratulations(true);
+        localStorage.setItem(`congratulations-${user.id}`, 'true');
+      }
+      setHasCheckedStorage(true);
+    }
+  }, [isVerified, user.id, hasCheckedStorage]);
+
+  const handleCloseCongratulations = () => {
+    setShowCongratulations(false);
+  };
+
+  // Temporary debug function - remove this after testing
+  const resetCongratulations = () => {
+    localStorage.removeItem(`congratulations-${user.id}`);
+    setHasCheckedStorage(false);
+    setShowCongratulations(false);
+    console.log('Congratulations state reset');
+  };
+
+  // Debug logging
+  React.useEffect(() => {
+    if (isVerified) {
+      const hasSeen = localStorage.getItem(`congratulations-${user.id}`);
+      console.log('Verification check:', { 
+        isVerified, 
+        hasSeenCongratulations: hasSeen, 
+        userId: user.id 
+      });
+    }
+  }, [isVerified, user.id]);
 
   if (!isVerified) {
     return null; // This component is only for verified users
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-            <Trophy className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold">Welcome back, {user.firstName}! 🎉</h2>
-            <p className="text-purple-100">You're fully verified and ready to find your dream home</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <Badge className="bg-green-500 text-white border-green-400">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Fully Verified
-          </Badge>
-          <Badge className="bg-blue-500 text-white border-blue-400">
-            <Star className="w-3 h-3 mr-1" />
-            Premium Access
-          </Badge>
-        </div>
-      </motion.div>
+  // Sidebar navigation removed per request
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  return (
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Left Sidebar */}
+      <aside className="hidden md:block fixed left-6 top-24 w-80 max-h-[calc(100vh-7rem)] bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
+        <div className="flex flex-col">
+        {/* Profile Section */}
+        <div className="p-4 border-b border-slate-200">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src="" alt={user.firstName} />
+                <AvatarFallback className="bg-red-600 text-white text-xl font-semibold">
+                  {user.firstName?.[0]}{user.lastName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow">
+                <CameraIcon className="w-4 h-4 text-slate-500" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="text-slate-900 font-semibold text-lg">{user.firstName} {user.lastName}</div>
+              <div className="text-sm text-slate-500 truncate max-w-[14rem]">{user.email}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* KYC Progress */}
+        <div className="p-4 border-b border-slate-200">
+          <div className="flex items-center gap-2 text-green-700 mb-2">
+            <CheckCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">Verified Member</span>
+          </div>
+          <Progress value={75} className="h-2" />
+          <div className="text-xs text-slate-600 mt-2">
+            You can contact sellers and list properties
+          </div>
+        </div>
+
+        {/* Quick Settings */}
+        <div className="px-4 py-3 border-b border-slate-200 space-y-3">
+          <div className="text-xs font-medium text-slate-500">Quick Settings</div>
+          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-slate-700">
+              <SunIcon className="w-4 h-4" />
+              <span>Dark Mode</span>
+            </div>
+            <button
+              onClick={() => setDarkModeEnabled((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled ? 'bg-red-600' : 'bg-slate-300'}`}
+              aria-pressed={darkModeEnabled}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${darkModeEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-slate-700">
+              <Bell className="w-4 h-4" />
+              <span>Notifications</span>
+            </div>
+            <button
+              onClick={() => setNotificationsEnabled((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${notificationsEnabled ? 'bg-red-600' : 'bg-slate-300'}`}
+              aria-pressed={notificationsEnabled}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${notificationsEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Account Overview */}
+        <div className="px-4 py-3 border-b border-slate-200 space-y-3">
+          <div className="text-xs font-medium text-slate-500">Account Overview</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+              <div className="text-xs text-green-700">Verifications</div>
+              <div className="text-lg font-semibold text-green-700">3/3</div>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className="text-xs text-blue-700">KYC Status</div>
+              <div className="text-lg font-semibold text-blue-700">Approved</div>
+            </div>
+          </div>
+          <Button className="w-full bg-red-600 hover:bg-red-700">
+            <PencilIcon className="w-4 h-4 mr-2" />
+            Edit Profile
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" className="w-full">
+              <Shield className="w-4 h-4 mr-2" />
+              Security
+            </Button>
+            <Button variant="outline" className="w-full">
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Help
+            </Button>
+          </div>
+          <Button variant="ghost" className="text-red-600 justify-start">
+            <LogOutIcon className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+
+        {/* Navigation removed */}
+        
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 md:ml-[23rem] p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Congratulations Popup - Only shows once */}
+      <AnimatePresence>
+        {showCongratulations && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white rounded-lg shadow-xl border border-green-400 p-4 max-w-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center flex-shrink-0">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold">Full Verification Complete!</h3>
+                  <Trophy className="w-4 h-4 text-yellow-300" />
+                </div>
+                <p className="text-sm text-green-100 mb-2">
+                  You now have access to all platform features
+                </p>
+                <div className="flex items-center gap-2 text-xs text-green-200">
+                  <CheckCircle className="w-3 h-3" />
+                  <span>Premium membership status</span>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseCongratulations}
+                className="text-green-100 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Welcome banner removed per request */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Financial Summary */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-2">
           <FinancialSummaryCard profile={mockFinancialProfile} />
         </div>
 
@@ -405,7 +571,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       </div>
 
       {/* Smart Recommendations */}
-      <Card>
+      <Card className="border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
@@ -416,8 +582,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockRecommendations.map((recommendation) => (
+          <div className="grid grid-cols-1 gap-6">
+            {mockRecommendations
+              .filter((rec) => rec.type === 'property')
+              .map((recommendation) => (
               <RecommendationCard
                 key={recommendation.id}
                 recommendation={recommendation}
@@ -435,33 +603,40 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-          onClick={onViewMarketInsights}
-        >
-          <BarChart3 className="w-6 h-6" />
-          <span>Market Insights</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-        >
-          <Heart className="w-6 h-6" />
-          <span>Saved Properties</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-20 flex flex-col items-center justify-center gap-2"
-        >
-          <MessageCircle className="w-6 h-6" />
-          <span>Messages</span>
-        </Button>
+      {/* Footer Navigation */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="w-6 h-6 text-blue-600" />
+            <div>
+              <div className="font-semibold text-slate-800">Market Insights</div>
+              <div className="text-xs text-slate-500">Trends and analytics</div>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div className="flex items-center gap-3">
+            <Heart className="w-6 h-6 text-rose-600" />
+            <div>
+              <div className="font-semibold text-slate-800">Saved Properties</div>
+              <div className="text-xs text-slate-500">12 saved</div>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div className="flex items-center gap-3">
+            <MessageCircle className="w-6 h-6 text-purple-600" />
+            <div>
+              <div className="font-semibold text-slate-800">Messages</div>
+              <div className="text-xs text-slate-500">3 unread</div>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
       </div>
+      </div>
+      </main>
     </div>
   );
 }; 
