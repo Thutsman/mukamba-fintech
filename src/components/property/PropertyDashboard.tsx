@@ -825,7 +825,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             alt=""
             fill
             priority
-            className="object-cover object-center md:object-[50%_40%] brightness-[0.9] contrast-110"
+            className="object-cover object-center sm:object-[50%_40%] brightness-[0.9] contrast-110"
             sizes="100vw"
           />
         </div>
@@ -833,10 +833,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/45" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
-          <div className="text-center space-y-8">
+          <div className="text-center space-y-6 sm:space-y-8">
             {/* Main Headline */}
             <motion.h1 
-              className="font-sans text-[clamp(2rem,6vw,3.75rem)] md:text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold text-slate-50 leading-[1.1] tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+              className="font-sans text-[clamp(2rem,6vw,3.5rem)] md:text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold text-slate-50 leading-[1.15] tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] px-2"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -849,7 +849,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             
             {/* Subheadline */}
             <motion.p 
-              className="font-sans text-[clamp(1rem,2.2vw,1.375rem)] text-slate-100 max-w-3xl mx-auto px-4 font-normal leading-[1.4] tracking-[0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
+              className="font-sans text-[clamp(1rem,2.2vw,1.25rem)] text-slate-100 max-w-3xl mx-auto px-4 font-normal leading-[1.5] tracking-[0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -861,7 +861,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             
             {/* Statistics Ticker */}
             <motion.div 
-              className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-8 md:gap-12"
+              className="grid grid-cols-1 gap-3 px-4 sm:grid-cols-3 sm:gap-4 md:flex md:flex-wrap md:justify-center md:gap-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -882,14 +882,14 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             
             {/* CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center px-4"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
               <Button 
                 size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-[0_4px_14px_rgba(220,38,38,0.3)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5"
+                className="bg-red-600 hover:bg-red-700 text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-[0_4px_14px_rgba(220,38,38,0.3)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5"
                 onClick={() => setActiveTab('listings')}
                 suppressHydrationWarning
               >
@@ -899,7 +899,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <Button 
                 size="lg"
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/20 hover:text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
+                className="border-white/30 text-white hover:bg-white/20 hover:text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
                 suppressHydrationWarning
               >
                 <PlusCircle className="w-5 h-5 mr-2" />
@@ -970,7 +970,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             </div>
             
                   {/* Quick Filters */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <CountryToggle
                   value={selectedCountry}
                   onChange={setSelectedCountry}
@@ -1033,7 +1033,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 </p>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-2 sm:px-0">
                 {featuredProperties.slice(0, 4).map((property, index) => (
                   <motion.div
                     key={property.id}

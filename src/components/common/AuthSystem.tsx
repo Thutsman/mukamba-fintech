@@ -152,7 +152,7 @@ export const AuthSystem: React.FC = () => {
     return (
       <div className="relative">
         {/* Compact Navigation Header */}
-        <nav className="bg-white py-4 px-6 shadow-sm border-b border-slate-200 sticky top-0 z-40">
+        <nav className="bg-white dark:bg-slate-900 py-3 sm:py-4 px-4 sm:px-6 shadow-sm border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
               {/* Logo */}
@@ -178,8 +178,8 @@ export const AuthSystem: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-slate-900">MUKAMBA</div>
-                  <div className="text-xs text-slate-600">FINTECH</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100">MUKAMBA</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">FINTECH</div>
                 </div>
               </div>
 
@@ -195,15 +195,47 @@ export const AuthSystem: React.FC = () => {
                 </a>
               </div>
 
-              {/* Authentication Buttons */}
-              <div className="flex items-center space-x-3">
+              {/* Mobile hamburger */}
+              <div className="md:hidden">
+                <details className="relative">
+                  <summary className="list-none cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <span className="sr-only">Menu</span>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="block w-5 h-0.5 bg-slate-700 dark:bg-slate-300"></span>
+                      <span className="block w-5 h-0.5 bg-slate-700 dark:bg-slate-300"></span>
+                      <span className="block w-5 h-0.5 bg-slate-700 dark:bg-slate-300"></span>
+                    </div>
+                  </summary>
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 space-y-2">
+                    <a href="#" className="block px-3 py-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Home</a>
+                    <a href="#" className="block px-3 py-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Properties</a>
+                    <div className="h-px bg-slate-200 dark:bg-slate-700" />
+                    <div className="flex gap-2">
+                      {!isAuthenticated ? (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => setShowRegister(true)} className="flex-1 border-slate-300 text-slate-700 dark:text-slate-200 dark:border-slate-600">Create Account</Button>
+                          <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700">Sign In</Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => setCurrentView('profile')} className="flex-1 border-slate-300 dark:border-slate-600">Profile</Button>
+                          <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleLogout}>Sign Out</Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              {/* Authentication Buttons (desktop) */}
+              <div className="hidden md:flex items-center space-x-3">
                 {!isAuthenticated ? (
                   <>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setShowRegister(true)}
-                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      className="border-slate-300 text-slate-700 dark:text-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
                       suppressHydrationWarning
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
@@ -228,7 +260,7 @@ export const AuthSystem: React.FC = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => setCurrentView('profile')}
-                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                      className="border-slate-300 text-slate-700 dark:text-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
                       suppressHydrationWarning
                     >
                       <User className="w-4 h-4 mr-2" />

@@ -29,10 +29,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('theme');
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var shouldDark = stored ? stored === 'dark' : prefersDark;
+                  if (shouldDark) document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                  // Listen for changes to OS setting
+                  try {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
+                      if (!localStorage.getItem('theme')) {
+                        if (e.matches) document.documentElement.classList.add('dark');
+                        else document.documentElement.classList.remove('dark');
+                      }
+                    });
+                  } catch (_) {}
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}>
         {children}
       </body>
     </html>
