@@ -181,6 +181,44 @@ export const useAuthStore = create<AuthStore>()(
             });
             return;
           }
+
+          // Check for verified seller credentials (test account)
+          if (credentials.email === 'seller@mukamba.com' && credentials.password === 'seller123') {
+            const sellerUser: User = {
+              id: 'seller_1',
+              firstName: 'Verified',
+              lastName: 'Seller',
+              email: credentials.email,
+              phone: '+27123456789',
+              level: 'premium',
+              roles: ['seller'],
+              isPhoneVerified: true,
+              isIdentityVerified: true,
+              isFinanciallyVerified: true,
+              isPropertyVerified: true,
+              isAddressVerified: true,
+              nationality: 'SA',
+              permissions: getUserPermissions({
+                roles: ['seller'],
+                isPhoneVerified: true,
+                isIdentityVerified: true,
+                isFinanciallyVerified: true,
+                isPropertyVerified: true,
+                isAddressVerified: true,
+                kycStatus: 'approved'
+              }),
+              kycStatus: 'approved',
+              createdAt: new Date()
+            };
+
+            set({
+              user: sellerUser,
+              isAuthenticated: true,
+              isLoading: false,
+              isNewUser: false
+            });
+            return;
+          }
           
           // Mock user data - replace with actual API response
           const mockUser: User = {

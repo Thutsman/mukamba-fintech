@@ -18,6 +18,7 @@ export const AuthSystem: React.FC = () => {
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile'>('properties');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
+  const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
   
   const router = useRouter();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning } = useAuthStore();
@@ -79,6 +80,8 @@ export const AuthSystem: React.FC = () => {
       router.push('/agent-dashboard');
     }
   }, [isAuthenticated, user, router]);
+
+  // Removed: automatic redirect to seller dashboard to prevent navigation loop when returning home
 
   const handleSwitchToRegister = () => {
     setShowRegister(true);
@@ -197,7 +200,7 @@ export const AuthSystem: React.FC = () => {
 
               {/* Mobile hamburger */}
               <div className="md:hidden">
-                <details className="relative">
+                <details className="relative" ref={mobileMenuRef}>
                   <summary className="list-none cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
                     <span className="sr-only">Menu</span>
                     <div className="flex flex-col gap-1.5">
@@ -209,12 +212,15 @@ export const AuthSystem: React.FC = () => {
                   <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 space-y-2">
                     <a href="#" className="block px-3 py-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Home</a>
                     <a href="#" className="block px-3 py-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Properties</a>
+                    {isAuthenticated && user?.roles.includes('seller') && (
+                      <a href="/dashboard/seller" className="block px-3 py-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Seller Dashboard</a>
+                    )}
                     <div className="h-px bg-slate-200 dark:bg-slate-700" />
                     <div className="flex gap-2">
                       {!isAuthenticated ? (
                         <>
-                          <Button size="sm" variant="outline" onClick={() => setShowRegister(true)} className="flex-1 border-slate-300 text-slate-700 dark:text-slate-200 dark:border-slate-600">Create Account</Button>
-                          <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700">Sign In</Button>
+                          <Button size="sm" variant="outline" onClick={() => { setShowRegister(true); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }} className="flex-1 border-slate-300 text-slate-700 dark:text-slate-200 dark:border-slate-600">Create Account</Button>
+                          <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => { setShowSigninModal(true); console.log('Sign-in modal opened from AuthSystem mobile menu'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}>Sign In</Button>
                         </>
                       ) : (
                         <>
@@ -256,6 +262,16 @@ export const AuthSystem: React.FC = () => {
                   </>
                 ) : (
                   <>
+                    {user?.roles.includes('seller') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push('/dashboard/seller')}
+                        className="border-slate-300 text-slate-700 dark:text-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        Seller Dashboard
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
