@@ -37,19 +37,11 @@ export default function RootLayout({
               (function() {
                 try {
                   var stored = localStorage.getItem('theme');
-                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  var shouldDark = stored ? stored === 'dark' : prefersDark;
-                  if (shouldDark) document.documentElement.classList.add('dark');
-                  else document.documentElement.classList.remove('dark');
-                  // Listen for changes to OS setting
-                  try {
-                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
-                      if (!localStorage.getItem('theme')) {
-                        if (e.matches) document.documentElement.classList.add('dark');
-                        else document.documentElement.classList.remove('dark');
-                      }
-                    });
-                  } catch (_) {}
+                  if (stored === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
                 } catch (e) {}
               })();
             `,

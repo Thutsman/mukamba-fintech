@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, UserPlus, LogOut, User } from 'lucide-react';
+import { LogIn, UserPlus, LogOut, User, Sun, Moon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,17 @@ export const AuthSystem: React.FC = () => {
   
   const router = useRouter();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning } = useAuthStore();
+  const [theme, setTheme] = React.useState<'light' | 'dark'>(() =>
+    (typeof window !== 'undefined' && (localStorage.getItem('theme') as 'light' | 'dark')) || 'light'
+  );
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('theme', theme);
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    } catch (_) {}
+  }, [theme]);
 
   // Check localStorage for widget closed state on component mount
   React.useEffect(() => {
@@ -196,6 +207,13 @@ export const AuthSystem: React.FC = () => {
                   <User className="w-4 h-4 mr-2" />
                   Properties
                 </a>
+                <button
+                  onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
+                  className="inline-flex items-center gap-2 text-slate-700 hover:text-red-600 font-medium"
+                >
+                  {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                  {theme === 'light' ? 'Dark' : 'Light'}
+                </button>
               </div>
 
               {/* Mobile hamburger */}
@@ -229,6 +247,13 @@ export const AuthSystem: React.FC = () => {
                         </>
                       )}
                     </div>
+                    <button
+                      onClick={() => { setTheme((t) => (t === 'light' ? 'dark' : 'light')); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
+                      className="w-full mt-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                      Toggle {theme === 'light' ? 'Dark' : 'Light'} Mode
+                    </button>
                   </div>
                 </details>
               </div>
