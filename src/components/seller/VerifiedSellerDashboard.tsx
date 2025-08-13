@@ -674,7 +674,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-[23rem] p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 md:ml-[23rem] p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden">
       {/* Back to Home */}
       <div>
         <Button
@@ -688,17 +688,17 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       </div>
       {/* Top Section */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
             <CardTitle className="text-xl">Welcome, {user.firstName} {user.lastName}</CardTitle>
-            <div className="text-sm text-slate-500">{user.email}</div>
+            <div className="text-sm text-slate-500 truncate">{user.email}</div>
             <div className="mt-2">
               <Badge className="bg-green-100 text-green-800">
                 <CheckCircle className="w-3 h-3 mr-1" /> Verified Seller
               </Badge>
             </div>
           </div>
-          <Button onClick={openNewListing} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={openNewListing} className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
             <PlusCircle className="w-4 h-4 mr-2" /> Start New Listing
           </Button>
         </CardHeader>
@@ -788,39 +788,69 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
         {listings.length === 0 ? (
           <div className="text-sm text-slate-600">No listings yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Property</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Location</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Type</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Price</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Listed Date</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Views</th>
-                  <th className="text-right py-3 px-4 font-medium text-slate-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listings.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100">
-                    <td className="py-3 px-4 font-medium text-slate-800">{p.title}</td>
-                    <td className="py-3 px-4">{p.address}{p.city ? `, ${p.city}` : ''}</td>
-                    <td className="py-3 px-4">{p.propertyType || '—'}</td>
-                    <td className="py-3 px-4">{typeof p.price === 'number' ? `R${p.price.toLocaleString()}` : p.price}</td>
-                    <td className="py-3 px-4"><StatusBadge status={p.status} /></td>
-                    <td className="py-3 px-4">{new Date(p.submittedAt).toLocaleDateString()}</td>
-                    <td className="py-3 px-4">{p.views ?? '—'}</td>
-                    <td className="py-3 px-4 text-right space-x-2">
+          <>
+            {/* Mobile Cards */}
+            <div className="space-y-4 lg:hidden">
+              {listings.map((p) => (
+                <div key={p.id} className="border border-slate-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-900 truncate">{p.title}</div>
+                      <div className="text-sm text-slate-600 truncate">{p.address}{p.city ? `, ${p.city}` : ''}</div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="text-slate-600">{p.propertyType || '—'}</span>
+                        <span className="text-slate-500">•</span>
+                        <span className="font-medium">{typeof p.price === 'number' ? `R${p.price.toLocaleString()}` : p.price}</span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <StatusBadge status={p.status} />
+                        <span className="text-xs text-slate-500">{new Date(p.submittedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 shrink-0">
                       <Button variant="outline" size="sm">Edit</Button>
-                      <Button variant="outline" size="sm">View Details</Button>
-                    </td>
+                      <Button variant="outline" size="sm">View</Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="overflow-x-auto hidden lg:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Property</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Location</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Price</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Listed Date</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600">Views</th>
+                    <th className="text-right py-3 px-4 font-medium text-slate-600">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {listings.map((p) => (
+                    <tr key={p.id} className="border-b border-slate-100">
+                      <td className="py-3 px-4 font-medium text-slate-800">{p.title}</td>
+                      <td className="py-3 px-4">{p.address}{p.city ? `, ${p.city}` : ''}</td>
+                      <td className="py-3 px-4">{p.propertyType || '—'}</td>
+                      <td className="py-3 px-4">{typeof p.price === 'number' ? `R${p.price.toLocaleString()}` : p.price}</td>
+                      <td className="py-3 px-4"><StatusBadge status={p.status} /></td>
+                      <td className="py-3 px-4">{new Date(p.submittedAt).toLocaleDateString()}</td>
+                      <td className="py-3 px-4">{p.views ?? '—'}</td>
+                      <td className="py-3 px-4 text-right space-x-2">
+                        <Button variant="outline" size="sm">Edit</Button>
+                        <Button variant="outline" size="sm">View Details</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
