@@ -38,16 +38,9 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var stored = localStorage.getItem('theme');
-                  if (!stored) {
-                    stored = 'light';
-                    localStorage.setItem('theme', 'light');
-                  }
-                  if (stored === 'dark') {
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                  }
+                  // Force app-controlled light theme regardless of device or previous storage
+                  document.documentElement.classList.remove('dark');
+                  try { localStorage.setItem('theme', 'light'); } catch (_) {}
                 } catch (e) {}
               })();
             `,

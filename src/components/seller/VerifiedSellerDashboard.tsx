@@ -687,11 +687,11 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
         </Button>
       </div>
       {/* Top Section */}
-      <Card>
+      <Card className="bg-white border-slate-200">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
-            <CardTitle className="text-xl">Welcome, {user.firstName} {user.lastName}</CardTitle>
-            <div className="text-sm text-slate-500 truncate">{user.email}</div>
+            <CardTitle className="text-xl text-slate-900">Welcome, {user.firstName} {user.lastName}</CardTitle>
+            <div className="text-sm text-slate-600 truncate">{user.email}</div>
             <div className="mt-2">
               <Badge className="bg-green-100 text-green-800">
                 <CheckCircle className="w-3 h-3 mr-1" /> Verified Seller
@@ -707,13 +707,13 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       {/* Seller Performance Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {sellerMetrics.map((m) => (
-          <Card key={m.title} className="border-slate-200 shadow-sm">
-            <CardContent className="p-4">
+          <Card key={m.title} className="border-slate-200 shadow-sm bg-white">
+            <CardContent className="p-4 text-slate-800">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-slate-500 font-medium">{m.title}</div>
+                  <div className="text-xs uppercase tracking-wide text-slate-600 font-medium">{m.title}</div>
                   <div className="mt-1 text-2xl font-bold text-slate-900">{m.value}</div>
-                  <div className="text-xs text-slate-500 mt-1">{m.subtitle}</div>
+                  <div className="text-xs text-slate-600 mt-1">{m.subtitle}</div>
                 </div>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${m.color}`}>
                   <m.icon className="w-5 h-5" />
@@ -726,7 +726,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6 text-slate-800">
         <h3 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Button variant="outline" className="flex flex-col items-center p-4 h-auto" onClick={openNewListing}>
@@ -749,7 +749,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 text-slate-800">
         <h3 className="text-lg font-semibold text-slate-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
           {recentActivities.map((a) => (
@@ -770,7 +770,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       </div>
 
       {/* Active Listings - Enhanced */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 text-slate-800">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-semibold text-slate-900">My Property Listings</h3>
           <div className="flex gap-3">
