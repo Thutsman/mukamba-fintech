@@ -13,6 +13,7 @@ interface AuthStore {
   isLoading: boolean;
   error: string | null;
   isNewUser: boolean; // Track if user just signed up
+  hasHydrated: boolean; // Persist hydration completed
   
   // Actions
   basicSignup: (data: BasicSignupData) => Promise<void>;
@@ -34,6 +35,7 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       error: null,
       isNewUser: false,
+      hasHydrated: false,
 
       // Basic signup - creates account immediately
       basicSignup: async (data: BasicSignupData) => {
@@ -350,7 +352,20 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         isNewUser: state.isNewUser
-      })
+      }),
+      onRehydrateStorage: () => (_state, _error) => {
+        // Mark store as hydrated after persistence restores state
+        // This avoids redirects based on pre-hydration defaults, especially on mobile
+        // We cannot call set from here, so use a microtask to update after rehydrate
+        queueMicrotask(() => {
+          try {
+            // Access the store and set the flag
+            useAuthStore.setState({ hasHydrated: true });
+          } catch (_) {
+            // no-op
+          }
+        });
+      }
     }
   )
 ); 

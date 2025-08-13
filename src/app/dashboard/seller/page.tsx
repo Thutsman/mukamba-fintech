@@ -7,9 +7,12 @@ import { useAuthStore } from '@/lib/store';
 
 export default function SellerDashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
 
   React.useEffect(() => {
+    // Wait until persisted auth store is hydrated to avoid false redirects on mobile
+    if (!hasHydrated) return;
+
     if (!isAuthenticated || !user) {
       router.replace('/');
       return;
@@ -19,8 +22,10 @@ export default function SellerDashboardPage() {
     if (!isSeller || !isVerified) {
       router.replace('/');
     }
-  }, [isAuthenticated, user, router]);
+  }, [hasHydrated, isAuthenticated, user, router]);
 
+  // Avoid rendering until hydration completes to prevent flicker/redirect loop
+  if (!hasHydrated) return null;
   if (!user) return null;
 
   return <VerifiedSellerDashboard user={user} />;
