@@ -39,6 +39,10 @@ export default function RootLayout({
               (function() {
                 try {
                   var stored = localStorage.getItem('theme');
+                  if (!stored) {
+                    stored = 'light';
+                    localStorage.setItem('theme', 'light');
+                  }
                   if (stored === 'dark') {
                     document.documentElement.classList.add('dark');
                   } else {

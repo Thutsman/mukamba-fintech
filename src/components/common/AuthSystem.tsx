@@ -22,9 +22,15 @@ export const AuthSystem: React.FC = () => {
   
   const router = useRouter();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning } = useAuthStore();
-  const [theme, setTheme] = React.useState<'light' | 'dark'>(() =>
-    (typeof window !== 'undefined' && (localStorage.getItem('theme') as 'light' | 'dark')) || 'light'
-  );
+  const [theme, setTheme] = React.useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (!stored) {
+      localStorage.setItem('theme', 'light');
+      return 'light';
+    }
+    return stored === 'dark' ? 'dark' : 'light';
+  });
 
   React.useEffect(() => {
     try {
@@ -33,6 +39,15 @@ export const AuthSystem: React.FC = () => {
       else document.documentElement.classList.remove('dark');
     } catch (_) {}
   }, [theme]);
+
+  // Ensure initial theme from storage is applied after mount in case SSR produced mismatch
+  React.useEffect(() => {
+    try {
+      const stored = (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
+      if (stored !== theme) setTheme(stored);
+    } catch (_) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check localStorage for widget closed state on component mount
   React.useEffect(() => {
