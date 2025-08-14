@@ -25,6 +25,7 @@ export const CountryToggle: React.FC<CountryToggleProps> = ({ value, onChange })
             src="/flags/zw.svg"
             alt="Zimbabwe Flag"
             className="w-4 h-4 rounded-sm"
+            suppressHydrationWarning
           />
           <span>Zimbabwe</span>
         </span>
@@ -51,6 +52,7 @@ export const CountryToggle: React.FC<CountryToggleProps> = ({ value, onChange })
             src="/flags/za.svg"
             alt="South Africa Flag"
             className="w-4 h-4 rounded-sm"
+            suppressHydrationWarning
           />
           <span>South Africa</span>
         </span>

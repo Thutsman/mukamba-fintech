@@ -830,59 +830,62 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
           />
         </div>
         {/* Subtle gradient overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/70 sm:from-black/20 sm:to-black/45" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
           <div className="text-center space-y-6 sm:space-y-8">
             {/* Main Headline */}
             <motion.h1 
-              className="font-sans text-[clamp(2rem,6vw,3.5rem)] md:text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold text-slate-50 leading-[1.15] tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] px-2"
+              className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] px-2 mb-4"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
               Skip the Down Payment,
-              <br className="hidden sm:block" />
-              <span className="text-blue-200">Own Your Home Faster</span>
+              <br />
+              <span className="text-blue-300">Own Your Home Faster</span>
             </motion.h1>
             
             
             {/* Subheadline */}
-            <motion.p 
-              className="font-sans text-[clamp(1rem,2.2vw,1.25rem)] text-slate-100 max-w-3xl mx-auto px-4 font-normal leading-[1.5] tracking-[0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
+            <motion.div 
+              className="text-center px-4 space-y-2 mb-6 max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Buy, Sell, or Rent-to-Own Properties
-              <br className="hidden sm:block" />
-              <span className="font-semibold">Comprehensive real estate solutions</span> across <span className="font-semibold">Zimbabwe and South Africa</span>.
-            </motion.p>
+              <p className="text-lg md:text-xl text-white font-medium">
+                Buy, Sell, or Rent-to-Own Properties
+              </p>
+              <p className="text-base md:text-lg text-gray-200">
+                Comprehensive real estate solutions across Zimbabwe and South Africa.
+              </p>
+            </motion.div>
             
             {/* Statistics Ticker */}
             <motion.div 
-              className="grid grid-cols-1 gap-3 px-4 sm:grid-cols-3 sm:gap-4 md:flex md:flex-wrap md:justify-center md:gap-8"
+              className="grid grid-cols-1 gap-4 px-6 mb-8 sm:grid-cols-3 sm:gap-4 md:flex md:flex-wrap md:justify-center md:gap-8 md:mb-0 md:px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <div className="text-center bg-black/35 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-50 mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">500+</div>
-                <div className="text-slate-200 text-xs sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Pre-Approved Properties</div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-black/35 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
+                <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">500+</div>
+                <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Pre-Approved Properties</div>
               </div>
-              <div className="text-center bg-black/35 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-50 mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">2,000+</div>
-                <div className="text-slate-200 text-xs sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Families Who Owned Their Home</div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-black/35 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
+                <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">2,000+</div>
+                <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Families Who Owned Their Home</div>
               </div>
-              <div className="text-center bg-black/35 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-50 mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">25+</div>
-                <div className="text-slate-200 text-xs sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Cities with Zero Down Payment</div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-black/35 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
+                <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">25+</div>
+                <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Cities with Zero Down Payment</div>
               </div>
             </motion.div>
             
             {/* CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4"
+              className="flex flex-col sm:flex-row gap-4 justify-center px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
