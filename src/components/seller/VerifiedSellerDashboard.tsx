@@ -53,6 +53,8 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
   const [docsError, setDocsError] = React.useState<string | null>(null);
   // Page section state must be declared before any effects that depend on it
   const [activeSection, setActiveSection] = React.useState<'overview' | 'listings' | 'analytics' | 'documents' | 'profile' | 'settings'>('overview');
+  // Mobile sidebar drawer
+  const [showMobileNav, setShowMobileNav] = React.useState(false);
   
   // Document categories
   type DocCategory = 'title-deeds' | 'municipal-rates' | 'company-documents' | 'identity-documents';
