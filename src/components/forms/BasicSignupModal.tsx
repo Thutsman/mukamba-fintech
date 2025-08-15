@@ -246,15 +246,15 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-md bg-white dark:bg-white rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-800">
               Join Mukamba
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-600 mt-1">
               Get started in 30 seconds - explore properties right away!
             </p>
           </div>
@@ -300,7 +300,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
               <span className="w-full border-t border-slate-200 dark:border-slate-700" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-slate-900 px-2 text-slate-500">Or sign up with email</span>
+              <span className="bg-white dark:bg-white px-2 text-slate-500">Or sign up with email</span>
             </div>
           </div>
 
@@ -597,7 +597,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm"
+                className="p-3 bg-red-50 dark:bg-red-50 border border-red-200 dark:border-red-200 rounded-lg text-red-700 dark:text-red-700 text-sm"
               >
                 {error}
               </motion.div>
@@ -622,11 +622,11 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
           </form>
 
           {/* Benefits */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-900/20 dark:to-red-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-50 dark:to-red-50 rounded-lg border border-blue-200 dark:border-blue-200">
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-800 mb-2">
               🎉 What you get immediately:
             </h4>
-            <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+            <ul className="text-xs text-slate-600 dark:text-slate-600 space-y-1">
               <li>• Browse 1,200+ rent-to-buy properties</li>
               <li>• Save your favorite listings</li>
               <li>• Get property price alerts</li>
@@ -636,7 +636,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
 
           {/* Login Link */}
           <div className="mt-6 text-center">
-            <span className="text-sm text-slate-600 dark:text-slate-400">
+            <span className="text-sm text-slate-600 dark:text-slate-600">
               Already have an account?{' '}
             </span>
             <button

@@ -509,7 +509,7 @@ const NavigationBar: React.FC<{
   return (
     <>
       <motion.nav 
-        className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm"
+        className="bg-white dark:bg-white border-b border-slate-200 dark:border-slate-200 shadow-sm"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -649,6 +649,14 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const [showTour, setShowTour] = React.useState(false);
   const [showCelebration, setShowCelebration] = React.useState(false);
   const [celebrationData, setCelebrationData] = React.useState<any>(null);
+  const [shownCelebrations, setShownCelebrations] = React.useState<Set<string>>(() => {
+    // Load from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mukamba-celebrations-shown');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    }
+    return new Set();
+  });
   const [successMessage, setSuccessMessage] = React.useState('');
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [isFirstVisit, setIsFirstVisit] = React.useState(false);
@@ -672,36 +680,52 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     }
   }, []);
 
-  // Progress celebration logic
+  // Progress celebration logic - only show once per verification level
   React.useEffect(() => {
     const verificationCount = [user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified].filter(Boolean).length;
     
-    if (verificationCount === 1 && user.isPhoneVerified) {
-      setCelebrationData({
-        title: 'Phone Verified! 🎉',
-        description: 'You can now contact property owners directly',
-        icon: <Phone className="w-6 h-6" />,
-        reward: 'Messaging unlocked'
-      });
-      setShowCelebration(true);
-    } else if (verificationCount === 2 && user.isIdentityVerified) {
-      setCelebrationData({
-        title: 'Identity Verified! 🚀',
-        description: 'Access to premium features and financing options',
-        icon: <Shield className="w-6 h-6" />,
-        reward: 'Premium features unlocked'
-      });
-      setShowCelebration(true);
-    } else if (verificationCount === 3) {
-      setCelebrationData({
-        title: 'Full Verification Complete! 🏆',
-        description: 'You now have access to all platform features',
-        icon: <Trophy className="w-6 h-6" />,
-        reward: 'Premium membership status'
-      });
-      setShowCelebration(true);
+    // Create a unique key for this verification level
+    const celebrationKey = `verification-${verificationCount}`;
+    
+    // Only show celebration if we haven't shown it for this level before
+    if (!shownCelebrations.has(celebrationKey)) {
+      if (verificationCount === 1 && user.isPhoneVerified) {
+        setCelebrationData({
+          title: 'Phone Verified! 🎉',
+          description: 'You can now contact property owners directly',
+          icon: <Phone className="w-6 h-6" />,
+          reward: 'Messaging unlocked'
+        });
+        setShowCelebration(true);
+        setShownCelebrations(prev => new Set([...prev, celebrationKey]));
+      } else if (verificationCount === 2 && user.isIdentityVerified) {
+        setCelebrationData({
+          title: 'Identity Verified! 🚀',
+          description: 'Access to premium features and financing options',
+          icon: <Shield className="w-6 h-6" />,
+          reward: 'Premium features unlocked'
+        });
+        setShowCelebration(true);
+        setShownCelebrations(prev => new Set([...prev, celebrationKey]));
+      } else if (verificationCount === 3) {
+        setCelebrationData({
+          title: 'Full Verification Complete! 🏆',
+          description: 'You now have access to all platform features',
+          icon: <Trophy className="w-6 h-6" />,
+          reward: 'Premium membership status'
+        });
+        setShowCelebration(true);
+        setShownCelebrations(prev => new Set([...prev, celebrationKey]));
+      }
     }
-  }, [user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified]);
+  }, [user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified, shownCelebrations]);
+
+  // Save celebrations to localStorage whenever they change
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mukamba-celebrations-shown', JSON.stringify([...shownCelebrations]));
+    }
+  }, [shownCelebrations]);
 
   const getLevelInfo = (level: typeof userLevel, user: UserType) => {
     // Calculate actual progress based on verification status
@@ -1075,7 +1099,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-white">
       {/* Navigation Bar */}
       <NavigationBar
         user={user}
@@ -1221,7 +1245,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex items-center mb-4">
-                <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                <div className="flex-1 bg-slate-200 dark:bg-slate-200 rounded-full h-3 overflow-hidden">
                   <motion.div 
                     className={`${levelInfo.color} h-3 rounded-full`}
                     initial={{ width: 0 }}
@@ -1508,9 +1532,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
         >
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-50 dark:to-indigo-50 border-blue-200 dark:border-blue-200">
             <CardHeader>
-              <CardTitle className="flex items-center text-blue-700 dark:text-blue-300">
+              <CardTitle className="flex items-center text-blue-700 dark:text-blue-700">
                 <Building className="w-5 h-5 mr-2" />
                 Become a Real Estate Agent
                 <Tooltip content="Join our network of verified real estate professionals">
@@ -1520,33 +1544,33 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-blue-700 dark:text-blue-300 text-sm">
+                <p className="text-blue-700 dark:text-blue-700 text-sm">
                   Are you a licensed real estate agent? Join our platform to access exclusive features and connect with more clients.
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-white/50 dark:bg-slate-800/50 rounded-lg">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center p-4 bg-white/50 dark:bg-white/50 rounded-lg">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Shield className="w-6 h-6 text-blue-600" />
                     </div>
                     <h4 className="font-semibold text-sm mb-1">Verified Status</h4>
-                    <p className="text-xs text-blue-600 dark:text-blue-400">EAC registration verification</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-600">EAC registration verification</p>
                   </div>
                   
-                  <div className="text-center p-4 bg-white/50 dark:bg-slate-800/50 rounded-lg">
-                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center p-4 bg-white/50 dark:bg-white/50 rounded-lg">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <TrendingUp className="w-6 h-6 text-green-600" />
                     </div>
                     <h4 className="font-semibold text-sm mb-1">Enhanced Features</h4>
-                    <p className="text-xs text-green-600 dark:text-green-400">Lead management & analytics</p>
+                    <p className="text-xs text-green-600 dark:text-green-600">Lead management & analytics</p>
                   </div>
                   
-                  <div className="text-center p-4 bg-white/50 dark:bg-slate-800/50 rounded-lg">
-                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center p-4 bg-white/50 dark:bg-white/50 rounded-lg">
+                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <MessageCircle className="w-6 h-6 text-purple-600" />
                     </div>
                     <h4 className="font-semibold text-sm mb-1">Direct Communication</h4>
-                    <p className="text-xs text-purple-600 dark:text-purple-400">Connect with clients directly</p>
+                    <p className="text-xs text-purple-600 dark:text-purple-600">Connect with clients directly</p>
                   </div>
                 </div>
                 

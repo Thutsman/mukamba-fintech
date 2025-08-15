@@ -639,7 +639,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-white">
       {/* Floating Navigation */}
       <AnimatePresence>
         {showFloatingNav && (

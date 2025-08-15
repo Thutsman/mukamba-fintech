@@ -49,9 +49,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PropertyListing, PropertySearchFilters, PropertyType } from '@/types/property';
 import { User, getUserLevel, getUserPermissions } from '@/types/auth';
-import { searchProperties, getFeaturedProperties } from '@/lib/property-services';
+import { searchProperties as searchPropertiesService, getFeaturedProperties as getFeaturedPropertiesService } from '@/lib/property-services';
 import { RentToBuyCalculator } from '@/components/ui/RentToBuyCalculator';
 import { useAuthStore } from '@/lib/store';
+import { convertToPropertyListing, getAllProperties, getPropertiesByCountry, searchProperties as searchUnifiedProperties, getFeaturedProperties as getFeaturedUnifiedProperties } from '@/lib/property-data';
 
 // Enhanced types for verification-based features
 interface VerificationLevel {
@@ -191,9 +192,11 @@ export const EnhancedPropertyListings: React.FC<EnhancedPropertyListingsProps> =
   React.useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
-      const results = searchProperties(filters);
+      // Use centralized property data and convert to PropertyListing format
+      const unifiedResults = searchUnifiedProperties(filters.location?.city || '');
+      const results = unifiedResults.map(convertToPropertyListing);
       // Enhance properties with mock insights for verified users
-      const enhancedResults = results.map(property => ({
+      const enhancedResults = results.map((property: PropertyListing) => ({
         ...property,
         insights: verificationLevel >= 1 ? {
           verifiedBuyersViewing: Math.floor(Math.random() * 5) + 1,
@@ -222,8 +225,9 @@ export const EnhancedPropertyListings: React.FC<EnhancedPropertyListingsProps> =
   // Load featured properties
   React.useEffect(() => {
     if (showFeatured) {
-      const featured = getFeaturedProperties(filters.country);
-      const enhancedFeatured = featured.map(property => ({
+      const unifiedFeatured = getFeaturedUnifiedProperties(6);
+      const featured = unifiedFeatured.map(convertToPropertyListing);
+      const enhancedFeatured = featured.map((property: PropertyListing) => ({
         ...property,
         insights: verificationLevel >= 1 ? {
           verifiedBuyersViewing: Math.floor(Math.random() * 3) + 1,

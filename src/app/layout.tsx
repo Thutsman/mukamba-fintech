@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="light">
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#ffffff" />
@@ -40,14 +40,20 @@ export default function RootLayout({
                 try {
                   // Force app-controlled light theme regardless of device or previous storage
                   document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
                   try { localStorage.setItem('theme', 'light'); } catch (_) {}
+                  // Override any system preference
+                  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                  }
                 } catch (e) {}
               })();
             `,
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased bg-white text-slate-900`}>
         {children}
       </body>
     </html>
