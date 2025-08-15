@@ -27,10 +27,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Message, MessageThread } from './BuyerMessaging';
+import { Message, MessageThread as MessageThreadType } from './BuyerMessaging';
 
 interface MessageThreadProps {
-  thread: MessageThread;
+  thread: MessageThreadType;
   userId: string;
   onBack: () => void;
   onViewProperty?: (propertyId: string) => void;
