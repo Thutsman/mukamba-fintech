@@ -24,7 +24,7 @@ export interface UnifiedProperty {
   features: string[];
   // Additional fields for enhanced features
   country?: 'ZW' | 'SA';
-  currency?: 'USD' | 'ZAR';
+  currency?: 'USD' | 'ZAR' | 'GBP';
   monthlyRental?: number;
   rentCreditPercentage?: number;
   seller?: {

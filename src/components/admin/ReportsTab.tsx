@@ -69,12 +69,12 @@ interface ChartData {
 
 // Mock Data
 const kycData: ChartData[] = [
-  { name: 'Jan', approved: 45, pending: 12, rejected: 3 },
-  { name: 'Feb', approved: 52, pending: 8, rejected: 2 },
-  { name: 'Mar', approved: 48, pending: 15, rejected: 5 },
-  { name: 'Apr', approved: 61, pending: 6, rejected: 1 },
-  { name: 'May', approved: 55, pending: 10, rejected: 4 },
-  { name: 'Jun', approved: 67, pending: 4, rejected: 2 }
+  { name: 'Jan', value: 45, approved: 45, pending: 12, rejected: 3 },
+  { name: 'Feb', value: 52, approved: 52, pending: 8, rejected: 2 },
+  { name: 'Mar', value: 48, approved: 48, pending: 15, rejected: 5 },
+  { name: 'Apr', value: 61, approved: 61, pending: 6, rejected: 1 },
+  { name: 'May', value: 55, approved: 55, pending: 10, rejected: 4 },
+  { name: 'Jun', value: 67, approved: 67, pending: 4, rejected: 2 }
 ];
 
 const propertyData: ChartData[] = [
@@ -84,38 +84,38 @@ const propertyData: ChartData[] = [
 ];
 
 const escrowData: ChartData[] = [
-  { name: 'Jan', amount: 125000, transactions: 45 },
-  { name: 'Feb', amount: 142000, transactions: 52 },
-  { name: 'Mar', amount: 138000, transactions: 48 },
-  { name: 'Apr', amount: 156000, transactions: 61 },
-  { name: 'May', amount: 148000, transactions: 55 },
-  { name: 'Jun', amount: 167000, transactions: 67 }
+  { name: 'Jan', value: 125000, amount: 125000, transactions: 45 },
+  { name: 'Feb', value: 142000, amount: 142000, transactions: 52 },
+  { name: 'Mar', value: 138000, amount: 138000, transactions: 48 },
+  { name: 'Apr', value: 156000, amount: 156000, transactions: 61 },
+  { name: 'May', value: 148000, amount: 148000, transactions: 55 },
+  { name: 'Jun', value: 167000, amount: 167000, transactions: 67 }
 ];
 
 const userActivityData: ChartData[] = [
-  { name: 'Mon', active: 1200, new: 45, verified: 38 },
-  { name: 'Tue', active: 1350, new: 52, verified: 42 },
-  { name: 'Wed', active: 1280, new: 48, verified: 35 },
-  { name: 'Thu', active: 1420, new: 61, verified: 49 },
-  { name: 'Fri', active: 1380, new: 55, verified: 44 },
-  { name: 'Sat', active: 1150, new: 38, verified: 32 },
-  { name: 'Sun', active: 980, new: 29, verified: 25 }
+  { name: 'Mon', value: 1200, active: 1200, new: 45, verified: 38 },
+  { name: 'Tue', value: 1350, active: 1350, new: 52, verified: 42 },
+  { name: 'Wed', value: 1280, active: 1280, new: 48, verified: 35 },
+  { name: 'Thu', value: 1420, active: 1420, new: 61, verified: 49 },
+  { name: 'Fri', value: 1380, active: 1380, new: 55, verified: 44 },
+  { name: 'Sat', value: 1150, active: 1150, new: 38, verified: 32 },
+  { name: 'Sun', value: 980, active: 980, new: 29, verified: 25 }
 ];
 
 const messagingData: ChartData[] = [
-  { name: 'Week 1', messages: 1250, responses: 1180, avgResponse: 2.3 },
-  { name: 'Week 2', messages: 1380, responses: 1320, avgResponse: 2.1 },
-  { name: 'Week 3', messages: 1420, responses: 1350, avgResponse: 2.4 },
-  { name: 'Week 4', messages: 1560, responses: 1480, avgResponse: 2.0 }
+  { name: 'Week 1', value: 1250, messages: 1250, responses: 1180, avgResponse: 2.3 },
+  { name: 'Week 2', value: 1380, messages: 1380, responses: 1320, avgResponse: 2.1 },
+  { name: 'Week 3', value: 1420, messages: 1420, responses: 1350, avgResponse: 2.4 },
+  { name: 'Week 4', value: 1560, messages: 1560, responses: 1480, avgResponse: 2.0 }
 ];
 
 const growthData: ChartData[] = [
-  { name: 'Jan', users: 850, properties: 320, revenue: 45000 },
-  { name: 'Feb', users: 920, properties: 380, revenue: 52000 },
-  { name: 'Mar', users: 1050, properties: 420, revenue: 58000 },
-  { name: 'Apr', users: 1180, properties: 480, revenue: 65000 },
-  { name: 'May', users: 1320, properties: 520, revenue: 72000 },
-  { name: 'Jun', users: 1450, properties: 580, revenue: 82000 }
+  { name: 'Jan', value: 850, users: 850, properties: 320, revenue: 45000 },
+  { name: 'Feb', value: 920, users: 920, properties: 380, revenue: 52000 },
+  { name: 'Mar', value: 1050, users: 1050, properties: 420, revenue: 58000 },
+  { name: 'Apr', value: 1180, users: 1180, properties: 480, revenue: 65000 },
+  { name: 'May', value: 1320, users: 1320, properties: 520, revenue: 72000 },
+  { name: 'Jun', value: 1450, users: 1450, properties: 580, revenue: 82000 }
 ];
 
 // Reusable ReportCard Component
@@ -194,7 +194,7 @@ const PropertyChart: React.FC = () => (
         cx="50%"
         cy="50%"
         labelLine={false}
-        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
         outerRadius={80}
         fill="#8884d8"
         dataKey="value"
