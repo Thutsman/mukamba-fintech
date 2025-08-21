@@ -90,23 +90,23 @@ export const RecentPropertiesFeed: React.FC<RecentPropertiesFeedProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors gap-3"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
                   <Home className="w-4 h-4 text-slate-600" />
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900">{property.title}</p>
-                  <p className="text-sm text-slate-600 flex items-center">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {property.location}
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-slate-900 truncate">{property.title}</p>
+                  <p className="text-sm text-slate-600 flex items-center truncate">
+                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">{property.location}</span>
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getStatusColor(property.status)}>
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                    <Badge className={`${getStatusColor(property.status)} text-xs`}>
                       {property.status}
                     </Badge>
-                    <Badge className={getTypeColor(property.type)}>
+                    <Badge className={`${getTypeColor(property.type)} text-xs`}>
                       {property.type}
                     </Badge>
                     {property.bedrooms && property.bathrooms && (
@@ -117,32 +117,34 @@ export const RecentPropertiesFeed: React.FC<RecentPropertiesFeedProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between sm:justify-end space-x-2">
                 <div className="text-right">
                   <p className="font-medium text-slate-900">
                     ${property.price.toLocaleString()}
                   </p>
                   <p className="text-xs text-slate-500">{property.listedAt}</p>
                 </div>
-                {onViewProperty && (
+                <div className="flex items-center space-x-1">
+                  {onViewProperty && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewProperty(property.id)}
+                      className="h-8 w-8 p-0"
+                      suppressHydrationWarning
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onViewProperty(property.id)}
                     className="h-8 w-8 p-0"
                     suppressHydrationWarning
                   >
-                    <Eye className="w-4 h-4" />
+                    <MoreHorizontal className="w-4 h-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  suppressHydrationWarning
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
+                </div>
               </div>
             </motion.div>
           ))}

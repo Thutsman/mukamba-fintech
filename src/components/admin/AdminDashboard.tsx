@@ -24,7 +24,8 @@ import {
   Eye,
   Download,
   FileText,
-  Zap
+  Zap,
+  Bell
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -39,8 +40,10 @@ import { RecentPropertiesFeed } from './RecentPropertiesFeed';
 import { AdminNavigation } from './AdminNavigation';
 import { ListingsPage } from './ListingsPage';
 import { KYCPage } from './KYCPage';
+import { ReportsTab } from './ReportsTab';
 import type { AdminTab, AdminStats, AdminUser, AdminProperty, AdminListing, KYCVerification } from '@/types/admin';
 import { theme, getColor } from '@/lib/theme';
+import { toast } from 'sonner';
 
 interface AdminDashboardProps {
   user: UserType;
@@ -328,8 +331,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }} 
       />
 
-      {/* Header */}
+      {/* Header and Navigation Container */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200">
+        {/* Header */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -346,43 +350,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <Button
-                variant="outline"
-                onClick={onBackToUserView}
-                className="text-xs sm:text-sm border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 px-2 sm:px-3 py-1 sm:py-2"
-                suppressHydrationWarning
-              >
-                <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">User View</span>
-                <span className="sm:hidden">User</span>
-              </Button>
-              <Button
-                variant="outline"
+            <div className="header-actions flex items-center gap-3 flex-shrink-0">
+              <button 
+                className="sign-out-button flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:from-red-100 hover:to-red-200 transition-all duration-300 shadow-md hover:shadow-lg text-red-700 hover:text-red-900"
                 onClick={onLogout}
-                className="text-xs sm:text-sm border-red-200 hover:border-red-300 text-red-700 hover:bg-red-50 px-2 sm:px-3 py-1 sm:py-2"
                 suppressHydrationWarning
               >
-                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Sign Out</span>
-                <span className="sm:hidden">Logout</span>
-              </Button>
+                <LogOut size={18} />
+                <span className="hidden sm:inline text-sm font-medium">Sign Out</span>
+                <span className="sm:hidden text-sm font-medium">Logout</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Admin Navigation */}
-      <AdminNavigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        notifications={5}
-        pendingActions={{
-          listings: 12,
-          kyc: 8,
-          escrow: 3
-        }}
-      />
+        {/* Admin Navigation */}
+        <AdminNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          notifications={5}
+          pendingActions={{
+            listings: 12,
+            kyc: 8,
+            escrow: 3
+          }}
+        />
+      </div>
 
       {/* Main Content */}
       <main className="relative z-10">
@@ -521,7 +514,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Recent Activity
                 </h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                   <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
                     <CardHeader className="pb-4">
                       <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -529,7 +522,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         Recent Users
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 sm:p-6">
                       <RecentUsersFeed 
                         users={recentUsers}
                         onViewUser={(userId) => console.log('View user:', userId)}
@@ -545,7 +538,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         Recent Properties
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 sm:p-6">
                       <RecentPropertiesFeed 
                         properties={recentProperties}
                         onViewProperty={(propertyId) => console.log('View property:', propertyId)}
@@ -569,6 +562,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onApproveListing={(listingId) => console.log('Approve listing:', listingId)}
                 onRejectListing={(listingId, reason) => console.log('Reject listing:', listingId, reason)}
                 onBulkAction={(action, listingIds) => console.log('Bulk action:', action, listingIds)}
+                onAddToListings={(propertyListing) => {
+                  console.log('Adding property to listings:', propertyListing);
+                  // Here you would typically add the property to your PropertyListings component
+                  // For now, we'll just log it
+                  toast.success(`Property "${propertyListing.title}" added to listings successfully!`);
+                }}
               />
             </section>
           )}
@@ -658,6 +657,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </CardContent>
                 </Card>
               </div>
+            </section>
+          )}
+
+          {activeTab === 'reports' && (
+            <section>
+              <ReportsTab />
             </section>
           )}
 

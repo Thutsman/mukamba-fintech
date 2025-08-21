@@ -11,7 +11,8 @@ import {
   Settings,
   FileText,
   TrendingUp,
-  Bell
+  Bell,
+  Building
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { AdminTab } from '@/types/admin';
@@ -28,15 +29,128 @@ interface AdminNavigationProps {
   };
 }
 
+interface NavTabProps {
+  label: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  count?: number | null;
+  active: boolean;
+  onClick: () => void;
+  hasPendingActions?: boolean;
+}
+
+// Reusable NavTab Component
+const NavTab: React.FC<NavTabProps> = ({ 
+  label, 
+  icon: Icon, 
+  count, 
+  active, 
+  onClick, 
+  hasPendingActions = false 
+}) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  return (
+    <motion.button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`
+        relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+        ${active 
+          ? 'bg-blue-50/80 border-b-2 border-blue-500 text-blue-700 font-semibold shadow-sm' 
+          : 'text-slate-600 hover:bg-slate-50/80 hover:text-slate-800'
+        }
+        ${hasPendingActions && !active ? 'bg-amber-50/60 border-l-2 border-amber-400' : ''}
+      `}
+      whileHover={{ 
+        scale: 1.02, 
+        y: -1,
+        transition: { duration: 0.2 }
+      }}
+      whileTap={{ 
+        scale: 0.98,
+        transition: { duration: 0.1 }
+      }}
+      suppressHydrationWarning
+    >
+      {/* Icon */}
+      <div className="relative">
+        <Icon 
+          size={20} 
+          className={`transition-colors duration-200 ${
+            active ? 'text-blue-600' : 'text-slate-500'
+          }`} 
+        />
+        {hasPendingActions && !active && (
+          <motion.div
+            className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.7, 1, 0.7]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        )}
+      </div>
+
+      {/* Label */}
+      <span className="font-medium text-sm whitespace-nowrap">{label}</span>
+
+      {/* Notification Badge */}
+      {count && count > 0 && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 500, 
+            damping: 30 
+          }}
+          className="relative"
+        >
+          <Badge 
+            className={`
+              rounded-full text-xs font-semibold px-2 py-0.5 min-w-[20px] h-[20px] flex items-center justify-center
+              ${active 
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25' 
+                : 'bg-red-500 text-white shadow-lg shadow-red-500/25 animate-pulse'
+              }
+            `}
+          >
+            {count}
+          </Badge>
+          
+          {/* Tooltip */}
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 5 }}
+              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow-lg z-50 whitespace-nowrap"
+            >
+              You have {count} new {label.toLowerCase()}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+    </motion.button>
+  );
+};
+
 const navigationItems = [
-  { id: 'overview', label: 'Overview', icon: BarChart3, color: 'bg-blue-100 text-blue-600' },
-  { id: 'listings', label: 'Listings', icon: FileText, color: 'bg-green-100 text-green-600' },
-  { id: 'kyc', label: 'KYC', icon: Shield, color: 'bg-purple-100 text-purple-600' },
-  { id: 'properties', label: 'Properties', icon: Home, color: 'bg-orange-100 text-orange-600' },
-  { id: 'escrow', label: 'Escrow', icon: DollarSign, color: 'bg-indigo-100 text-indigo-600' },
-  { id: 'users', label: 'Users', icon: Users, color: 'bg-red-100 text-red-600' },
-  { id: 'reports', label: 'Reports', icon: TrendingUp, color: 'bg-teal-100 text-teal-600' },
-  { id: 'settings', label: 'Settings', icon: Settings, color: 'bg-gray-100 text-gray-600' }
+  { id: 'overview', label: 'Overview', icon: BarChart3, badge: null },
+  { id: 'listings', label: 'Listings', icon: FileText, badge: 12 },
+  { id: 'kyc', label: 'KYC', icon: Shield, badge: 8 },
+  { id: 'properties', label: 'Properties', icon: Building, badge: null },
+  { id: 'escrow', label: 'Escrow', icon: DollarSign, badge: 3 },
+  { id: 'users', label: 'Users', icon: Users, badge: null },
+  { id: 'reports', label: 'Reports', icon: TrendingUp, badge: null },
+  { id: 'settings', label: 'Settings', icon: Settings, badge: null }
 ] as const;
 
 export const AdminNavigation: React.FC<AdminNavigationProps> = ({
@@ -58,83 +172,111 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
     }
   };
 
+  const hasPendingActions = (tab: AdminTab) => {
+    return getPendingCount(tab) > 0;
+  };
+
   return (
-    <div className="bg-white border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between">
-          {/* Navigation Tabs */}
-          <div className="flex space-x-1 lg:space-x-2 overflow-x-auto scrollbar-hide">
-            {navigationItems.map((item) => {
-              const isActive = activeTab === item.id;
-              const pendingCount = getPendingCount(item.id as AdminTab);
+          {/* Enhanced Navigation Tabs */}
+          <nav className="flex-1">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-2">
+              {navigationItems.map((item) => {
+                const isActive = activeTab === item.id;
+                const pendingCount = getPendingCount(item.id as AdminTab);
+                const displayBadge = pendingCount > 0 ? pendingCount : item.badge;
+                const hasPending = hasPendingActions(item.id as AdminTab);
 
-              return (
-                <motion.button
-                  key={item.id}
-                  onClick={() => onTabChange(item.id as AdminTab)}
-                  className={`
-                    flex items-center space-x-1 lg:space-x-2 py-3 sm:py-4 px-2 sm:px-3 lg:px-4 
-                    font-medium text-xs lg:text-sm transition-all duration-150 
-                    relative whitespace-nowrap rounded-md min-w-fit
-                    ${isActive 
-                      ? 'text-blue-600 bg-blue-50/50' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }
-                  `}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  suppressHydrationWarning
-                >
-                  <item.icon className={`w-4 h-4 lg:w-5 lg:h-5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                  <span className="hidden sm:inline">{item.label}</span>
+                return (
+                  <NavTab
+                    key={item.id}
+                    label={item.label}
+                    icon={item.icon}
+                    count={displayBadge}
+                    active={isActive}
+                    onClick={() => onTabChange(item.id as AdminTab)}
+                    hasPendingActions={hasPending}
+                  />
+                );
+              })}
+            </div>
+          </nav>
 
-                  {/* Pending Count Badge */}
-                  {pendingCount > 0 && (
-                    <Badge
-                      className={`ml-1 text-xs ${
-                        isActive
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {pendingCount}
-                    </Badge>
-                  )}
-
-                  {/* Active Indicator */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute -bottom-px left-0 right-0 h-0.5 bg-blue-600"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* Notifications */}
+          {/* Enhanced Notifications */}
           {notifications > 0 && (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center space-x-2"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 500, 
+                damping: 30,
+                delay: 0.2
+              }}
+              className="flex items-center space-x-2 ml-4"
             >
-              <button
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-50 transition-colors duration-150 relative"
+              <motion.button
+                className="relative p-2 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:from-red-100 hover:to-red-200 transition-all duration-300 shadow-md hover:shadow-lg"
                 onClick={() => console.log('Show notifications')}
+                whileHover={{ 
+                  scale: 1.05,
+                  y: -1,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ 
+                  scale: 0.95,
+                  transition: { duration: 0.1 }
+                }}
+                suppressHydrationWarning
               >
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] flex items-center justify-center rounded-full">
+                <Bell className="w-5 h-5 text-red-600" />
+                
+                {/* Enhanced notification badge */}
+                <motion.div
+                  className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold min-w-[20px] h-[20px] flex items-center justify-center rounded-full shadow-lg border-2 border-white"
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    transition: { 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }
+                  }}
+                >
                   {notifications}
-                </Badge>
-              </button>
+                  
+                  {/* Pulse effect */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-red-400"
+                    animate={{ 
+                      scale: [1, 1.5, 1],
+                      opacity: [0.7, 0, 0.7]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                </motion.div>
+              </motion.button>
             </motion.div>
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }; 

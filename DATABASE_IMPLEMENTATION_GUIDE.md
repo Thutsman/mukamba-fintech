@@ -1,1165 +1,512 @@
-# Database Implementation Guide for Mukamba FinTech
+# Mukamba FinTech Database Implementation Guide
 
-## Overview
+## Quick Start
 
-This guide provides step-by-step instructions for implementing the database schema with your existing Mukamba FinTech application. The implementation is designed to be phased, allowing you to migrate from the current mock-based system to a fully functional Supabase backend.
+### 1. Deploy the Database Schema
 
-## Prerequisites
+Copy and paste the SQL from `supabase/migrations/20240302000000_enhanced_schema_setup.sql` into your Supabase SQL Editor and run it.
 
-1. **Supabase Project Setup**
-   - Create a new Supabase project at [supabase.com](https://supabase.com)
-   - Note your project URL and anon key
-   - Enable Row Level Security (RLS) in your project settings
+### 2. Verify the Setup
 
-2. **Environment Variables**
-   Add the following to your `.env.local` file:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
+Run these queries to verify everything is working:
 
-## Phase 1: Database Setup
+```sql
+-- Check tables were created
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name LIKE '%verification%' OR table_name LIKE '%property%';
 
-### Step 1: Run the Migration
+-- Check RLS is enabled
+SELECT schemaname, tablename, rowsecurity 
+FROM pg_tables 
+WHERE schemaname = 'public' 
+AND tablename IN ('user_profiles', 'properties', 'kyc_verifications');
+```
 
-1. **Install Supabase CLI** (if not already installed):
-   ```bash
-   npm install -g supabase
-   ```
+## Key Database Design Decisions
 
-2. **Initialize Supabase in your project**:
-   ```bash
-   supabase init
-   ```
+### 1. **User Verification Workflow**
+- **Problem**: Users need to go through multiple verification steps
+- **Solution**: `user_verification_steps` table tracks progress through each step
+- **Benefits**: 
+  - Clear audit trail of verification progress
+  - Flexible step management
+  - Easy to add new verification types
 
-3. **Run the complete schema migration**:
-   ```bash
-   supabase db push
-   ```
+### 2. **Financial Assessment Data**
+- **Problem**: Complex financial data with varying requirements
+- **Solution**: Dedicated `financial_assessments` table with JSONB for flexible data
+- **Benefits**:
+  - Structured storage of financial information
+  - Built-in credit scoring function
+  - Easy to extend with new financial fields
 
-   This will create all tables, indexes, policies, and triggers defined in `supabase/migrations/20240301000000_complete_schema_setup.sql`.
+### 3. **Property Management**
+- **Problem**: Properties need media, documents, and complex metadata
+- **Solution**: Separate tables for properties, media, and documents
+- **Benefits**:
+  - Efficient media management
+  - Document verification workflow
+  - Scalable property data structure
 
-### Step 2: Verify Setup
+### 4. **Rent-to-Buy Agreements**
+- **Problem**: Complex financial agreements with monthly payments
+- **Solution**: `rent_to_buy_agreements` and `rent_payments` tables
+- **Benefits**:
+  - Track agreement terms and status
+  - Monitor monthly payments and credits
+  - Support for escrow transactions
 
-1. **Check tables in Supabase Dashboard**:
-   - Navigate to your Supabase project dashboard
-   - Go to "Table Editor"
-   - Verify all tables are created:
-     - `user_profiles`
-     - `kyc_verifications`
-     - `kyc_documents`
-     - `properties`
-     - `property_media`
-     - `property_documents`
-     - `agents`
-     - `agent_leads`
-     - `agent_viewings`
-     - `property_inquiries`
-     - `saved_properties`
-     - `property_alerts`
-     - `escrow_transactions`
-     - `admin_audit_log`
-     - `system_notifications`
+## Integration with Your Forms
 
-2. **Check storage buckets**:
-   - Go to "Storage" in your Supabase dashboard
-   - Verify buckets are created:
-     - `property-images`
-     - `property-documents`
-     - `user-documents`
-     - `agent-documents`
-
-## Phase 2: Authentication Integration
-
-### Step 1: Update Supabase Client
-
-Replace your current `src/lib/supabase.ts` with the enhanced version:
+### 1. Basic Signup Flow
 
 ```typescript
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
+// In your BasicSignupModal.tsx
+const handleSignup = async (data: BasicSignupData) => {
+  // 1. Create user in Supabase Auth
+  const { user, error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      data: {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone
+      }
+    }
+  });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  // 2. User profile is automatically created by trigger
+  // 3. Create initial verification step
+  await supabase.rpc('create_verification_step', {
+    p_user_id: user.id,
+    p_step_type: 'phone_verification'
+  });
+};
+```
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+### 2. Phone Verification Flow
 
-// Storage bucket names
-export const STORAGE_BUCKETS = {
-  PROPERTY_IMAGES: 'property-images',
-  PROPERTY_DOCUMENTS: 'property-documents',
-  USER_DOCUMENTS: 'user-documents',
-  AGENT_DOCUMENTS: 'agent-documents',
-} as const;
-
-// Helper function to get public URL
-export const getPublicUrl = (bucket: string, path: string) => {
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+```typescript
+// In your PhoneVerificationModal.tsx
+const handleSendOTP = async (phoneNumber: string) => {
+  // 1. Generate OTP
+  const otp = generateOTP();
+  const otpHash = await hashOTP(otp);
+  
+  // 2. Store verification attempt
+  await supabase.from('phone_verification_attempts').insert({
+    user_id: user.id,
+    phone_number: phoneNumber,
+    otp_code: otp,
+    otp_hash: otpHash,
+    expires_at: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+  });
+  
+  // 3. Send SMS (implement your SMS service)
+  await sendSMS(phoneNumber, `Your verification code is: ${otp}`);
 };
 
-// Helper function to upload a file
-export const uploadFile = async (
-  bucket: string,
-  path: string,
-  file: File
-) => {
+const handleVerifyOTP = async (otp: string) => {
+  // 1. Verify OTP
+  const { data: attempt } = await supabase
+    .from('phone_verification_attempts')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('otp_code', otp)
+    .single();
+    
+  if (attempt && new Date() < new Date(attempt.expires_at)) {
+    // 2. Mark verification as complete
+    await supabase.rpc('complete_verification_step', {
+      p_user_id: user.id,
+      p_step_type: 'phone_verification'
+    });
+    
+    // 3. Update user profile
+    await supabase.rpc('update_user_verification_status', {
+      p_user_id: user.id
+    });
+  }
+};
+```
+
+### 3. Identity Verification Flow
+
+```typescript
+// In your IdentityVerificationModal.tsx
+const handleDocumentUpload = async (files: File[]) => {
+  // 1. Create verification step
+  await supabase.rpc('create_verification_step', {
+    p_user_id: user.id,
+    p_step_type: 'identity_verification'
+  });
+  
+  // 2. Upload files to Supabase Storage
+  for (const file of files) {
+    const filePath = `user-documents/${user.id}/${file.name}`;
+    await supabase.storage.from('user-documents').upload(filePath, file);
+    
+    // 3. Store document metadata
+    await supabase.from('kyc_documents').insert({
+      kyc_verification_id: verificationId,
+      document_type: 'id_document',
+      file_path: filePath,
+      file_name: file.name,
+      file_size: file.size,
+      mime_type: file.type
+    });
+  }
+};
+```
+
+### 4. Financial Assessment Flow
+
+```typescript
+// In your FinancialAssessmentModal.tsx
+const handleFinancialAssessment = async (data: FinancialFormData) => {
+  // 1. Calculate credit score
+  const creditScore = await supabase.rpc('calculate_credit_score', {
+    p_monthly_income: parseFloat(data.monthlyIncome),
+    p_monthly_expenses: parseFloat(data.monthlyExpenses),
+    p_employment_duration: data.employmentDuration,
+    p_has_debts: data.hasDebts
+  });
+  
+  // 2. Store financial assessment
+  await supabase.from('financial_assessments').insert({
+    user_id: user.id,
+    id_number: data.idNumber,
+    date_of_birth: data.dateOfBirth,
+    nationality: data.nationality,
+    residential_address: data.residentialAddress,
+    employment_status: data.employmentStatus,
+    monthly_income: parseFloat(data.monthlyIncome),
+    employer_name: data.employerName,
+    job_title: data.jobTitle,
+    employment_duration: data.employmentDuration,
+    monthly_expenses: parseFloat(data.monthlyExpenses),
+    has_debts: data.hasDebts,
+    debt_details: data.debtDetails,
+    credit_score: creditScore.data,
+    risk_level: getRiskLevel(creditScore.data)
+  });
+  
+  // 3. Complete verification step
+  await supabase.rpc('complete_verification_step', {
+    p_user_id: user.id,
+    p_step_type: 'financial_assessment'
+  });
+};
+```
+
+### 5. Property Listing Flow
+
+```typescript
+// In your PropertyListingModal.tsx
+const handlePropertySubmission = async (data: PropertyListingData, images: File[]) => {
+  // 1. Create property listing
+  const { data: property } = await supabase.from('properties').insert({
+    owner_id: user.id,
+    title: data.title,
+    description: data.description,
+    property_type: data.propertyType,
+    listing_type: data.listingType,
+    country: data.country,
+    city: data.city,
+    suburb: data.suburb,
+    street_address: data.streetAddress,
+    size_sqm: parseFloat(data.size),
+    bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
+    bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null,
+    price: parseFloat(data.price),
+    rent_to_buy_deposit: data.rentToBuyDeposit ? parseFloat(data.rentToBuyDeposit) : null,
+    monthly_rental: data.monthlyRental ? parseFloat(data.monthlyRental) : null,
+    rent_credit_percentage: data.rentCreditPercentage ? parseFloat(data.rentCreditPercentage) : null,
+    features: data.features,
+    amenities: data.amenities
+  }).select().single();
+  
+  // 2. Upload property images
+  for (let i = 0; i < images.length; i++) {
+    const file = images[i];
+    const filePath = `property-images/${property.id}/${file.name}`;
+    await supabase.storage.from('property-images').upload(filePath, file);
+    
+    // 3. Store media metadata
+    await supabase.from('property_media').insert({
+      property_id: property.id,
+      media_type: 'image',
+      file_path: filePath,
+      file_name: file.name,
+      file_size: file.size,
+      mime_type: file.type,
+      is_main_image: i === 0,
+      display_order: i
+    });
+  }
+};
+```
+
+## Storage Bucket Setup
+
+### 1. Create Storage Buckets
+
+The migration creates these buckets automatically, but verify they exist:
+
+```sql
+-- Check storage buckets
+SELECT * FROM storage.buckets;
+```
+
+### 2. Storage Policies
+
+The migration sets up RLS policies for storage. Key policies:
+
+- **property-images**: Public read, authenticated write
+- **property-documents**: Authenticated access only
+- **user-documents**: Authenticated access only
+- **agent-documents**: Authenticated access only
+
+### 3. File Upload Example
+
+```typescript
+const uploadFile = async (file: File, bucket: string, path: string) => {
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(path, file, {
       cacheControl: '3600',
       upsert: false
     });
-
-  if (error) throw error;
-  return data;
-};
-
-// Helper function to download a file
-export const downloadFile = async (bucket: string, path: string) => {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .download(path);
-
-  if (error) throw error;
-  return data;
-};
-```
-
-### Step 2: Update Auth Store
-
-Modify your `src/lib/store.ts` to integrate with Supabase:
-
-```typescript
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { supabase } from './supabase';
-import type { UserProfile, InsertType } from '@/types/database';
-
-interface AuthStore {
-  user: UserProfile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  isNewUser: boolean;
-  
-  // Actions
-  basicSignup: (data: BasicSignupData) => Promise<void>;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => Promise<void>;
-  updateUser: (updates: Partial<UserProfile>) => Promise<void>;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  markUserAsReturning: () => void;
-}
-
-export const useAuthStore = create<AuthStore>()
-  persist(
-    (set, get) => ({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-      isNewUser: false,
-
-      basicSignup: async (data: BasicSignupData) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          // Create user in Supabase Auth
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: data.email,
-            password: data.password,
-            options: {
-              data: {
-                first_name: data.firstName,
-                last_name: data.lastName,
-                phone: data.phone
-              }
-            }
-          });
-
-          if (authError) throw authError;
-
-          // User profile will be created automatically by the trigger
-          // Fetch the created profile
-          if (authData.user) {
-            const { data: profile, error: profileError } = await supabase
-              .from('user_profiles')
-              .select('*')
-              .eq('id', authData.user.id)
-              .single();
-
-            if (profileError) throw profileError;
-
-            set({
-              user: profile,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-              isNewUser: true
-            });
-          }
-        } catch (error) {
-          console.error('Signup failed:', error);
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Signup failed'
-          });
-        }
-      },
-
-      login: async (credentials: LoginCredentials) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password
-          });
-
-          if (error) throw error;
-
-          if (data.user) {
-            // Fetch user profile
-            const { data: profile, error: profileError } = await supabase
-              .from('user_profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-
-            if (profileError) throw profileError;
-
-            // Update last login
-            await supabase
-              .from('user_profiles')
-              .update({ last_login_at: new Date().toISOString() })
-              .eq('id', data.user.id);
-
-            set({
-              user: profile,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-              isNewUser: false
-            });
-          }
-        } catch (error) {
-          console.error('Login failed:', error);
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Login failed'
-          });
-        }
-      },
-
-      logout: async () => {
-        try {
-          await supabase.auth.signOut();
-          set({
-            user: null,
-            isAuthenticated: false,
-            error: null,
-            isNewUser: false
-          });
-        } catch (error) {
-          console.error('Logout failed:', error);
-        }
-      },
-
-      updateUser: async (updates: Partial<UserProfile>) => {
-        const { user } = get();
-        if (!user) return;
-
-        try {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .update(updates)
-            .eq('id', user.id)
-            .select()
-            .single();
-
-          if (error) throw error;
-
-          set({ user: data });
-        } catch (error) {
-          console.error('Update user failed:', error);
-          set({ error: error instanceof Error ? error.message : 'Update failed' });
-        }
-      },
-
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
-      setError: (error: string | null) => set({ error }),
-      markUserAsReturning: () => set({ isNewUser: false })
-    }),
-    {
-      name: 'auth-storage',
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        isNewUser: state.isNewUser
-      })
-    }
-  );
-```
-
-## Phase 3: KYC Document Management
-
-### Step 1: Create KYC Service
-
-Create `src/lib/kyc-services.ts`:
-
-```typescript
-import { supabase } from './supabase';
-import { STORAGE_BUCKETS } from './supabase';
-import type { 
-  KYCVerification, 
-  KYCDocument, 
-  InsertType, 
-  DocumentType 
-} from '@/types/database';
-
-export async function createKYCVerification(
-  data: InsertType<'kyc_verifications'>
-): Promise<KYCVerification> {
-  const { data: verification, error } = await supabase
-    .from('kyc_verifications')
-    .insert(data)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return verification;
-}
-
-export async function uploadKYCDocument(
-  file: File,
-  kycVerificationId: string,
-  documentType: DocumentType
-): Promise<KYCDocument> {
-  // Generate unique file path
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${kycVerificationId}/${documentType}.${fileExt}`;
-  const filePath = `kyc/${fileName}`;
-
-  // Upload file to storage
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from(STORAGE_BUCKETS.USER_DOCUMENTS)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-
-  if (uploadError) throw uploadError;
-
-  // Create document record
-  const documentData: InsertType<'kyc_documents'> = {
-    kyc_verification_id: kycVerificationId,
-    document_type: documentType,
-    file_path: filePath,
-    file_name: file.name,
-    file_size: file.size,
-    mime_type: file.type
-  };
-
-  const { data: document, error: documentError } = await supabase
-    .from('kyc_documents')
-    .insert(documentData)
-    .select()
-    .single();
-
-  if (documentError) throw documentError;
-  return document;
-}
-
-export async function getKYCVerification(userId: string): Promise<KYCVerification | null> {
-  const { data, error } = await supabase
-    .from('kyc_verifications')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error && error.code !== 'PGRST116') throw error;
-  return data;
-}
-
-export async function getKYCDocuments(kycVerificationId: string): Promise<KYCDocument[]> {
-  const { data, error } = await supabase
-    .from('kyc_documents')
-    .select('*')
-    .eq('kyc_verification_id', kycVerificationId)
-    .order('uploaded_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function downloadKYCDocument(documentId: string): Promise<Blob> {
-  const { data: document, error: docError } = await supabase
-    .from('kyc_documents')
-    .select('file_path')
-    .eq('id', documentId)
-    .single();
-
-  if (docError) throw docError;
-
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKETS.USER_DOCUMENTS)
-    .download(document.file_path);
-
-  if (error) throw error;
-  return data;
-}
-```
-
-### Step 2: Update KYC Components
-
-Update your KYC components to use the new service:
-
-```typescript
-// In your KYC components, replace mock uploads with real uploads
-import { uploadKYCDocument, createKYCVerification } from '@/lib/kyc-services';
-
-// Example usage in IdentityVerificationModal
-const handleSubmitDocuments = async () => {
-  setIsLoading(true);
-  setStep('processing');
-  
-  try {
-    // Create KYC verification record
-    const verificationData = {
-      user_id: user.id,
-      verification_type: 'buyer' as const,
-      id_number: idNumber,
-      date_of_birth: dateOfBirth,
-      // ... other fields
-    };
-
-    const verification = await createKYCVerification(verificationData);
-
-    // Upload documents
-    for (const [type, file] of Object.entries(uploadedFiles)) {
-      if (file) {
-        await uploadKYCDocument(file, verification.id, type as DocumentType);
-      }
-    }
-
-    // Update user KYC status
-    await updateUser({ kyc_status: 'pending' });
-
-    setStep('success');
-    setTimeout(() => {
-      onComplete();
-      handleClose();
-    }, 2000);
-  } catch (error) {
-    console.error('Document verification failed:', error);
-    setError(error instanceof Error ? error.message : 'Upload failed');
-  } finally {
-    setIsLoading(false);
-  }
-};
-```
-
-## Phase 4: Property Management
-
-### Step 1: Create Property Service
-
-Create `src/lib/property-services.ts`:
-
-```typescript
-import { supabase } from './supabase';
-import { STORAGE_BUCKETS } from './supabase';
-import type { 
-  Property, 
-  PropertyMedia, 
-  PropertyDocument,
-  InsertType,
-  SearchFilters,
-  PaginatedResponse
-} from '@/types/database';
-
-export async function createProperty(
-  data: InsertType<'properties'>
-): Promise<Property> {
-  const { data: property, error } = await supabase
-    .from('properties')
-    .insert(data)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return property;
-}
-
-export async function uploadPropertyMedia(
-  file: File,
-  propertyId: string,
-  mediaType: 'image' | 'virtual_tour' | 'floor_plan',
-  isMainImage: boolean = false
-): Promise<PropertyMedia> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${propertyId}/${mediaType}/${Date.now()}.${fileExt}`;
-  const filePath = `properties/${fileName}`;
-
-  // Upload file
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from(STORAGE_BUCKETS.PROPERTY_IMAGES)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-
-  if (uploadError) throw uploadError;
-
-  // Create media record
-  const mediaData: InsertType<'property_media'> = {
-    property_id: propertyId,
-    media_type: mediaType,
-    file_path: filePath,
-    file_name: file.name,
-    file_size: file.size,
-    mime_type: file.type,
-    is_main_image: isMainImage,
-    display_order: 0
-  };
-
-  const { data: media, error: mediaError } = await supabase
-    .from('property_media')
-    .insert(mediaData)
-    .select()
-    .single();
-
-  if (mediaError) throw mediaError;
-  return media;
-}
-
-export async function uploadPropertyDocument(
-  file: File,
-  propertyId: string,
-  documentType: PropertyDocumentType
-): Promise<PropertyDocument> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${propertyId}/${documentType}/${Date.now()}.${fileExt}`;
-  const filePath = `documents/${fileName}`;
-
-  // Upload file
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from(STORAGE_BUCKETS.PROPERTY_DOCUMENTS)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-
-  if (uploadError) throw uploadError;
-
-  // Create document record
-  const documentData: InsertType<'property_documents'> = {
-    property_id: propertyId,
-    document_type: documentType,
-    file_path: filePath,
-    file_name: file.name,
-    file_size: file.size,
-    mime_type: file.type
-  };
-
-  const { data: document, error: documentError } = await supabase
-    .from('property_documents')
-    .insert(documentData)
-    .select()
-    .single();
-
-  if (documentError) throw documentError;
-  return document;
-}
-
-export async function getProperties(
-  filters: SearchFilters = {},
-  page: number = 1,
-  limit: number = 20
-): Promise<PaginatedResponse<Property>> {
-  let query = supabase
-    .from('properties')
-    .select('*', { count: 'exact' })
-    .eq('status', 'active');
-
-  // Apply filters
-  if (filters.country) {
-    query = query.eq('country', filters.country);
-  }
-  if (filters.city) {
-    query = query.eq('city', filters.city);
-  }
-  if (filters.propertyType && filters.propertyType.length > 0) {
-    query = query.in('property_type', filters.propertyType);
-  }
-  if (filters.listingType) {
-    query = query.eq('listing_type', filters.listingType);
-  }
-  if (filters.priceMin) {
-    query = query.gte('price', filters.priceMin);
-  }
-  if (filters.priceMax) {
-    query = query.lte('price', filters.priceMax);
-  }
-  if (filters.bedrooms) {
-    query = query.gte('bedrooms', filters.bedrooms);
-  }
-  if (filters.bathrooms) {
-    query = query.gte('bathrooms', filters.bathrooms);
-  }
-
-  // Apply sorting
-  if (filters.sortBy) {
-    switch (filters.sortBy) {
-      case 'price-asc':
-        query = query.order('price', { ascending: true });
-        break;
-      case 'price-desc':
-        query = query.order('price', { ascending: false });
-        break;
-      case 'date-newest':
-        query = query.order('created_at', { ascending: false });
-        break;
-      case 'date-oldest':
-        query = query.order('created_at', { ascending: true });
-        break;
-    }
-  } else {
-    query = query.order('created_at', { ascending: false });
-  }
-
-  // Apply pagination
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-
-  return {
-    data: data || [],
-    count: count || 0,
-    page,
-    limit,
-    totalPages: Math.ceil((count || 0) / limit)
-  };
-}
-
-export async function getProperty(id: string): Promise<Property | null> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error && error.code !== 'PGRST116') throw error;
-  return data;
-}
-
-export async function getPropertyMedia(propertyId: string): Promise<PropertyMedia[]> {
-  const { data, error } = await supabase
-    .from('property_media')
-    .select('*')
-    .eq('property_id', propertyId)
-    .order('display_order', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getPropertyDocuments(propertyId: string): Promise<PropertyDocument[]> {
-  const { data, error } = await supabase
-    .from('property_documents')
-    .select('*')
-    .eq('property_id', propertyId)
-    .order('uploaded_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-```
-
-### Step 2: Update Property Components
-
-Update your property components to use the new service:
-
-```typescript
-// In PropertyListingModal
-const handleFinalSubmit = async () => {
-  setIsLoading(true);
-  setStep('submitting');
-  
-  try {
-    const formData = form.getValues();
     
-    // Create property
-    const propertyData = {
-      owner_id: user.id,
-      title: formData.title,
-      description: formData.description,
-      property_type: formData.propertyType,
-      listing_type: formData.listingType,
-      country: formData.country,
-      city: formData.city,
-      suburb: formData.suburb,
-      street_address: formData.streetAddress,
-      size_sqm: formData.size,
-      bedrooms: formData.bedrooms,
-      bathrooms: formData.bathrooms,
-      parking_spaces: formData.parking,
-      features: formData.features,
-      amenities: formData.amenities,
-      price: formData.price,
-      currency: formData.currency,
-      rent_to_buy_deposit: formData.rentToBuyDeposit,
-      monthly_rental: formData.monthlyRental,
-      rent_credit_percentage: formData.rentCreditPercentage
-    };
-
-    const property = await createProperty(propertyData);
-
-    // Upload images
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i];
-      await uploadPropertyMedia(
-        image, 
-        property.id, 
-        'image', 
-        i === 0 // First image is main image
-      );
-    }
-
-    onComplete(property);
-    setStep('success');
-    setTimeout(() => {
-      handleClose();
-    }, 2000);
-  } catch (error) {
-    console.error('Failed to submit property listing:', error);
-    setError(error instanceof Error ? error.message : 'Submission failed');
-    setStep('preview');
-  } finally {
-    setIsLoading(false);
+  if (error) throw error;
+  
+  // Get public URL (for property-images only)
+  if (bucket === 'property-images') {
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+    return publicUrl;
   }
+  
+  return data.path;
 };
 ```
 
-## Phase 5: Admin Integration
+## Testing the Implementation
 
-### Step 1: Create Admin Service
+### 1. Test User Registration
 
-Create `src/lib/admin-services.ts`:
+```sql
+-- Check user profile creation
+SELECT * FROM user_profiles WHERE email = 'test@example.com';
+
+-- Check verification steps
+SELECT * FROM user_verification_steps WHERE user_id = 'user-uuid';
+```
+
+### 2. Test Property Creation
+
+```sql
+-- Check property listing
+SELECT p.*, pm.file_path 
+FROM properties p 
+LEFT JOIN property_media pm ON p.id = pm.property_id 
+WHERE p.owner_id = 'user-uuid';
+```
+
+### 3. Test Credit Scoring
+
+```sql
+-- Test credit score calculation
+SELECT calculate_credit_score(25000.00, 15000.00, '2-5years', 'minimal');
+```
+
+## Performance Optimization
+
+### 1. Database Indexes
+
+The migration creates comprehensive indexes. Monitor query performance:
+
+```sql
+-- Check slow queries
+SELECT query, calls, total_time, mean_time 
+FROM pg_stat_statements 
+ORDER BY mean_time DESC 
+LIMIT 10;
+```
+
+### 2. Storage Optimization
+
+- Use image compression for property photos
+- Implement lazy loading for property images
+- Set appropriate cache headers for static assets
+
+### 3. Query Optimization
+
+```sql
+-- Example optimized property search
+SELECT p.*, 
+       pm.file_path as main_image,
+       up.first_name || ' ' || up.last_name as owner_name
+FROM properties p
+LEFT JOIN property_media pm ON p.id = pm.property_id AND pm.is_main_image = TRUE
+LEFT JOIN user_profiles up ON p.owner_id = up.id
+WHERE p.status = 'active'
+  AND p.country = 'ZW'
+  AND p.price BETWEEN 100000 AND 200000
+ORDER BY p.created_at DESC
+LIMIT 20;
+```
+
+## Security Considerations
+
+### 1. Row Level Security (RLS)
+
+All tables have RLS enabled. Test policies:
+
+```sql
+-- Test user can only see own data
+SELECT * FROM user_profiles WHERE id = auth.uid();
+
+-- Test property owner access
+SELECT * FROM properties WHERE owner_id = auth.uid();
+```
+
+### 2. File Access Control
+
+Test storage policies:
 
 ```typescript
-import { supabase } from './supabase';
-import type { 
-  KYCVerification, 
-  Property, 
-  UserProfile,
-  AdminAuditLog,
-  SystemNotification,
-  UserStats,
-  PropertyStats,
-  AgentStats
-} from '@/types/database';
+// Should work for property owner
+const { data } = await supabase.storage
+  .from('property-documents')
+  .list('property-uuid/');
 
-export async function getPendingKYC(): Promise<KYCVerification[]> {
-  const { data, error } = await supabase
-    .from('kyc_verifications')
-    .select(`
-      *,
-      user_profiles!inner (
-        id,
-        first_name,
-        last_name,
-        email,
-        phone
-      )
-    `)
-    .eq('status', 'pending')
-    .order('submitted_at', { ascending: true });
+// Should fail for non-owner
+const { error } = await supabase.storage
+  .from('property-documents')
+  .list('other-property-uuid/');
+```
 
-  if (error) throw error;
-  return data || [];
-}
+### 3. API Security
 
-export async function approveKYC(
-  kycId: string, 
-  adminId: string, 
-  notes?: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('kyc_verifications')
-    .update({
-      status: 'approved',
-      reviewed_by: adminId,
-      reviewed_at: new Date().toISOString(),
-      admin_notes: notes
-    })
-    .eq('id', kycId);
+Always validate user permissions in your API routes:
 
-  if (error) throw error;
-
-  // Update user profile
-  const { data: kyc } = await supabase
-    .from('kyc_verifications')
-    .select('user_id')
-    .eq('id', kycId)
-    .single();
-
-  if (kyc) {
-    await supabase
-      .from('user_profiles')
-      .update({ kyc_status: 'approved' })
-      .eq('id', kyc.user_id);
-  }
-
-  // Create notification
-  await createNotification({
-    userId: kyc.user_id,
-    type: 'kyc_approved',
-    title: 'KYC Approved',
-    message: 'Your KYC verification has been approved. You can now access premium features.'
-  });
-}
-
-export async function rejectKYC(
-  kycId: string, 
-  adminId: string, 
-  reason: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('kyc_verifications')
-    .update({
-      status: 'rejected',
-      reviewed_by: adminId,
-      reviewed_at: new Date().toISOString(),
-      rejection_reason: reason
-    })
-    .eq('id', kycId);
-
-  if (error) throw error;
-
-  // Update user profile
-  const { data: kyc } = await supabase
-    .from('kyc_verifications')
-    .select('user_id')
-    .eq('id', kycId)
-    .single();
-
-  if (kyc) {
-    await supabase
-      .from('user_profiles')
-      .update({ kyc_status: 'rejected' })
-      .eq('id', kyc.user_id);
-  }
-
-  // Create notification
-  await createNotification({
-    userId: kyc.user_id,
-    type: 'kyc_rejected',
-    title: 'KYC Rejected',
-    message: `Your KYC verification has been rejected. Reason: ${reason}`
-  });
-}
-
-export async function getPendingProperties(): Promise<Property[]> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select(`
-      *,
-      user_profiles!inner (
-        id,
-        first_name,
-        last_name,
-        email
-      )
-    `)
-    .eq('verification_status', 'pending')
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function approveProperty(
-  propertyId: string, 
-  adminId: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('properties')
-    .update({
-      verification_status: 'approved',
-      status: 'active',
-      listed_at: new Date().toISOString()
-    })
-    .eq('id', propertyId);
-
-  if (error) throw error;
-
-  // Get property owner
+```typescript
+// Example: Property update endpoint
+const updateProperty = async (propertyId: string, updates: any) => {
+  // Check if user owns the property
   const { data: property } = await supabase
     .from('properties')
-    .select('owner_id, title')
+    .select('owner_id')
     .eq('id', propertyId)
     .single();
-
-  if (property) {
-    // Create notification
-    await createNotification({
-      userId: property.owner_id,
-      type: 'property_approved',
-      title: 'Property Approved',
-      message: `Your property "${property.title}" has been approved and is now live.`
-    });
+    
+  if (property.owner_id !== user.id) {
+    throw new Error('Unauthorized');
   }
-}
-
-export async function rejectProperty(
-  propertyId: string, 
-  adminId: string, 
-  reason: string
-): Promise<void> {
-  const { error } = await supabase
+  
+  // Update property
+  return await supabase
     .from('properties')
-    .update({
-      verification_status: 'rejected',
-      status: 'draft'
-    })
+    .update(updates)
     .eq('id', propertyId);
-
-  if (error) throw error;
-
-  // Get property owner
-  const { data: property } = await supabase
-    .from('properties')
-    .select('owner_id, title')
-    .eq('id', propertyId)
-    .single();
-
-  if (property) {
-    // Create notification
-    await createNotification({
-      userId: property.owner_id,
-      type: 'property_rejected',
-      title: 'Property Rejected',
-      message: `Your property "${property.title}" has been rejected. Reason: ${reason}`
-    });
-  }
-}
-
-export async function createNotification(
-  data: {
-    userId: string;
-    type: NotificationType;
-    title: string;
-    message: string;
-    relatedId?: string;
-  }
-): Promise<void> {
-  const { error } = await supabase
-    .from('system_notifications')
-    .insert({
-      user_id: data.userId,
-      notification_type: data.type,
-      title: data.title,
-      message: data.message
-    });
-
-  if (error) throw error;
-}
-
-export async function getAdminStats(): Promise<{
-  userStats: UserStats;
-  propertyStats: PropertyStats;
-  agentStats: AgentStats;
-}> {
-  // Get user stats
-  const { count: totalUsers } = await supabase
-    .from('user_profiles')
-    .select('*', { count: 'exact', head: true });
-
-  const { count: verifiedUsers } = await supabase
-    .from('user_profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('kyc_status', 'approved');
-
-  const { count: pendingKYC } = await supabase
-    .from('kyc_verifications')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending');
-
-  // Get property stats
-  const { count: totalProperties } = await supabase
-    .from('properties')
-    .select('*', { count: 'exact', head: true });
-
-  const { count: activeProperties } = await supabase
-    .from('properties')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active');
-
-  const { count: pendingVerification } = await supabase
-    .from('properties')
-    .select('*', { count: 'exact', head: true })
-    .eq('verification_status', 'pending');
-
-  // Get agent stats
-  const { count: totalAgents } = await supabase
-    .from('agents')
-    .select('*', { count: 'exact', head: true });
-
-  const { count: verifiedAgents } = await supabase
-    .from('agents')
-    .select('*', { count: 'exact', head: true })
-    .eq('verified_status', 'approved');
-
-  return {
-    userStats: {
-      totalUsers: totalUsers || 0,
-      verifiedUsers: verifiedUsers || 0,
-      pendingKYC: pendingKYC || 0,
-      activeUsers: 0, // Would need to calculate based on last login
-      userGrowth: 0 // Would need to calculate based on time period
-    },
-    propertyStats: {
-      totalProperties: totalProperties || 0,
-      activeProperties: activeProperties || 0,
-      pendingVerification: pendingVerification || 0,
-      averagePrice: 0, // Would need to calculate
-      popularCities: [], // Would need to calculate
-      listingsByType: {} // Would need to calculate
-    },
-    agentStats: {
-      totalAgents: totalAgents || 0,
-      verifiedAgents: verifiedAgents || 0,
-      pendingVerification: 0, // Would need to calculate
-      totalLeads: 0, // Would need to calculate
-      activeViewings: 0, // Would need to calculate
-      averageResponseTime: '0h' // Would need to calculate
-    }
-  };
-}
+};
 ```
 
-## Phase 6: Testing and Validation
+## Monitoring & Maintenance
 
-### Step 1: Test User Registration
+### 1. Database Monitoring
 
-1. **Test basic signup flow**
-2. **Verify user profile creation**
-3. **Test login/logout functionality**
-4. **Verify RLS policies work correctly**
+Set up monitoring for:
+- Query performance
+- Storage usage
+- User activity
+- Error rates
 
-### Step 2: Test KYC Upload
+### 2. Regular Maintenance
 
-1. **Test document upload to storage**
-2. **Verify KYC verification creation**
-3. **Test admin approval/rejection flow**
-4. **Verify notifications are created**
+```sql
+-- Clean up expired verification attempts
+DELETE FROM phone_verification_attempts 
+WHERE expires_at < NOW() - INTERVAL '1 day';
 
-### Step 3: Test Property Management
+-- Archive old property listings
+UPDATE properties 
+SET status = 'archived' 
+WHERE updated_at < NOW() - INTERVAL '1 year' 
+AND status = 'active';
 
-1. **Test property creation**
-2. **Test image upload**
-3. **Test property search and filtering**
-4. **Test admin property approval**
-
-### Step 4: Test Admin Features
-
-1. **Test KYC document review**
-2. **Test property verification**
-3. **Test admin statistics**
-4. **Test audit logging**
-
-## Phase 7: Performance Optimization
-
-### Step 1: Add Database Indexes
-
-The migration already includes comprehensive indexes, but monitor query performance and add additional indexes as needed.
-
-### Step 2: Implement Caching
-
-Consider implementing Redis caching for frequently accessed data:
-
-```typescript
-// Example caching implementation
-import { Redis } from 'ioredis';
-
-const redis = new Redis(process.env.REDIS_URL);
-
-export async function getCachedProperties(filters: SearchFilters) {
-  const cacheKey = `properties:${JSON.stringify(filters)}`;
-  const cached = await redis.get(cacheKey);
-  
-  if (cached) {
-    return JSON.parse(cached);
-  }
-  
-  const data = await getProperties(filters);
-  await redis.setex(cacheKey, 300, JSON.stringify(data)); // Cache for 5 minutes
-  return data;
-}
+-- Update credit scores (run monthly)
+UPDATE user_profiles 
+SET credit_score = (
+  SELECT credit_score 
+  FROM financial_assessments 
+  WHERE user_id = user_profiles.id 
+  ORDER BY created_at DESC 
+  LIMIT 1
+)
+WHERE credit_score IS NULL;
 ```
 
-### Step 3: Optimize File Uploads
+### 3. Backup Strategy
 
-Implement image optimization and compression:
-
-```typescript
-// Example image optimization
-import sharp from 'sharp';
-
-export async function optimizeImage(file: File): Promise<File> {
-  const buffer = await file.arrayBuffer();
-  const optimizedBuffer = await sharp(buffer)
-    .resize(1200, 800, { fit: 'inside' })
-    .jpeg({ quality: 80 })
-    .toBuffer();
-  
-  return new File([optimizedBuffer], file.name, {
-    type: 'image/jpeg'
-  });
-}
-```
-
-## Migration Checklist
-
-- [ ] Set up Supabase project
-- [ ] Run database migration
-- [ ] Update environment variables
-- [ ] Integrate authentication
-- [ ] Implement KYC document upload
-- [ ] Implement property management
-- [ ] Implement admin features
-- [ ] Test all functionality
-- [ ] Optimize performance
-- [ ] Deploy to production
+- Enable Supabase point-in-time recovery
+- Set up automated backups
+- Test restore procedures regularly
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **RLS Policy Errors**: Ensure all tables have proper RLS policies
-2. **Storage Upload Failures**: Check bucket permissions and file size limits
-3. **Authentication Issues**: Verify Supabase Auth configuration
-4. **Type Errors**: Ensure TypeScript types match database schema
+1. **RLS Policy Errors**
+   ```sql
+   -- Check if RLS is enabled
+   SELECT schemaname, tablename, rowsecurity 
+   FROM pg_tables 
+   WHERE tablename = 'your_table';
+   
+   -- Check policies
+   SELECT * FROM pg_policies WHERE tablename = 'your_table';
+   ```
 
-### Debug Commands
+2. **Storage Upload Failures**
+   ```sql
+   -- Check storage bucket exists
+   SELECT * FROM storage.buckets WHERE id = 'your-bucket';
+   
+   -- Check storage policies
+   SELECT * FROM storage.policies WHERE bucket_id = 'your-bucket';
+   ```
 
-```bash
-# Check Supabase connection
-supabase status
+3. **Function Errors**
+   ```sql
+   -- Check function exists
+   SELECT routine_name, routine_type 
+   FROM information_schema.routines 
+   WHERE routine_schema = 'public';
+   ```
 
-# View database logs
-supabase logs
+### Performance Issues
 
-# Reset database (development only)
-supabase db reset
-```
+1. **Slow Queries**
+   - Check if indexes are being used
+   - Analyze query execution plans
+   - Consider query optimization
 
-This implementation guide provides a comprehensive path to migrate your application from mock data to a fully functional Supabase backend while maintaining all existing functionality and adding new features like document management, admin controls, and proper data persistence. 
+2. **Storage Issues**
+   - Monitor storage usage
+   - Implement file cleanup
+   - Optimize image sizes
+
+## Next Steps
+
+1. **Deploy the schema** to your Supabase project
+2. **Update your application code** to use the new database structure
+3. **Test all user flows** thoroughly
+4. **Set up monitoring** and alerting
+5. **Plan for scaling** as your user base grows
+
+This implementation provides a solid foundation for your Mukamba FinTech platform with comprehensive user management, property listings, and financial transactions. 

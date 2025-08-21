@@ -2,486 +2,456 @@
 
 ## Overview
 
-This document describes the complete database schema for the Mukamba FinTech application, which is designed to support a comprehensive property marketplace with user authentication, KYC verification, property management, agent system, and admin functionality.
+This document provides a comprehensive overview of the database schema for the Mukamba FinTech platform, explaining how it supports all the user forms and workflows identified in the application.
 
 ## Database Architecture
 
-The schema is built on Supabase (PostgreSQL) and includes:
+The database is built on **Supabase** (PostgreSQL) and follows these key principles:
+- **Row Level Security (RLS)** for data protection
+- **JSONB fields** for flexible data storage
+- **UUID primary keys** for security
+- **Comprehensive indexing** for performance
+- **Audit trails** for compliance
 
-- **User Management & Authentication**: Extended user profiles with roles and verification status
-- **KYC Documentation System**: Complete verification workflow with document storage
-- **Property Management**: Comprehensive property listings with media and documents
-- **Agent System**: Real estate agent management with leads and viewings
-- **User Interactions**: Inquiries, saved properties, and alerts
-- **Escrow & Transactions**: Financial transaction tracking
-- **Admin & System**: Audit logging and notifications
-- **Storage**: File storage for images and documents
+## Core Tables Overview
 
-## Core Tables
+### 1. User Management & Authentication
 
-### 1. User Management (`user_profiles`)
+#### `user_profiles` (extends auth.users)
+**Purpose**: Stores user profile information and verification status
+**Key Fields**:
+- `id` (UUID) - References auth.users
+- `first_name`, `last_name`, `phone`
+- `user_level` - 'guest', 'basic', 'verified', 'premium'
+- `roles` - Array of roles: 'buyer', 'seller', 'admin', 'agent'
+- Verification flags: `is_phone_verified`, `is_identity_verified`, etc.
+- `credit_score` - Calculated credit score
+- `kyc_status` - 'none', 'partial', 'pending', 'approved', 'rejected'
 
-Extends Supabase's `auth.users` table with application-specific data.
+**Form Mapping**: 
+- `BasicSignupModal.tsx` → Creates initial user profile
+- All verification forms update verification flags
 
-```sql
-user_profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
-  phone TEXT,
-  nationality TEXT CHECK (nationality IN ('SA', 'ZIM')),
-  user_level TEXT DEFAULT 'basic',
-  roles TEXT[] DEFAULT '{}',
-  is_phone_verified BOOLEAN DEFAULT FALSE,
-  is_identity_verified BOOLEAN DEFAULT FALSE,
-  is_financially_verified BOOLEAN DEFAULT FALSE,
-  is_property_verified BOOLEAN DEFAULT FALSE,
-  is_address_verified BOOLEAN DEFAULT FALSE,
-  credit_score INTEGER,
-  kyc_status TEXT DEFAULT 'none',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  last_login_at TIMESTAMP WITH TIME ZONE
-)
-```
+#### `user_verification_steps`
+**Purpose**: Tracks progress through verification workflow
+**Key Fields**:
+- `step_type` - 'phone_verification', 'identity_verification', 'financial_assessment'
+- `status` - 'pending', 'in_progress', 'completed', 'failed', 'expired'
+- `verification_data` - JSONB with step-specific data
 
-**Key Features:**
-- Extends Supabase auth with custom user data
-- Supports multiple roles (buyer, seller, admin, agent)
-- Tracks verification status for different aspects
-- Credit scoring for buyers
-- KYC status tracking
+**Form Mapping**:
+- `PhoneVerificationModal.tsx` → 'phone_verification' step
+- `IdentityVerificationModal.tsx` → 'identity_verification' step
+- `FinancialAssessmentModal.tsx` → 'financial_assessment' step
 
-### 2. KYC Verification System
+#### `phone_verification_attempts`
+**Purpose**: Manages OTP verification for phone numbers
+**Key Fields**:
+- `otp_code`, `otp_hash` - Secure OTP storage
+- `attempts_count`, `max_attempts` - Rate limiting
+- `expires_at` - OTP expiration
+
+**Form Mapping**: `PhoneVerificationModal.tsx`
+
+#### `financial_assessments`
+**Purpose**: Stores detailed financial assessment data
+**Key Fields**:
+- Personal info: `id_number`, `date_of_birth`, `nationality`
+- Address: `residential_address` (JSONB)
+- Employment: `employment_status`, `monthly_income`, `employer_name`
+- Financial: `monthly_expenses`, `has_debts`, `debt_details`
+- Results: `credit_score`, `risk_level`, `pre_approved_amount`
+
+**Form Mapping**: `FinancialAssessmentModal.tsx`
+
+### 2. KYC Documentation System
 
 #### `kyc_verifications`
-Main KYC verification records with different types for buyers and sellers.
-
-```sql
-kyc_verifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES user_profiles(id),
-  verification_type TEXT CHECK (verification_type IN ('buyer', 'seller')),
-  status TEXT DEFAULT 'pending',
-  id_number TEXT,
-  date_of_birth DATE,
-  monthly_income DECIMAL(12,2),
-  employment_status TEXT,
-  bank_name TEXT,
-  credit_consent BOOLEAN DEFAULT FALSE,
-  business_registered BOOLEAN DEFAULT FALSE,
-  business_name TEXT,
-  business_registration_number TEXT,
-  tax_number TEXT,
-  reviewed_by UUID REFERENCES user_profiles(id),
-  reviewed_at TIMESTAMP WITH TIME ZONE,
-  rejection_reason TEXT,
-  admin_notes TEXT,
-  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+**Purpose**: Main KYC verification records
+**Key Fields**:
+- `verification_type` - 'buyer' or 'seller'
+- `verification_level` - 'basic', 'enhanced', 'premium'
+- `expires_at` - Verification expiration
+- `certificate_url` - Link to verification certificate
 
 #### `kyc_documents`
-Stores uploaded KYC documents with metadata.
+**Purpose**: Stores uploaded KYC documents
+**Key Fields**:
+- `document_type` - 'id_document', 'proof_of_income', 'title_deed', etc.
+- `file_path`, `file_name`, `file_size`, `mime_type`
+- `verified` - Document verification status
 
-```sql
-kyc_documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  kyc_verification_id UUID REFERENCES kyc_verifications(id),
-  document_type TEXT CHECK (document_type IN (
-    'id_document', 'proof_of_income', 'bank_statement',
-    'title_deed', 'property_tax_certificate', 'municipal_rates_certificate',
-    'property_insurance', 'compliance_certificate', 'business_registration',
-    'tax_clearance_certificate'
-  )),
-  file_path TEXT NOT NULL,
-  file_name TEXT NOT NULL,
-  file_size INTEGER NOT NULL,
-  mime_type TEXT NOT NULL,
-  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  verified BOOLEAN DEFAULT FALSE,
-  verification_notes TEXT
-)
-```
+**Form Mapping**: 
+- `IdentityVerificationModal.tsx` → 'id_document' uploads
+- `FinancialAssessmentModal.tsx` → 'proof_of_income', 'proof_of_address' uploads
+- `PropertyDocumentationModal.tsx` → Property-related documents
+
+#### `verification_certificates`
+**Purpose**: Issued verification certificates
+**Key Fields**:
+- `certificate_type` - 'identity', 'financial', 'comprehensive'
+- `verification_level` - 'basic', 'enhanced', 'premium'
+- `issued_at`, `expires_at` - Certificate validity
+- `features` - Array of certificate features
 
 ### 3. Property Management System
 
 #### `properties`
-Core property listings with comprehensive details.
+**Purpose**: Property listings
+**Key Fields**:
+- Basic info: `title`, `description`, `property_type`, `listing_type`
+- Location: `country`, `city`, `suburb`, `street_address`, coordinates
+- Details: `size_sqm`, `bedrooms`, `bathrooms`, `features`, `amenities`
+- Financial: `price`, `currency`, `rent_to_buy_deposit`, `monthly_rental`
+- Status: `status`, `verification_status`, `featured`, `premium_listing`
 
-```sql
-properties (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  owner_id UUID REFERENCES user_profiles(id),
-  title TEXT NOT NULL,
-  description TEXT,
-  property_type TEXT CHECK (property_type IN ('house', 'apartment', 'townhouse', 'land', 'commercial')),
-  listing_type TEXT CHECK (listing_type IN ('rent-to-buy', 'sale')),
-  country TEXT CHECK (country IN ('ZW', 'SA')),
-  city TEXT NOT NULL,
-  suburb TEXT NOT NULL,
-  street_address TEXT NOT NULL,
-  latitude DECIMAL(10, 8),
-  longitude DECIMAL(11, 8),
-  size_sqm DECIMAL(8,2),
-  bedrooms INTEGER,
-  bathrooms INTEGER,
-  parking_spaces INTEGER,
-  features TEXT[],
-  amenities TEXT[],
-  price DECIMAL(12,2) NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  rent_to_buy_deposit DECIMAL(12,2),
-  monthly_rental DECIMAL(12,2),
-  rent_credit_percentage DECIMAL(5,2),
-  status TEXT DEFAULT 'draft',
-  verification_status TEXT DEFAULT 'pending',
-  views_count INTEGER DEFAULT 0,
-  saved_count INTEGER DEFAULT 0,
-  inquiries_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  listed_at TIMESTAMP WITH TIME ZONE,
-  sold_at TIMESTAMP WITH TIME ZONE
-)
-```
+**Form Mapping**: `PropertyListingModal.tsx`
 
 #### `property_media`
-Stores property images, virtual tours, and floor plans.
+**Purpose**: Property images and media
+**Key Fields**:
+- `media_type` - 'image', 'virtual_tour', 'floor_plan'
+- `is_main_image` - Primary property image
+- `display_order` - Image ordering
 
-```sql
-property_media (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  property_id UUID REFERENCES properties(id),
-  media_type TEXT CHECK (media_type IN ('image', 'virtual_tour', 'floor_plan')),
-  file_path TEXT NOT NULL,
-  file_name TEXT NOT NULL,
-  file_size INTEGER NOT NULL,
-  mime_type TEXT NOT NULL,
-  is_main_image BOOLEAN DEFAULT FALSE,
-  display_order INTEGER DEFAULT 0,
-  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+**Form Mapping**: `PropertyListingModal.tsx` (media upload step)
 
 #### `property_documents`
-Stores property-related documents for verification.
+**Purpose**: Property-related documents
+**Key Fields**:
+- `document_type` - 'title_deed', 'property_tax_certificate', etc.
+- `verified` - Document verification status
 
-```sql
-property_documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  property_id UUID REFERENCES properties(id),
-  document_type TEXT CHECK (document_type IN (
-    'title_deed', 'property_tax_certificate', 'municipal_rates_certificate',
-    'property_insurance', 'compliance_certificate', 'survey_diagram', 'building_plans'
-  )),
-  file_path TEXT NOT NULL,
-  file_name TEXT NOT NULL,
-  file_size INTEGER NOT NULL,
-  mime_type TEXT NOT NULL,
-  verified BOOLEAN DEFAULT FALSE,
-  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+**Form Mapping**: `PropertyDocumentsStep.tsx`
 
-### 4. Agent System
+#### `property_listing_history`
+**Purpose**: Audit trail of property changes
+**Key Fields**:
+- `action` - 'created', 'updated', 'activated', etc.
+- `changes` - JSONB with what changed
+- `performed_by` - Who made the change
 
-#### `agents`
-Real estate agent profiles and verification.
+#### `property_viewings`
+**Purpose**: Scheduled property viewings
+**Key Fields**:
+- `scheduled_for` - Viewing date/time
+- `status` - 'scheduled', 'confirmed', 'completed', 'cancelled'
+- `feedback_rating`, `feedback_comment` - Post-viewing feedback
 
-```sql
-agents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES user_profiles(id),
-  full_name TEXT NOT NULL,
-  company_name TEXT NOT NULL,
-  eac_number TEXT NOT NULL UNIQUE,
-  bio TEXT NOT NULL,
-  business_license_url TEXT,
-  id_document_url TEXT,
-  verified_status TEXT DEFAULT 'pending',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+### 4. Messaging & Communication
 
-#### `agent_leads`
-Agent lead management system.
+#### `conversations`
+**Purpose**: Conversation threads between users
+**Key Fields**:
+- `participant1_id`, `participant2_id` - Conversation participants
+- `property_id` - Optional property context
+- `last_message_at` - Last activity timestamp
 
-```sql
-agent_leads (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  agent_id UUID REFERENCES agents(id),
-  property_id UUID REFERENCES properties(id),
-  property_title TEXT NOT NULL,
-  client_name TEXT NOT NULL,
-  client_email TEXT NOT NULL,
-  client_phone TEXT,
-  message TEXT NOT NULL,
-  status TEXT DEFAULT 'new',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+#### `messages`
+**Purpose**: Individual messages in conversations
+**Key Fields**:
+- `conversation_id` - Links to conversations table
+- `sender_id`, `recipient_id` - Message participants
+- `message_type` - 'text', 'image', 'file', 'system'
+- `content` - Message content
+- `attachments` - Array of file attachments
+- `read_at` - Message read timestamp
 
-#### `agent_viewings`
-Property viewing scheduling and management.
+**Form Mapping**: `MessageComposer.tsx`, `MessageThread.tsx`
 
-```sql
-agent_viewings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  agent_id UUID REFERENCES agents(id),
-  lead_id UUID REFERENCES agent_leads(id),
-  property_id UUID REFERENCES properties(id),
-  scheduled_for TIMESTAMP WITH TIME ZONE NOT NULL,
-  status TEXT DEFAULT 'scheduled',
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+### 5. Rent-to-Buy Agreements
 
-### 5. User Interactions
+#### `rent_to_buy_agreements`
+**Purpose**: Rent-to-buy agreements between buyers and sellers
+**Key Fields**:
+- Agreement terms: `monthly_rental`, `rent_credit_percentage`, `option_period_months`
+- Financial: `purchase_price`, `deposit_amount`
+- Status: `status`, `start_date`, `end_date`, `purchase_deadline`
+- Tracking: `total_rent_paid`, `total_rent_credit`, `remaining_balance`
 
-#### `property_inquiries`
-User inquiries about properties.
+#### `rent_payments`
+**Purpose**: Monthly rent payments and credit tracking
+**Key Fields**:
+- `payment_month` - Month being paid for
+- `rent_amount`, `rent_credit`, `net_payment`
+- `payment_status` - 'pending', 'paid', 'overdue', 'cancelled'
+- `transaction_id` - Links to escrow transaction
 
-```sql
-property_inquiries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  property_id UUID REFERENCES properties(id),
-  user_id UUID REFERENCES user_profiles(id),
-  inquiry_type TEXT CHECK (inquiry_type IN ('viewing', 'information', 'offer')),
-  message TEXT NOT NULL,
-  status TEXT DEFAULT 'pending',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
-
-#### `saved_properties`
-User's saved/favorited properties.
-
-```sql
-saved_properties (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES user_profiles(id),
-  property_id UUID REFERENCES properties(id),
-  notes TEXT,
-  saved_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, property_id)
-)
-```
-
-#### `property_alerts`
-User-defined property search alerts.
-
-```sql
-property_alerts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES user_profiles(id),
-  alert_name TEXT NOT NULL,
-  country TEXT CHECK (country IN ('ZW', 'SA')),
-  city TEXT,
-  suburb TEXT,
-  property_types TEXT[],
-  price_min DECIMAL(12,2),
-  price_max DECIMAL(12,2),
-  bedrooms_min INTEGER,
-  bathrooms_min INTEGER,
-  features TEXT[],
-  amenities TEXT[],
-  frequency TEXT DEFAULT 'daily',
-  enabled BOOLEAN DEFAULT TRUE,
-  last_sent TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
-
-### 6. Financial & Transactions
+### 6. Escrow & Transactions
 
 #### `escrow_transactions`
-Financial transaction tracking for property deals.
+**Purpose**: Financial transactions
+**Key Fields**:
+- `transaction_type` - 'deposit', 'rental', 'purchase', 'refund'
+- `amount`, `currency` - Transaction amount
+- `status` - 'pending', 'completed', 'failed', 'cancelled'
+- `payment_method` - 'bank_transfer', 'card', 'mobile_money', 'crypto'
+- `processing_fee`, `net_amount` - Fee breakdown
 
-```sql
-escrow_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  property_id UUID REFERENCES properties(id),
-  buyer_id UUID REFERENCES user_profiles(id),
-  seller_id UUID REFERENCES user_profiles(id),
-  transaction_type TEXT CHECK (transaction_type IN ('deposit', 'rental', 'purchase', 'refund')),
-  amount DECIMAL(12,2) NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  status TEXT DEFAULT 'pending',
-  transaction_hash TEXT,
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  completed_at TIMESTAMP WITH TIME ZONE
-)
-```
+#### `transaction_fees`
+**Purpose**: Detailed fee breakdown
+**Key Fields**:
+- `fee_type` - 'processing', 'escrow', 'platform', 'late_payment'
+- `amount` - Fee amount
+- `description` - Fee description
 
-### 7. Admin & System
-
-#### `admin_audit_log`
-Audit trail for admin actions.
-
-```sql
-admin_audit_log (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  admin_id UUID REFERENCES user_profiles(id),
-  action TEXT NOT NULL,
-  table_name TEXT NOT NULL,
-  record_id UUID,
-  old_values JSONB,
-  new_values JSONB,
-  ip_address INET,
-  user_agent TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+### 7. Notifications & Alerts
 
 #### `system_notifications`
-User notification system.
+**Purpose**: System notifications to users
+**Key Fields**:
+- `notification_type` - Type of notification
+- `title`, `message` - Notification content
+- `priority` - 'low', 'normal', 'high', 'urgent'
+- `action_url` - Optional action link
+- `read_at` - Read timestamp
 
-```sql
-system_notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES user_profiles(id),
-  notification_type TEXT CHECK (notification_type IN (
-    'kyc_approved', 'kyc_rejected', 'property_approved', 'property_rejected',
-    'inquiry_received', 'viewing_scheduled', 'escrow_transaction', 'system_alert'
-  )),
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  read_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-)
-```
+#### `notification_templates`
+**Purpose**: Reusable notification templates
+**Key Fields**:
+- `template_name` - Template identifier
+- `title_template`, `message_template` - Template content
+- `variables` - Array of template variables
 
-## Storage Buckets
+#### `user_notification_preferences`
+**Purpose**: User notification preferences
+**Key Fields**:
+- `notification_type` - Type of notification
+- `email_enabled`, `sms_enabled`, `push_enabled` - Delivery preferences
 
-The schema includes four storage buckets for file management:
+#### `property_alerts`
+**Purpose**: Property search alerts
+**Key Fields**:
+- Search criteria: `country`, `city`, `property_types`, `price_min`, `price_max`
+- `frequency` - 'daily', 'weekly'
+- `enabled` - Alert status
 
-1. **`property-images`** (Public): Property photos and media
-2. **`property-documents`** (Private): Property-related documents
-3. **`user-documents`** (Private): KYC and user documents
-4. **`agent-documents`** (Private): Agent verification documents
+### 8. Analytics & Reporting
 
-## Row Level Security (RLS)
+#### `property_analytics`
+**Purpose**: Daily property performance metrics
+**Key Fields**:
+- `date` - Analytics date
+- `views_count`, `unique_views` - View metrics
+- `saved_count`, `inquiry_count`, `viewing_count` - Engagement metrics
 
-All tables have RLS enabled with appropriate policies:
+#### `user_activity_log`
+**Purpose**: User activity audit trail
+**Key Fields**:
+- `activity_type` - Type of activity
+- `activity_data` - JSONB with activity details
+- `ip_address`, `user_agent` - Activity context
 
-- **Users**: Can only access their own data
-- **Property Owners**: Can manage their own properties and media
-- **Admins**: Have access to all data for management
-- **Public**: Can view active properties and images
-
-## Key Features
-
-### 1. Scalable User Management
-- Multiple user roles and levels
-- Progressive verification system
-- Credit scoring for buyers
-- KYC workflow for compliance
-
-### 2. Comprehensive Property System
-- Support for multiple property types
-- Rent-to-buy and sale listings
-- Media management (images, virtual tours, floor plans)
-- Document verification system
-- Location-based search capabilities
-
-### 3. Agent Management
-- Agent verification and onboarding
-- Lead management system
-- Viewing scheduling
-- Performance tracking
-
-### 4. Financial Integration
-- Escrow transaction tracking
-- Support for multiple currencies
-- Transaction history and audit trail
-
-### 5. Admin Capabilities
-- Complete audit logging
-- KYC document review and approval
-- Property verification management
-- User management and monitoring
-- System notifications
-
-### 6. Security & Compliance
-- Row Level Security (RLS) on all tables
-- Secure file storage with access controls
-- Audit trails for admin actions
-- KYC document verification workflow
-
-## Usage Patterns
+## Form-to-Database Mapping
 
 ### User Registration Flow
-1. User signs up via Supabase Auth
-2. `handle_new_user()` trigger creates `user_profiles` record
-3. User completes basic profile information
-4. User initiates KYC verification process
-5. Documents uploaded to `user-documents` bucket
-6. Admin reviews and approves/rejects KYC
+
+1. **Basic Signup** (`BasicSignupModal.tsx`)
+   ```sql
+   -- Creates user in auth.users (handled by Supabase)
+   -- Creates profile in user_profiles
+   INSERT INTO user_profiles (id, first_name, last_name, email, phone, user_level, roles)
+   VALUES (auth.uid(), 'John', 'Doe', 'john@example.com', '+27123456789', 'basic', ARRAY['buyer']);
+   ```
+
+2. **Phone Verification** (`PhoneVerificationModal.tsx`)
+   ```sql
+   -- Creates verification attempt
+   INSERT INTO phone_verification_attempts (user_id, phone_number, otp_code, otp_hash, expires_at)
+   VALUES (auth.uid(), '+27123456789', '123456', 'hashed_otp', NOW() + INTERVAL '10 minutes');
+   
+   -- On successful verification
+   UPDATE user_profiles SET is_phone_verified = TRUE WHERE id = auth.uid();
+   SELECT complete_verification_step(auth.uid(), 'phone_verification');
+   ```
+
+3. **Identity Verification** (`IdentityVerificationModal.tsx`)
+   ```sql
+   -- Creates verification step
+   SELECT create_verification_step(auth.uid(), 'identity_verification');
+   
+   -- Uploads documents
+   INSERT INTO kyc_documents (kyc_verification_id, document_type, file_path, file_name, file_size, mime_type)
+   VALUES (verification_id, 'id_document', '/uploads/id_front.jpg', 'id_front.jpg', 1024000, 'image/jpeg');
+   
+   -- On approval
+   SELECT complete_verification_step(auth.uid(), 'identity_verification', '{"document_type": "national_id"}');
+   ```
+
+4. **Financial Assessment** (`FinancialAssessmentModal.tsx`)
+   ```sql
+   -- Creates financial assessment
+   INSERT INTO financial_assessments (
+     user_id, id_number, date_of_birth, nationality, residential_address,
+     employment_status, monthly_income, employer_name, job_title,
+     monthly_expenses, has_debts, credit_score, risk_level
+   ) VALUES (
+     auth.uid(), '63-123456-A-12', '1990-01-01', 'ZIM',
+     '{"streetAddress": "123 Main St", "city": "Harare", "province": "Harare"}',
+     'full-time', 25000.00, 'Tech Corp', 'Developer',
+     15000.00, 'minimal', 720, 'Medium'
+   );
+   
+   -- On completion
+   SELECT complete_verification_step(auth.uid(), 'financial_assessment');
+   ```
 
 ### Property Listing Flow
-1. Verified seller creates property listing
-2. Property documents uploaded to `property-documents` bucket
-3. Property images uploaded to `property-images` bucket
-4. Admin reviews and approves property
-5. Property becomes visible to buyers
 
-### Agent Onboarding Flow
-1. User applies to become an agent
-2. Agent documents uploaded to `agent-documents` bucket
-3. Admin verifies agent credentials
-4. Agent can manage leads and viewings
+1. **Property Details** (`PropertyListingModal.tsx`)
+   ```sql
+   -- Creates property listing
+   INSERT INTO properties (
+     owner_id, title, description, property_type, listing_type,
+     country, city, suburb, street_address, size_sqm, bedrooms, bathrooms,
+     price, currency, rent_to_buy_deposit, monthly_rental, rent_credit_percentage
+   ) VALUES (
+     auth.uid(), 'Modern 3-Bedroom House', 'Beautiful family home...',
+     'house', 'rent-to-buy', 'ZW', 'Harare', 'Borrowdale', '123 Example St',
+     200.00, 3, 2, 150000.00, 'USD', 15000.00, 1000.00, 25.00
+   );
+   ```
 
-### KYC Document Management
-1. Users upload documents through the application
-2. Documents stored in appropriate storage buckets
-3. File metadata stored in `kyc_documents` table
-4. Admins can download and review documents
-5. Verification status updated based on review
+2. **Property Media** (`PropertyListingModal.tsx`)
+   ```sql
+   -- Uploads property images
+   INSERT INTO property_media (property_id, media_type, file_path, file_name, is_main_image, display_order)
+   VALUES 
+     (property_id, 'image', '/uploads/property_1.jpg', 'property_1.jpg', TRUE, 1),
+     (property_id, 'image', '/uploads/property_2.jpg', 'property_2.jpg', FALSE, 2);
+   ```
 
-## Performance Considerations
+3. **Property Documents** (`PropertyDocumentsStep.tsx`)
+   ```sql
+   -- Uploads property documents
+   INSERT INTO property_documents (property_id, document_type, file_path, file_name, file_size, mime_type)
+   VALUES (property_id, 'title_deed', '/uploads/title_deed.pdf', 'title_deed.pdf', 2048000, 'application/pdf');
+   ```
 
-### Indexes
-- Comprehensive indexing on frequently queried columns
-- GIN indexes for array fields (roles, features, amenities)
-- Composite indexes for location-based queries
-- Partial indexes for status-based filtering
+### Rent-to-Buy Agreement Flow
 
-### Triggers
-- Automatic `updated_at` timestamp updates
-- Property view count increments
-- User profile creation on auth signup
-- Notification creation for system events
+1. **Agreement Creation**
+   ```sql
+   -- Creates rent-to-buy agreement
+   INSERT INTO rent_to_buy_agreements (
+     property_id, buyer_id, seller_id, monthly_rental, rent_credit_percentage,
+     option_period_months, purchase_price, deposit_amount, status, start_date
+   ) VALUES (
+     property_id, buyer_id, seller_id, 1000.00, 25.00, 36, 150000.00, 15000.00,
+     'active', CURRENT_DATE
+   );
+   ```
 
-### Storage Optimization
-- Separate buckets for different file types
-- Public access only for property images
-- Private access for sensitive documents
-- Admin access to all storage buckets
+2. **Monthly Payments**
+   ```sql
+   -- Records monthly rent payment
+   INSERT INTO rent_payments (
+     agreement_id, payment_month, rent_amount, rent_credit, net_payment, payment_status
+   ) VALUES (
+     agreement_id, '2024-01-01', 1000.00, 250.00, 750.00, 'paid'
+   );
+   ```
 
-## Migration Strategy
+## Key Functions
 
-1. **Phase 1**: Core user and KYC system
-2. **Phase 2**: Property management and media
-3. **Phase 3**: Agent system and leads
-4. **Phase 4**: Financial transactions and escrow
-5. **Phase 5**: Admin features and audit logging
+### Verification Functions
 
-## Security Considerations
+```sql
+-- Create verification step
+SELECT create_verification_step(user_id, 'phone_verification', 30);
 
-- All tables have RLS enabled
-- File access controlled by storage policies
-- Admin actions logged for audit trail
-- Sensitive data encrypted at rest
-- API access controlled by Supabase Auth
+-- Complete verification step
+SELECT complete_verification_step(user_id, 'identity_verification', '{"document_type": "passport"}');
 
-This schema provides a solid foundation for a scalable, secure, and feature-rich property marketplace with comprehensive user management, KYC verification, and admin capabilities. 
+-- Update user verification status
+SELECT update_user_verification_status(user_id);
+```
+
+### Credit Scoring Function
+
+```sql
+-- Calculate credit score
+SELECT calculate_credit_score(25000.00, 15000.00, '2-5years', 'minimal');
+-- Returns: 720
+```
+
+### Notification Functions
+
+```sql
+-- Create user notification
+SELECT create_user_notification(
+  user_id, 
+  'kyc_approved', 
+  'KYC Approved', 
+  'Your verification has been approved!',
+  'high'
+);
+
+-- Log user activity
+SELECT log_user_activity(user_id, 'property_viewed', '{"property_id": "uuid"}');
+```
+
+## Security & Performance
+
+### Row Level Security (RLS)
+All tables have RLS enabled with policies that ensure:
+- Users can only access their own data
+- Property owners can manage their properties
+- Admins have appropriate access levels
+- Public access is limited to active properties
+
+### Indexing Strategy
+- **Primary keys**: UUID with automatic indexing
+- **Foreign keys**: Indexed for join performance
+- **Search fields**: Text search indexes on property titles, descriptions
+- **Date fields**: Indexed for time-based queries
+- **Status fields**: Indexed for filtering
+
+### Performance Optimizations
+- **JSONB fields**: For flexible data storage with indexing
+- **Array fields**: For tags and features with GIN indexes
+- **Composite indexes**: For common query patterns
+- **Partial indexes**: For active records only
+
+## Data Migration Strategy
+
+### Phase 1: Core Tables
+1. Run the enhanced schema migration
+2. Migrate existing user data
+3. Set up RLS policies
+4. Create indexes
+
+### Phase 2: Verification System
+1. Set up verification workflows
+2. Create notification templates
+3. Configure credit scoring
+
+### Phase 3: Property Management
+1. Migrate property data
+2. Set up media storage
+3. Configure document verification
+
+### Phase 4: Rent-to-Buy System
+1. Set up agreement workflows
+2. Configure payment processing
+3. Set up escrow system
+
+## Monitoring & Maintenance
+
+### Key Metrics to Monitor
+- **User verification completion rates**
+- **Property listing performance**
+- **Rent-to-buy agreement success rates**
+- **System response times**
+- **Storage usage**
+
+### Regular Maintenance Tasks
+- **Clean up expired verification attempts**
+- **Archive old property listings**
+- **Update credit scores**
+- **Purge old activity logs**
+- **Optimize database performance**
+
+## Conclusion
+
+This database schema provides a robust foundation for the Mukamba FinTech platform, supporting all the user workflows identified in the application forms while maintaining security, performance, and scalability. The schema is designed to grow with the platform and can accommodate future features and requirements. 

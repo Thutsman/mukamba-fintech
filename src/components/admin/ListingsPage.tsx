@@ -21,7 +21,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PropertyDocumentsReview } from './PropertyDocumentsReview';
+import { AdminListingModal } from './AdminListingModal';
 import type { AdminListing } from '@/types/admin';
+import { PropertyListing } from '@/types/property';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -31,6 +33,7 @@ interface ListingsPageProps {
   onApproveListing?: (listingId: string) => void;
   onRejectListing?: (listingId: string, reason: string) => void;
   onBulkAction?: (action: 'approve' | 'reject', listingIds: string[]) => void;
+  onAddToListings?: (propertyListing: PropertyListing) => void;
 }
 
 export const ListingsPage: React.FC<ListingsPageProps> = ({
@@ -38,12 +41,15 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
   onViewListing,
   onApproveListing,
   onRejectListing,
-  onBulkAction
+  onBulkAction,
+  onAddToListings
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [selectedListings, setSelectedListings] = React.useState<string[]>([]);
   const [activeTab, setActiveTab] = React.useState('listings');
+  const [isAddListingModalOpen, setIsAddListingModalOpen] = React.useState(false);
+  const [selectedListingForAdd, setSelectedListingForAdd] = React.useState<AdminListing | undefined>();
 
   const filteredListings = listings.filter(listing => {
     const matchesSearch = listing.propertyTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,6 +103,18 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
         ? prev.filter(id => id !== listingId)
         : [...prev, listingId]
     );
+  };
+
+  const handleAddListing = (listing?: AdminListing) => {
+    setSelectedListingForAdd(listing);
+    setIsAddListingModalOpen(true);
+  };
+
+  const handleAddToListingsComplete = (propertyListing: PropertyListing) => {
+    onAddToListings?.(propertyListing);
+    setIsAddListingModalOpen(false);
+    setSelectedListingForAdd(undefined);
+    toast.success('Property added to listings successfully!');
   };
 
   const handleBulkApprove = () => {
@@ -316,7 +334,10 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
                     <Download className="w-4 h-4 mr-2" />
                     Export
                   </Button>
-                  <Button suppressHydrationWarning>
+                  <Button 
+                    onClick={() => handleAddListing()}
+                    suppressHydrationWarning
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Listing
                   </Button>
@@ -508,6 +529,18 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
                             <CheckCircle className="w-4 h-4" />
                           </Button>
                         )}
+                        {listing.status === 'approved' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddListing(listing)}
+                            className="h-8 w-8 p-0 text-blue-600"
+                            suppressHydrationWarning
+                            title="Add to Listings"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        )}
                         {listing.status === 'pending' && onRejectListing && (
                           <Button
                             variant="ghost"
@@ -553,6 +586,15 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Admin Listing Modal */}
+      <AdminListingModal
+        isOpen={isAddListingModalOpen}
+        onClose={() => setIsAddListingModalOpen(false)}
+        onComplete={handleAddToListingsComplete}
+        adminListing={selectedListingForAdd}
+        country="ZW"
+      />
     </div>
   );
 }; 

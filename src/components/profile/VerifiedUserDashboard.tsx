@@ -514,7 +514,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   // Show application modals if active
   if (showApplicationForm) {
-    return (
+  return (
       <ApplicationForm
         property={selectedPropertyForApplication || mockApplicationProperty}
         onBack={handleCloseApplicationModals}
@@ -719,7 +719,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                         <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${notificationsEnabled ? 'translate-x-5' : 'translate-x-1'}`}/>
             </button>
           </div>
-        </div>
+          </div>
         </div>
 
                 {/* Navigation Items */}
@@ -779,12 +779,12 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           <div>
               <div className="text-slate-800 font-semibold">Welcome, Verified Buyer</div>
               <div className="text-xs text-slate-500">{user.email}</div>
+            </div>
           </div>
-        </div>
         <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/>Verified</Badge>
             <Button className="bg-red-600 hover:bg-red-700" size="sm" onClick={() => setShowPropertySearch(true)}>Start New Search</Button>
-        </div>
+          </div>
         </div>
 
         {/* Metric Cards */}
@@ -842,7 +842,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               >
                 <Home className="w-4 h-4"/>
                 Browse Properties
-              </Button>
+          </Button>
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300 transition-colors duration-200" 
@@ -853,7 +853,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               </Button>
               <Button variant="outline" className="flex items-center gap-2" onClick={()=>setActiveSection('applications')}><FileText className="w-4 h-4"/>View Applications</Button>
               <Button variant="outline" className="flex items-center gap-2" onClick={()=>setShowMessaging(true)}><MessageCircle className="w-4 h-4"/>Messages</Button>
-            </div>
+        </div>
         </CardContent>
       </Card>
 
@@ -893,19 +893,19 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     ) : null}
                     <div className={`absolute inset-0 bg-slate-200 flex items-center justify-center ${p.imageUrl ? 'hidden' : 'flex'}`}>
                       <Building className="w-8 h-8 text-slate-400" />
-            </div>
+              </div>
                     {/* Property badges */}
                     <div className="absolute top-2 left-2 flex gap-1">
                       <Badge className="bg-green-100 text-green-800 text-xs">Available</Badge>
                 </div>
-              </div>
+                </div>
                   <div className="p-3">
                     <div className="font-semibold text-slate-800 text-sm truncate mb-1" title={`${p.title} • ${p.address}`}>
                       {p.title} • {p.address}
-                    </div>
+              </div>
                     <div className="text-lg font-bold text-slate-900 mb-1">
                       R{p.price.toLocaleString()}
-                </div>
+            </div>
                     <div className="text-xs text-slate-500 mb-3 flex gap-3">
                       <span className="flex items-center gap-1">
                         <Bed className="w-3 h-3" />
@@ -939,11 +939,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                       >
                         Apply Now
                       </Button>
-                    </div>
-            </div>
           </div>
+          </div>
+        </div>
               ))}
-            </div>
+        </div>
           </CardContent>
         </Card>
 
@@ -958,7 +958,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 <div key={idx} className="flex items-center justify-between text-sm">
                   <span className="text-slate-700">{a.text}</span>
                   <span className="text-slate-500">{a.time}</span>
-          </div>
+        </div>
                 ))}
           </div>
         </CardContent>
@@ -966,8 +966,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
       {/* Applications Section */}
       {activeSection === 'applications' && (
-        <Card>
-          <CardHeader>
+          <Card>
+            <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>My Applications</span>
               <Button 
@@ -978,10 +978,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 <FileText className="w-4 h-4 mr-1" />
                 New Application
               </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
               {mockApplications.length > 0 ? (
                 mockApplications.map((app) => (
                   <div key={app.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
@@ -1004,13 +1004,13 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                       }>
                         {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                       </Badge>
-                      <Button 
+                <Button
                         size="sm" 
                         variant="outline" 
                         onClick={() => handleViewApplicationStatus(app.id)}
-                      >
+                >
                         View Status
-                      </Button>
+                </Button>
                     </div>
                   </div>
                 ))
@@ -1028,9 +1028,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   </Button>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
       )}
 
 
@@ -1053,12 +1053,12 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   <h5 className="text-sm font-medium text-slate-900 mb-1">ID Copy</h5>
                   <p className="text-xs text-slate-500">Uploaded on: 2023-10-20</p>
                   <p className="text-xs text-slate-500">Status: Verified</p>
-                </div>
+        </div>
                 <div className="bg-slate-100 p-4 rounded-lg border border-slate-200">
                   <h5 className="text-sm font-medium text-slate-900 mb-1">Bank Statement</h5>
                   <p className="text-xs text-slate-500">Uploaded on: 2023-10-15</p>
                   <p className="text-xs text-slate-500">Status: Verified</p>
-                </div>
+      </div>
               </div>
             </div>
             <div className="mt-4">
@@ -1078,10 +1078,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       {/* Financing Section */}
       {activeSection === 'financing' && (
         <Card>
-          <CardHeader>
+        <CardHeader>
             <CardTitle>Financing Pre-Approval</CardTitle>
-          </CardHeader>
-          <CardContent>
+        </CardHeader>
+        <CardContent>
             <p className="text-slate-500">
               Your current financing pre-approval status and details.
               This feature is under development.
@@ -1105,9 +1105,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <Button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
                 View Financing Details
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
       )}
 
       {/* Profile Section */}
@@ -1118,27 +1118,27 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+            <div>
                 <h5 className="text-sm font-medium text-slate-900 mb-1">Full Name</h5>
                 <p className="text-slate-500">{user.firstName} {user.lastName}</p>
-              </div>
+            </div>
               <div>
                 <h5 className="text-sm font-medium text-slate-900 mb-1">Email</h5>
                 <p className="text-slate-500">{user.email}</p>
-              </div>
+          </div>
               <div>
                 <h5 className="text-sm font-medium text-slate-900 mb-1">Phone</h5>
                 <p className="text-slate-500">{user.phone || 'N/A'}</p>
-              </div>
-              <div>
+        </div>
+            <div>
                 <h5 className="text-sm font-medium text-slate-900 mb-1">Credit Score</h5>
                 <p className="text-slate-500">{user.creditScore}</p>
-              </div>
             </div>
+          </div>
             <div className="mt-4">
               <h4 className="text-lg font-semibold text-slate-900 mb-2">Financial Profile</h4>
               <FinancialSummaryCard profile={mockFinancialProfile} />
-            </div>
+        </div>
             <div className="mt-4">
               <h4 className="text-lg font-semibold text-slate-900 mb-2">Application History</h4>
               <Button 
@@ -1174,8 +1174,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   onChange={(e) => setDarkModeEnabled(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-              </div>
-            </div>
+          </div>
+      </div>
             <div className="mt-4">
               <h4 className="text-lg font-semibold text-slate-900 mb-2">Notifications</h4>
               <div className="flex items-center gap-2 text-sm text-slate-700">
@@ -1187,7 +1187,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   onChange={(e) => setNotificationsEnabled(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-              </div>
+      </div>
             </div>
             <div className="mt-4">
               <h4 className="text-lg font-semibold text-slate-900 mb-2">Account</h4>

@@ -11,13 +11,13 @@ interface CountryToggleProps {
 
 export const CountryToggle: React.FC<CountryToggleProps> = ({ value, onChange }) => {
   return (
-    <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 p-1 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800">
+    <div className="flex items-center space-x-2 bg-white p-1 rounded-lg shadow-lg border border-slate-200">
       <button
         onClick={() => onChange('ZW')}
         className={`relative px-4 py-2 rounded-md text-sm font-medium transition-colors ${
           value === 'ZW'
-            ? 'text-emerald-700 dark:text-emerald-300'
-            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+            ? 'text-emerald-700'
+            : 'text-slate-600 hover:text-slate-900'
         }`}
       >
         <span className="relative z-10 flex items-center space-x-2">
@@ -32,7 +32,7 @@ export const CountryToggle: React.FC<CountryToggleProps> = ({ value, onChange })
         {value === 'ZW' && (
           <motion.div
             layoutId="countryToggleBg"
-            className="absolute inset-0 bg-emerald-100 dark:bg-emerald-900/30 rounded-md"
+            className="absolute inset-0 bg-emerald-100 rounded-md"
             initial={false}
             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
           />
@@ -43,8 +43,8 @@ export const CountryToggle: React.FC<CountryToggleProps> = ({ value, onChange })
         onClick={() => onChange('SA')}
         className={`relative px-4 py-2 rounded-md text-sm font-medium transition-colors ${
           value === 'SA'
-            ? 'text-emerald-700 dark:text-emerald-300'
-            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+            ? 'text-emerald-700'
+            : 'text-slate-600 hover:text-slate-900'
         }`}
       >
         <span className="relative z-10 flex items-center space-x-2">
@@ -59,18 +59,18 @@ export const CountryToggle: React.FC<CountryToggleProps> = ({ value, onChange })
         {value === 'SA' && (
           <motion.div
             layoutId="countryToggleBg"
-            className="absolute inset-0 bg-emerald-100 dark:bg-emerald-900/30 rounded-md"
+            className="absolute inset-0 bg-emerald-100 rounded-md"
             initial={false}
             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
           />
         )}
       </button>
 
-      <div className="w-px h-6 bg-slate-200 dark:bg-slate-700" />
+      <div className="w-px h-6 bg-slate-200" />
 
       <button
         onClick={() => onChange(value === 'ZW' ? 'SA' : 'ZW')}
-        className="p-2 rounded-md text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        className="p-2 rounded-md text-slate-600 hover:text-slate-900"
         title="Switch Country"
       >
         <Globe className="w-4 h-4" />

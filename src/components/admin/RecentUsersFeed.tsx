@@ -76,46 +76,48 @@ export const RecentUsersFeed: React.FC<RecentUsersFeedProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors gap-3"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-slate-600" />
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900">{user.name}</p>
-                  <p className="text-sm text-slate-600">{user.email}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getStatusColor(user.status)}>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-slate-900 truncate">{user.name}</p>
+                  <p className="text-sm text-slate-600 truncate">{user.email}</p>
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                    <Badge className={`${getStatusColor(user.status)} text-xs`}>
                       {user.status}
                     </Badge>
-                    <Badge className={getRoleColor(user.role)}>
+                    <Badge className={`${getRoleColor(user.role)} text-xs`}>
                       {user.role}
                     </Badge>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between sm:justify-end space-x-2">
                 <span className="text-xs text-slate-500">{user.joined}</span>
-                {onViewUser && (
+                <div className="flex items-center space-x-1">
+                  {onViewUser && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewUser(user.id)}
+                      className="h-8 w-8 p-0"
+                      suppressHydrationWarning
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onViewUser(user.id)}
                     className="h-8 w-8 p-0"
                     suppressHydrationWarning
                   >
-                    <Eye className="w-4 h-4" />
+                    <MoreHorizontal className="w-4 h-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  suppressHydrationWarning
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
+                </div>
               </div>
             </motion.div>
           ))}

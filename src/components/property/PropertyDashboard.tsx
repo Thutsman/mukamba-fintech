@@ -639,7 +639,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-white">
+    <div className="min-h-screen bg-slate-50">
       {/* Floating Navigation */}
       <AnimatePresence>
         {showFloatingNav && (
@@ -817,7 +817,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
       </AnimatePresence>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-slate-900">
+      <div className="relative overflow-hidden bg-slate-800">
         {/* Full-bleed property background image */}
         <div className="absolute inset-0 pointer-events-none">
           <Image
@@ -869,15 +869,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-black/35 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-white/20 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
                 <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">500+</div>
                 <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Pre-Approved Properties</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-black/35 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-white/20 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
                 <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">2,000+</div>
                 <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Families Who Owned Their Home</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-black/35 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-white/20 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
                 <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">25+</div>
                 <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Cities with Zero Down Payment</div>
               </div>

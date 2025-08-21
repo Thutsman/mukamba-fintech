@@ -689,32 +689,32 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     
     // Only show celebration if we haven't shown it for this level before
     if (!shownCelebrations.has(celebrationKey)) {
-      if (verificationCount === 1 && user.isPhoneVerified) {
-        setCelebrationData({
-          title: 'Phone Verified! 🎉',
-          description: 'You can now contact property owners directly',
-          icon: <Phone className="w-6 h-6" />,
-          reward: 'Messaging unlocked'
-        });
-        setShowCelebration(true);
+    if (verificationCount === 1 && user.isPhoneVerified) {
+      setCelebrationData({
+        title: 'Phone Verified! 🎉',
+        description: 'You can now contact property owners directly',
+        icon: <Phone className="w-6 h-6" />,
+        reward: 'Messaging unlocked'
+      });
+      setShowCelebration(true);
         setShownCelebrations(prev => new Set([...prev, celebrationKey]));
-      } else if (verificationCount === 2 && user.isIdentityVerified) {
-        setCelebrationData({
-          title: 'Identity Verified! 🚀',
-          description: 'Access to premium features and financing options',
-          icon: <Shield className="w-6 h-6" />,
-          reward: 'Premium features unlocked'
-        });
-        setShowCelebration(true);
+    } else if (verificationCount === 2 && user.isIdentityVerified) {
+      setCelebrationData({
+        title: 'Identity Verified! 🚀',
+        description: 'Access to premium features and financing options',
+        icon: <Shield className="w-6 h-6" />,
+        reward: 'Premium features unlocked'
+      });
+      setShowCelebration(true);
         setShownCelebrations(prev => new Set([...prev, celebrationKey]));
-      } else if (verificationCount === 3) {
-        setCelebrationData({
-          title: 'Full Verification Complete! 🏆',
-          description: 'You now have access to all platform features',
-          icon: <Trophy className="w-6 h-6" />,
-          reward: 'Premium membership status'
-        });
-        setShowCelebration(true);
+    } else if (verificationCount === 3) {
+      setCelebrationData({
+        title: 'Full Verification Complete! 🏆',
+        description: 'You now have access to all platform features',
+        icon: <Trophy className="w-6 h-6" />,
+        reward: 'Premium membership status'
+      });
+      setShowCelebration(true);
         setShownCelebrations(prev => new Set([...prev, celebrationKey]));
       }
     }

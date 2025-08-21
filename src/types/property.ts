@@ -26,7 +26,7 @@ export interface PropertyDetails {
 
 export interface PropertyFinancials {
   price: number;
-  currency: 'USD' | 'ZAR';
+  currency: 'USD' | 'ZAR' | 'GBP';
   rentToBuyDeposit?: number;
   monthlyRental?: number;
   rentCreditPercentage?: number;
