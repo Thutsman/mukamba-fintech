@@ -320,7 +320,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-900">
+    <div className="min-h-screen bg-[#F8FAFC]">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 z-0 opacity-[0.03]" 
         style={{ 
@@ -329,43 +329,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       />
 
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 truncate">
-                    Mukamba Admin
-                  </h1>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                    Welcome back, {user.firstName}
-                  </p>
-                </div>
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-slate-900 truncate">
+                  Mukamba Admin
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 truncate">
+                  Welcome back, {user.firstName}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <Button
                 variant="outline"
                 onClick={onBackToUserView}
-                className="border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50"
+                className="text-xs sm:text-sm border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 px-2 sm:px-3 py-1 sm:py-2"
                 suppressHydrationWarning
               >
-                <User className="w-4 h-4 mr-2" />
-                User View
+                <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">User View</span>
+                <span className="sm:hidden">User</span>
               </Button>
               <Button
                 variant="outline"
                 onClick={onLogout}
-                className="border-red-200 hover:border-red-300 text-red-700 hover:bg-red-50"
+                className="text-xs sm:text-sm border-red-200 hover:border-red-300 text-red-700 hover:bg-red-50 px-2 sm:px-3 py-1 sm:py-2"
                 suppressHydrationWarning
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
+                <span className="sm:hidden">Logout</span>
               </Button>
             </div>
           </div>
@@ -386,12 +386,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* Main Content */}
       <main className="relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 sm:space-y-12">
           {activeTab === 'overview' && (
-            <div className="space-y-12">
+            <div className="space-y-8 sm:space-y-12">
               {/* Stats Grid */}
               <section>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Overview
                 </h2>
                 <OverviewCards stats={adminStats} />
@@ -399,36 +399,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Document Review Queue */}
               <section>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Review Queue
                 </h2>
                 <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white overflow-hidden">
-                  <CardContent className="p-6 relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-32 -mt-32" />
+                  <CardContent className="p-4 sm:p-6 relative">
+                    <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-16 sm:-mr-32 -mt-16 sm:-mt-32" />
                     <div className="relative">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                         <div className="space-y-2">
-                          <h3 className="text-xl font-semibold">Document Review Queue</h3>
-                          <p className="text-blue-100 text-sm">
+                          <h3 className="text-lg sm:text-xl font-semibold">Document Review Queue</h3>
+                          <p className="text-blue-100 text-xs sm:text-sm">
                             {mockListings.filter(l => l.status === 'pending').length} property listings and{' '}
                             {mockKYCVerifications.filter(v => v.status === 'pending').length} KYC verifications pending review
                           </p>
                         </div>
                         <Button 
                           variant="secondary" 
-                          className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm text-xs sm:text-sm px-3 sm:px-4 py-2"
                           onClick={() => setActiveTab('listings')}
                           suppressHydrationWarning
                         >
-                          <FileText className="w-4 h-4 mr-2" />
+                          <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                           Review Now
                         </Button>
                       </div>
 
                       {/* Progress Indicators */}
-                      <div className="grid grid-cols-2 gap-4 mt-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 sm:mt-6">
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-xs sm:text-sm">
                             <span>Property Listings</span>
                             <span className="font-medium">
                               {mockListings.filter(l => l.status === 'pending').length} pending
@@ -445,7 +445,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
 
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-xs sm:text-sm">
                             <span>KYC Verifications</span>
                             <span className="font-medium">
                               {mockKYCVerifications.filter(v => v.status === 'pending').length} pending
@@ -468,47 +468,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Quick Actions */}
               <section>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Quick Actions
                 </h2>
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-amber-500" />
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                       Quick Actions
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                       <Button 
-                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all duration-150" 
+                        className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
                         onClick={() => setActiveTab('listings')}
                         suppressHydrationWarning
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>Review Documents</span>
                       </Button>
                       <Button 
-                        className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/10 transition-all duration-150" 
+                        className="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
                         suppressHydrationWarning
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>Add User</span>
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="flex items-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150" 
+                        className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
                         suppressHydrationWarning
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>Edit Property</span>
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="flex items-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150" 
+                        className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
                         suppressHydrationWarning
                       >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>Export Data</span>
                       </Button>
                     </div>
@@ -518,14 +518,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Recent Activity */}
               <section>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Recent Activity
                 </h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                   <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="w-5 h-5 text-blue-500" />
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                         Recent Users
                       </CardTitle>
                     </CardHeader>
@@ -539,9 +539,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </Card>
 
                   <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Home className="w-5 h-5 text-emerald-500" />
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <Home className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                         Recent Properties
                       </CardTitle>
                     </CardHeader>
@@ -560,7 +560,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'listings' && (
             <section>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                 Property Listings
               </h2>
               <ListingsPage
@@ -575,7 +575,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'kyc' && (
             <section>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                 KYC Verifications
               </h2>
               <KYCPage
@@ -590,40 +590,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'users' && (
             <section>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                 User Management
               </h2>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm text-slate-600">
                       Manage user accounts, roles, and permissions
                     </p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700" suppressHydrationWarning>
-                    <Plus className="w-4 h-4 mr-2" />
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Add User
                   </Button>
                 </div>
                 
                 <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-6">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 sm:mb-6">
                       <div className="flex-1">
                         <Input
                           placeholder="Search users..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="max-w-sm"
+                          className="max-w-sm text-xs sm:text-sm"
                         />
                       </div>
-                      <Button variant="outline" suppressHydrationWarning>
-                        <Filter className="w-4 h-4 mr-2" />
+                      <Button variant="outline" className="text-xs sm:text-sm" suppressHydrationWarning>
+                        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         Filter
                       </Button>
                     </div>
                     
-                    <p className="text-slate-600 text-center py-8">
+                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
                       User management interface coming soon...
                     </p>
                   </CardContent>
@@ -634,25 +634,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'properties' && (
             <section>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                 Property Management
               </h2>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm text-slate-600">
                       Manage property listings and documentation
                     </p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700" suppressHydrationWarning>
-                    <Plus className="w-4 h-4 mr-2" />
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Add Property
                   </Button>
                 </div>
                 
                 <Card>
-                  <CardContent className="p-6">
-                    <p className="text-slate-600 text-center py-8">
+                  <CardContent className="p-4 sm:p-6">
+                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
                       Property management interface coming soon...
                     </p>
                   </CardContent>
@@ -663,19 +663,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'settings' && (
             <section>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                 System Settings
               </h2>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-xs sm:text-sm text-slate-600">
                     Configure system preferences and global settings
                   </p>
                 </div>
                 
                 <Card>
-                  <CardContent className="p-6">
-                    <p className="text-slate-600 text-center py-8">
+                  <CardContent className="p-4 sm:p-6">
+                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
                       System settings interface coming soon...
                     </p>
                   </CardContent>

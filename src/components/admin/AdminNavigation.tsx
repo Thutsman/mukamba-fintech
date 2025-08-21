@@ -59,7 +59,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+    <div className="bg-white border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Navigation Tabs */}
@@ -73,9 +73,9 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
                   key={item.id}
                   onClick={() => onTabChange(item.id as AdminTab)}
                   className={`
-                    flex items-center space-x-1 lg:space-x-2 py-4 px-3 lg:px-4 
+                    flex items-center space-x-1 lg:space-x-2 py-3 sm:py-4 px-2 sm:px-3 lg:px-4 
                     font-medium text-xs lg:text-sm transition-all duration-150 
-                    relative whitespace-nowrap rounded-md
+                    relative whitespace-nowrap rounded-md min-w-fit
                     ${isActive 
                       ? 'text-blue-600 bg-blue-50/50' 
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -123,11 +123,11 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
               className="flex items-center space-x-2"
             >
               <button
-                className="p-2 rounded-lg hover:bg-slate-50 transition-colors duration-150"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-50 transition-colors duration-150 relative"
                 onClick={() => console.log('Show notifications')}
               >
-                <Bell className="w-5 h-5 text-slate-400" />
-                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center rounded-full">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] flex items-center justify-center rounded-full">
                   {notifications}
                 </Badge>
               </button>
