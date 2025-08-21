@@ -55,7 +55,7 @@ const NavTab: React.FC<NavTabProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
-        relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+        relative flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200
         ${active 
           ? 'bg-blue-50/80 border-b-2 border-blue-500 text-blue-700 font-semibold shadow-sm' 
           : 'text-slate-600 hover:bg-slate-50/80 hover:text-slate-800'
@@ -76,7 +76,7 @@ const NavTab: React.FC<NavTabProps> = ({
       {/* Icon */}
       <div className="relative">
         <Icon 
-          size={20} 
+          size={18} 
           className={`transition-colors duration-200 ${
             active ? 'text-blue-600' : 'text-slate-500'
           }`} 
@@ -98,7 +98,7 @@ const NavTab: React.FC<NavTabProps> = ({
       </div>
 
       {/* Label */}
-      <span className="font-medium text-sm whitespace-nowrap">{label}</span>
+      <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{label}</span>
 
       {/* Notification Badge */}
       {count && count > 0 && (
@@ -114,7 +114,7 @@ const NavTab: React.FC<NavTabProps> = ({
         >
           <Badge 
             className={`
-              rounded-full text-xs font-semibold px-2 py-0.5 min-w-[20px] h-[20px] flex items-center justify-center
+              rounded-full text-xs font-semibold px-1.5 sm:px-2 py-0.5 min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-[20px] flex items-center justify-center
               ${active 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25' 
                 : 'bg-red-500 text-white shadow-lg shadow-red-500/25 animate-pulse'
@@ -178,11 +178,12 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
 
   return (
     <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between">
           {/* Enhanced Navigation Tabs */}
           <nav className="flex-1">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-2">
+            {/* Mobile: Grid layout for better space utilization */}
+            <div className="grid grid-cols-4 sm:flex sm:items-center sm:gap-2 py-2">
               {navigationItems.map((item) => {
                 const isActive = activeTab === item.id;
                 const pendingCount = getPendingCount(item.id as AdminTab);
@@ -215,10 +216,10 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
                 damping: 30,
                 delay: 0.2
               }}
-              className="flex items-center space-x-2 ml-4"
+              className="flex items-center space-x-2 ml-2 sm:ml-4"
             >
               <motion.button
-                className="relative p-2 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:from-red-100 hover:to-red-200 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="relative p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:from-red-100 hover:to-red-200 transition-all duration-300 shadow-md hover:shadow-lg"
                 onClick={() => console.log('Show notifications')}
                 whileHover={{ 
                   scale: 1.05,
@@ -231,11 +232,11 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
                 }}
                 suppressHydrationWarning
               >
-                <Bell className="w-5 h-5 text-red-600" />
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                 
                 {/* Enhanced notification badge */}
                 <motion.div
-                  className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold min-w-[20px] h-[20px] flex items-center justify-center rounded-full shadow-lg border-2 border-white"
+                  className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-[20px] flex items-center justify-center rounded-full shadow-lg border-2 border-white"
                   animate={{ 
                     scale: [1, 1.1, 1],
                     transition: { 
