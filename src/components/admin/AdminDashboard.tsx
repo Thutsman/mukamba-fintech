@@ -296,28 +296,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, y: -2 }}
-      transition={{ type: 'spring', stiffness: 300 }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="group cursor-pointer"
     >
-      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-        <CardContent className="p-6">
+      <Card className="relative overflow-hidden border-0 rounded-2xl shadow-xl transition-all duration-300">
+        <div className="absolute inset-0 bg-gradient-to-br opacity-10" 
+          style={{
+            backgroundImage: `radial-gradient(circle at 100% 100%, 
+              ${color === 'bg-blue-600' ? '#60a5fa 0%, #2563eb' :
+                color === 'bg-green-600' ? '#34d399 0%, #059669' :
+                color === 'bg-purple-600' ? '#a78bfa 0%, #7c3aed' :
+                '#fbbf24 0%, #d97706'} 100%)`
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br"
+          style={{
+            backgroundImage: `linear-gradient(to bottom right, 
+              ${color === 'bg-blue-600' ? '#3b82f6, #1d4ed8' :
+                color === 'bg-green-600' ? '#10b981, #047857' :
+                color === 'bg-purple-600' ? '#8b5cf6, #6d28d9' :
+                '#f59e0b, #b45309'})`
+          }}
+        />
+        <CardContent className="relative p-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-2xl font-bold text-white">{value}</h3>
                 {trend && (
-                  <Badge className="bg-green-100 text-green-700 text-xs">
+                  <Badge className="bg-white/20 text-white text-xs backdrop-blur-sm border border-white/10">
                     <TrendingUp className="w-3 h-3 mr-1" />
                     {trend}
                   </Badge>
                 )}
               </div>
-              <p className="text-sm font-semibold text-slate-700 mb-1">{title}</p>
-              <p className="text-xs text-slate-500">{subtitle}</p>
+              <p className="text-sm font-medium text-white/90 mb-1">{title}</p>
+              <p className="text-xs text-white/70">{subtitle}</p>
             </div>
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${color}`}>
-              <Icon className="w-6 h-6 text-white" />
+            <div className="relative group-hover:scale-110 transition-transform duration-300">
+              <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
+              <div className="relative w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
+                <Icon className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -326,51 +347,64 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100/80">
       {/* Subtle background pattern */}
-      <div className="absolute inset-0 z-0 opacity-[0.03]" 
+      <div className="absolute inset-0 z-0 opacity-[0.15] mix-blend-soft-light pointer-events-none" 
         style={{ 
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` 
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5z' fill='%23000000' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+          backgroundSize: '50px 50px'
         }} 
       />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-blue-50/50 via-transparent to-transparent pointer-events-none" />
 
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <button
-                className="lg:hidden inline-flex items-center gap-2 p-2 rounded-md hover:bg-slate-50"
-                onClick={() => setMobileOpen(v => !v)}
-                aria-label="Toggle navigation menu"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-lg sm:text-2xl font-bold text-slate-900 truncate">
-                    Mukamba Admin
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">
-                    Welcome back, {user.firstName}
-                  </p>
+      <div className="sticky top-0 z-50">
+        <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 transition-colors duration-200"
+                  onClick={() => setMobileOpen(v => !v)}
+                  aria-label="Toggle navigation menu"
+                >
+                  <Menu className="w-5 h-5 text-slate-700" />
+                </button>
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-blue-500 rounded-xl blur-lg opacity-30 group-hover:opacity-40 transition-opacity duration-300" />
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-500 rounded-xl flex items-center justify-center shadow-xl shadow-blue-500/20">
+                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-lg sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 truncate">
+                      Mukamba Admin
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">
+                      Welcome back, {user.firstName}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="header-actions flex items-center gap-3 flex-shrink-0">
-              <button 
-                className="sign-out-button flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:from-red-100 hover:to-red-200 transition-all duration-300 shadow-md hover:shadow-lg text-red-700 hover:text-red-900"
-                onClick={onLogout}
-                suppressHydrationWarning
-              >
-                <LogOut size={18} />
-                <span className="hidden sm:inline text-sm font-medium">Sign Out</span>
-                <span className="sm:hidden text-sm font-medium">Logout</span>
-              </button>
+              <div className="header-actions flex items-center gap-4 flex-shrink-0">
+                <button
+                  className="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-slate-100/80 hover:bg-slate-200/80 transition-colors duration-200 text-slate-700"
+                  aria-label="View notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                </button>
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl shadow-red-500/10 hover:shadow-red-500/20 text-white font-medium"
+                  onClick={onLogout}
+                  suppressHydrationWarning
+                >
+                  <LogOut size={18} />
+                  <span className="hidden sm:inline text-sm">Sign Out</span>
+                  <span className="sm:hidden text-sm">Logout</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -386,7 +420,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           isMobileOpen={mobileOpen}
           onMobileToggle={() => setMobileOpen(v => !v)}
         />
-        <main className="flex-1 max-w-[calc(100vw-16rem)] lg:pl-6 py-6 space-y-8 sm:space-y-12 overflow-y-auto">
+        <main className="flex-1 lg:pl-6 py-6 space-y-8 sm:space-y-12 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">
               {activeTab === 'overview' && (
                 <div className="space-y-8 sm:space-y-12">

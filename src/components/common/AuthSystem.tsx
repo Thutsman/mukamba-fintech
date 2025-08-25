@@ -160,18 +160,18 @@ export const AuthSystem: React.FC = () => {
     // Default view - main application
     return (
       <div className="relative">
-        {/* Compact Navigation Header */}
-        <nav className="bg-white py-3 sm:py-4 px-4 sm:px-6 shadow-sm border-b border-slate-200 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between">
+        {/* Header matching Mukamba Gateway marketing site */}
+        <header className="bg-white shadow-lg border-b border-slate-200 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex items-center justify-between h-20 sm:h-24 md:h-28">
               {/* Logo */}
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-3">
-                  {/* Replace the icon-based logo with an image logo */}
+              <div className="flex-shrink-0 flex items-center">
+                <div className="flex items-center">
+                  {/* Logo matching Mukamba Gateway marketing site */}
                   <img 
                     src="/logo.svg" 
-                    alt="Mukamba Fintech Logo" 
-                    className="w-10 h-10 object-contain"
+                    alt="Mukamba Logo" 
+                    className="header-logo w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 object-contain"
                     onError={(e) => {
                       // Fallback to the original icon if image fails to load
                       const target = e.currentTarget as HTMLImageElement;
@@ -182,13 +182,9 @@ export const AuthSystem: React.FC = () => {
                       }
                     }}
                   />
-                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
-                    <User className="w-5 h-5 text-white" />
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
+                    <User className="w-18 h-18 sm:w-22 sm:h-22 md:w-26 md:h-26 text-white" />
                   </div>
-                </div>
-                <div>
-                                  <div className="text-xl font-bold text-slate-900">MUKAMBA</div>
-                <div className="text-xs text-slate-600">FINTECH</div>
                 </div>
               </div>
 
@@ -302,7 +298,7 @@ export const AuthSystem: React.FC = () => {
               </div>
             </div>
           </div>
-        </nav>
+        </header>
 
         {/* Property Dashboard - Available to all users */}
         <PropertyDashboard 

@@ -484,10 +484,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             )}
             
             {/* Property Badges */}
-            <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap gap-1 sm:gap-2">
-              <Badge className="bg-red-500 text-white text-xs">
-                Featured
-              </Badge>
+                                    <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap gap-1 sm:gap-2">
+                          <Badge className="bg-blue-500 text-white text-xs">
+                            Featured
+                          </Badge>
               {property.listingType === 'rent-to-buy' && (
                 <Badge className="bg-green-500 text-white text-xs">
                   Rent-to-Buy
@@ -587,7 +587,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 
                 <Button
                   size="sm"
-                  className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
+                  className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePropertySelect(property);
@@ -658,7 +658,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             >
               <Button
                 size="icon"
-                className="w-12 h-12 bg-red-600 hover:bg-red-700 shadow-lg"
+                className="w-12 h-12 bg-blue-600 hover:bg-blue-700 shadow-lg"
                 onClick={handleQuickSearchToggle}
               >
                 <Search className="w-5 h-5" />
@@ -758,7 +758,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                       <Button
                         onClick={handleQuickSearch}
                         disabled={isSearchLoading}
-                        className="w-full bg-red-600 hover:bg-red-700 text-sm"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-sm"
                       >
                         {isSearchLoading ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -818,33 +818,51 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
 
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-slate-800">
-        {/* Full-bleed property background image */}
+        {/* Elegant house background image from Unsplash */}
         <div className="absolute inset-0 pointer-events-none">
           <Image
-            src="/propertyimage.jpg"
-            alt=""
+            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2073&q=80"
+            alt="Elegant modern house exterior"
             fill
             priority
-            className="object-cover object-center sm:object-[50%_40%] brightness-[0.9] contrast-110"
+            className="object-cover object-center brightness-[0.7] contrast-120"
             sizes="100vw"
           />
         </div>
-        {/* Subtle gradient overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/70 sm:from-black/20 sm:to-black/45" />
+        {/* Enhanced gradient overlay for better logo visibility */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/70" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
           <div className="text-center space-y-6 sm:space-y-8">
-            {/* Main Headline */}
-            <motion.h1 
-              className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] px-2 mb-4"
+            {/* Logo and Main Headline */}
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
+              className="flex flex-col items-center space-y-6"
             >
-              Skip the Down Payment,
-              <br />
-              <span className="text-blue-300">Own Your Home Faster</span>
-            </motion.h1>
+              {/* Enhanced Logo with better visibility */}
+              <div className="relative">
+                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-2xl">
+                  <Image
+                    src="/logo.svg"
+                    alt="Mukamba Logo"
+                    width={120}
+                    height={60}
+                    className="h-20 w-auto sm:h-24 md:h-28 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]"
+                    priority
+                  />
+                </div>
+              </div>
+              
+              <h1 
+                className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] px-2 mb-4 text-center"
+              >
+                Skip the Down Payment,
+                <br />
+                <span className="text-blue-300">Own Your Home Faster</span>
+              </h1>
+            </motion.div>
             
             
             {/* Subheadline */}
@@ -858,7 +876,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 Buy, Sell, or Rent-to-Own Properties
               </p>
               <p className="text-base md:text-lg text-gray-200">
-                Comprehensive real estate solutions across Zimbabwe and South Africa.
+                Comprehensive real estate solutions across Zimbabwe and South Africa
               </p>
             </motion.div>
             
@@ -892,7 +910,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             >
               <Button 
                 size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-[0_4px_14px_rgba(220,38,38,0.3)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-[0_4px_14px_rgba(59,130,246,0.3)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5"
                 onClick={() => setActiveTab('listings')}
                 suppressHydrationWarning
               >
@@ -1006,7 +1024,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <Button
                 onClick={handleQuickSearch}
                 disabled={isSearchLoading}
-                      className="bg-red-600 hover:bg-red-700 px-6 py-2"
+                      className="bg-blue-600 hover:bg-blue-700 px-6 py-2"
               >
                 {isSearchLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1070,7 +1088,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                         
                         {/* Property Badges */}
                         <div className="absolute top-2 left-2 flex gap-1">
-                          <Badge className="bg-red-500 text-white text-xs">
+                          <Badge className="bg-blue-500 text-white text-xs">
                             Featured
                           </Badge>
                           {property.listingType === 'rent-to-buy' && (
@@ -1570,7 +1588,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                       onClick={() => setActiveTab('calculator')}
                       viewport={{ once: true }}
                     >
-                      <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300">
+                      <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300">
                         {/* Popular Badge */}
                         <div className="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
                           Most Popular
@@ -1583,13 +1601,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                           
                           <div>
                             <h3 className="text-xl font-bold mb-2">Calculate Your Savings</h3>
-                            <p className="text-red-100 text-sm mb-4">
+                            <p className="text-blue-100 text-sm mb-4">
                               See how much you'll save vs. traditional home buying
                             </p>
                             
                             {/* Preview */}
                             <div className="bg-white/10 rounded-lg p-3 text-left">
-                              <div className="text-xs text-red-200 mb-1">Preview:</div>
+                              <div className="text-xs text-blue-200 mb-1">Preview:</div>
                               <div className="text-xs space-y-1">
                                 <div>• Monthly payment: $1,200</div>
                                 <div>• Rent credit: $300/month</div>
@@ -1742,7 +1760,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                       </p>
                       <Button
                         onClick={() => setActiveTab('listings')}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-blue-600 hover:bg-blue-700"
                         suppressHydrationWarning
                       >
                         Browse Properties
@@ -1771,7 +1789,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                   </p>
                   <Button
                     onClick={() => setActiveTab('listings')}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-blue-600 hover:bg-blue-700"
                     suppressHydrationWarning
                   >
                     Browse Properties
@@ -1791,13 +1809,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     Create an account to save your favorite properties and get personalized recommendations
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button className="bg-red-600 hover:bg-red-700" suppressHydrationWarning>
+                    <Button className="bg-blue-600 hover:bg-blue-700" suppressHydrationWarning>
                       <UserPlus className="w-4 h-4 mr-2" />
                       Create Account
                     </Button>
                     <Button 
                       variant="outline" 
-                      className="border-red-300 text-red-700" 
+                      className="border-blue-300 text-blue-700" 
                       onClick={() => {
                         setShowSigninModal(true);
                         // Analytics tracking for signin modal
@@ -2050,7 +2068,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             >
               <Button
                 size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto"
                 onClick={() => setActiveTab('listings')}
                 suppressHydrationWarning
               >
@@ -2164,7 +2182,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     <Button
                       onClick={handleQuickSearch}
                       disabled={isSearchLoading}
-                      className="bg-red-600 hover:bg-red-700 px-6 py-2"
+                      className="bg-blue-600 hover:bg-blue-700 px-6 py-2"
                     >
                       {isSearchLoading ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -2228,7 +2246,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                         
                         {/* Property Badges */}
                         <div className="absolute top-2 left-2 flex gap-1">
-                          <Badge className="bg-red-500 text-white text-xs">
+                          <Badge className="bg-blue-500 text-white text-xs">
                             Featured
                           </Badge>
                           {property.listingType === 'rent-to-buy' && (
