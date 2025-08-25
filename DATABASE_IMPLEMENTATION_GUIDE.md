@@ -66,16 +66,16 @@ AND tablename IN ('user_profiles', 'properties', 'kyc_verifications');
 const handleSignup = async (data: BasicSignupData) => {
   // 1. Create user in Supabase Auth
   const { user, error } = await supabase.auth.signUp({
-    email: data.email,
-    password: data.password,
-    options: {
-      data: {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone: data.phone
-      }
-    }
-  });
+            email: data.email,
+            password: data.password,
+            options: {
+              data: {
+                first_name: data.firstName,
+                last_name: data.lastName,
+                phone: data.phone
+              }
+            }
+          });
 
   // 2. User profile is automatically created by trigger
   // 3. Create initial verification step
@@ -112,11 +112,11 @@ const handleVerifyOTP = async (otp: string) => {
   // 1. Verify OTP
   const { data: attempt } = await supabase
     .from('phone_verification_attempts')
-    .select('*')
+              .select('*')
     .eq('user_id', user.id)
     .eq('otp_code', otp)
-    .single();
-    
+              .single();
+
   if (attempt && new Date() < new Date(attempt.expires_at)) {
     // 2. Mark verification as complete
     await supabase.rpc('complete_verification_step', {
@@ -152,10 +152,10 @@ const handleDocumentUpload = async (files: File[]) => {
     await supabase.from('kyc_documents').insert({
       kyc_verification_id: verificationId,
       document_type: 'id_document',
-      file_path: filePath,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type
+    file_path: filePath,
+    file_name: file.name,
+    file_size: file.size,
+    mime_type: file.type
     });
   }
 };
@@ -176,7 +176,7 @@ const handleFinancialAssessment = async (data: FinancialFormData) => {
   
   // 2. Store financial assessment
   await supabase.from('financial_assessments').insert({
-    user_id: user.id,
+      user_id: user.id,
     id_number: data.idNumber,
     date_of_birth: data.dateOfBirth,
     nationality: data.nationality,
@@ -238,10 +238,10 @@ const handlePropertySubmission = async (data: PropertyListingData, images: File[
     await supabase.from('property_media').insert({
       property_id: property.id,
       media_type: 'image',
-      file_path: filePath,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
+    file_path: filePath,
+    file_name: file.name,
+    file_size: file.size,
+    mime_type: file.type,
       is_main_image: i === 0,
       display_order: i
     });
@@ -279,9 +279,9 @@ const uploadFile = async (file: File, bucket: string, path: string) => {
       cacheControl: '3600',
       upsert: false
     });
-    
+
   if (error) throw error;
-  
+
   // Get public URL (for property-images only)
   if (bucket === 'property-images') {
     const { data: { publicUrl } } = supabase.storage
@@ -403,7 +403,7 @@ const updateProperty = async (propertyId: string, updates: any) => {
     .select('owner_id')
     .eq('id', propertyId)
     .single();
-    
+
   if (property.owner_id !== user.id) {
     throw new Error('Unauthorized');
   }

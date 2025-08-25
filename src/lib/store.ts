@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
 import type { User, RegistrationData, LoginCredentials, BasicSignupData, UserLevel } from '@/types/auth';
 import { getUserPermissions, getUserLevel } from '@/types/auth';
 
@@ -19,6 +20,7 @@ interface AuthStore {
   basicSignup: (data: BasicSignupData) => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  checkAuth: () => Promise<void>;
   startVerification: (type: 'buyer' | 'seller', step: string) => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
@@ -44,12 +46,60 @@ export const useAuthStore = create<AuthStore>()(
         try {
           console.log('Starting signup process for:', data.email);
           
-          // Mock API call - replace with actual API
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Create basic user account
+          if (!supabase) {
+            throw new Error('Supabase client not initialized');
+          }
+
+          // Real Supabase auth call
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: data.email,
+            password: data.password,
+            options: {
+              data: {
+                first_name: data.firstName,
+                last_name: data.lastName,
+                phone: data.phone,
+                app_type: 'fintech' // Add app metadata to distinguish from early access
+              }
+            }
+          });
+
+          if (authError) {
+            console.error('Supabase auth error:', authError);
+            throw new Error(authError.message);
+          }
+
+          if (!authData.user) {
+            throw new Error('No user data returned from signup');
+          }
+
+          console.log('Supabase user created:', authData.user);
+
+          // Check if email confirmation is required
+          if (authData.user && !authData.user.email_confirmed_at) {
+            console.log('Email confirmation required - user not fully authenticated');
+            
+            // Don't set user as authenticated until email is confirmed
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: 'Please check your email and confirm your account before proceeding.',
+              isNewUser: false
+            });
+            
+            // Show email confirmation message
+            alert('Account created successfully! Please check your email and click the confirmation link to activate your account.');
+            return;
+          }
+
+          // Note: Profile creation is now handled by the database trigger
+          // The trigger will automatically create a user profile when a user signs up
+          console.log('User profile will be created automatically by database trigger');
+
+          // Create basic user account for frontend
           const newUser: User = {
-            id: `user_${userIdCounter++}`,
+            id: authData.user.id,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,
@@ -92,7 +142,7 @@ export const useAuthStore = create<AuthStore>()(
         } catch (error) {
           console.error('Signup failed:', error);
           set({
-            error: 'Signup failed. Please try again.',
+            error: error instanceof Error ? error.message : 'Signup failed. Please try again.',
             isLoading: false,
             isAuthenticated: false,
             user: null
@@ -101,160 +151,81 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-            login: async (credentials) => {
+                         login: async (credentials) => {
         set({ isLoading: true, error: null });
         
         try {
-          // Mock API call - replace with actual API
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Check for admin credentials
-          if (credentials.email === 'admin@mukamba.com' && credentials.password === 'admin123') {
-            const adminUser: User = {
-              id: 'admin_1',
-              firstName: 'Admin',
-              lastName: 'User',
-              email: credentials.email,
-              phone: '+27123456789',
-              level: 'premium',
-              roles: ['admin'],
-              isPhoneVerified: true,
-              isIdentityVerified: true,
-              isFinanciallyVerified: true,
-              isPropertyVerified: true,
-              isAddressVerified: true,
-              nationality: 'SA',
-              creditScore: 850,
-              permissions: getUserPermissions({
-                roles: ['admin'],
-                isPhoneVerified: true,
-                isIdentityVerified: true,
-                isFinanciallyVerified: true,
-                isPropertyVerified: true,
-                kycStatus: 'approved'
-              }),
-              kycStatus: 'approved',
-              createdAt: new Date()
-            };
-
-            set({
-              user: adminUser,
-              isAuthenticated: true,
-              isLoading: false,
-              isNewUser: false
-            });
-            return;
+          if (!supabase) {
+            throw new Error('Supabase client not initialized');
           }
 
-          // Check for agent credentials
-          if (credentials.email === 'agent@mukamba.com' && credentials.password === 'agent123') {
-            const agentUser: User = {
-              id: 'agent_1',
-              firstName: 'Sarah',
-              lastName: 'Johnson',
-              email: credentials.email,
-              phone: '+27123456789',
-              level: 'premium',
-              roles: ['agent'],
-              isPhoneVerified: true,
-              isIdentityVerified: true,
-              isFinanciallyVerified: true,
-              isPropertyVerified: true,
-              isAddressVerified: true,
-              nationality: 'SA',
-              creditScore: 800,
-              permissions: getUserPermissions({
-                roles: ['agent'],
-                isPhoneVerified: true,
-                isIdentityVerified: true,
-                isFinanciallyVerified: true,
-                isPropertyVerified: true,
-                kycStatus: 'approved'
-              }),
-              kycStatus: 'approved',
-              createdAt: new Date()
-            };
-
-            set({
-              user: agentUser,
-              isAuthenticated: true,
-              isLoading: false,
-              isNewUser: false
-            });
-            return;
-          }
-
-          // Check for verified seller credentials (test account)
-          if (credentials.email === 'seller@mukamba.com' && credentials.password === 'seller123') {
-            const sellerUser: User = {
-              id: 'seller_1',
-              firstName: 'Verified',
-              lastName: 'Seller',
-              email: credentials.email,
-              phone: '+27123456789',
-              level: 'premium',
-              roles: ['seller'],
-              isPhoneVerified: true,
-              isIdentityVerified: true,
-              isFinanciallyVerified: true,
-              isPropertyVerified: true,
-              isAddressVerified: true,
-              nationality: 'SA',
-              permissions: getUserPermissions({
-                roles: ['seller'],
-                isPhoneVerified: true,
-                isIdentityVerified: true,
-                isFinanciallyVerified: true,
-                isPropertyVerified: true,
-                isAddressVerified: true,
-                kycStatus: 'approved'
-              }),
-              kycStatus: 'approved',
-              createdAt: new Date()
-            };
-
-            set({
-              user: sellerUser,
-              isAuthenticated: true,
-              isLoading: false,
-              isNewUser: false
-            });
-            return;
-          }
-          
-          // Mock user data - replace with actual API response
-          const mockUser: User = {
-            id: '1',
-            firstName: 'John',
-            lastName: 'Doe',
+          // Real Supabase login
+          const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
-            phone: '+27123456789',
-            level: 'verified',
-            roles: ['buyer'],
-            isPhoneVerified: true,
-            isIdentityVerified: true,
-            isFinanciallyVerified: true,
-            isPropertyVerified: false,
-            isAddressVerified: true,
-            nationality: 'SA',
-            creditScore: 750,
+            password: credentials.password
+          });
+
+          if (error) {
+            throw new Error(error.message);
+          }
+
+          if (!data.user) {
+            throw new Error('No user data returned from login');
+          }
+
+          console.log('User logged in:', data.user);
+
+          // Fetch user profile from database
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            // Continue with basic user data if profile not found
+          }
+
+          // Convert Supabase user to our User type
+          const user: User = {
+            id: data.user.id,
+            firstName: profileData?.first_name || data.user.user_metadata?.first_name || 'User',
+            lastName: profileData?.last_name || data.user.user_metadata?.last_name || '',
+            email: data.user.email || credentials.email,
+            phone: profileData?.phone || data.user.user_metadata?.phone || '',
+            
+            // Map from database profile
+            level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
+            roles: profileData?.user_role === 'admin' ? ['admin'] : 
+                   profileData?.user_role === 'seller' ? ['seller'] : 
+                   profileData?.user_role === 'buyer' ? ['buyer'] : [],
+            
+            // Verification status from database
+            isPhoneVerified: profileData?.is_phone_verified || false,
+            isIdentityVerified: profileData?.is_identity_verified || false,
+            isFinanciallyVerified: profileData?.is_financially_verified || false,
+            isPropertyVerified: profileData?.is_property_verified || false,
+            isAddressVerified: profileData?.is_address_verified || false,
+            
+            // System fields
             permissions: getUserPermissions({
-              isPhoneVerified: true,
-              isIdentityVerified: true,
-              isFinanciallyVerified: true,
-              isPropertyVerified: false,
-              isAddressVerified: true,
-              kycStatus: 'approved'
+              isPhoneVerified: profileData?.is_phone_verified || false,
+              isIdentityVerified: profileData?.is_identity_verified || false,
+              isFinanciallyVerified: profileData?.is_financially_verified || false,
+              isPropertyVerified: profileData?.is_property_verified || false,
+              isAddressVerified: profileData?.is_address_verified || false,
+              kycStatus: 'none' // TODO: Map from database
             }),
-            kycStatus: 'approved',
-            createdAt: new Date()
+            kycStatus: 'none', // TODO: Map from database
+            createdAt: data.user.created_at ? new Date(data.user.created_at) : new Date()
           };
 
-          set({
-            user: mockUser,
+                    set({
+            user: user,
             isAuthenticated: true,
             isLoading: false,
-            isNewUser: false // Returning user
+            isNewUser: false
           });
         } catch (error) {
           set({
@@ -264,17 +235,101 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      logout: () => {
-        set({
-          user: null,
-          isAuthenticated: false,
-          error: null,
-          isLoading: false,
-          isNewUser: false
-        });
-      },
+             logout: async () => {
+         try {
+           if (supabase) {
+             await supabase.auth.signOut();
+           }
+         } catch (error) {
+           console.error('Logout error:', error);
+         }
+         
+         set({
+           user: null,
+           isAuthenticated: false,
+           error: null,
+           isLoading: false,
+           isNewUser: false
+                  });
+       },
 
-      startVerification: async (type: 'buyer' | 'seller', step: string) => {
+       checkAuth: async () => {
+         try {
+           if (!supabase) return;
+
+           const { data: { user }, error } = await supabase.auth.getUser();
+           
+           if (error || !user) {
+             set({
+               user: null,
+               isAuthenticated: false,
+               isLoading: false
+             });
+             return;
+           }
+
+           // Fetch user profile from database
+           const { data: profileData, error: profileError } = await supabase
+             .from('user_profiles')
+             .select('*')
+             .eq('id', user.id)
+             .single();
+
+           if (profileError) {
+             console.error('Profile fetch error:', profileError);
+           }
+
+           // Convert Supabase user to our User type
+           const userData: User = {
+             id: user.id,
+             firstName: profileData?.first_name || user.user_metadata?.first_name || 'User',
+             lastName: profileData?.last_name || user.user_metadata?.last_name || '',
+             email: user.email || '',
+             phone: profileData?.phone || user.user_metadata?.phone || '',
+             
+             // Map from database profile
+             level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
+             roles: profileData?.user_role === 'admin' ? ['admin'] : 
+                    profileData?.user_role === 'seller' ? ['seller'] : 
+                    profileData?.user_role === 'buyer' ? ['buyer'] : [],
+             
+             // Verification status from database
+             isPhoneVerified: profileData?.is_phone_verified || false,
+             isIdentityVerified: profileData?.is_identity_verified || false,
+             isFinanciallyVerified: profileData?.is_financially_verified || false,
+             isPropertyVerified: profileData?.is_property_verified || false,
+             isAddressVerified: profileData?.is_address_verified || false,
+             
+             // System fields
+             permissions: getUserPermissions({
+               isPhoneVerified: profileData?.is_phone_verified || false,
+               isIdentityVerified: profileData?.is_identity_verified || false,
+               isFinanciallyVerified: profileData?.is_financially_verified || false,
+               isPropertyVerified: profileData?.is_property_verified || false,
+               isAddressVerified: profileData?.is_address_verified || false,
+               kycStatus: 'none' // TODO: Map from database
+             }),
+             kycStatus: 'none', // TODO: Map from database
+             createdAt: user.created_at ? new Date(user.created_at) : new Date()
+           };
+
+           set({
+             user: userData,
+             isAuthenticated: true,
+             isLoading: false,
+             isNewUser: false
+           });
+         } catch (error) {
+           console.error('Auth check error:', error);
+           set({
+             user: null,
+             isAuthenticated: false,
+             isLoading: false
+           });
+         }
+       },
+
+       startVerification: async (type: 'buyer' | 'seller', step: string) => {
         set({ isLoading: true, error: null });
         
         try {

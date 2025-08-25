@@ -247,7 +247,7 @@ The database is built on **Supabase** (PostgreSQL) and follows these key princip
 ### User Registration Flow
 
 1. **Basic Signup** (`BasicSignupModal.tsx`)
-   ```sql
+```sql
    -- Creates user in auth.users (handled by Supabase)
    -- Creates profile in user_profiles
    INSERT INTO user_profiles (id, first_name, last_name, email, phone, user_level, roles)
@@ -266,7 +266,7 @@ The database is built on **Supabase** (PostgreSQL) and follows these key princip
    ```
 
 3. **Identity Verification** (`IdentityVerificationModal.tsx`)
-   ```sql
+```sql
    -- Creates verification step
    SELECT create_verification_step(auth.uid(), 'identity_verification');
    
@@ -299,7 +299,7 @@ The database is built on **Supabase** (PostgreSQL) and follows these key princip
 ### Property Listing Flow
 
 1. **Property Details** (`PropertyListingModal.tsx`)
-   ```sql
+```sql
    -- Creates property listing
    INSERT INTO properties (
      owner_id, title, description, property_type, listing_type,
@@ -322,7 +322,7 @@ The database is built on **Supabase** (PostgreSQL) and follows these key princip
    ```
 
 3. **Property Documents** (`PropertyDocumentsStep.tsx`)
-   ```sql
+```sql
    -- Uploads property documents
    INSERT INTO property_documents (property_id, document_type, file_path, file_name, file_size, mime_type)
    VALUES (property_id, 'title_deed', '/uploads/title_deed.pdf', 'title_deed.pdf', 2048000, 'application/pdf');
@@ -331,7 +331,7 @@ The database is built on **Supabase** (PostgreSQL) and follows these key princip
 ### Rent-to-Buy Agreement Flow
 
 1. **Agreement Creation**
-   ```sql
+```sql
    -- Creates rent-to-buy agreement
    INSERT INTO rent_to_buy_agreements (
      property_id, buyer_id, seller_id, monthly_rental, rent_credit_percentage,
@@ -343,7 +343,7 @@ The database is built on **Supabase** (PostgreSQL) and follows these key princip
    ```
 
 2. **Monthly Payments**
-   ```sql
+```sql
    -- Records monthly rent payment
    INSERT INTO rent_payments (
      agreement_id, payment_month, rent_amount, rent_credit, net_payment, payment_status

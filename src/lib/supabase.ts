@@ -9,6 +9,7 @@ export const STORAGE_BUCKETS = {
   PROPERTY_IMAGES: 'property-images',
   PROPERTY_DOCUMENTS: 'property-documents',
   USER_DOCUMENTS: 'user-documents',
+  KYC_DOCUMENTS: 'kyc-documents',
 } as const;
 
 // Create client only if credentials are available

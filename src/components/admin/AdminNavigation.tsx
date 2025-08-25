@@ -3,281 +3,180 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart3,
   Home,
-  Users,
-  Shield,
-  DollarSign,
-  Settings,
   FileText,
+  Briefcase,
+  Shield,
+  Building,
+  CreditCard,
   TrendingUp,
+  Users,
+  Settings,
   Bell,
-  Building
+  ChevronDown,
+  Menu
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { AdminTab } from '@/types/admin';
-import { theme, getColor } from '@/lib/theme';
 
 interface AdminNavigationProps {
   activeTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   notifications?: number;
-  pendingActions?: {
-    listings: number;
-    kyc: number;
-    escrow: number;
+  pendingActions?: Partial<Record<AdminTab, number>> & {
+    listings?: number;
+    offers?: number;
+    kyc?: number;
+    payments?: number;
+    reports?: number;
+    users?: number;
   };
+  isMobileOpen?: boolean;
+  onMobileToggle?: () => void;
 }
 
-interface NavTabProps {
-  label: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
-  count?: number | null;
-  active: boolean;
-  onClick: () => void;
-  hasPendingActions?: boolean;
-}
+type GroupId = 'platform' | 'transactions' | 'admin';
 
-// Reusable NavTab Component
-const NavTab: React.FC<NavTabProps> = ({ 
-  label, 
-  icon: Icon, 
-  count, 
-  active, 
-  onClick, 
-  hasPendingActions = false 
-}) => {
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  return (
-    <motion.button
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`
-        relative flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200
-        ${active 
-          ? 'bg-blue-50/80 border-b-2 border-blue-500 text-blue-700 font-semibold shadow-sm' 
-          : 'text-slate-600 hover:bg-slate-50/80 hover:text-slate-800'
-        }
-        ${hasPendingActions && !active ? 'bg-amber-50/60 border-l-2 border-amber-400' : ''}
-      `}
-      whileHover={{ 
-        scale: 1.02, 
-        y: -1,
-        transition: { duration: 0.2 }
-      }}
-      whileTap={{ 
-        scale: 0.98,
-        transition: { duration: 0.1 }
-      }}
-      suppressHydrationWarning
-    >
-      {/* Icon */}
-      <div className="relative">
-        <Icon 
-          size={18} 
-          className={`transition-colors duration-200 ${
-            active ? 'text-blue-600' : 'text-slate-500'
-          }`} 
-        />
-        {hasPendingActions && !active && (
-          <motion.div
-            className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full"
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.7, 1, 0.7]
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        )}
-      </div>
-
-      {/* Label */}
-      <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{label}</span>
-
-      {/* Notification Badge */}
-      {count && count > 0 && (
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 500, 
-            damping: 30 
-          }}
-          className="relative"
-        >
-          <Badge 
-            className={`
-              rounded-full text-xs font-semibold px-1.5 sm:px-2 py-0.5 min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-[20px] flex items-center justify-center
-              ${active 
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25' 
-                : 'bg-red-500 text-white shadow-lg shadow-red-500/25 animate-pulse'
-              }
-            `}
-          >
-            {count}
-          </Badge>
-          
-          {/* Tooltip */}
-          {isHovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow-lg z-50 whitespace-nowrap"
-            >
-              You have {count} new {label.toLowerCase()}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
-            </motion.div>
-          )}
-        </motion.div>
-      )}
-    </motion.button>
-  );
-};
-
-const navigationItems = [
-  { id: 'overview', label: 'Overview', icon: BarChart3, badge: null },
-  { id: 'listings', label: 'Listings', icon: FileText, badge: 12 },
-  { id: 'kyc', label: 'KYC', icon: Shield, badge: 8 },
-  { id: 'properties', label: 'Properties', icon: Building, badge: null },
-  { id: 'escrow', label: 'Escrow', icon: DollarSign, badge: 3 },
-  { id: 'users', label: 'Users', icon: Users, badge: null },
-  { id: 'reports', label: 'Reports', icon: TrendingUp, badge: null },
-  { id: 'settings', label: 'Settings', icon: Settings, badge: null }
-] as const;
+const groups: { id: GroupId; label: string; items: { id: AdminTab; label: string; icon: React.ComponentType<{ className?: string }>; }[] }[] = [
+  {
+    id: 'platform',
+    label: 'Platform',
+    items: [
+      { id: 'overview', label: 'Overview', icon: Home },
+      { id: 'listings', label: 'Listings', icon: FileText },
+      { id: 'offers', label: 'Offers', icon: Briefcase },
+      { id: 'kyc', label: 'KYC', icon: Shield },
+      { id: 'properties', label: 'Properties', icon: Building }
+    ]
+  },
+  {
+    id: 'transactions',
+    label: 'Transactions',
+    items: [
+      { id: 'payments', label: 'Payment Tracking', icon: CreditCard },
+      { id: 'reports', label: 'Reports', icon: TrendingUp }
+    ]
+  },
+  {
+    id: 'admin',
+    label: 'Admin',
+    items: [
+      { id: 'users', label: 'Users', icon: Users },
+      { id: 'settings', label: 'Settings', icon: Settings }
+    ]
+  }
+];
 
 export const AdminNavigation: React.FC<AdminNavigationProps> = ({
   activeTab,
   onTabChange,
   notifications = 0,
-  pendingActions = { listings: 0, kyc: 0, escrow: 0 }
+  pendingActions = {},
+  isMobileOpen = false,
+  onMobileToggle
 }) => {
-  const getPendingCount = (tab: AdminTab) => {
-    switch (tab) {
-      case 'listings':
-        return pendingActions.listings;
-      case 'kyc':
-        return pendingActions.kyc;
-      case 'escrow':
-        return pendingActions.escrow;
-      default:
-        return 0;
-    }
+  const [openGroups, setOpenGroups] = React.useState<Record<GroupId, boolean>>({
+    platform: true,
+    transactions: true,
+    admin: true
+  });
+
+  const toggleGroup = (groupId: GroupId) => {
+    setOpenGroups((g) => ({ ...g, [groupId]: !g[groupId] }));
   };
 
-  const hasPendingActions = (tab: AdminTab) => {
-    return getPendingCount(tab) > 0;
-  };
-
-  return (
-    <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
-        <div className="flex items-center justify-between">
-          {/* Enhanced Navigation Tabs */}
-          <nav className="flex-1">
-            {/* Mobile: Grid layout for better space utilization */}
-            <div className="grid grid-cols-4 sm:flex sm:items-center sm:gap-2 py-2">
-              {navigationItems.map((item) => {
-                const isActive = activeTab === item.id;
-                const pendingCount = getPendingCount(item.id as AdminTab);
-                const displayBadge = pendingCount > 0 ? pendingCount : item.badge;
-                const hasPending = hasPendingActions(item.id as AdminTab);
-
-                return (
-                  <NavTab
-                    key={item.id}
-                    label={item.label}
-                    icon={item.icon}
-                    count={displayBadge}
-                    active={isActive}
-                    onClick={() => onTabChange(item.id as AdminTab)}
-                    hasPendingActions={hasPending}
-                  />
-                );
-              })}
-            </div>
-          </nav>
-
-          {/* Enhanced Notifications */}
-          {notifications > 0 && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 500, 
-                damping: 30,
-                delay: 0.2
-              }}
-              className="flex items-center space-x-2 ml-2 sm:ml-4"
-            >
-              <motion.button
-                className="relative p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 hover:from-red-100 hover:to-red-200 transition-all duration-300 shadow-md hover:shadow-lg"
-                onClick={() => console.log('Show notifications')}
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -1,
-                  transition: { duration: 0.2 }
-                }}
-                whileTap={{ 
-                  scale: 0.95,
-                  transition: { duration: 0.1 }
-                }}
-                suppressHydrationWarning
-              >
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                
-                {/* Enhanced notification badge */}
-                <motion.div
-                  className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-[20px] flex items-center justify-center rounded-full shadow-lg border-2 border-white"
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    transition: { 
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }
-                  }}
-                >
-                  {notifications}
-                  
-                  {/* Pulse effect */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full bg-red-400"
-                    animate={{ 
-                      scale: [1, 1.5, 1],
-                      opacity: [0.7, 0, 0.7]
-                    }}
-                    transition={{ 
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                </motion.div>
-              </motion.button>
-            </motion.div>
-          )}
-        </div>
-      </div>
-
-      <style jsx>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+  const renderDot = (count?: number) => (
+    <div className="relative" aria-hidden>
+      {count && count > 0 ? (
+        <span
+          className="absolute -top-1 -right-1 inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse"
+          title={`${count} new updates`}
+        />
+      ) : null}
     </div>
   );
-}; 
+
+  return (
+    <aside
+      className={`
+        bg-white border-r border-slate-200
+        fixed lg:sticky top-0 inset-y-0 left-0 z-40 w-64 transform transition-transform duration-200
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        h-[calc(100vh-4rem)]
+      `}
+      role="navigation"
+      aria-label="Admin sidebar navigation"
+    >
+      <div className="h-14 px-3 flex items-center justify-between lg:hidden border-b border-slate-200">
+        <div className="font-semibold text-slate-900">Menu</div>
+        <button aria-label="Close menu" onClick={onMobileToggle} className="p-2 rounded hover:bg-slate-100">
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="p-3 space-y-4 overflow-y-auto h-[calc(100%-3.5rem)]">
+        {/* Notifications button */}
+        <div className="flex items-center justify-between px-2">
+          <div className="text-xs font-semibold text-slate-500 uppercase">Navigation</div>
+          {notifications > 0 && (
+            <button
+              className="relative p-2 rounded-lg hover:bg-slate-50"
+              aria-label={`You have ${notifications} notifications`}
+            >
+              <Bell className="w-4 h-4 text-slate-600" />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" aria-hidden />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500" aria-hidden />
+            </button>
+          )}
+        </div>
+
+        {groups.map((group) => (
+          <div key={group.id}>
+            <button
+              className="w-full flex items-center justify-between px-2 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wide hover:text-slate-800"
+              onClick={() => toggleGroup(group.id)}
+              aria-expanded={openGroups[group.id]}
+            >
+              <span>{group.label}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${openGroups[group.id] ? 'rotate-180' : ''}`} />
+            </button>
+            <motion.div
+              initial={false}
+              animate={{ height: openGroups[group.id] ? 'auto' : 0, opacity: openGroups[group.id] ? 1 : 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-1 space-y-1">
+                {group.items.map((item) => {
+                  const isActive = activeTab === item.id;
+                  const count = pendingActions[item.id] || 0;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onTabChange(item.id)}
+                      className={`
+                        group w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm
+                        ${isActive ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'}
+                      `}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <div className="relative">
+                        <item.icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-500'}`} />
+                        {renderDot(count)}
+                      </div>
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {count > 0 && (
+                        <Badge className="bg-slate-100 text-slate-700 text-[10px] px-1.5 py-0.5" title={`${count} new`}>
+                          {count}
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+};

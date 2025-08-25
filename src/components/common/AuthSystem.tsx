@@ -21,8 +21,13 @@ export const AuthSystem: React.FC = () => {
   const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
   
   const router = useRouter();
-  const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning } = useAuthStore();
+  const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth } = useAuthStore();
   // Theme is app-controlled (light-only). No toggle here.
+
+  // Check authentication status on component mount
+  React.useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   // Check localStorage for widget closed state on component mount
   React.useEffect(() => {

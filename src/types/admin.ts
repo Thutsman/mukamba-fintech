@@ -78,7 +78,7 @@ export interface KYCVerification {
   notes?: string;
 }
 
-export interface EscrowTransaction {
+export interface PaymentInstallment {
   id: string;
   propertyId: string;
   propertyTitle: string;
@@ -87,10 +87,10 @@ export interface EscrowTransaction {
   sellerId: string;
   sellerName: string;
   amount: number;
-  type: 'deposit' | 'rental' | 'purchase' | 'refund';
-  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  method: 'bank' | 'mobile_money' | 'card';
+  status: 'pending' | 'paid' | 'failed' | 'flagged';
   createdAt: string;
-  completedAt?: string;
+  paymentDate?: string;
   transactionHash?: string;
   notes?: string;
 }
@@ -137,7 +137,7 @@ export interface AdminReport {
 
 export interface AdminNotification {
   id: string;
-  type: 'verification_pending' | 'listing_pending' | 'escrow_transaction' | 'user_suspended' | 'system_alert';
+  type: 'verification_pending' | 'listing_pending' | 'payment_issue' | 'user_suspended' | 'system_alert';
   title: string;
   message: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -177,7 +177,7 @@ export interface AdminSettings {
   };
 }
 
-export type AdminTab = 'overview' | 'listings' | 'kyc' | 'properties' | 'escrow' | 'users' | 'reports' | 'settings';
+export type AdminTab = 'overview' | 'listings' | 'offers' | 'kyc' | 'properties' | 'payments' | 'users' | 'reports' | 'settings';
 
 export interface AdminBulkAction {
   type: 'approve' | 'reject' | 'suspend' | 'activate' | 'delete';
