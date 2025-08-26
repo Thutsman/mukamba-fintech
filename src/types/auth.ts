@@ -2,7 +2,14 @@
 export type UserLevel = 'guest' | 'basic' | 'verified' | 'premium';
 
 // User roles - now optional and can be multiple
-export type UserRole = 'buyer' | 'seller' | 'both' | 'admin' | 'agent';
+export type UserRole = 'user' | 'buyer' | 'seller' | 'agent' | 'admin';
+export type UserStatus = 'new' | 'verified' | 'suspended' | 'pending_verification';
+export type VerificationStatus = 'pending' | 'verified' | 'rejected' | 'expired' | 'unverified' | 'partially_verified' | 'fully_verified';
+export type BuyerType = 'cash' | 'installment';
+export type KYCLevel = 'none' | 'email' | 'phone' | 'identity' | 'financial' | 'complete';
+export type SignupSource = 'property_details_gate' | 'direct_signup' | 'seller_intent' | 'agent_referral';
+export type ContactMethod = 'phone' | 'email' | 'both';
+export type ContactRequestStatus = 'pending' | 'sent' | 'responded' | 'completed';
 
 // Registration steps for tenants
 export const TENANT_REGISTRATION_STEPS = [
@@ -132,8 +139,8 @@ export interface User {
   level: UserLevel;
   roles: UserRole[];
   
-  // Verification status
-  isPhoneVerified: boolean;
+  // Verification status - updated to match database schema
+  is_phone_verified: boolean;
   isIdentityVerified: boolean;
   isFinanciallyVerified: boolean; // For buyers
   isPropertyVerified: boolean; // For sellers
@@ -192,10 +199,10 @@ export function getUserPermissions(user: Partial<User>): UserPermissions {
   return {
     canBrowseProperties: true, // Always available
     canSaveProperties: true, // Always available
-    canContactSellers: user.isPhoneVerified || false,
-    canScheduleViewings: user.isPhoneVerified || false,
+    canContactSellers: user.is_phone_verified || false,
+    canScheduleViewings: user.is_phone_verified || false,
     canApplyForFinancing: user.isIdentityVerified && user.isFinanciallyVerified || false,
-    canListProperties: user.isPhoneVerified && user.isIdentityVerified || false,
+    canListProperties: user.is_phone_verified && user.isIdentityVerified || false,
     canReceiveApplications: user.isIdentityVerified && user.isPropertyVerified || false,
     canProcessTransactions: user.kycStatus === 'approved' || false,
     // Admin permissions
@@ -215,7 +222,7 @@ export function getBuyerVerificationSteps(user: Partial<User>): VerificationStep
       title: 'Verify Phone Number',
       description: 'Confirm your phone number with SMS verification',
       required: false,
-      completed: user.isPhoneVerified || false,
+      completed: user.is_phone_verified || false,
       benefits: ['Contact property owners', 'Schedule viewings', 'Get priority notifications'],
       requiredFor: ['Contact sellers', 'Schedule viewings']
     },
@@ -248,7 +255,7 @@ export function getSellerVerificationSteps(user: Partial<User>): VerificationSte
       title: 'Verify Phone Number',
       description: 'Confirm your phone number with SMS verification',
       required: false,
-      completed: user.isPhoneVerified || false,
+      completed: user.is_phone_verified || false,
       benefits: ['List properties', 'Receive inquiries', 'Direct communication'],
       requiredFor: ['List properties', 'Receive applications']
     },
@@ -273,8 +280,7 @@ export function getSellerVerificationSteps(user: Partial<User>): VerificationSte
   ];
 }
 
-// Enhanced verification status types
-export type VerificationStatus = 'unverified' | 'partially_verified' | 'fully_verified';
+// Enhanced verification status types - now consolidated above
 
 // Detailed verification states for modals
 export type IdentityVerificationState = 'unverified' | 'pending' | 'verified' | 'expired' | 'rejected';
@@ -350,12 +356,12 @@ export interface SmartRecommendation {
 }
 
 // Enhanced helper functions for verification status
-export function getVerificationStatus(user: Partial<User>): VerificationStatus {
+export function getVerificationStatus(user: Partial<UserProfile>): VerificationStatus {
   const verificationCount = [
-    user.isPhoneVerified,
-    user.isIdentityVerified,
-    user.isFinanciallyVerified,
-    user.isAddressVerified
+    user.is_phone_verified,
+    user.kyc_level === 'identity' || user.kyc_level === 'complete',
+    user.kyc_level === 'financial' || user.kyc_level === 'complete',
+    user.kyc_level === 'complete'
   ].filter(Boolean).length;
 
   if (verificationCount === 0) return 'unverified';
@@ -363,27 +369,108 @@ export function getVerificationStatus(user: Partial<User>): VerificationStatus {
   return 'fully_verified';
 }
 
-export function isFullyVerified(user: Partial<User>): boolean {
+export function isFullyVerified(user: Partial<UserProfile>): boolean {
   return getVerificationStatus(user) === 'fully_verified';
 }
 
-export function getVerificationProgress(user: Partial<User>): number {
+export function getVerificationProgress(user: Partial<UserProfile>): number {
   const totalSteps = 4; // phone, identity, financial, address
   const completedSteps = [
-    user.isPhoneVerified,
-    user.isIdentityVerified,
-    user.isFinanciallyVerified,
-    user.isAddressVerified
+    user.is_phone_verified,
+    user.kyc_level === 'identity' || user.kyc_level === 'complete',
+    user.kyc_level === 'financial' || user.kyc_level === 'complete',
+    user.kyc_level === 'complete'
   ].filter(Boolean).length;
   
   return Math.round((completedSteps / totalSteps) * 100);
 }
 
 // Helper function to determine user level
-export function getUserLevel(user: Partial<User>): UserLevel {
+export function getUserLevel(user: Partial<UserProfile>): UserLevel {
   if (!user.email) return 'guest';
-  if (!user.isPhoneVerified && !user.isIdentityVerified) return 'basic';
-  if (user.isPhoneVerified && user.isIdentityVerified && user.isAddressVerified) return 'verified';
-  if (user.kycStatus === 'approved') return 'premium';
+  if (!user.is_phone_verified && user.kyc_level === 'none') return 'basic';
+  if (user.is_phone_verified && user.kyc_level === 'phone') return 'verified';
+  if (user.kyc_level === 'complete') return 'premium';
   return 'basic';
+} 
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  is_phone_verified: boolean;
+  email_confirmed_at?: string;
+  avatar_url?: string;
+  date_of_birth?: string;
+  nationality?: string;
+  id_number?: string;
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+  };
+  roles: UserRole[];
+  status: UserStatus;
+  buyer_type?: BuyerType;
+  kyc_level: KYCLevel;
+  additional_info?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BuyerOnboardingProgress {
+  id: string;
+  user_id: string;
+  current_step: string;
+  form_data: Record<string, any>;
+  completed_steps: string[];
+  buyer_type?: BuyerType;
+  signup_source?: SignupSource;
+  property_id?: string;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+}
+
+export interface BuyerPhoneVerification {
+  id: string;
+  user_id: string;
+  phone_number: string;
+  otp_code: string;
+  otp_expires_at: string;
+  verified_at?: string;
+  verification_source?: string;
+  property_id?: string;
+  created_at: string;
+}
+
+export interface BuyerContactRequest {
+  id: string;
+  buyer_id: string;
+  property_id: string;
+  seller_id: string;
+  buyer_type: BuyerType;
+  contact_method: ContactMethod;
+  message?: string;
+  status: ContactRequestStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BuyerAnalytics {
+  user_id: string;
+  email: string;
+  buyer_type?: BuyerType;
+  kyc_level: KYCLevel;
+  is_phone_verified: boolean;
+  signup_date: string;
+  signup_source?: SignupSource;
+  current_step?: string;
+  completed_steps?: string[];
+  contact_requests_count: number;
+  completed_contacts: number;
 } 

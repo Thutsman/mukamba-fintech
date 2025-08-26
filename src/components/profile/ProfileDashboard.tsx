@@ -85,7 +85,7 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
     const recommendations = [];
 
     // Profile completion recommendations
-    if (!user.isPhoneVerified) {
+    if (!user.is_phone_verified) {
       recommendations.push({
         id: 'verify-phone',
         type: 'urgent',
@@ -98,7 +98,7 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
       });
     }
 
-    if (!user.isIdentityVerified && user.isPhoneVerified) {
+    if (!user.isIdentityVerified && user.is_phone_verified) {
       recommendations.push({
         id: 'verify-identity',
         type: 'important',
@@ -626,13 +626,13 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   // Debug logging to see if store updates are working
   React.useEffect(() => {
     console.log('ProfileDashboard user updated:', {
-      isPhoneVerified: user.isPhoneVerified,
+      isPhoneVerified: user.is_phone_verified,
       isIdentityVerified: user.isIdentityVerified,
       isFinanciallyVerified: user.isFinanciallyVerified,
       isPropertyVerified: user.isPropertyVerified,
       level: user.level
     });
-  }, [user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified, user.isPropertyVerified, user.level]);
+  }, [user.is_phone_verified, user.isIdentityVerified, user.isFinanciallyVerified, user.isPropertyVerified, user.level]);
   
   // Force re-render when store user changes
   React.useEffect(() => {
@@ -682,14 +682,14 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
   // Progress celebration logic - only show once per verification level
   React.useEffect(() => {
-    const verificationCount = [user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified].filter(Boolean).length;
+    const verificationCount = [user.is_phone_verified, user.isIdentityVerified, user.isFinanciallyVerified].filter(Boolean).length;
     
     // Create a unique key for this verification level
     const celebrationKey = `verification-${verificationCount}`;
     
     // Only show celebration if we haven't shown it for this level before
     if (!shownCelebrations.has(celebrationKey)) {
-    if (verificationCount === 1 && user.isPhoneVerified) {
+    if (verificationCount === 1 && user.is_phone_verified) {
       setCelebrationData({
         title: 'Phone Verified! 🎉',
         description: 'You can now contact property owners directly',
@@ -718,7 +718,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         setShownCelebrations(prev => new Set([...prev, celebrationKey]));
       }
     }
-  }, [user.isPhoneVerified, user.isIdentityVerified, user.isFinanciallyVerified, shownCelebrations]);
+  }, [user.is_phone_verified, user.isIdentityVerified, user.isFinanciallyVerified, shownCelebrations]);
 
   // Save celebrations to localStorage whenever they change
   React.useEffect(() => {
@@ -730,7 +730,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const getLevelInfo = (level: typeof userLevel, user: UserType) => {
     // Calculate actual progress based on verification status
     const verificationSteps = [
-      user.isPhoneVerified,
+      user.is_phone_verified,
       user.isIdentityVerified,
       user.isFinanciallyVerified,
       user.isPropertyVerified
@@ -752,7 +752,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       actualProgress,
       visualProgress,
       level,
-      isPhoneVerified: user.isPhoneVerified,
+      isPhoneVerified: user.is_phone_verified,
       isIdentityVerified: user.isIdentityVerified,
       isFinanciallyVerified: user.isFinanciallyVerified,
       isPropertyVerified: user.isPropertyVerified
@@ -794,7 +794,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     const info = getLevelInfo(userLevel, user);
     console.log('levelInfo calculated:', {
       userLevel,
-      isPhoneVerified: user.isPhoneVerified,
+      isPhoneVerified: user.is_phone_verified,
       isIdentityVerified: user.isIdentityVerified,
       isFinanciallyVerified: user.isFinanciallyVerified,
       isPropertyVerified: user.isPropertyVerified,
@@ -839,7 +839,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     
     switch (verificationType) {
       case 'phone':
-        updates.isPhoneVerified = true;
+        updates.is_phone_verified = true;
         break;
       case 'identity':
         updates.isIdentityVerified = true;
@@ -1332,123 +1332,179 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       </Card>
         </motion.div>
 
-      {/* Role Selection */}
-      {!selectedRole && (
-          <motion.div
-            id="role-selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      {/* Essential KYC Section */}
+      <motion.div
+        id="essential-kyc"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardHeader>
-                <CardTitle className="flex items-center">
-                  Choose Your Path
-                  <Tooltip content="Select your primary interest to see relevant verification steps">
-                    <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                  </Tooltip>
-                </CardTitle>
+            <CardTitle className="flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Complete Your Profile
+              <Tooltip content="These verifications unlock more features and build trust">
+                <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+              </Tooltip>
+            </CardTitle>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Select what you'd like to do to see relevant verification steps
+              Complete these essential verifications to unlock more features
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-              <Button
-                variant="outline"
-                      className="h-24 flex-col space-y-2 hover:border-red-300 transition-all duration-300 hover:shadow-md"
-                onClick={() => setSelectedRole('buyer')}
+            <div className="space-y-4">
+              {/* Phone Verification */}
+              <div className={`p-4 rounded-lg border ${
+                user.is_phone_verified 
+                  ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                  : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-full ${
+                      user.is_phone_verified 
+                        ? 'bg-green-100 text-green-600' 
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">Phone Verification</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {user.is_phone_verified ? 'Verified' : 'Required for messaging and notifications'}
+                      </p>
+                    </div>
+                  </div>
+                  {user.is_phone_verified ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => setActiveModal('phone')}
+                      className="bg-red-600 hover:bg-red-700"
                     >
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-              >
-                <Home className="w-8 h-8 text-red-600" />
-                      </motion.div>
-                <div className="text-center">
-                  <div className="font-semibold">I want to buy/rent</div>
-                  <div className="text-xs text-slate-500">Find and apply for properties</div>
+                      Verify Now
+                    </Button>
+                  )}
                 </div>
-              </Button>
-                  </motion.div>
-                  
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-              <Button
-                variant="outline"
-                      className="h-24 flex-col space-y-2 hover:border-red-300 transition-all duration-300 hover:shadow-md"
-                onClick={() => setSelectedRole('seller')}
-                    >
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-              >
-                <CreditCard className="w-8 h-8 text-red-600" />
-                      </motion.div>
-                <div className="text-center">
-                  <div className="font-semibold">I want to sell/rent out</div>
-                  <div className="text-xs text-slate-500">List properties and find tenants</div>
-                </div>
-              </Button>
-                  </motion.div>
-            </div>
-          </CardContent>
-        </Card>
-          </motion.div>
-      )}
+              </div>
 
-      {/* Verification Steps */}
-      {selectedRole && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center">
-                {selectedRole === 'buyer' ? 'Buyer' : 'Seller'} Verification Steps
-                    <Tooltip content="Complete these steps in order for the best experience">
-                      <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                    </Tooltip>
-              </CardTitle>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedRole(null)}
-                      className="transition-colors duration-200"
-              >
-                Switch Path
-              </Button>
-                  </motion.div>
-            </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Complete these steps to unlock more features
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6">
-              {(selectedRole === 'buyer' ? buyerSteps : sellerSteps).map((step, index) => (
-                <VerificationStepCard
-                  key={step.id}
-                  step={step}
-                  role={selectedRole}
-                  index={index}
-                />
-              ))}
+              {/* Identity Verification */}
+              <div className={`p-4 rounded-lg border ${
+                user.isIdentityVerified 
+                  ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                  : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-full ${
+                      user.isIdentityVerified 
+                        ? 'bg-green-100 text-green-600' 
+                        : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">Identity Verification</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {user.isIdentityVerified ? 'Verified' : 'Required for financing and property applications'}
+                      </p>
+                    </div>
+                  </div>
+                  {user.isIdentityVerified ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => setActiveModal('identity')}
+                      className="bg-red-600 hover:bg-red-700"
+                      disabled={!user.is_phone_verified}
+                    >
+                      Verify Now
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
-          </motion.div>
-        )}
+      </motion.div>
+
+      {/* Additional Features Section */}
+      {user.is_phone_verified && user.isIdentityVerified && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Zap className="w-5 h-5 mr-2" />
+                Unlock Premium Features
+                <Tooltip content="These features are available after completing basic verification">
+                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+                </Tooltip>
+              </CardTitle>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                You've unlocked additional features to enhance your experience
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Financial Assessment */}
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-800 rounded-full">
+                        <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Financial Assessment</h4>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                          Get your credit score and unlock financing options
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setActiveModal('financial')}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Start Assessment
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Property Listing */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
+                        <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">List Your Property</h4>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                          Sell or rent out your property on our platform
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setActiveModal('listing')}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      List Property
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
       </>
       )}
 

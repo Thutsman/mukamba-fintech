@@ -304,9 +304,9 @@ export const canUpgradeRole = (user: User, targetRole: string): boolean => {
   // Add role-specific upgrade requirements
   switch (targetRole) {
     case 'seller':
-      return user.isPhoneVerified && user.isIdentityVerified;
+      return user.is_phone_verified && user.isIdentityVerified;
     case 'agent':
-      return user.isPhoneVerified && user.isIdentityVerified && user.isPropertyVerified;
+      return user.is_phone_verified && user.isIdentityVerified && user.isPropertyVerified;
     default:
       return true;
   }

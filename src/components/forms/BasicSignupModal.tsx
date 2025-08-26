@@ -20,6 +20,8 @@ interface BasicSignupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToLogin: () => void;
+  sellerIntent?: boolean; // New prop to indicate user came from "Want to Sell?" button
+  onSellerSignupComplete?: () => void; // Callback when user with seller intent completes signup
 }
 
 // Enhanced validation schema
@@ -76,7 +78,9 @@ const validatePhoneFormat = (phone: string, country: 'SA' | 'ZW') => {
 export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
   isOpen,
   onClose,
-  onSwitchToLogin
+  onSwitchToLogin,
+  sellerIntent = false,
+  onSellerSignupComplete
 }) => {
   const { basicSignup, isLoading, error, setError, isAuthenticated } = useAuthStore();
   const [hasStartedSignup, setHasStartedSignup] = React.useState(false);
@@ -92,9 +96,14 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       setTimeout(() => {
         onClose();
         setHasStartedSignup(false); // Reset for next time
+        
+        // If user signed up with seller intent, trigger seller onboarding
+        if (sellerIntent && onSellerSignupComplete) {
+          onSellerSignupComplete();
+        }
       }, 500);
     }
-  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, onClose]);
+  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, onClose, sellerIntent, onSellerSignupComplete]);
 
   // Reset signup state when modal closes
   React.useEffect(() => {
@@ -252,10 +261,13 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-800">
-              Join Mukamba
+              {sellerIntent ? 'Start Selling on Mukamba' : 'Join Mukamba'}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-600 mt-1">
-              Get started in 30 seconds - explore properties right away!
+              {sellerIntent 
+                ? 'Create your account to list your property and reach qualified buyers!' 
+                : 'Get started in 30 seconds - explore properties right away!'
+              }
             </p>
           </div>
           <Button
@@ -607,7 +619,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
             <Button
               type="submit"
               disabled={isLoading || isGoogleLoading || emailAvailability === 'taken'}
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-base font-semibold"
+              className="w-full bg-red-700 hover:bg-red-800 text-white py-3 text-base font-semibold"
               suppressHydrationWarning
             >
               {isLoading ? (
@@ -624,13 +636,24 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
           {/* Benefits */}
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-50 dark:to-red-50 rounded-lg border border-blue-200 dark:border-blue-200">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-800 mb-2">
-              🎉 What you get immediately:
+              {sellerIntent ? '🏠 What you get as a seller:' : '🎉 What you get immediately:'}
             </h4>
             <ul className="text-xs text-slate-600 dark:text-slate-600 space-y-1">
-              <li>• Browse 1,200+ rent-to-buy properties</li>
-              <li>• Save your favorite listings</li>
-              <li>• Get property price alerts</li>
-              <li>• Access market insights</li>
+              {sellerIntent ? (
+                <>
+                  <li>• List your property for free</li>
+                  <li>• Reach thousands of qualified buyers</li>
+                  <li>• Get competitive offers quickly</li>
+                  <li>• Access seller dashboard & analytics</li>
+                </>
+              ) : (
+                <>
+                  <li>• Browse 1,200+ rent-to-buy properties</li>
+                  <li>• Save your favorite listings</li>
+                  <li>• Get property price alerts</li>
+                  <li>• Access market insights</li>
+                </>
+              )}
             </ul>
           </div>
 

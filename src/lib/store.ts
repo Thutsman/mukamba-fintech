@@ -110,7 +110,7 @@ export const useAuthStore = create<AuthStore>()(
             roles: [],
             
             // Verification status
-            isPhoneVerified: false,
+            is_phone_verified: false,
             isIdentityVerified: false,
             isFinanciallyVerified: false,
             isPropertyVerified: false,
@@ -118,7 +118,7 @@ export const useAuthStore = create<AuthStore>()(
             
             // System fields
             permissions: getUserPermissions({
-              isPhoneVerified: false,
+              is_phone_verified: false,
               isIdentityVerified: false,
               isFinanciallyVerified: false,
               isPropertyVerified: false,
@@ -151,7 +151,7 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-                         login: async (credentials) => {
+            login: async (credentials) => {
         set({ isLoading: true, error: null });
         
         try {
@@ -161,7 +161,7 @@ export const useAuthStore = create<AuthStore>()(
 
           // Real Supabase login
           const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
+              email: credentials.email,
             password: credentials.password
           });
 
@@ -202,15 +202,15 @@ export const useAuthStore = create<AuthStore>()(
                    profileData?.user_role === 'buyer' ? ['buyer'] : [],
             
             // Verification status from database
-            isPhoneVerified: profileData?.is_phone_verified || false,
+            is_phone_verified: profileData?.is_phone_verified || false,
             isIdentityVerified: profileData?.is_identity_verified || false,
             isFinanciallyVerified: profileData?.is_financially_verified || false,
             isPropertyVerified: profileData?.is_property_verified || false,
             isAddressVerified: profileData?.is_address_verified || false,
             
             // System fields
-            permissions: getUserPermissions({
-              isPhoneVerified: profileData?.is_phone_verified || false,
+              permissions: getUserPermissions({
+              is_phone_verified: profileData?.is_phone_verified || false,
               isIdentityVerified: profileData?.is_identity_verified || false,
               isFinanciallyVerified: profileData?.is_financially_verified || false,
               isPropertyVerified: profileData?.is_property_verified || false,
@@ -219,13 +219,13 @@ export const useAuthStore = create<AuthStore>()(
             }),
             kycStatus: 'none', // TODO: Map from database
             createdAt: data.user.created_at ? new Date(data.user.created_at) : new Date()
-          };
+            };
 
-                    set({
+            set({
             user: user,
-            isAuthenticated: true,
-            isLoading: false,
-            isNewUser: false
+              isAuthenticated: true,
+              isLoading: false,
+              isNewUser: false
           });
         } catch (error) {
           set({
@@ -244,14 +244,14 @@ export const useAuthStore = create<AuthStore>()(
            console.error('Logout error:', error);
          }
          
-         set({
-           user: null,
-           isAuthenticated: false,
-           error: null,
-           isLoading: false,
-           isNewUser: false
-                  });
-       },
+        set({
+          user: null,
+          isAuthenticated: false,
+          error: null,
+          isLoading: false,
+          isNewUser: false
+        });
+      },
 
        checkAuth: async () => {
          try {
@@ -294,7 +294,7 @@ export const useAuthStore = create<AuthStore>()(
                     profileData?.user_role === 'buyer' ? ['buyer'] : [],
              
              // Verification status from database
-             isPhoneVerified: profileData?.is_phone_verified || false,
+             is_phone_verified: profileData?.is_phone_verified || false,
              isIdentityVerified: profileData?.is_identity_verified || false,
              isFinanciallyVerified: profileData?.is_financially_verified || false,
              isPropertyVerified: profileData?.is_property_verified || false,
@@ -302,7 +302,7 @@ export const useAuthStore = create<AuthStore>()(
              
              // System fields
              permissions: getUserPermissions({
-               isPhoneVerified: profileData?.is_phone_verified || false,
+               is_phone_verified: profileData?.is_phone_verified || false,
                isIdentityVerified: profileData?.is_identity_verified || false,
                isFinanciallyVerified: profileData?.is_financially_verified || false,
                isPropertyVerified: profileData?.is_property_verified || false,
@@ -327,9 +327,9 @@ export const useAuthStore = create<AuthStore>()(
              isLoading: false
            });
          }
-       },
+      },
 
-       startVerification: async (type: 'buyer' | 'seller', step: string) => {
+      startVerification: async (type: 'buyer' | 'seller', step: string) => {
         set({ isLoading: true, error: null });
         
         try {
@@ -344,7 +344,7 @@ export const useAuthStore = create<AuthStore>()(
           
           switch (step) {
             case 'phone-verification':
-              updates = { isPhoneVerified: true };
+              updates = { is_phone_verified: true };
               break;
             case 'identity-verification':
               updates = { isIdentityVerified: true, nationality: 'SA' };

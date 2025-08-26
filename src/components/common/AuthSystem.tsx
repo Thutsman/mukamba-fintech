@@ -222,12 +222,12 @@ export const AuthSystem: React.FC = () => {
                       {!isAuthenticated ? (
                         <>
                           <Button size="sm" variant="outline" onClick={() => { setShowRegister(true); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }} className="flex-1 border-slate-300 text-slate-700">Create Account</Button>
-                          <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => { setShowSigninModal(true); console.log('Sign-in modal opened from AuthSystem mobile menu'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}>Sign In</Button>
+                          <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800" onClick={() => { setShowSigninModal(true); console.log('Sign-in modal opened from AuthSystem mobile menu'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}>Sign In</Button>
                         </>
                       ) : (
                         <>
                           <Button size="sm" variant="outline" onClick={() => setCurrentView('profile')} className="flex-1 border-slate-300">Profile</Button>
-                          <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleLogout}>Sign Out</Button>
+                          <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800" onClick={handleLogout}>Sign Out</Button>
                         </>
                       )}
                     </div>
@@ -251,7 +251,7 @@ export const AuthSystem: React.FC = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-red-600 hover:bg-red-700 text-white"
+                      className="bg-red-700 hover:bg-red-800 text-white"
                       onClick={() => {
                         setShowSigninModal(true);
                         console.log('Sign-in modal opened from AuthSystem header');
@@ -345,13 +345,13 @@ export const AuthSystem: React.FC = () => {
             </div>
             
             {/* Quick Logout */}
-            <Button
-              onClick={handleLogout}
-              size="sm"
-              variant="outline"
-              className="bg-white/90 backdrop-blur-sm border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-300 shadow-lg"
-              suppressHydrationWarning
-            >
+                            <Button
+                  onClick={handleLogout}
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/90 backdrop-blur-sm border-slate-200 text-slate-600 hover:text-red-700 hover:border-red-400 shadow-lg"
+                  suppressHydrationWarning
+                >
               <LogOut className="w-4 h-4 mr-1" />
               <span className="text-xs">Sign Out</span>
             </Button>
@@ -394,7 +394,7 @@ export const AuthSystem: React.FC = () => {
                 <Button
                   size="sm"
                   onClick={() => setShowRegister(true)}
-                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  className="flex-1 bg-red-700 hover:bg-red-800"
                   suppressHydrationWarning
                 >
                   Sign Up

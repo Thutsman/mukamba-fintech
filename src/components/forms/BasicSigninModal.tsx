@@ -360,7 +360,7 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
             <Button
               type="submit"
               disabled={isLoading || isGoogleLoading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-base font-semibold"
+              className="w-full bg-red-700 hover:bg-red-800 text-white py-3 text-base font-semibold"
               suppressHydrationWarning
             >
               {isLoading ? (
@@ -494,7 +494,7 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={isForgotPasswordLoading || !forgotPasswordEmail}
-                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    className="flex-1 bg-red-700 hover:bg-red-800"
                     suppressHydrationWarning
                   >
                     {isForgotPasswordLoading ? (

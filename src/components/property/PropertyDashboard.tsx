@@ -58,6 +58,9 @@ import { CountryToggle } from '@/components/ui/country-toggle';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
+import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal';
+import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
+import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import Image from 'next/image';
 
 // Analytics tracking function
@@ -87,8 +90,16 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
   const [popularCities, setPopularCities] = React.useState(getPopularCities(selectedCountry));
   const [featuredProperties, setFeaturedProperties] = React.useState<Property[]>([]);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
+  const [showBuyerSignupModal, setShowBuyerSignupModal] = React.useState(false);
+  const [showBuyerPhoneVerificationModal, setShowBuyerPhoneVerificationModal] = React.useState(false);
+  const [selectedPropertyForSignup, setSelectedPropertyForSignup] = React.useState<Property | null>(null);
+  const [selectedPropertyForContact, setSelectedPropertyForContact] = React.useState<Property | null>(null);
+  const [userBuyerType, setUserBuyerType] = React.useState<'cash' | 'installment' | undefined>(undefined);
+  const [userPhoneVerified, setUserPhoneVerified] = React.useState(user?.is_phone_verified || false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [showAgentModal, setShowAgentModal] = React.useState(false);
+  const [showSellerModal, setShowSellerModal] = React.useState(false);
+  const [sellerIntent, setSellerIntent] = React.useState(false);
   const [isSearchLoading, setIsSearchLoading] = React.useState(false);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -590,10 +601,25 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                   className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePropertySelect(property);
+                    if (user) {
+                      // User is authenticated - show property details
+                      handlePropertySelect(property);
+                    } else {
+                      // User not authenticated - show buyer signup modal
+                      setSelectedPropertyForSignup(property);
+                      setShowBuyerSignupModal(true);
+                      
+                      // Track analytics
+                      trackEvent('property_details_gated', {
+                        property_id: property.id,
+                        property_title: property.title,
+                        source: 'featured_properties',
+                        event_category: 'lead_generation'
+                      });
+                    }
                   }}
                 >
-                  View Details
+                  {user ? 'View Details' : 'Sign Up to View Details'}
                 </Button>
               </div>
             </div>
@@ -817,23 +843,21 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
       </AnimatePresence>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-slate-800">
-        {/* Elegant house background image from Unsplash */}
-        <div className="absolute inset-0 pointer-events-none">
-          <Image
-            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2073&q=80"
-            alt="Elegant modern house exterior"
-            fill
-            priority
-            className="object-cover object-center brightness-[0.7] contrast-120"
-            sizes="100vw"
-          />
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100" style={{ height: '600px' }}>
+        {/* High-quality modern architecture background - mobile optimized */}
+        <div 
+          className="absolute inset-0 bg-cover bg-bottom bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+            backgroundPosition: '50% 60%', // Adjust to show more of the house and less sky
+          }}
+        >
+          {/* Darker overlay to match mukambagateway.com */}
+          <div className="absolute inset-0 bg-black/30"></div>
         </div>
-        {/* Enhanced gradient overlay for better logo visibility */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/70" />
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
-          <div className="text-center space-y-6 sm:space-y-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="text-center space-y-6">
             {/* Logo and Main Headline */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -842,62 +866,62 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               className="flex flex-col items-center space-y-6"
             >
               {/* Enhanced Logo with better visibility */}
-              <div className="relative">
-                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-2xl">
+              <div className="relative mb-8">
+                <div className="bg-white rounded-2xl p-4 shadow-lg">
                   <Image
                     src="/logo.svg"
                     alt="Mukamba Logo"
-                    width={120}
-                    height={60}
-                    className="h-20 w-auto sm:h-24 md:h-28 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]"
+                    width={280}
+                    height={80}
+                    className="h-16 w-auto"
                     priority
                   />
                 </div>
               </div>
               
               <h1 
-                className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight tracking-[-0.02em] drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] px-2 mb-4 text-center"
+                className="font-sans text-4xl sm:text-5xl font-bold text-slate-900 leading-tight tracking-tight px-2 mb-2 text-center"
               >
-                Skip the Down Payment,
+                Sell Smarter,
                 <br />
-                <span className="text-blue-300">Own Your Home Faster</span>
+                <span className="text-blue-500">Pay less</span>
               </h1>
             </motion.div>
             
             
             {/* Subheadline */}
             <motion.div 
-              className="text-center px-4 space-y-2 mb-6 max-w-3xl mx-auto"
+              className="text-center px-4 space-y-3 mb-6 max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <p className="text-lg md:text-xl text-white font-medium">
+              <p className="text-xl text-slate-100 font-medium">
                 Buy, Sell, or Rent-to-Own Properties
               </p>
-              <p className="text-base md:text-lg text-gray-200">
+              <p className="text-lg text-slate-200">
                 Comprehensive real estate solutions across Zimbabwe and South Africa
               </p>
             </motion.div>
             
             {/* Statistics Ticker */}
             <motion.div 
-              className="grid grid-cols-1 gap-4 px-6 mb-8 sm:grid-cols-3 sm:gap-4 md:flex md:flex-wrap md:justify-center md:gap-8 md:mb-0 md:px-4"
+              className="grid grid-cols-1 gap-6 px-4 sm:grid-cols-3 sm:gap-8 md:flex md:justify-center md:gap-12"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-white/20 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
-                <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">500+</div>
-                <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Pre-Approved Properties</div>
+              <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
+                <div className="text-3xl font-bold text-slate-800 mb-1">500+</div>
+                <div className="text-slate-600 text-sm">Pre-Approved Properties</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-white/20 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
-                <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">2,000+</div>
-                <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Families Who Owned Their Home</div>
+              <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
+                <div className="text-3xl font-bold text-slate-800 mb-1">2,000+</div>
+                <div className="text-slate-600 text-sm">Families Who Owned Their Home</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center sm:bg-white/20 sm:rounded-xl sm:px-5 sm:py-3 inline-block">
-                <div className="text-2xl font-bold text-white mb-1 sm:text-3xl md:text-4xl sm:font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">25+</div>
-                <div className="text-gray-200 text-sm sm:text-sm md:text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">Cities with Zero Down Payment</div>
+              <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
+                <div className="text-3xl font-bold text-slate-800 mb-1">25+</div>
+                <div className="text-slate-600 text-sm">Cities with Zero Down Payment</div>
               </div>
             </motion.div>
             
@@ -910,17 +934,26 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             >
               <Button 
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-[0_4px_14px_rgba(59,130,246,0.3)] transition-transform duration-200 will-change-transform hover:-translate-y-0.5"
-                onClick={() => setActiveTab('listings')}
-                suppressHydrationWarning
-              >
-                <Search className="w-5 h-5 mr-2" />
-                Find Zero-Down Properties
-              </Button>
-              <Button 
-                size="lg"
                 variant="outline"
                 className="border-white/30 text-white hover:bg-white/20 hover:text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
+                onClick={() => {
+                  // Track analytics
+                  trackEvent('hero_sell_property_clicked', {
+                    source: 'hero_section',
+                    event_category: 'conversion',
+                    user_status: user ? 'authenticated' : 'guest'
+                  });
+                  
+                  // Smart routing based on authentication
+                  if (user) {
+                    // Authenticated user: Open seller onboarding
+                    setShowSellerModal(true);
+                  } else {
+                    // Guest user: Open signup modal with seller intent
+                    setSellerIntent(true);
+                    setShowSignupModal(true);
+                  }
+                }}
                 suppressHydrationWarning
               >
                 <PlusCircle className="w-5 h-5 mr-2" />
@@ -1238,11 +1271,48 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
           {/* Explore Tab */}
           <TabsContent value="explore">
             <div className="space-y-8">
-              {/* Market Stats */}
+              {/* Featured Properties */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 px-4 sm:px-0">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-0">Featured Properties</h2>
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab('listings')}
+                    className="flex items-center w-full sm:w-auto"
+                    suppressHydrationWarning
+                  >
+                    View All {featuredProperties.length} Properties
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
+                  {isDataLoading ? (
+                    // Skeleton loading for featured properties
+                    Array.from({ length: 4 }).map((_, index) => (
+                      <PropertyCardSkeleton key={index} index={index} />
+                    ))
+                  ) : (
+                    featuredProperties.slice(0, 4).map((property, index) => (
+                      <FeaturedPropertyCard
+                        key={property.id}
+                        property={property}
+                        index={index}
+                      />
+                    ))
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Market Stats */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
               >
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6 px-4 sm:px-0">Market Overview</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
@@ -1333,12 +1403,92 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 </div>
               </motion.div>
 
+              {/* Want to Sell Your House? CTA - Show to all users with smart routing */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200 hover:shadow-lg transition-all duration-300">
+                  <CardContent className="p-8 text-center">
+                    <div className="max-w-2xl mx-auto">
+                      <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Home className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-800 mb-4">
+                        Want to Sell Your House?
+                      </h3>
+                      <p className="text-slate-600 mb-6 text-lg">
+                        List your property on Mukamba and reach thousands of qualified buyers. 
+                        Get competitive offers and close deals faster with our rent-to-buy platform.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button 
+                          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-3 text-lg"
+                          size="lg"
+                                                     onClick={() => {
+                             // Track analytics
+                             trackEvent('sell_house_cta_clicked', {
+                               source: 'property_dashboard',
+                               event_category: 'conversion',
+                               user_status: user ? 'authenticated' : 'guest'
+                             });
+                             
+                             // Smart routing based on authentication
+                             if (user) {
+                               // Authenticated user: Open seller onboarding
+                               setShowSellerModal(true);
+                             } else {
+                               // Guest user: Open signup modal with seller intent
+                               setSellerIntent(true);
+                               setShowSignupModal(true);
+                             }
+                           }}
+                        >
+                          <Home className="w-5 h-5 mr-2" />
+                          List Your Property
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-50 px-8 py-3 text-lg"
+                          size="lg"
+                          onClick={() => {
+                            trackEvent('learn_more_selling_clicked', {
+                              source: 'property_dashboard',
+                              event_category: 'engagement'
+                            });
+                            // TODO: Show selling benefits modal or navigate to info page
+                            console.log('Learn More About Selling clicked');
+                          }}
+                        >
+                          Learn More
+                        </Button>
+                      </div>
+                      <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-slate-500">
+                        <div className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                          No listing fees
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                          Pre-qualified buyers
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                          Fast closing process
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
               {/* Popular Cities */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
               >
                 <Card>
                   <CardHeader>
@@ -1373,50 +1523,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 </Card>
               </motion.div>
 
-              {/* Featured Properties */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 px-4 sm:px-0">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-0">Featured Properties</h2>
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab('listings')}
-                    className="flex items-center w-full sm:w-auto"
-                    suppressHydrationWarning
-                  >
-                    View All {featuredProperties.length} Properties
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
-                  {isDataLoading ? (
-                    // Skeleton loading for featured properties
-                    Array.from({ length: 4 }).map((_, index) => (
-                      <PropertyCardSkeleton key={index} index={index} />
-                    ))
-                  ) : (
-                    featuredProperties.slice(0, 4).map((property, index) => (
-                      <FeaturedPropertyCard
-                        key={property.id}
-                        property={property}
-                        index={index}
-                      />
-                    ))
-                  )}
-                </div>
-              </motion.div>
-
               {/* Trust & Social Proof Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
                 className="space-y-8"
               >
                 {/* Customer Testimonials */}
@@ -1566,9 +1677,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               {/* Quick Actions */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
               >
                 <div className="space-y-6">
                   <div className="text-center px-4 sm:px-0">
@@ -1580,13 +1690,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     {/* Primary Action - Calculate Rent-to-Buy */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.05, y: -8 }}
                       whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
                       className="group cursor-pointer"
                       onClick={() => setActiveTab('calculator')}
-                      viewport={{ once: true }}
                     >
                       <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300">
                         {/* Popular Badge */}
@@ -1622,13 +1731,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     {/* Advanced Search */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, y: -4 }}
                       whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
                       className="group cursor-pointer"
                       onClick={() => setActiveTab('listings')}
-                      viewport={{ once: true }}
                     >
                       <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-green-300">
                         <div className="text-center space-y-4">
@@ -1659,13 +1767,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     {/* Saved Properties */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, y: -4 }}
                       whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.3 }}
                       className="group cursor-pointer"
                       onClick={() => setActiveTab('saved')}
-                      viewport={{ once: true }}
                     >
                       <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-purple-300">
                         <div className="text-center space-y-4">
@@ -1727,20 +1834,62 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                 <div className="space-y-6">
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <h3 className="text-lg font-semibold text-slate-800">
                             Calculating for: {selectedProperty.title}
                           </h3>
                           <p className="text-slate-600">{selectedProperty.location.streetAddress}, {selectedProperty.location.city}</p>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => setSelectedProperty(null)}
-                          suppressHydrationWarning
-                        >
-                          Change Property
-                        </Button>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Button
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => {
+                              if (user && userPhoneVerified) {
+                                // User is authenticated and phone verified - show contact info
+                                alert('Contact Seller: +27 XX XXX XXXX\nEmail: seller@example.com\nFeature coming soon!');
+                              } else if (user && !userPhoneVerified) {
+                                // User authenticated but needs phone verification
+                                setSelectedPropertyForContact(selectedProperty);
+                                setShowBuyerPhoneVerificationModal(true);
+                                
+                                // Track phone verification gate
+                                trackEvent('seller_contact_gated', {
+                                  property_id: selectedProperty.id,
+                                  property_title: selectedProperty.title,
+                                  user_status: 'authenticated_no_phone',
+                                  source: 'calculator_tab',
+                                  event_category: 'lead_generation'
+                                });
+                              } else {
+                                // User not authenticated - redirect to signup
+                                setSelectedPropertyForSignup(selectedProperty);
+                                setShowBuyerSignupModal(true);
+                                
+                                // Track signup gate
+                                trackEvent('seller_contact_signup_required', {
+                                  property_id: selectedProperty.id,
+                                  property_title: selectedProperty.title,
+                                  user_status: 'anonymous',
+                                  source: 'calculator_tab',
+                                  event_category: 'lead_generation'
+                                });
+                              }
+                            }}
+                            suppressHydrationWarning
+                          >
+                            {user && userPhoneVerified ? 'Contact Seller' : 
+                             user && !userPhoneVerified ? 'Verify Phone to Contact' : 
+                             'Sign Up to Contact Seller'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setSelectedProperty(null)}
+                            suppressHydrationWarning
+                          >
+                            Change Property
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -2321,10 +2470,22 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
       {/* Basic Signup Modal */}
       <BasicSignupModal
         isOpen={showSignupModal}
-        onClose={() => setShowSignupModal(false)}
+        onClose={() => {
+          setShowSignupModal(false);
+          setSellerIntent(false); // Reset seller intent when modal closes
+        }}
         onSwitchToLogin={() => {
           setShowSignupModal(false);
+          setSellerIntent(false); // Reset seller intent when switching to login
           setShowSigninModal(true);
+        }}
+        sellerIntent={sellerIntent}
+        onSellerSignupComplete={() => {
+          // User completed signup with seller intent - open seller onboarding
+          setSellerIntent(false); // Reset seller intent
+          setTimeout(() => {
+            setShowSellerModal(true); // Open seller onboarding modal
+          }, 1000); // Small delay to let signup modal close gracefully
         }}
       />
 
@@ -2348,6 +2509,123 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
           console.log('Agent registration completed');
         }}
       />
+
+      {/* Seller Onboarding Modal */}
+      <SellerOnboardingModal
+        isOpen={showSellerModal}
+        onClose={() => setShowSellerModal(false)}
+        onComplete={(sellerData) => {
+          setShowSellerModal(false);
+          // Show success message or redirect
+          console.log('Seller onboarding completed:', sellerData);
+          // TODO: Navigate to seller dashboard or show success message
+        }}
+      />
+
+      {/* Buyer Signup Modal */}
+      <BuyerSignupModal
+        isOpen={showBuyerSignupModal}
+        onClose={() => {
+          setShowBuyerSignupModal(false);
+          setSelectedPropertyForSignup(null);
+        }}
+        onSignupComplete={(email, buyerType) => {
+          setShowBuyerSignupModal(false);
+          
+          // Store buyer type for future use
+          setUserBuyerType(buyerType);
+          
+          // Track successful buyer signup
+          trackEvent('buyer_signup_completed', {
+            email: email,
+            buyer_type: buyerType,
+            property_id: selectedPropertyForSignup?.id,
+            property_title: selectedPropertyForSignup?.title,
+            source: 'property_details_gate',
+            event_category: 'conversion'
+          });
+          
+          // TODO: Create user account with buyer type in real implementation
+          console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
+          
+          // Show property details after signup (user now has email-level access)
+          if (selectedPropertyForSignup) {
+            handlePropertySelect(selectedPropertyForSignup);
+          }
+          
+          // Reset state
+          setSelectedPropertyForSignup(null);
+        }}
+        propertyTitle={selectedPropertyForSignup?.title}
+      />
+
+      {/* Buyer Phone Verification Modal */}
+      <BuyerPhoneVerificationModal
+        isOpen={showBuyerPhoneVerificationModal}
+        onClose={() => {
+          setShowBuyerPhoneVerificationModal(false);
+          setSelectedPropertyForContact(null);
+        }}
+        onVerificationComplete={(phoneNumber) => {
+          setShowBuyerPhoneVerificationModal(false);
+          setUserPhoneVerified(true);
+          
+          // Track successful phone verification
+          trackEvent('buyer_phone_verified', {
+            phone_number: phoneNumber,
+            buyer_type: userBuyerType,
+            property_id: selectedPropertyForContact?.id,
+            property_title: selectedPropertyForContact?.title,
+            source: 'seller_contact_gate',
+            event_category: 'conversion'
+          });
+          
+          // TODO: Update user profile with phone verification in real implementation
+          console.log('Phone verification completed:', { phoneNumber, buyerType: userBuyerType });
+          
+          // Show success message or redirect to seller contact
+          alert(`Phone verified! You can now contact sellers directly. Feature coming soon.`);
+          
+          // Reset state
+          setSelectedPropertyForContact(null);
+        }}
+        buyerType={userBuyerType}
+        userEmail={user?.email}
+      />
+
+      {/* Floating "Want to Sell?" Button - Show to all users with smart routing */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 2, duration: 0.5 }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <Button
+          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"
+          size="lg"
+          onClick={() => {
+            trackEvent('floating_sell_button_clicked', {
+              source: 'property_dashboard',
+              event_category: 'conversion',
+              user_status: user ? 'authenticated' : 'guest'
+            });
+            
+            // Smart routing based on authentication
+            if (user) {
+              // Authenticated user: Open seller onboarding
+              setShowSellerModal(true);
+            } else {
+              // Guest user: Open signup modal with seller intent
+              setSellerIntent(true);
+              setShowSignupModal(true);
+            }
+          }}
+        >
+          <Home className="w-5 h-5 mr-2" />
+          Want to Sell?
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </motion.div>
 
       {/* Success Animation Overlay */}
       <AnimatePresence>
