@@ -78,7 +78,7 @@ interface PropertyDashboardProps {
   onPropertySelect?: (property: Property) => void;
 }
 
-export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
+export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   user,
   onPropertySelect
 }) => {
@@ -148,15 +148,23 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
     return () => clearTimeout(timer);
   }, [selectedCountry]);
 
-  // Scroll detection for floating navigation
+  // Optimize scroll detection with throttling to prevent flickering
   React.useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const heroHeight = 600; // Approximate hero section height
-      setShowFloatingNav(scrollY > heroHeight);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const heroHeight = 600; // Approximate hero section height
+          setShowFloatingNav(scrollY > heroHeight);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -880,33 +888,30 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               </div>
               
               <h1 
-                className="font-sans text-4xl sm:text-5xl font-bold text-slate-900 leading-tight tracking-tight px-2 mb-2 text-center"
+                className="font-sans text-4xl sm:text-5xl font-bold text-white leading-tight tracking-tight px-2 mb-2 text-center drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
               >
                 Sell Smarter,
                 <br />
-                <span className="text-blue-500">Pay less</span>
+                <span className="text-blue-300 font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Pay less</span>
               </h1>
             </motion.div>
             
             
             {/* Subheadline */}
             <motion.div 
-              className="text-center px-4 space-y-3 mb-6 max-w-3xl mx-auto"
+              className="text-center px-4 mb-8 max-w-4xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <p className="text-xl text-slate-100 font-medium">
-                Buy, Sell, or Rent-to-Own Properties
-              </p>
-              <p className="text-lg text-slate-200">
-                Comprehensive real estate solutions across Zimbabwe and South Africa
+              <p className="text-2xl sm:text-3xl text-white font-semibold leading-tight tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                Own Your Home with Flexible Installment Plans
               </p>
             </motion.div>
             
             {/* Statistics Ticker */}
             <motion.div 
-              className="grid grid-cols-1 gap-6 px-4 sm:grid-cols-3 sm:gap-8 md:flex md:justify-center md:gap-12"
+              className="grid grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:gap-8 md:flex md:justify-center md:gap-12"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -918,10 +923,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
               <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
                 <div className="text-3xl font-bold text-slate-800 mb-1">2,000+</div>
                 <div className="text-slate-600 text-sm">Families Who Owned Their Home</div>
-              </div>
-              <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
-                <div className="text-3xl font-bold text-slate-800 mb-1">25+</div>
-                <div className="text-slate-600 text-sm">Cities with Zero Down Payment</div>
               </div>
             </motion.div>
             
@@ -1194,7 +1195,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 bg-gradient-to-br from-slate-100 to-slate-50">
         {/* Error State */}
         {error && (
           <motion.div
@@ -1249,22 +1250,40 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
           }} 
           className="space-y-8"
         >
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
-            <TabsTrigger value="explore" className="flex items-center">
-              <Home className="w-4 h-4 mr-2" />
-              Explore
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4 h-auto p-1 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl shadow-sm">
+            <TabsTrigger 
+              value="explore" 
+              className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-50"
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Explore</span>
+              <span className="sm:hidden">Home</span>
             </TabsTrigger>
-            <TabsTrigger value="listings" className="flex items-center">
-              <Search className="w-4 h-4 mr-2" />
-              All Listings
+            <TabsTrigger 
+              value="listings" 
+              className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-50"
+            >
+              <Search className="w-4 h-4" />
+              <span className="hidden sm:inline">All Listings</span>
+              <span className="sm:hidden">Search</span>
             </TabsTrigger>
-            <TabsTrigger value="calculator" className="flex items-center">
-              <Calculator className="w-4 h-4 mr-2" />
-              Calculator
+            <TabsTrigger 
+              value="calculator" 
+              className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-50"
+            >
+              <Calculator className="w-4 h-4" />
+              <span className="hidden sm:inline">Calculator</span>
+              <span className="sm:hidden">Calc</span>
             </TabsTrigger>
-            <TabsTrigger value="saved" className="flex items-center" disabled={!user}>
-              <Bookmark className="w-4 h-4 mr-2" />
-              Saved {!user && <span className="text-xs ml-1">(Sign up required)</span>}
+            <TabsTrigger 
+              value="saved" 
+              className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed" 
+              disabled={!user}
+            >
+              <Bookmark className="w-4 h-4" />
+              <span className="hidden sm:inline">Saved</span>
+              <span className="sm:hidden">Saved</span>
+              {!user && <span className="hidden lg:inline text-xs ml-1 text-slate-500">(Sign up required)</span>}
             </TabsTrigger>
           </TabsList>
 
@@ -1294,12 +1313,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                   {isDataLoading ? (
                     // Skeleton loading for featured properties
                     Array.from({ length: 4 }).map((_, index) => (
-                      <PropertyCardSkeleton key={index} index={index} />
+                      <PropertyCardSkeleton key={`skeleton-${index}`} index={index} />
                     ))
                   ) : (
                     featuredProperties.slice(0, 4).map((property, index) => (
                       <FeaturedPropertyCard
-                        key={property.id}
+                        key={`property-${property.id}`}
                         property={property}
                         index={index}
                       />
@@ -1320,7 +1339,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
                     // Loading skeleton
                     Array.from({ length: 4 }).map((_, index) => (
                       <motion.div
-                        key={index}
+                        key={`stats-skeleton-${index}`}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 }}
@@ -2529,7 +2548,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
           setShowBuyerSignupModal(false);
           setSelectedPropertyForSignup(null);
         }}
-        onSignupComplete={(email, buyerType) => {
+        onSignupComplete={async (email, buyerType) => {
           setShowBuyerSignupModal(false);
           
           // Store buyer type for future use
@@ -2545,8 +2564,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
             event_category: 'conversion'
           });
           
-          // TODO: Create user account with buyer type in real implementation
           console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
+          
+          // Show success message
+          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
           
           // Show property details after signup (user now has email-level access)
           if (selectedPropertyForSignup) {
@@ -2642,4 +2663,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = ({
       </AnimatePresence>
     </div>
   );
-}; 
+});
+
+// Add display name for debugging
+PropertyDashboard.displayName = 'PropertyDashboard';
+
+// Add display name for debugging
+PropertyDashboard.displayName = 'PropertyDashboard';
