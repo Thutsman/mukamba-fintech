@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, DollarSign, CreditCard, CheckCircle, ArrowRight } from 'lucide-react';
+import { X, Mail, DollarSign, CreditCard, CheckCircle, ArrowRight, User, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuthStore } from '@/lib/store';
+import { buyerServices } from '@/lib/buyer-services';
 
 interface BuyerSignupModalProps {
   isOpen: boolean;
@@ -21,18 +24,43 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
   onSignupComplete,
   propertyTitle
 }) => {
+  const { basicSignup, isLoading, error, setError } = useAuthStore();
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [buyerType, setBuyerType] = useState<'cash' | 'installment' | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; buyerType?: string }>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const validateForm = () => {
-    const newErrors: { email?: string; buyerType?: string } = {};
+    const newErrors: { [key: string]: string } = {};
+    
+    if (!firstName) {
+      newErrors.firstName = 'First name is required';
+    }
+    
+    if (!lastName) {
+      newErrors.lastName = 'Last name is required';
+    }
     
     if (!email) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = 'Please enter a valid email address';
+    }
+    
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+    
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     if (!buyerType) {
@@ -48,23 +76,60 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
     
     if (!validateForm()) return;
     
-    setIsLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create account using the auth store
+      await basicSignup({
+        firstName,
+        lastName,
+        email,
+        password,
+        phone
+      });
+      
+      // If successful, update user profile with buyer type
+      // We need to wait a moment for the user to be created, then update the profile
+      setTimeout(async () => {
+        try {
+          const { buyerServices } = await import('@/lib/buyer-services');
+          
+          // Get the current user from the auth store
+          const { user } = useAuthStore.getState();
+          
+          if (user?.id) {
+            // Update buyer type in database
+            const result = await buyerServices.updateBuyerOnboardingProgress(
+              user.id,
+              {
+                buyer_type: buyerType!,
+                current_step: 'email_verified',
+                signup_source: 'property_details_gate'
+              }
+            );
+            
+            if (result.success) {
+              console.log('Buyer type updated successfully');
+            }
+          }
+        } catch (error) {
+          console.error('Error updating buyer type:', error);
+        }
+      }, 1000);
       
       onSignupComplete(email, buyerType!);
       
       // Reset form
       setEmail('');
+      setFirstName('');
+      setLastName('');
+      setPassword('');
+      setConfirmPassword('');
+      setPhone('');
       setBuyerType(null);
       setErrors({});
+      
     } catch (error) {
       console.error('Signup error:', error);
-      setErrors({ email: 'Something went wrong. Please try again.' });
-    } finally {
-      setIsLoading(false);
+      setErrors({ general: 'Something went wrong. Please try again.' });
     }
   };
 
@@ -87,10 +152,10 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+                     className="relative w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
         >
-          {/* Header */}
-          <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
+                     {/* Header */}
+           <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white">
             <button
               onClick={onClose}
               className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -112,32 +177,138 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="px-6 py-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email Input */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email Address
-                </label>
-                <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full ${errors.email ? 'border-red-500' : ''}`}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
-              </div>
+          <div className="px-6 py-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                             {/* Name Fields */}
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <Label htmlFor="firstName" className="text-sm font-medium text-slate-700 mb-1">
+                     First Name
+                   </Label>
+                   <Input
+                     id="firstName"
+                     type="text"
+                     placeholder="First name"
+                     value={firstName}
+                     onChange={(e) => setFirstName(e.target.value)}
+                     className={`w-full ${errors.firstName ? 'border-red-500' : ''}`}
+                   />
+                   {errors.firstName && (
+                     <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                   )}
+                 </div>
+                 <div>
+                   <Label htmlFor="lastName" className="text-sm font-medium text-slate-700 mb-1">
+                     Last Name
+                   </Label>
+                   <Input
+                     id="lastName"
+                     type="text"
+                     placeholder="Last name"
+                     value={lastName}
+                     onChange={(e) => setLastName(e.target.value)}
+                     className={`w-full ${errors.lastName ? 'border-red-500' : ''}`}
+                   />
+                   {errors.lastName && (
+                     <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                   )}
+                 </div>
+               </div>
 
-              {/* Buyer Type Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
-                  How do you plan to purchase?
-                </label>
-                
-                <div className="space-y-3">
+                             {/* Email Input */}
+               <div>
+                 <Label htmlFor="email" className="text-sm font-medium text-slate-700 mb-1">
+                   Email Address
+                 </Label>
+                 <Input
+                   id="email"
+                   type="email"
+                   placeholder="Enter your email address"
+                   value={email}
+                   onChange={(e) => setEmail(e.target.value)}
+                   className={`w-full ${errors.email ? 'border-red-500' : ''}`}
+                 />
+                 {errors.email && (
+                   <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                 )}
+               </div>
+
+                             {/* Phone Input */}
+               <div>
+                 <Label htmlFor="phone" className="text-sm font-medium text-slate-700 mb-1">
+                   Phone Number (Optional)
+                 </Label>
+                 <Input
+                   id="phone"
+                   type="tel"
+                   placeholder="+27 123 456 789"
+                   value={phone}
+                   onChange={(e) => setPhone(e.target.value)}
+                   className="w-full"
+                 />
+               </div>
+
+                             {/* Password Fields */}
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <Label htmlFor="password" className="text-sm font-medium text-slate-700 mb-1">
+                     Password
+                   </Label>
+                   <div className="relative">
+                     <Input
+                       id="password"
+                       type={showPassword ? 'text' : 'password'}
+                       placeholder="Create password"
+                       value={password}
+                       onChange={(e) => setPassword(e.target.value)}
+                       className={`w-full pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setShowPassword(!showPassword)}
+                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                     >
+                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                     </button>
+                   </div>
+                   {errors.password && (
+                     <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                   )}
+                 </div>
+                 <div>
+                   <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700 mb-1">
+                     Confirm Password
+                   </Label>
+                   <div className="relative">
+                     <Input
+                       id="confirmPassword"
+                       type={showConfirmPassword ? 'text' : 'password'}
+                       placeholder="Confirm password"
+                       value={confirmPassword}
+                       onChange={(e) => setConfirmPassword(e.target.value)}
+                       className={`w-full pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                     >
+                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                     </button>
+                   </div>
+                   {errors.confirmPassword && (
+                     <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                   )}
+                 </div>
+               </div>
+
+                             {/* Buyer Type Selection */}
+               <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-2">
+                   How do you plan to purchase?
+                 </label>
+                 
+                 <div className="space-y-2">
                   {/* Cash Buyer Option */}
                   <Card 
                     className={`cursor-pointer transition-all duration-200 ${
@@ -147,7 +318,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                     }`}
                     onClick={() => setBuyerType('cash')}
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-3">
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 mt-1">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
@@ -171,7 +342,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                           <p className="text-sm text-slate-600">
                             I plan to purchase with cash or existing funds
                           </p>
-                          <div className="mt-2 text-xs text-green-600">
+                          <div className="mt-1 text-xs text-green-600">
                             ✓ Simplified verification • ✓ Priority with sellers
                           </div>
                         </div>
@@ -188,7 +359,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                     }`}
                     onClick={() => setBuyerType('installment')}
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-3">
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 mt-1">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
@@ -212,7 +383,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                           <p className="text-sm text-slate-600">
                             I need financing or rent-to-buy options
                           </p>
-                          <div className="mt-2 text-xs text-blue-600">
+                          <div className="mt-1 text-xs text-blue-600">
                             ✓ Pre-approved financing • ✓ Rent-to-buy available
                           </div>
                         </div>
@@ -226,12 +397,19 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                 )}
               </div>
 
+              {/* General Error */}
+              {errors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{errors.general}</p>
+                </div>
+              )}
+
               {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 text-lg font-semibold"
-                disabled={isLoading}
-              >
+                             <Button
+                 type="submit"
+                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-2.5 text-lg font-semibold"
+                 disabled={isLoading}
+               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -245,15 +423,15 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                 )}
               </Button>
 
-              {/* Next Steps Preview */}
-              <div className="text-center text-sm text-slate-500">
-                Next: Phone verification required for seller contact
-              </div>
+                             {/* Next Steps Preview */}
+               <div className="text-center text-xs text-slate-500">
+                 Next: Phone verification required for seller contact
+               </div>
             </form>
           </div>
 
-          {/* Benefits Footer */}
-          <div className="bg-slate-50 px-6 py-4 border-t">
+                     {/* Benefits Footer */}
+           <div className="bg-slate-50 px-6 py-3 border-t">
             <div className="flex items-center justify-center space-x-6 text-xs text-slate-600">
               <div className="flex items-center space-x-1">
                 <CheckCircle className="w-4 h-4 text-green-500" />
