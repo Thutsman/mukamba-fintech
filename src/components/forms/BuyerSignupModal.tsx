@@ -114,6 +114,8 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
             
             if (result.success) {
               console.log('Buyer signup completed successfully');
+              // Only call onSignupComplete after buyer type is saved
+              onSignupComplete(email, buyerType!);
             } else {
               console.error('Error completing buyer signup:', result.error);
             }
@@ -124,8 +126,6 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
           console.error('Error updating buyer type:', error);
         }
       }, 2000); // Increased timeout to 2 seconds
-      
-      onSignupComplete(email, buyerType!);
       
       // Reset form
       setEmail('');
