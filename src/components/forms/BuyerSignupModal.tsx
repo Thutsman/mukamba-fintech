@@ -78,7 +78,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
     
     try {
       // Create account using the auth store
-      await basicSignup({
+      const signupResult = await basicSignup({
         firstName,
         lastName,
         email,
@@ -96,18 +96,18 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
           const { user } = useAuthStore.getState();
           
           if (user?.id) {
-            // Update buyer type in database
-            const result = await buyerServices.updateBuyerOnboardingProgress(
+            // Call the handle_buyer_signup function to properly populate buyer_onboarding_progress
+            const result = await buyerServices.handleBuyerSignup(
               user.id,
-              {
-                buyer_type: buyerType!,
-                current_step: 'email_verified',
-                signup_source: 'property_details_gate'
-              }
+              buyerType!,
+              'property_details_gate' as any,
+              undefined // propertyId will be set later if needed
             );
             
             if (result.success) {
-              console.log('Buyer type updated successfully');
+              console.log('Buyer signup completed successfully');
+            } else {
+              console.error('Error completing buyer signup:', result.error);
             }
           }
         } catch (error) {

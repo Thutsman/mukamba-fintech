@@ -14,26 +14,37 @@ import {
   DollarSign,
   Building,
   Home,
-  Tag
+  Tag,
+  MessageCircle,
+  Phone
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UnifiedProperty } from '@/lib/property-data';
+import { User } from '@/types/auth';
 
 interface PropertyCardProps {
   property: UnifiedProperty;
   viewMode: 'grid' | 'list';
   onView: () => void;
   onSave: () => void;
+  user?: User;
+  onContactSeller?: (property: UnifiedProperty) => void;
+  onPhoneVerification?: (property: UnifiedProperty) => void;
+  onBuyerSignup?: (property: UnifiedProperty) => void;
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
   viewMode,
   onView,
-  onSave
+  onSave,
+  user,
+  onContactSeller,
+  onPhoneVerification,
+  onBuyerSignup
 }) => {
   const [isSaved, setIsSaved] = React.useState(property.isSaved || false);
 
@@ -41,6 +52,51 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     e.stopPropagation();
     setIsSaved(!isSaved);
     onSave();
+  };
+
+  const handleContactSeller = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      // User not authenticated - show buyer signup modal
+      onBuyerSignup?.(property);
+    } else if (!user.is_phone_verified) {
+      // User authenticated but needs phone verification
+      onPhoneVerification?.(property);
+    } else {
+      // User authenticated and phone verified - show contact info
+      onContactSeller?.(property);
+    }
+  };
+
+  const getContactButtonText = () => {
+    if (!user) {
+      return 'Sign Up to Contact';
+    } else if (!user.is_phone_verified) {
+      return 'Verify Phone to Contact';
+    } else {
+      return 'Message Seller';
+    }
+  };
+
+  const getContactButtonIcon = () => {
+    if (!user) {
+      return <MessageCircle className="w-4 h-4" />;
+    } else if (!user.is_phone_verified) {
+      return <Phone className="w-4 h-4" />;
+    } else {
+      return <MessageCircle className="w-4 h-4" />;
+    }
+  };
+
+  const getContactButtonVariant = () => {
+    if (!user) {
+      return 'outline' as const;
+    } else if (!user.is_phone_verified) {
+      return 'default' as const;
+    } else {
+      return 'default' as const;
+    }
   };
 
   const getPropertyTypeIcon = (type: string) => {
@@ -101,10 +157,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             {/* Save button */}
             <button
               onClick={handleSave}
-              className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+              className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-sm"
             >
               <Heart 
-                className={`w-4 h-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} 
+                className={`w-3 h-3 ${isSaved ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} 
               />
             </button>
 
@@ -112,7 +168,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             {property.isViewed && (
               <div className="absolute top-2 left-2">
                 <Badge className="bg-blue-100 text-blue-800 text-xs">
-                  <Eye className="w-3 h-3 mr-1" />
+                  <Eye className="w-2 h-2 mr-1" />
                   Viewed
                 </Badge>
               </div>
@@ -123,51 +179,60 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           <div className="flex-1 p-4">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-900 text-lg mb-1">
+                <h3 className="font-semibold text-slate-900 text-lg mb-1 line-clamp-1">
                   {property.title}
                 </h3>
                 <p className="text-slate-600 text-sm mb-2 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {property.address}, {property.city}
                 </p>
-                <p className="text-slate-500 text-sm mb-3 line-clamp-2">
-                  {property.description}
-                </p>
               </div>
               
-              <div className="text-right ml-4">
-                <div className="text-2xl font-bold text-slate-900">
-                  R{property.price.toLocaleString()}
-                </div>
-                {property.originalPrice && property.originalPrice > property.price && (
-                  <div className="text-sm text-slate-500 line-through">
-                    R{property.originalPrice.toLocaleString()}
-                  </div>
-                )}
-                <Badge className={`mt-2 ${purchaseTypeBadge.color}`}>
-                  {purchaseTypeBadge.label}
-                </Badge>
+              <div className="flex gap-2 ml-4">
+                <Button 
+                  size="sm" 
+                  variant={getContactButtonVariant()}
+                  onClick={handleContactSeller}
+                  className={!user ? 'border-red-600 text-red-600 hover:bg-red-50' : 
+                            !user?.is_phone_verified ? 'bg-blue-600 hover:bg-blue-700' : 
+                            'bg-green-600 hover:bg-green-700'}
+                >
+                  {getContactButtonIcon()}
+                  <span className="ml-1">{getContactButtonText()}</span>
+                </Button>
+                
+                <Button 
+                  size="sm" 
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={onView}
+                >
+                  View Details
+                </Button>
               </div>
             </div>
+            
+            <div className="flex items-center gap-4 text-sm text-slate-600 mb-3">
+              <span className="flex items-center gap-1">
+                <Bed className="w-4 h-4" />
+                {property.bedrooms}
+              </span>
+              <span className="flex items-center gap-1">
+                <Bath className="w-4 h-4" />
+                {property.bathrooms}
+              </span>
+              <span className="flex items-center gap-1">
+                <Car className="w-4 h-4" />
+                {property.parking}
+              </span>
+              <span>{property.area} m²</span>
+            </div>
+
+            <p className="text-slate-500 text-sm mb-3 line-clamp-2">
+              {property.description}
+            </p>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-slate-600">
-                <span className="flex items-center gap-1">
-                  <Bed className="w-4 h-4" />
-                  {property.bedrooms}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Bath className="w-4 h-4" />
-                  {property.bathrooms}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Car className="w-4 h-4" />
-                  {property.parking}
-                </span>
-                <span>{property.area} m²</span>
-              </div>
-
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {property.rating && (
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
@@ -176,12 +241,20 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
                   </div>
                 )}
                 
-                {property.availableFrom && (
-                  <div className="flex items-center gap-1 text-sm text-slate-500">
-                    <Calendar className="w-3 h-3" />
-                    <span>Available {new Date(property.availableFrom).toLocaleDateString()}</span>
+                <div className="text-lg font-bold text-slate-900">
+                  R{property.price.toLocaleString()}
+                </div>
+                {property.originalPrice && property.originalPrice > property.price && (
+                  <div className="text-sm text-slate-500 line-through">
+                    R{property.originalPrice.toLocaleString()}
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Badge className={purchaseTypeBadge.color}>
+                  {purchaseTypeBadge.label}
+                </Badge>
               </div>
             </div>
 
@@ -308,9 +381,27 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             </div>
           )}
           
-          <Button size="sm" className="bg-red-600 hover:bg-red-700">
-            View Details
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              variant={getContactButtonVariant()}
+              onClick={handleContactSeller}
+              className={!user ? 'border-red-600 text-red-600 hover:bg-red-50' : 
+                        !user?.is_phone_verified ? 'bg-blue-600 hover:bg-blue-700' : 
+                        'bg-green-600 hover:bg-green-700'}
+            >
+              {getContactButtonIcon()}
+              <span className="ml-1">{getContactButtonText()}</span>
+            </Button>
+            
+            <Button 
+              size="sm" 
+              className="bg-red-600 hover:bg-red-700"
+              onClick={onView}
+            >
+              View Details
+            </Button>
+          </div>
         </div>
 
         {/* Features */}
