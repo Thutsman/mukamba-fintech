@@ -273,6 +273,31 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 <span className="text-xs">{property.views}</span>
               </div>
             </div>
+
+            {/* Contact Seller Button */}
+            <div className="pt-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!user) {
+                    // User not authenticated - show buyer signup modal
+                    alert('Please sign up to contact sellers. Feature coming soon!');
+                  } else if (!user.is_phone_verified) {
+                    // User authenticated but needs phone verification
+                    alert('Please verify your phone number to contact sellers. Feature coming soon!');
+                  } else {
+                    // User authenticated and phone verified - show contact info
+                    alert(`Contact Seller for ${property.title}:\nPhone: +27 XX XXX XXXX\nEmail: seller@example.com\nFeature coming soon!`);
+                  }
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                {!user ? 'Sign Up to Contact' : 
+                 !user.is_phone_verified ? 'Verify Phone to Contact' : 
+                 'Message Seller'}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

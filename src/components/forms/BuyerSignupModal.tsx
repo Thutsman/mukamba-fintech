@@ -95,7 +95,15 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
           // Get the current user from the auth store
           const { user } = useAuthStore.getState();
           
+          console.log('BuyerSignupModal: User from store:', user);
+          
           if (user?.id) {
+            console.log('BuyerSignupModal: Calling handleBuyerSignup with:', {
+              userId: user.id,
+              buyerType: buyerType,
+              signupSource: 'property_details_gate'
+            });
+            
             // Call the handle_buyer_signup function to properly populate buyer_onboarding_progress
             const result = await buyerServices.handleBuyerSignup(
               user.id,
@@ -109,11 +117,13 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
             } else {
               console.error('Error completing buyer signup:', result.error);
             }
+          } else {
+            console.error('BuyerSignupModal: No user found in store after signup');
           }
         } catch (error) {
           console.error('Error updating buyer type:', error);
         }
-      }, 1000);
+      }, 2000); // Increased timeout to 2 seconds
       
       onSignupComplete(email, buyerType!);
       
