@@ -145,6 +145,8 @@ export interface User {
   isFinanciallyVerified: boolean; // For buyers
   isPropertyVerified: boolean; // For sellers
   isAddressVerified: boolean;
+  kyc_level: KYCLevel;
+  buyer_type?: BuyerType;
   
   // Optional data based on verification
   nationality?: 'SA' | 'ZIM';

@@ -10,8 +10,10 @@ import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
 import { PropertyDashboard } from '@/components/property/PropertyDashboard';
+import { VerifiedUserDashboard } from '@/components/profile/VerifiedUserDashboard';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAuthStore } from '@/lib/store';
+import { isFullyVerified } from '@/types/auth';
 
 export const AuthSystem: React.FC = () => {
   const [showRegister, setShowRegister] = React.useState(false);
@@ -300,17 +302,41 @@ export const AuthSystem: React.FC = () => {
           </div>
         </header>
 
-        {/* Property Dashboard - Available to all users */}
-        <PropertyDashboard 
-          user={user || undefined}
-          onPropertySelect={(property) => {
-            console.log('Selected property:', property);
-            // For unauthenticated users, show signup prompt for advanced features
-            if (!isAuthenticated) {
-              // Could show property details but prompt to sign up for contact/save features
-            }
-          }}
-        />
+        {/* Conditional Dashboard Rendering */}
+        {isAuthenticated && user && isFullyVerified(user) ? (
+          // Show VerifiedUserDashboard for fully verified users
+          <VerifiedUserDashboard
+            user={user}
+            onViewProperty={(propertyId) => {
+              console.log('View property:', propertyId);
+              // Navigate to property details
+            }}
+            onViewApplication={(applicationId) => {
+              console.log('View application:', applicationId);
+              // Navigate to application details
+            }}
+            onStartNewApplication={() => {
+              console.log('Start new application');
+              // Navigate to property search or application form
+            }}
+            onViewMarketInsights={() => {
+              console.log('View market insights');
+              // Navigate to market insights page
+            }}
+          />
+        ) : (
+          // Show PropertyDashboard for unauthenticated or non-verified users
+          <PropertyDashboard 
+            user={user || undefined}
+            onPropertySelect={(property) => {
+              console.log('Selected property:', property);
+              // For unauthenticated users, show signup prompt for advanced features
+              if (!isAuthenticated) {
+                // Could show property details but prompt to sign up for contact/save features
+              }
+            }}
+          />
+        )}
 
       {/* Authentication Status UI */}
       {isAuthenticated && user ? (

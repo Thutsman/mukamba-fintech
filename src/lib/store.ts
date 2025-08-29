@@ -97,36 +97,38 @@ export const useAuthStore = create<AuthStore>()(
           // The trigger will automatically create a user profile when a user signs up
           console.log('User profile will be created automatically by database trigger');
 
-          // Create basic user account for frontend
-          const newUser: User = {
-            id: authData.user.id,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            phone: data.phone,
-            
-            // Default user state
-            level: 'basic',
-            roles: [],
-            
-            // Verification status
-            is_phone_verified: false,
-            isIdentityVerified: false,
-            isFinanciallyVerified: false,
-            isPropertyVerified: false,
-            isAddressVerified: false,
-            
-            // System fields
-            permissions: getUserPermissions({
-              is_phone_verified: false,
-              isIdentityVerified: false,
-              isFinanciallyVerified: false,
-              isPropertyVerified: false,
-              kycStatus: 'none'
-            }),
-            kycStatus: 'none',
-            createdAt: new Date()
-          };
+                     // Create basic user account for frontend
+           const newUser: User = {
+             id: authData.user.id,
+             firstName: data.firstName,
+             lastName: data.lastName,
+             email: data.email,
+             phone: data.phone,
+             
+             // Default user state
+             level: 'basic',
+             roles: [],
+             
+             // Verification status
+             is_phone_verified: false,
+             isIdentityVerified: false,
+             isFinanciallyVerified: false,
+             isPropertyVerified: false,
+             isAddressVerified: false,
+             kyc_level: 'none',
+             buyer_type: undefined,
+             
+             // System fields
+             permissions: getUserPermissions({
+               is_phone_verified: false,
+               isIdentityVerified: false,
+               isFinanciallyVerified: false,
+               isPropertyVerified: false,
+               kycStatus: 'none'
+             }),
+             kycStatus: 'none',
+             createdAt: new Date()
+           };
 
           console.log('Created new user:', newUser);
 
@@ -187,39 +189,41 @@ export const useAuthStore = create<AuthStore>()(
             // Continue with basic user data if profile not found
           }
 
-          // Convert Supabase user to our User type
-          const user: User = {
-            id: data.user.id,
-            firstName: profileData?.first_name || data.user.user_metadata?.first_name || 'User',
-            lastName: profileData?.last_name || data.user.user_metadata?.last_name || '',
-            email: data.user.email || credentials.email,
-            phone: profileData?.phone || data.user.user_metadata?.phone || '',
-            
-            // Map from database profile
-            level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
-            roles: profileData?.user_role === 'admin' ? ['admin'] : 
-                   profileData?.user_role === 'seller' ? ['seller'] : 
-                   profileData?.user_role === 'buyer' ? ['buyer'] : [],
-            
-            // Verification status from database
-            is_phone_verified: profileData?.is_phone_verified || false,
-            isIdentityVerified: profileData?.is_identity_verified || false,
-            isFinanciallyVerified: profileData?.is_financially_verified || false,
-            isPropertyVerified: profileData?.is_property_verified || false,
-            isAddressVerified: profileData?.is_address_verified || false,
-            
-            // System fields
-              permissions: getUserPermissions({
-              is_phone_verified: profileData?.is_phone_verified || false,
-              isIdentityVerified: profileData?.is_identity_verified || false,
-              isFinanciallyVerified: profileData?.is_financially_verified || false,
-              isPropertyVerified: profileData?.is_property_verified || false,
-              isAddressVerified: profileData?.is_address_verified || false,
-              kycStatus: 'none' // TODO: Map from database
-            }),
-            kycStatus: 'none', // TODO: Map from database
-            createdAt: data.user.created_at ? new Date(data.user.created_at) : new Date()
-            };
+                     // Convert Supabase user to our User type
+           const user: User = {
+             id: data.user.id,
+             firstName: profileData?.first_name || data.user.user_metadata?.first_name || 'User',
+             lastName: profileData?.last_name || data.user.user_metadata?.last_name || '',
+             email: data.user.email || credentials.email,
+             phone: profileData?.phone || data.user.user_metadata?.phone || '',
+             
+             // Map from database profile
+             level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
+             roles: profileData?.user_role === 'admin' ? ['admin'] : 
+                    profileData?.user_role === 'seller' ? ['seller'] : 
+                    profileData?.user_role === 'buyer' ? ['buyer'] : [],
+             
+             // Verification status from database
+             is_phone_verified: profileData?.is_phone_verified || false,
+             isIdentityVerified: profileData?.is_identity_verified || false,
+             isFinanciallyVerified: profileData?.is_financially_verified || false,
+             isPropertyVerified: profileData?.is_property_verified || false,
+             isAddressVerified: profileData?.is_address_verified || false,
+             kyc_level: profileData?.kyc_level || 'none',
+             buyer_type: profileData?.buyer_type || undefined,
+             
+             // System fields
+               permissions: getUserPermissions({
+               is_phone_verified: profileData?.is_phone_verified || false,
+               isIdentityVerified: profileData?.is_identity_verified || false,
+               isFinanciallyVerified: profileData?.is_financially_verified || false,
+               isPropertyVerified: profileData?.is_property_verified || false,
+               isAddressVerified: profileData?.is_address_verified || false,
+               kycStatus: 'none' // TODO: Map from database
+             }),
+             kycStatus: 'none', // TODO: Map from database
+             createdAt: data.user.created_at ? new Date(data.user.created_at) : new Date()
+             };
 
             set({
             user: user,
@@ -299,6 +303,8 @@ export const useAuthStore = create<AuthStore>()(
              isFinanciallyVerified: profileData?.is_financially_verified || false,
              isPropertyVerified: profileData?.is_property_verified || false,
              isAddressVerified: profileData?.is_address_verified || false,
+             kyc_level: profileData?.kyc_level || 'none',
+             buyer_type: profileData?.buyer_type || undefined,
              
              // System fields
              permissions: getUserPermissions({
