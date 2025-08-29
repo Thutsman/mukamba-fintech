@@ -257,83 +257,87 @@ export const useAuthStore = create<AuthStore>()(
         });
       },
 
-       checkAuth: async () => {
-         try {
-           if (!supabase) return;
+               checkAuth: async () => {
+          try {
+            if (!supabase) return;
 
-           const { data: { user }, error } = await supabase.auth.getUser();
-           
-           if (error || !user) {
-             set({
-               user: null,
-               isAuthenticated: false,
-               isLoading: false
-             });
-             return;
-           }
+            const { data: { user }, error } = await supabase.auth.getUser();
+            
+            if (error || !user) {
+              set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false
+              });
+              return;
+            }
 
-           // Fetch user profile from database
-           const { data: profileData, error: profileError } = await supabase
-             .from('user_profiles')
-             .select('*')
-             .eq('id', user.id)
-             .single();
+            // Fetch user profile from database
+            const { data: profileData, error: profileError } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single();
 
-           if (profileError) {
-             console.error('Profile fetch error:', profileError);
-           }
+            if (profileError) {
+              console.error('Profile fetch error:', profileError);
+            }
 
-           // Convert Supabase user to our User type
-           const userData: User = {
-             id: user.id,
-             firstName: profileData?.first_name || user.user_metadata?.first_name || 'User',
-             lastName: profileData?.last_name || user.user_metadata?.last_name || '',
-             email: user.email || '',
-             phone: profileData?.phone || user.user_metadata?.phone || '',
-             
-             // Map from database profile
-             level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
-             roles: profileData?.user_role === 'admin' ? ['admin'] : 
-                    profileData?.user_role === 'seller' ? ['seller'] : 
-                    profileData?.user_role === 'buyer' ? ['buyer'] : [],
-             
-             // Verification status from database
-             is_phone_verified: profileData?.is_phone_verified || false,
-             isIdentityVerified: profileData?.is_identity_verified || false,
-             isFinanciallyVerified: profileData?.is_financially_verified || false,
-             isPropertyVerified: profileData?.is_property_verified || false,
-             isAddressVerified: profileData?.is_address_verified || false,
-             kyc_level: profileData?.kyc_level || 'none',
-             buyer_type: profileData?.buyer_type || undefined,
-             
-             // System fields
-             permissions: getUserPermissions({
-               is_phone_verified: profileData?.is_phone_verified || false,
-               isIdentityVerified: profileData?.is_identity_verified || false,
-               isFinanciallyVerified: profileData?.is_financially_verified || false,
-               isPropertyVerified: profileData?.is_property_verified || false,
-               isAddressVerified: profileData?.is_address_verified || false,
-               kycStatus: 'none' // TODO: Map from database
-             }),
-             kycStatus: 'none', // TODO: Map from database
-             createdAt: user.created_at ? new Date(user.created_at) : new Date()
-           };
+            // Convert Supabase user to our User type
+            const userData: User = {
+              id: user.id,
+              firstName: profileData?.first_name || user.user_metadata?.first_name || 'User',
+              lastName: profileData?.last_name || user.user_metadata?.last_name || '',
+              email: user.email || '',
+              phone: profileData?.phone || user.user_metadata?.phone || '',
+              
+              // Map from database profile
+              level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
+              roles: profileData?.user_role === 'admin' ? ['admin'] : 
+                     profileData?.user_role === 'seller' ? ['seller'] : 
+                     profileData?.user_role === 'buyer' ? ['buyer'] : [],
+              
+              // Verification status from database
+              is_phone_verified: profileData?.is_phone_verified || false,
+              isIdentityVerified: profileData?.is_identity_verified || false,
+              isFinanciallyVerified: profileData?.is_financially_verified || false,
+              isPropertyVerified: profileData?.is_property_verified || false,
+              isAddressVerified: profileData?.is_address_verified || false,
+              kyc_level: profileData?.kyc_level || 'none',
+              buyer_type: profileData?.buyer_type || undefined,
+              
+              // System fields
+              permissions: getUserPermissions({
+                is_phone_verified: profileData?.is_phone_verified || false,
+                isIdentityVerified: profileData?.is_identity_verified || false,
+                isFinanciallyVerified: profileData?.is_financially_verified || false,
+                isPropertyVerified: profileData?.is_property_verified || false,
+                isAddressVerified: profileData?.is_address_verified || false,
+                kycStatus: 'none' // TODO: Map from database
+              }),
+              kycStatus: 'none', // TODO: Map from database
+              createdAt: user.created_at ? new Date(user.created_at) : new Date()
+            };
 
-           set({
-             user: userData,
-             isAuthenticated: true,
-             isLoading: false,
-             isNewUser: false
-           });
-         } catch (error) {
-           console.error('Auth check error:', error);
-           set({
-             user: null,
-             isAuthenticated: false,
-             isLoading: false
-           });
-         }
-      },
+            // Check if user just confirmed their email and needs to complete KYC
+            const needsKYC = !profileData?.is_phone_verified && profileData?.kyc_level === 'none';
+            const isNewlyConfirmed = Boolean(user.email_confirmed_at) && !profileData?.is_phone_verified;
+
+            set({
+              user: userData,
+              isAuthenticated: true,
+              isLoading: false,
+              isNewUser: needsKYC || isNewlyConfirmed
+            });
+          } catch (error) {
+            console.error('Auth check error:', error);
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false
+            });
+          }
+        },
 
       startVerification: async (type: 'buyer' | 'seller', step: string) => {
         set({ isLoading: true, error: null });

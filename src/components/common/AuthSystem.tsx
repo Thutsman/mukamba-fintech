@@ -52,6 +52,14 @@ export const AuthSystem: React.FC = () => {
     }
   }, [isAuthenticated, isNewUser]);
 
+  // Check if user just confirmed their email and redirect to profile
+  React.useEffect(() => {
+    if (isAuthenticated && user && !user.is_phone_verified && user.kyc_level === 'none') {
+      console.log('User just confirmed email, redirecting to profile for KYC');
+      setCurrentView('profile');
+    }
+  }, [isAuthenticated, user]);
+
   // Debug authentication state changes
   React.useEffect(() => {
     console.log('Authentication state changed:', { 
