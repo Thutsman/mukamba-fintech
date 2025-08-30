@@ -390,9 +390,9 @@ const SmartRecommendations: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="flex items-center text-blue-700 dark:text-blue-300">
+          <CardTitle className="flex items-center text-blue-700">
             <Target className="w-5 h-5 mr-2" />
             Smart Recommendations
             <Tooltip content="AI-powered suggestions based on your profile and goals">
@@ -410,13 +410,13 @@ const SmartRecommendations: React.FC<{
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ scale: 1.02 }}
                 className={`p-4 rounded-lg border-l-4 ${
-                  rec.type === 'urgent' 
-                    ? 'bg-red-50 dark:bg-red-900/20 border-red-400' 
-                    : rec.type === 'important'
-                    ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400'
-                    : rec.type === 'opportunity'
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
-                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
+                                        rec.type === 'urgent' 
+                        ? 'bg-red-50 border-red-400' 
+                        : rec.type === 'important'
+                        ? 'bg-orange-50 border-orange-400'
+                        : rec.type === 'opportunity'
+                        ? 'bg-green-50 border-green-400'
+                        : 'bg-blue-50 border-blue-400'
                 } cursor-pointer transition-all duration-200`}
                 onClick={() => onActionClick(rec.id)}
               >
@@ -435,8 +435,8 @@ const SmartRecommendations: React.FC<{
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm">{rec.title}</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">{rec.description}</p>
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      <p className="text-xs text-slate-600">{rec.description}</p>
+                      <p className="text-xs text-green-600 mt-1">
                         ✨ {rec.benefit}
                       </p>
                     </div>
@@ -509,7 +509,7 @@ const NavigationBar: React.FC<{
   return (
     <>
       <motion.nav 
-        className="bg-white dark:bg-white border-b border-slate-200 dark:border-slate-200 shadow-sm"
+        className="bg-white border-b border-slate-200 shadow-sm"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -524,7 +524,7 @@ const NavigationBar: React.FC<{
                   variant="ghost"
                   size="sm"
                   onClick={onBackToHome}
-                  className="flex items-center text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200"
+                  className="flex items-center text-slate-600 hover:text-slate-900 transition-colors duration-200"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Back to Home
@@ -532,7 +532,7 @@ const NavigationBar: React.FC<{
               </motion.div>
               
               {/* Breadcrumb separator */}
-              <div className="text-slate-400 dark:text-slate-600">/</div>
+              <div className="text-slate-400">/</div>
               
               {/* Logo/Brand */}
               <motion.div 
@@ -542,7 +542,7 @@ const NavigationBar: React.FC<{
                 <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">M</span>
                 </div>
-                <span className="font-bold text-xl text-slate-800 dark:text-slate-200">
+                <span className="font-bold text-xl text-slate-800">
                   Mukamba
                 </span>
               </motion.div>
@@ -560,7 +560,7 @@ const NavigationBar: React.FC<{
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="relative text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200"
+                    className="relative text-slate-600 hover:text-slate-900 transition-colors duration-200"
                   >
                     <motion.div
                       animate={{ rotate: notificationCount > 0 ? [0, -10, 10, 0] : 0 }}
@@ -586,10 +586,10 @@ const NavigationBar: React.FC<{
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     variant="ghost"
-                    className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 p-2 transition-colors duration-200"
+                    className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 p-2 transition-colors duration-200"
                   >
                     <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold">
+                      <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
                         {user.firstName[0]}{user.lastName[0]}
                       </AvatarFallback>
                     </Avatar>
@@ -921,8 +921,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       whileTap={{ scale: 0.98 }}
       className={`p-4 rounded-lg border cursor-pointer transition-all duration-300 ${
       available 
-        ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
-        : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+        ? 'bg-green-50 border-green-200' 
+        : 'bg-gray-50 border-gray-200'
       }`}
     >
       <div className="flex items-center mb-2">
@@ -938,7 +938,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         </motion.div>
         <div className="text-green-600 mr-2">{icon}</div>
         <span className={`font-medium text-sm ${
-          available ? 'text-green-800 dark:text-green-200' : 'text-gray-600 dark:text-gray-400'
+          available ? 'text-green-800' : 'text-gray-600'
         }`}>
           {title}
         </span>
@@ -949,7 +949,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         )}
       </div>
       <p className={`text-xs ${
-        available ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'
+        available ? 'text-green-700' : 'text-gray-500'
       }`}>
         {description}
       </p>
@@ -957,7 +957,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         <motion.p 
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-red-600 dark:text-red-400 mt-1"
+          className="text-xs text-red-600 mt-1"
         >
           Requires: {requiredFor}
         </motion.p>
@@ -978,8 +978,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     >
       <Card className={`${
         step.completed 
-          ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20' 
-          : 'border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-700'
+          ? 'border-green-200 bg-green-50' 
+          : 'border-slate-200 hover:border-red-300'
       } transition-all duration-300 cursor-pointer`}
       onClick={() => !step.completed && !loadingVerification && handleStartVerification(role, step.id)}
       >
@@ -1024,16 +1024,16 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          <p className="text-sm text-slate-600 mb-3">
             {step.description}
           </p>
           
           <div className="space-y-2">
             <div>
-              <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <h5 className="text-xs font-semibold text-slate-700 mb-1">
                 Benefits:
               </h5>
-              <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <ul className="text-xs text-slate-600 space-y-1">
                 {step.benefits.map((benefit: string, idx: number) => (
                   <motion.li 
                     key={idx} 
@@ -1051,10 +1051,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             
             {step.requiredFor.length > 0 && (
               <div>
-                <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <h5 className="text-xs font-semibold text-slate-700 mb-1">
                   Required for:
                 </h5>
-                <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                <ul className="text-xs text-slate-600 space-y-1">
                   {step.requiredFor.map((requirement: string, idx: number) => (
                     <motion.li 
                       key={idx} 
@@ -1099,7 +1099,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-white">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
       <NavigationBar
         user={user}
@@ -1119,7 +1119,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">
           {isNewUser ? `Welcome to Mukamba, ${user.firstName}!` : `Welcome back, ${user.firstName}!`}
             {(isFirstVisit || isNewUser) && (
               <motion.span
@@ -1132,7 +1132,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </motion.span>
             )}
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-slate-600">
           {isNewUser 
             ? "Let's get your account set up! Complete your profile to start exploring rent-to-buy properties." 
             : "Complete your profile to unlock more features"
@@ -1191,14 +1191,14 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-800">
+            <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
               <CardHeader>
-                <CardTitle className="flex items-center text-green-700 dark:text-green-300">
+                <CardTitle className="flex items-center text-green-700">
                   🎉 Welcome to Mukamba!
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-green-700 dark:text-green-300 mb-4">
+                <p className="text-green-700 mb-4">
                   Congratulations on creating your account! Here's what you can do to get started:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1245,7 +1245,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex items-center mb-4">
-                <div className="flex-1 bg-slate-200 dark:bg-slate-200 rounded-full h-3 overflow-hidden">
+                <div className="flex-1 bg-slate-200 rounded-full h-3 overflow-hidden">
                   <motion.div 
                     className={`${levelInfo.color} h-3 rounded-full`}
                     initial={{ width: 0 }}
@@ -1257,12 +1257,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1 }}
-                  className="ml-3 text-sm font-medium text-slate-600 dark:text-slate-400"
+                  className="ml-3 text-sm font-medium text-slate-600"
                 >
               {levelInfo.progress}%
                 </motion.span>
           </div>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-slate-600 text-sm">
             {levelInfo.description}
           </p>
         </CardContent>
@@ -1348,7 +1348,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
               </Tooltip>
             </CardTitle>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-slate-600">
               Complete these essential verifications to unlock more features
             </p>
           </CardHeader>
@@ -1357,8 +1357,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               {/* Phone Verification */}
               <div className={`p-4 rounded-lg border ${
                 user.is_phone_verified 
-                  ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
-                  : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-slate-50 border-slate-200'
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -1371,7 +1371,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm">Phone Verification</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                      <p className="text-xs text-slate-600">
                         {user.is_phone_verified ? 'Verified' : 'Required for messaging and notifications'}
                       </p>
                     </div>
@@ -1393,8 +1393,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               {/* Identity Verification */}
               <div className={`p-4 rounded-lg border ${
                 user.isIdentityVerified 
-                  ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
-                  : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-slate-50 border-slate-200'
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -1407,7 +1407,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm">Identity Verification</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                      <p className="text-xs text-slate-600">
                         {user.isIdentityVerified ? 'Verified' : 'Required for financing and property applications'}
                       </p>
                     </div>
@@ -1447,22 +1447,22 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
                 </Tooltip>
               </CardTitle>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-slate-600">
                 You've unlocked additional features to enhance your experience
               </p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Financial Assessment */}
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-green-100 dark:bg-green-800 rounded-full">
-                        <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      <div className="p-2 bg-green-100 rounded-full">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
                       </div>
                       <div>
                         <h4 className="font-semibold text-sm">Financial Assessment</h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <p className="text-xs text-slate-600">
                           Get your credit score and unlock financing options
                         </p>
                       </div>
@@ -1478,15 +1478,15 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 </div>
 
                 {/* Property Listing */}
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
-                        <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <div className="p-2 bg-blue-100 rounded-full">
+                        <Home className="w-4 h-4 text-blue-600" />
                       </div>
                       <div>
                         <h4 className="font-semibold text-sm">List Your Property</h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <p className="text-xs text-slate-600">
                           Sell or rent out your property on our platform
                         </p>
                       </div>
@@ -1588,9 +1588,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
         >
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-50 dark:to-indigo-50 border-blue-200 dark:border-blue-200">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
             <CardHeader>
-              <CardTitle className="flex items-center text-blue-700 dark:text-blue-700">
+              <CardTitle className="flex items-center text-blue-700">
                 <Building className="w-5 h-5 mr-2" />
                 Become a Real Estate Agent
                 <Tooltip content="Join our network of verified real estate professionals">
@@ -1600,33 +1600,33 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-blue-700 dark:text-blue-700 text-sm">
+                <p className="text-blue-700 text-sm">
                   Are you a licensed real estate agent? Join our platform to access exclusive features and connect with more clients.
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-white/50 dark:bg-white/50 rounded-lg">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center p-4 bg-white/50 rounded-lg">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Shield className="w-6 h-6 text-blue-600" />
                     </div>
                     <h4 className="font-semibold text-sm mb-1">Verified Status</h4>
-                    <p className="text-xs text-blue-600 dark:text-blue-600">EAC registration verification</p>
+                    <p className="text-xs text-blue-600">EAC registration verification</p>
                   </div>
                   
-                  <div className="text-center p-4 bg-white/50 dark:bg-white/50 rounded-lg">
-                    <div className="w-12 h-12 bg-green-100 dark:bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center p-4 bg-white/50 rounded-lg">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <TrendingUp className="w-6 h-6 text-green-600" />
                     </div>
                     <h4 className="font-semibold text-sm mb-1">Enhanced Features</h4>
-                    <p className="text-xs text-green-600 dark:text-green-600">Lead management & analytics</p>
+                    <p className="text-xs text-green-600">Lead management & analytics</p>
                   </div>
                   
-                  <div className="text-center p-4 bg-white/50 dark:bg-white/50 rounded-lg">
-                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center p-4 bg-white/50 rounded-lg">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <MessageCircle className="w-6 h-6 text-purple-600" />
                     </div>
                     <h4 className="font-semibold text-sm mb-1">Direct Communication</h4>
-                    <p className="text-xs text-purple-600 dark:text-purple-600">Connect with clients directly</p>
+                    <p className="text-xs text-purple-600">Connect with clients directly</p>
                   </div>
                 </div>
                 
