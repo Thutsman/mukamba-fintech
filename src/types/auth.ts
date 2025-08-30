@@ -234,8 +234,8 @@ export function getBuyerVerificationSteps(user: Partial<User>): VerificationStep
       description: 'Upload your ID document for identity verification',
       required: false,
       completed: user.isIdentityVerified || false,
-      benefits: ['Apply for rent-to-buy financing', 'Access exclusive properties', 'Get pre-approval'],
-      requiredFor: ['Apply for financing', 'Rent-to-buy applications']
+      benefits: ['Apply for installment purchase financing', 'Access exclusive properties', 'Get pre-approval'],
+      requiredFor: ['Apply for financing', 'Installment purchase applications']
     },
     {
       id: 'financial-verification',
@@ -244,7 +244,7 @@ export function getBuyerVerificationSteps(user: Partial<User>): VerificationStep
       required: false,
       completed: user.isFinanciallyVerified || false,
       benefits: ['Get credit score', 'Pre-approved financing', 'Higher application priority'],
-      requiredFor: ['Rent-to-buy applications', 'Financing pre-approval']
+      requiredFor: ['Installment purchase applications', 'Financing pre-approval']
     }
   ];
 }
@@ -276,8 +276,8 @@ export function getSellerVerificationSteps(user: Partial<User>): VerificationSte
       description: 'Upload title deeds and property certificates',
       required: false,
       completed: user.isPropertyVerified || false,
-      benefits: ['List verified properties', 'Process rent-to-buy deals', 'Premium placement'],
-      requiredFor: ['Rent-to-buy listings', 'Premium property placement']
+      benefits: ['List verified properties', 'Process installment purchase deals', 'Premium placement'],
+      requiredFor: ['Installment purchase listings', 'Premium property placement']
     }
   ];
 }

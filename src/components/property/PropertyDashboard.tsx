@@ -441,10 +441,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             )}
             
             {/* Property Badges */}
-            <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap gap-1 sm:gap-2">
+                                    <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap gap-1 sm:gap-2">
                           <Badge className="bg-blue-500 text-white text-xs">
-                Featured
-              </Badge>
+                            Featured
+                          </Badge>
               {property.listingType === 'rent-to-buy' && (
                 <Badge className="bg-green-500 text-white text-xs">
                   Installments
@@ -653,7 +653,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             {imageLoadErrors.has(property.media.mainImage) ? (
               <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
                 <Home className="w-12 h-12 text-slate-400" />
-              </div>
+                      </div>
             ) : (
               <Image
                 src={property.media.mainImage}
@@ -694,11 +694,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   Installments
                 </Badge>
               )}
-                      </div>
+                    </div>
                       
             {/* Quick View Button (appears on hover) */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <Button
+              <Button
                 size="sm"
                 className="bg-white text-slate-800 hover:bg-slate-100"
                 onClick={(e) => {
@@ -708,7 +708,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Quick View
-                      </Button>
+              </Button>
                     </div>
           </div>
           
@@ -796,22 +796,22 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               {/* Enhanced Logo with glass effect */}
               <div className="relative mb-8">
                 <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/30">
-          <Image
+                  <Image
                     src="/logo.svg"
                     alt="Mukamba Logo"
                     width={320}
                     height={90}
                     className="h-20 w-auto"
-            priority
-          />
-        </div>
+                    priority
+                  />
+                </div>
               </div>
               
               <h1 
                 className="font-sans text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight px-4 mb-4 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
               >
                 Sell Smarter,
-              <br />
+                <br />
                 <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Pay Less</span>
               </h1>
             </div>

@@ -98,37 +98,37 @@ export const useAuthStore = create<AuthStore>()(
           console.log('User profile will be created automatically by database trigger');
 
                      // Create basic user account for frontend
-           const newUser: User = {
+          const newUser: User = {
              id: authData.user.id,
-             firstName: data.firstName,
-             lastName: data.lastName,
-             email: data.email,
-             phone: data.phone,
-             
-             // Default user state
-             level: 'basic',
-             roles: [],
-             
-             // Verification status
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            
+            // Default user state
+            level: 'basic',
+            roles: [],
+            
+            // Verification status
              is_phone_verified: false,
-             isIdentityVerified: false,
-             isFinanciallyVerified: false,
-             isPropertyVerified: false,
-             isAddressVerified: false,
+            isIdentityVerified: false,
+            isFinanciallyVerified: false,
+            isPropertyVerified: false,
+            isAddressVerified: false,
              kyc_level: 'none',
              buyer_type: undefined,
-             
-             // System fields
-             permissions: getUserPermissions({
+            
+            // System fields
+            permissions: getUserPermissions({
                is_phone_verified: false,
-               isIdentityVerified: false,
-               isFinanciallyVerified: false,
-               isPropertyVerified: false,
-               kycStatus: 'none'
-             }),
-             kycStatus: 'none',
-             createdAt: new Date()
-           };
+              isIdentityVerified: false,
+              isFinanciallyVerified: false,
+              isPropertyVerified: false,
+              kycStatus: 'none'
+            }),
+            kycStatus: 'none',
+            createdAt: new Date()
+          };
 
           console.log('Created new user:', newUser);
 
@@ -213,7 +213,7 @@ export const useAuthStore = create<AuthStore>()(
              buyer_type: profileData?.buyer_type || undefined,
              
              // System fields
-               permissions: getUserPermissions({
+              permissions: getUserPermissions({
                is_phone_verified: profileData?.is_phone_verified || false,
                isIdentityVerified: profileData?.is_identity_verified || false,
                isFinanciallyVerified: profileData?.is_financially_verified || false,
@@ -223,7 +223,7 @@ export const useAuthStore = create<AuthStore>()(
              }),
              kycStatus: 'none', // TODO: Map from database
              createdAt: data.user.created_at ? new Date(data.user.created_at) : new Date()
-             };
+            };
 
             set({
             user: user,
@@ -318,6 +318,7 @@ export const useAuthStore = create<AuthStore>()(
               kycStatus: 'none', // TODO: Map from database
               createdAt: user.created_at ? new Date(user.created_at) : new Date()
             };
+          
 
             // Check if user just confirmed their email and needs to complete KYC
             const needsKYC = !profileData?.is_phone_verified && profileData?.kyc_level === 'none';
@@ -337,7 +338,7 @@ export const useAuthStore = create<AuthStore>()(
               isLoading: false
             });
           }
-        },
+      },
 
       startVerification: async (type: 'buyer' | 'seller', step: string) => {
         set({ isLoading: true, error: null });

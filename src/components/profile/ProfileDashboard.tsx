@@ -37,7 +37,14 @@ import {
   ChevronRight,
   Trophy,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  DollarSign,
+  Clock,
+  Calculator,
+  BarChart3,
+  FileText,
+  PlusCircle,
+  Headphones
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -62,7 +69,7 @@ import { IdentityVerificationModal } from '@/components/forms/IdentityVerificati
 import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
 import { PropertyDocumentationModal } from '@/components/forms/PropertyDocumentationModal';
 import { PropertyListingModal } from '@/components/forms/PropertyListingModal';
-import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
+
 import { VerifiedUserDashboard } from './VerifiedUserDashboard';
 
 interface ProfileDashboardProps {
@@ -83,76 +90,277 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
 
   const getRecommendations = () => {
     const recommendations = [];
+    const kycLevel = user.kyc_level || 'none';
+    const buyerType = user.buyer_type;
+    const isSeller = user.roles.includes('seller');
 
-    // Profile completion recommendations
-    if (!user.is_phone_verified) {
+    // Email-Only Users (KYC: 'email')
+    if (kycLevel === 'email' || kycLevel === 'none') {
       recommendations.push({
         id: 'verify-phone',
-        type: 'urgent',
+        type: 'primary',
         title: 'Verify Your Phone Number',
-        description: 'Enable communication with property owners and unlock key features',
+        description: 'Enable direct communication with property owners',
         action: 'Start Phone Verification',
         priority: 1,
         icon: <Phone className="w-4 h-4" />,
-        benefit: 'Unlock messaging and notifications'
+        benefit: 'Unlock messaging and notifications',
+        timeRequired: '2 minutes',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Access seller contact info',
+        badge: 'Recommended for you'
+      });
+
+      recommendations.push({
+        id: 'complete-profile',
+        type: 'secondary',
+        title: 'Complete Your Profile',
+        description: 'Add missing information to improve your experience',
+        action: 'Update Profile',
+        priority: 2,
+        icon: <User className="w-4 h-4" />,
+        benefit: 'Better property recommendations',
+        timeRequired: '3 minutes',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Personalized property suggestions'
+      });
+
+      recommendations.push({
+        id: 'browse-premium',
+        type: 'secondary',
+        title: 'Browse Premium Properties',
+        description: 'Explore exclusive properties (coming soon)',
+        action: 'Coming Soon',
+        priority: 3,
+        icon: <Star className="w-4 h-4" />,
+        benefit: 'Access to premium listings',
+        timeRequired: 'Complete later',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Premium property access',
+        badge: 'Coming Soon'
       });
     }
 
-    if (!user.isIdentityVerified && user.is_phone_verified) {
+    // Phone-Verified Users (KYC: 'phone')
+    else if (kycLevel === 'phone') {
       recommendations.push({
         id: 'verify-identity',
-        type: 'important',
+        type: 'primary',
         title: 'Complete Identity Verification',
-        description: 'Build trust and access premium features with ID verification',
+        description: 'Build trust and access premium features',
         action: 'Upload ID Document',
-        priority: 2,
+        priority: 1,
         icon: <Shield className="w-4 h-4" />,
-        benefit: 'Access financing options and exclusive listings'
+        benefit: 'Access financing options and exclusive listings',
+        timeRequired: '3 minutes',
+        difficulty: 'Moderate',
+        whatYoullUnlock: 'Apply for installment purchases',
+        badge: 'Recommended for you'
+      });
+
+      recommendations.push({
+        id: 'property-alerts',
+        type: 'secondary',
+        title: 'Start Property Search with Alerts',
+        description: 'Get notified about new properties matching your criteria',
+        action: 'Set Up Alerts',
+        priority: 2,
+        icon: <Bell className="w-4 h-4" />,
+        benefit: 'Never miss your perfect property',
+        timeRequired: '2 minutes',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Custom property notifications'
+      });
+
+      recommendations.push({
+        id: 'contact-owners',
+        type: 'secondary',
+        title: 'Contact Property Owners Directly',
+        description: 'You can now message sellers directly',
+        action: 'Start Messaging',
+        priority: 3,
+        icon: <MessageCircle className="w-4 h-4" />,
+        benefit: 'Direct communication with sellers',
+        timeRequired: 'Available now',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Direct seller communication',
+        badge: 'Unlocked'
       });
     }
 
-    // Role-specific recommendations
-    if (selectedRole === 'buyer' && !user.isFinanciallyVerified && user.isIdentityVerified) {
-      recommendations.push({
-        id: 'financial-assessment',
-        type: 'opportunity',
-        title: 'Complete Financial Assessment',
-        description: 'Get your credit score and unlock rent-to-buy options',
-        action: 'Start Assessment',
-        priority: 3,
-        icon: <TrendingUp className="w-4 h-4" />,
-        benefit: 'Access to personalized financing offers'
-      });
+    // Identity-Verified Users
+    else if (kycLevel === 'identity') {
+      if (buyerType === 'cash') {
+        recommendations.push({
+          id: 'browse-exclusive',
+          type: 'primary',
+          title: 'Browse Exclusive Properties',
+          description: 'Access premium properties for cash buyers',
+          action: 'View Exclusive Listings',
+          priority: 1,
+          icon: <Star className="w-4 h-4" />,
+          benefit: 'Priority access to premium properties',
+          timeRequired: 'Available now',
+          difficulty: 'Easy',
+          whatYoullUnlock: 'Exclusive property access',
+          badge: 'Recommended for you'
+        });
+
+        recommendations.push({
+          id: 'property-alerts-premium',
+          type: 'secondary',
+          title: 'Set Up Premium Property Alerts',
+          description: 'Get notified about exclusive cash buyer opportunities',
+          action: 'Configure Alerts',
+          priority: 2,
+          icon: <Bell className="w-4 h-4" />,
+          benefit: 'First access to new listings',
+          timeRequired: '2 minutes',
+          difficulty: 'Easy',
+          whatYoullUnlock: 'Premium alert system'
+        });
+
+        recommendations.push({
+          id: 'cash-buyer-status',
+          type: 'secondary',
+          title: 'Apply for Premium Cash Buyer Status',
+          description: 'Get priority treatment from sellers',
+          action: 'Apply Now',
+          priority: 3,
+          icon: <Trophy className="w-4 h-4" />,
+          benefit: 'Priority with property owners',
+          timeRequired: '5 minutes',
+          difficulty: 'Moderate',
+          whatYoullUnlock: 'Premium buyer status'
+        });
+      } else if (buyerType === 'installment') {
+        recommendations.push({
+          id: 'financial-assessment',
+          type: 'primary',
+          title: 'Complete Financial Assessment',
+          description: 'Get pre-approved for installment purchase options',
+          action: 'Start Assessment',
+          priority: 1,
+          icon: <TrendingUp className="w-4 h-4" />,
+          benefit: 'Access to installment purchase financing',
+          timeRequired: '5 minutes',
+          difficulty: 'Comprehensive',
+          whatYoullUnlock: 'Pre-approval for financing',
+          badge: 'Recommended for you'
+        });
+
+        recommendations.push({
+          id: 'calculate-installments',
+          type: 'secondary',
+          title: 'Calculate Installment Options',
+          description: 'See your payment options for different properties',
+          action: 'Use Calculator',
+          priority: 2,
+          icon: <Calculator className="w-4 h-4" />,
+          benefit: 'Understand your payment options',
+          timeRequired: '2 minutes',
+          difficulty: 'Easy',
+          whatYoullUnlock: 'Payment calculator access'
+        });
+
+        recommendations.push({
+          id: 'pre-approval',
+          type: 'secondary',
+          title: 'Get Pre-Approved for Financing',
+          description: 'Secure your financing before making offers',
+          action: 'Apply for Pre-Approval',
+          priority: 3,
+          icon: <CreditCard className="w-4 h-4" />,
+          benefit: 'Confidence in your buying power',
+          timeRequired: '10 minutes',
+          difficulty: 'Comprehensive',
+          whatYoullUnlock: 'Pre-approval certificate'
+        });
+      }
     }
 
-    if (selectedRole === 'seller' && !user.isPropertyVerified && user.isIdentityVerified) {
+    // Financial-Verified Users
+    else if (kycLevel === 'financial') {
       recommendations.push({
-        id: 'property-documents',
-        type: 'opportunity',
-        title: 'Upload Property Documents',
-        description: 'Verify your properties to attract serious buyers',
-        action: 'Upload Documents',
-        priority: 3,
+        id: 'start-applications',
+        type: 'primary',
+        title: 'Start Property Applications',
+        description: 'Apply for properties with confidence',
+        action: 'Browse & Apply',
+        priority: 1,
         icon: <Home className="w-4 h-4" />,
-        benefit: 'Increased visibility and buyer trust'
+        benefit: 'Full access to all properties',
+        timeRequired: 'Available now',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Complete application access',
+        badge: 'Recommended for you'
       });
-    }
 
-    // Engagement recommendations
-    if (userLevel === 'basic') {
       recommendations.push({
-        id: 'explore-features',
-        type: 'tip',
-        title: 'Explore Platform Features',
-        description: 'Discover what you can do with your current access level',
-        action: 'Take Tour',
-        priority: 4,
-        icon: <Lightbulb className="w-4 h-4" />,
-        benefit: 'Make the most of your membership'
+        id: 'market-insights',
+        type: 'secondary',
+        title: 'Access Market Insights',
+        description: 'Get detailed market analysis and trends',
+        action: 'View Insights',
+        priority: 2,
+        icon: <BarChart3 className="w-4 h-4" />,
+        benefit: 'Make informed decisions',
+        timeRequired: 'Available now',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Market analytics access'
+      });
+
+      recommendations.push({
+        id: 'premium-support',
+        type: 'secondary',
+        title: 'Premium Support Access',
+        description: 'Get priority customer support',
+        action: 'Contact Support',
+        priority: 3,
+        icon: <Headphones className="w-4 h-4" />,
+        benefit: 'Faster response times',
+        timeRequired: 'Available now',
+        difficulty: 'Easy',
+        whatYoullUnlock: 'Priority support access'
       });
     }
 
-    return recommendations.sort((a, b) => a.priority - b.priority).slice(0, 3);
+    // Sellers
+    if (isSeller) {
+      if (!user.isPropertyVerified) {
+        recommendations.unshift({
+          id: 'property-documents',
+          type: 'primary',
+          title: 'Upload Property Documents',
+          description: 'Verify your properties to attract serious buyers',
+          action: 'Upload Documents',
+          priority: 1,
+          icon: <FileText className="w-4 h-4" />,
+          benefit: 'Increased visibility and buyer trust',
+          timeRequired: '5 minutes',
+          difficulty: 'Moderate',
+          whatYoullUnlock: 'Verified property status',
+          badge: 'Recommended for you'
+        });
+      } else {
+        recommendations.unshift({
+          id: 'list-property',
+          type: 'primary',
+          title: 'List Your Property',
+          description: 'Start attracting buyers to your property',
+          action: 'Create Listing',
+          priority: 1,
+          icon: <PlusCircle className="w-4 h-4" />,
+          benefit: 'Reach qualified buyers',
+          timeRequired: '10 minutes',
+          difficulty: 'Moderate',
+          whatYoullUnlock: 'Property listing access',
+          badge: 'Recommended for you'
+        });
+      }
+    }
+
+    return recommendations.sort((a, b) => a.priority - b.priority).slice(0, 4);
   };
 
   return getRecommendations();
@@ -382,7 +590,31 @@ const SmartRecommendations: React.FC<{
   recommendations: ReturnType<typeof useSmartRecommendations>;
   onActionClick: (id: string) => void;
 }> = ({ recommendations, onActionClick }) => {
+  const [showAll, setShowAll] = React.useState(false);
+  
   if (recommendations.length === 0) return null;
+
+  const primaryRecommendation = recommendations.find(rec => rec.type === 'primary');
+  const secondaryRecommendations = recommendations.filter(rec => rec.type === 'secondary');
+  const displayedRecommendations = showAll ? recommendations : recommendations.slice(0, 3);
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Easy': return 'text-green-600 bg-green-100';
+      case 'Moderate': return 'text-orange-600 bg-orange-100';
+      case 'Comprehensive': return 'text-red-600 bg-red-100';
+      default: return 'text-slate-600 bg-slate-100';
+    }
+  };
+
+  const getBadgeColor = (badge: string) => {
+    switch (badge) {
+      case 'Recommended for you': return 'bg-blue-500 text-white';
+      case 'Unlocked': return 'bg-green-500 text-white';
+      case 'Coming Soon': return 'bg-slate-500 text-white';
+      default: return 'bg-blue-100 text-blue-700';
+    }
+  };
 
   return (
     <motion.div
@@ -401,50 +633,365 @@ const SmartRecommendations: React.FC<{
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {recommendations.map((rec, index) => (
+          <div className="space-y-4">
+            {/* Primary Recommendation - Prominently Displayed */}
+            {primaryRecommendation && (
               <motion.div
-                key={rec.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.02 }}
-                className={`p-4 rounded-lg border-l-4 ${
-                                        rec.type === 'urgent' 
-                        ? 'bg-red-50 border-red-400' 
-                        : rec.type === 'important'
-                        ? 'bg-orange-50 border-orange-400'
-                        : rec.type === 'opportunity'
-                        ? 'bg-green-50 border-green-400'
-                        : 'bg-blue-50 border-blue-400'
-                } cursor-pointer transition-all duration-200`}
-                onClick={() => onActionClick(rec.id)}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="p-6 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg cursor-pointer transition-all duration-300"
+                onClick={() => onActionClick(primaryRecommendation.id)}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-full ${
-                      rec.type === 'urgent' 
-                        ? 'bg-red-100 text-red-600' 
-                        : rec.type === 'important'
-                        ? 'bg-orange-100 text-orange-600'
-                        : rec.type === 'opportunity'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-blue-100 text-blue-600'
-                    }`}>
-                      {rec.icon}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 bg-blue-100 rounded-full">
+                      {primaryRecommendation.icon}
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">{rec.title}</h4>
-                      <p className="text-xs text-slate-600">{rec.description}</p>
-                      <p className="text-xs text-green-600 mt-1">
-                        ✨ {rec.benefit}
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h4 className="font-bold text-lg text-blue-900">{primaryRecommendation.title}</h4>
+                        {primaryRecommendation.badge && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getBadgeColor(primaryRecommendation.badge)}`}>
+                            {primaryRecommendation.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-blue-700 mb-3">{primaryRecommendation.description}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm text-blue-700">{primaryRecommendation.timeRequired}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(primaryRecommendation.difficulty)}`}>
+                            {primaryRecommendation.difficulty}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Unlock className="w-4 h-4 text-green-600" />
+                          <span className="text-sm text-green-700">{primaryRecommendation.whatYoullUnlock}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-blue-600 font-medium">
+                          ✨ {primaryRecommendation.benefit}
+                        </p>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                          {primaryRecommendation.action}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
                 </div>
               </motion.div>
-            ))}
+            )}
+
+            {/* Secondary Recommendations */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {secondaryRecommendations.slice(0, showAll ? undefined : 2).map((rec, index) => (
+                <motion.div
+                  key={rec.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  className="p-4 rounded-lg border border-slate-200 bg-white hover:shadow-md cursor-pointer transition-all duration-200"
+                  onClick={() => onActionClick(rec.id)}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-slate-100 rounded-lg">
+                      {rec.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h5 className="font-semibold text-sm text-slate-800">{rec.title}</h5>
+                        {rec.badge && (
+                          <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getBadgeColor(rec.badge)}`}>
+                            {rec.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-600 mb-2">{rec.description}</p>
+                      
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                        <span>{rec.timeRequired}</span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-xs ${getDifficultyColor(rec.difficulty)}`}>
+                          {rec.difficulty}
+                        </span>
+                      </div>
+                      
+                      <p className="text-xs text-green-600 mb-2">
+                        ✨ {rec.benefit}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-blue-600">{rec.whatYoullUnlock}</span>
+                        <ChevronRight className="w-3 h-3 text-slate-400" />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Show More/Less Button */}
+            {recommendations.length > 3 && (
+              <div className="text-center pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAll(!showAll)}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  {showAll ? 'Show Less' : `See all ${recommendations.length} recommendations`}
+                  <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+// Progress Gamification Component
+const ProgressGamification: React.FC<{
+  user: UserType;
+}> = ({ user }) => {
+  const kycLevel = user.kyc_level || 'none';
+  const buyerType = user.buyer_type;
+  const isSeller = user.roles.includes('seller');
+
+  const getCompletionBadges = () => {
+    const badges = [];
+    
+    if (user.is_phone_verified) {
+      badges.push({
+        id: 'phone-champion',
+        title: 'Phone Champion',
+        description: 'Verified phone number',
+        icon: <Phone className="w-4 h-4" />,
+        color: 'bg-green-500',
+        unlocked: true
+      });
+    }
+    
+    if (user.isIdentityVerified) {
+      badges.push({
+        id: 'identity-verified',
+        title: 'Identity Verified',
+        description: 'ID verification complete',
+        icon: <Shield className="w-4 h-4" />,
+        color: 'bg-blue-500',
+        unlocked: true
+      });
+    }
+    
+    if (user.isFinanciallyVerified) {
+      badges.push({
+        id: 'pre-approved-buyer',
+        title: 'Pre-Approved Buyer',
+        description: 'Financial assessment complete',
+        icon: <TrendingUp className="w-4 h-4" />,
+        color: 'bg-purple-500',
+        unlocked: true
+      });
+    }
+    
+    if (user.isPropertyVerified) {
+      badges.push({
+        id: 'verified-seller',
+        title: 'Verified Seller',
+        description: 'Property verification complete',
+        icon: <Home className="w-4 h-4" />,
+        color: 'bg-red-500',
+        unlocked: true
+      });
+    }
+    
+    // Add locked badges for motivation
+    if (!user.is_phone_verified) {
+      badges.push({
+        id: 'phone-champion-locked',
+        title: 'Phone Champion',
+        description: 'Verify your phone number',
+        icon: <Phone className="w-4 h-4" />,
+        color: 'bg-slate-300',
+        unlocked: false
+      });
+    }
+    
+    if (!user.isIdentityVerified && user.is_phone_verified) {
+      badges.push({
+        id: 'identity-verified-locked',
+        title: 'Identity Verified',
+        description: 'Complete ID verification',
+        icon: <Shield className="w-4 h-4" />,
+        color: 'bg-slate-300',
+        unlocked: false
+      });
+    }
+    
+    if (!user.isFinanciallyVerified && user.isIdentityVerified && buyerType === 'installment') {
+      badges.push({
+        id: 'pre-approved-buyer-locked',
+        title: 'Pre-Approved Buyer',
+        description: 'Complete financial assessment',
+        icon: <TrendingUp className="w-4 h-4" />,
+        color: 'bg-slate-300',
+        unlocked: false
+      });
+    }
+    
+    return badges;
+  };
+
+  const getNextAchievement = () => {
+    if (!user.is_phone_verified) {
+      return {
+        title: 'Phone Champion',
+        description: 'Verify your phone number to unlock messaging',
+        progress: 0,
+        icon: <Phone className="w-5 h-5" />
+      };
+    }
+    
+    if (!user.isIdentityVerified) {
+      return {
+        title: 'Identity Verified',
+        description: 'Complete ID verification for premium access',
+        progress: 50,
+        icon: <Shield className="w-5 h-5" />
+      };
+    }
+    
+    if (!user.isFinanciallyVerified && buyerType === 'installment') {
+      return {
+        title: 'Pre-Approved Buyer',
+        description: 'Complete financial assessment for financing',
+        progress: 75,
+        icon: <TrendingUp className="w-5 h-5" />
+      };
+    }
+    
+    if (!user.isPropertyVerified && isSeller) {
+      return {
+        title: 'Verified Seller',
+        description: 'Upload property documents to start listing',
+        progress: 75,
+        icon: <Home className="w-5 h-5" />
+      };
+    }
+    
+    return {
+      title: 'All Achievements Unlocked!',
+      description: 'You have completed all verifications',
+      progress: 100,
+      icon: <Trophy className="w-5 h-5" />
+    };
+  };
+
+  const badges = getCompletionBadges();
+  const nextAchievement = getNextAchievement();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+    >
+      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+        <CardHeader>
+          <CardTitle className="flex items-center text-purple-700">
+            <Trophy className="w-5 h-5 mr-2" />
+            Your Achievements
+            <Tooltip content="Track your verification progress and unlock badges">
+              <Info className="w-4 h-4 ml-2 text-purple-500 cursor-help" />
+            </Tooltip>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Next Achievement Preview */}
+            <div className="p-4 bg-white rounded-lg border border-purple-200">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  {nextAchievement.icon}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-purple-900">{nextAchievement.title}</h4>
+                  <p className="text-sm text-purple-700">{nextAchievement.description}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-purple-600">Progress</span>
+                  <span className="text-purple-700 font-medium">{nextAchievement.progress}%</span>
+                </div>
+                <div className="w-full bg-purple-200 rounded-full h-2">
+                  <motion.div
+                    className="bg-purple-500 h-2 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${nextAchievement.progress}%` }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Achievement Badges */}
+            <div>
+              <h5 className="font-semibold text-purple-800 mb-3">Completion Badges</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {badges.map((badge) => (
+                  <motion.div
+                    key={badge.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                    className={`p-3 rounded-lg text-center transition-all duration-200 ${
+                      badge.unlocked 
+                        ? 'bg-white border-2 border-purple-200 shadow-md' 
+                        : 'bg-slate-100 border-2 border-slate-200 opacity-60'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-full ${badge.color} flex items-center justify-center mx-auto mb-2`}>
+                      <div className="text-white">
+                        {badge.icon}
+                      </div>
+                    </div>
+                    <h6 className={`font-semibold text-sm mb-1 ${
+                      badge.unlocked ? 'text-purple-900' : 'text-slate-600'
+                    }`}>
+                      {badge.title}
+                    </h6>
+                    <p className={`text-xs ${
+                      badge.unlocked ? 'text-purple-700' : 'text-slate-500'
+                    }`}>
+                      {badge.description}
+                    </p>
+                    {badge.unlocked && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="mt-2"
+                      >
+                        <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
+                      </motion.div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -630,9 +1177,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       isIdentityVerified: user.isIdentityVerified,
       isFinanciallyVerified: user.isFinanciallyVerified,
       isPropertyVerified: user.isPropertyVerified,
-      level: user.level
+      level: user.level,
+      buyerType: user.buyer_type,
+      kycLevel: user.kyc_level
     });
-  }, [user.is_phone_verified, user.isIdentityVerified, user.isFinanciallyVerified, user.isPropertyVerified, user.level]);
+  }, [user.is_phone_verified, user.isIdentityVerified, user.isFinanciallyVerified, user.isPropertyVerified, user.level, user.buyer_type, user.kyc_level]);
   
   // Force re-render when store user changes
   React.useEffect(() => {
@@ -662,7 +1211,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const [isFirstVisit, setIsFirstVisit] = React.useState(false);
 
   // Verification Modal State
-  const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | 'agent' | null>(null);
+  const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | null>(null);
   const [selectedCountry, setSelectedCountry] = React.useState<'ZW' | 'SA'>('ZW');
 
   // Recalculate these when user or forceUpdate changes
@@ -701,7 +1250,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     } else if (verificationCount === 2 && user.isIdentityVerified) {
       setCelebrationData({
         title: 'Identity Verified! 🚀',
-        description: 'Access to premium features and financing options',
+        description: 'Access to premium features and installment purchase options',
         icon: <Shield className="w-6 h-6" />,
         reward: 'Premium features unlocked'
       });
@@ -726,6 +1275,133 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       localStorage.setItem('mukamba-celebrations-shown', JSON.stringify([...shownCelebrations]));
     }
   }, [shownCelebrations]);
+
+  // Dynamic welcome message based on user type and KYC level
+  const getWelcomeMessage = () => {
+    const isSeller = user.roles.includes('seller');
+    const isBuyer = user.buyer_type || user.roles.includes('buyer');
+    const kycLevel = user.kyc_level || 'none';
+    
+    if (isNewUser) {
+      return `Welcome to Mukamba, ${user.firstName}!`;
+    }
+    
+    if (isSeller) {
+      return `Welcome back, ${user.firstName}! Let's get your property listed`;
+    }
+    
+    if (isBuyer) {
+      if (kycLevel === 'none' || kycLevel === 'email') {
+        return `Welcome back, ${user.firstName}! Complete verification to unlock all features`;
+      } else {
+        return `Welcome back, ${user.firstName}! Ready to find your next property?`;
+      }
+    }
+    
+    // Default for users without specific type
+    if (kycLevel === 'none' || kycLevel === 'email') {
+      return `Welcome back, ${user.firstName}! Complete verification to unlock all features`;
+    }
+    
+    return `Welcome back, ${user.firstName}!`;
+  };
+
+  // Get user journey guidance based on user type
+  const getUserJourney = () => {
+    const isSeller = user.roles.includes('seller');
+    const buyerType = user.buyer_type;
+    
+    if (isSeller) {
+      return {
+        title: "Seller Journey",
+        steps: ["Verify Profile", "List Properties", "Manage Applications"],
+        highlight: "Complete verification to start listing your properties",
+        icon: <Home className="w-5 h-5" />,
+        color: "from-red-500 to-red-600"
+      };
+    }
+    
+    if (buyerType === 'cash') {
+      return {
+        title: "Cash Buyer Journey",
+        steps: ["Browse Properties", "Save Favorites", "Contact Sellers"],
+        highlight: "Complete identity verification to access exclusive properties",
+        icon: <DollarSign className="w-5 h-5" />,
+        color: "from-green-500 to-green-600"
+      };
+    }
+    
+    if (buyerType === 'installment') {
+      return {
+        title: "Installment Buyer Journey",
+        steps: ["Browse Properties", "Get Pre-Approved", "Apply for Financing"],
+        highlight: "Complete financial verification for installment purchase options",
+        icon: <CreditCard className="w-5 h-5" />,
+        color: "from-blue-500 to-blue-600"
+      };
+    }
+    
+    // Default journey for users without specific type
+    return {
+      title: "Your Journey",
+      steps: ["Complete Verification", "Browse Properties", "Start Your Search"],
+      highlight: "Complete verification to unlock all platform features",
+      icon: <User className="w-5 h-5" />,
+      color: "from-slate-500 to-slate-600"
+    };
+  };
+
+  // Get progress motivation message
+  const getProgressMotivation = () => {
+    const verificationSteps = [
+      user.is_phone_verified,
+      user.isIdentityVerified,
+      user.isFinanciallyVerified,
+      user.isPropertyVerified
+    ];
+    const completedSteps = verificationSteps.filter(Boolean).length;
+    const totalSteps = verificationSteps.length;
+    const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
+    const remainingSteps = totalSteps - completedSteps;
+    
+    if (completedSteps === 0) {
+      return {
+        message: "Start your verification journey to unlock premium features",
+        timeEstimate: "5 minutes to complete phone verification",
+        nextStep: "Phone verification"
+      };
+    }
+    
+    if (completedSteps === 1 && !user.isIdentityVerified) {
+      return {
+        message: `You're ${progressPercentage}% complete - ${remainingSteps} more steps to unlock premium features`,
+        timeEstimate: "3 minutes to complete identity verification",
+        nextStep: "Identity verification"
+      };
+    }
+    
+    if (completedSteps === 2 && !user.isFinanciallyVerified) {
+      return {
+        message: `You're ${progressPercentage}% complete - ${remainingSteps} more steps to unlock installment purchase options`,
+        timeEstimate: "5 minutes to complete financial assessment",
+        nextStep: "Financial assessment"
+      };
+    }
+    
+    if (completedSteps >= 3) {
+      return {
+        message: `You're ${progressPercentage}% complete - Almost there!`,
+        timeEstimate: "2 minutes to complete final verification",
+        nextStep: "Final verification"
+      };
+    }
+    
+    return {
+      message: `You're ${progressPercentage}% complete - Keep going!`,
+      timeEstimate: "Complete remaining verifications",
+      nextStep: "Continue verification"
+    };
+  };
 
   const getLevelInfo = (level: typeof userLevel, user: UserType) => {
     // Calculate actual progress based on verification status
@@ -803,6 +1479,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     });
     return info;
   }, [userLevel, user, forceUpdate]);
+
+  const userJourney = getUserJourney();
+  const progressMotivation = getProgressMotivation();
 
   const handleStartVerification = async (type: 'buyer' | 'seller', step: string) => {
     // Open the appropriate verification modal
@@ -894,8 +1573,50 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       case 'property-documents':
         setActiveModal('property');
         break;
-      case 'explore-features':
-        setShowTour(true);
+      case 'list-property':
+        setActiveModal('listing');
+        break;
+      case 'complete-profile':
+        setSuccessMessage('Profile update feature coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'browse-premium':
+      case 'browse-exclusive':
+        setSuccessMessage('Premium properties coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'property-alerts':
+      case 'property-alerts-premium':
+        setSuccessMessage('Property alerts feature coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'contact-owners':
+        setSuccessMessage('Messaging feature coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'cash-buyer-status':
+        setSuccessMessage('Premium buyer status coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'calculate-installments':
+        setSuccessMessage('Payment calculator coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'pre-approval':
+        setSuccessMessage('Pre-approval feature coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'start-applications':
+        setSuccessMessage('Property applications coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'market-insights':
+        setSuccessMessage('Market insights coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'premium-support':
+        setSuccessMessage('Premium support coming soon!');
+        setShowSuccess(true);
         break;
       default:
         setSuccessMessage('Feature coming soon!');
@@ -1120,7 +1841,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           className="text-center"
         >
         <h1 className="text-3xl font-bold text-slate-800 mb-2">
-          {isNewUser ? `Welcome to Mukamba, ${user.firstName}!` : `Welcome back, ${user.firstName}!`}
+          {getWelcomeMessage()}
             {(isFirstVisit || isNewUser) && (
               <motion.span
                 initial={{ scale: 0 }}
@@ -1133,11 +1854,20 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             )}
         </h1>
         <p className="text-slate-600">
-          {isNewUser 
-            ? "Let's get your account set up! Complete your profile to start exploring rent-to-buy properties." 
-            : "Complete your profile to unlock more features"
-          }
+          {progressMotivation.message}
         </p>
+        
+        {/* Progress Motivation Details */}
+        <div className="mt-3 flex items-center justify-center space-x-4 text-sm">
+          <div className="flex items-center space-x-1 text-blue-600">
+            <Clock className="w-4 h-4" />
+            <span>{progressMotivation.timeEstimate}</span>
+          </div>
+          <div className="flex items-center space-x-1 text-green-600">
+            <ArrowRight className="w-4 h-4" />
+            <span>Next: {progressMotivation.nextStep}</span>
+          </div>
+        </div>
           
           {/* Take Tour Button for returning users */}
           {!isFirstVisit && (
@@ -1212,7 +1942,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                    <span className="text-sm font-medium">Complete your profile to unlock real estate opportunities</span>
+                    <span className="text-sm font-medium">Complete your profile to unlock property opportunities</span>
                   </div>
                 </div>
               </CardContent>
@@ -1220,11 +1950,167 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </motion.div>
         )}
 
+        {/* User Journey Guidance Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className={`bg-gradient-to-r ${userJourney.color} text-white border-0 shadow-lg`}>
+            <CardHeader>
+              <CardTitle className="flex items-center text-white">
+                {userJourney.icon}
+                <span className="ml-2">{userJourney.title}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Journey Steps */}
+                <div className="flex items-center justify-between">
+                  {userJourney.steps.map((step, index) => (
+                    <div key={index} className="flex items-center">
+                      <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full text-sm font-semibold">
+                        {index + 1}
+                      </div>
+                      <span className="ml-2 text-sm font-medium">{step}</span>
+                      {index < userJourney.steps.length - 1 && (
+                        <ArrowRight className="w-4 h-4 mx-2 text-white/60" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Highlight Message */}
+                <div className="mt-4 p-3 bg-white/10 rounded-lg">
+                  <p className="text-sm font-medium">
+                    ✨ {userJourney.highlight}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Progress Gamification */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center text-purple-700">
+                <Trophy className="w-5 h-5 mr-2" />
+                Your Achievements
+                <Tooltip content="Track your verification progress and unlock badges">
+                  <Info className="w-4 h-4 ml-2 text-purple-500 cursor-help" />
+                </Tooltip>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Achievement Badges */}
+                <div className="flex flex-wrap gap-3">
+                  {user.is_phone_verified && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center space-x-2 px-3 py-2 bg-green-100 rounded-full border border-green-200"
+                    >
+                      <Phone className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-700">Phone Champion</span>
+                    </motion.div>
+                  )}
+                  
+                  {user.isIdentityVerified && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center space-x-2 px-3 py-2 bg-blue-100 rounded-full border border-blue-200"
+                    >
+                      <Shield className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-700">Identity Verified</span>
+                    </motion.div>
+                  )}
+                  
+                  {user.isFinanciallyVerified && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center space-x-2 px-3 py-2 bg-purple-100 rounded-full border border-purple-200"
+                    >
+                      <TrendingUp className="w-4 h-4 text-purple-600" />
+                      <span className="text-sm font-medium text-purple-700">Pre-Approved Buyer</span>
+                    </motion.div>
+                  )}
+                  
+                  {user.isPropertyVerified && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center space-x-2 px-3 py-2 bg-orange-100 rounded-full border border-orange-200"
+                    >
+                      <Home className="w-4 h-4 text-orange-600" />
+                      <span className="text-sm font-medium text-orange-700">Verified Seller</span>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Next Achievement Preview */}
+                {!user.is_phone_verified && (
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-slate-200 rounded-full">
+                        <Phone className="w-4 h-4 text-slate-600" />
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-sm text-slate-800">Next Achievement</h5>
+                        <p className="text-xs text-slate-600">Complete phone verification to unlock "Phone Champion" badge</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {user.is_phone_verified && !user.isIdentityVerified && (
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-slate-200 rounded-full">
+                        <Shield className="w-4 h-4 text-slate-600" />
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-sm text-slate-800">Next Achievement</h5>
+                        <p className="text-xs text-slate-600">Complete identity verification to unlock "Identity Verified" badge</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {user.isIdentityVerified && !user.isFinanciallyVerified && user.buyer_type === 'installment' && (
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-slate-200 rounded-full">
+                        <TrendingUp className="w-4 h-4 text-slate-600" />
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-sm text-slate-800">Next Achievement</h5>
+                        <p className="text-xs text-slate-600">Complete financial assessment to unlock "Pre-Approved Buyer" badge</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Smart Recommendations */}
         <SmartRecommendations
           recommendations={recommendations}
           onActionClick={handleRecommendationAction}
         />
+
+        {/* Progress Gamification */}
+        <ProgressGamification user={user} />
 
       {/* Account Level */}
         <motion.div
@@ -1290,7 +2176,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <PermissionCard
               icon={<Home className="w-4 h-4" />}
               title="Browse Properties"
-              description="View all rent-to-buy listings"
+              description="View all property listings"
               available={permissions.canBrowseProperties}
             />
             <PermissionCard
@@ -1309,14 +2195,14 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <PermissionCard
               icon={<CreditCard className="w-4 h-4" />}
               title="Apply for Financing"
-              description="Submit rent-to-buy applications"
+              description="Submit installment purchase applications"
               available={permissions.canApplyForFinancing}
               requiredFor="Identity & financial verification"
             />
             <PermissionCard
               icon={<Home className="w-4 h-4" />}
               title="List Properties"
-              description="Add your properties to the platform"
+              description="Sell or rent out your properties"
               available={permissions.canListProperties}
               requiredFor="Phone & identity verification"
             />
@@ -1333,21 +2219,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         </motion.div>
 
       {/* Essential KYC Section */}
-      <motion.div
+          <motion.div
         id="essential-kyc"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardHeader>
-            <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center">
               <Shield className="w-5 h-5 mr-2" />
               Complete Your Profile
               <Tooltip content="These verifications unlock more features and build trust">
-                <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-              </Tooltip>
-            </CardTitle>
+                    <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+                  </Tooltip>
+                </CardTitle>
             <p className="text-sm text-slate-600">
               Complete these essential verifications to unlock more features
             </p>
@@ -1379,13 +2265,13 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   {user.is_phone_verified ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
-                    <Button
+              <Button
                       size="sm"
                       onClick={() => setActiveModal('phone')}
                       className="bg-red-600 hover:bg-red-700"
                     >
                       Verify Now
-                    </Button>
+              </Button>
                   )}
                 </div>
               </div>
@@ -1408,44 +2294,44 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                     <div>
                       <h4 className="font-semibold text-sm">Identity Verification</h4>
                       <p className="text-xs text-slate-600">
-                        {user.isIdentityVerified ? 'Verified' : 'Required for financing and property applications'}
+                        {user.isIdentityVerified ? 'Verified' : 'Required for installment purchases and property applications'}
                       </p>
                     </div>
                   </div>
                   {user.isIdentityVerified ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
-                    <Button
+              <Button
                       size="sm"
                       onClick={() => setActiveModal('identity')}
                       className="bg-red-600 hover:bg-red-700"
                       disabled={!user.is_phone_verified}
                     >
                       Verify Now
-                    </Button>
+              </Button>
                   )}
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+          </motion.div>
 
       {/* Additional Features Section */}
       {user.is_phone_verified && user.isIdentityVerified && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-            <CardHeader>
-              <CardTitle className="flex items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <CardHeader>
+                  <CardTitle className="flex items-center">
                 <Zap className="w-5 h-5 mr-2" />
                 Unlock Premium Features
                 <Tooltip content="These features are available after completing basic verification">
-                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                </Tooltip>
+                      <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+                    </Tooltip>
               </CardTitle>
               <p className="text-sm text-slate-600">
                 You've unlocked additional features to enhance your experience
@@ -1463,18 +2349,18 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                       <div>
                         <h4 className="font-semibold text-sm">Financial Assessment</h4>
                         <p className="text-xs text-slate-600">
-                          Get your credit score and unlock financing options
+                          Get your credit score and unlock installment purchase options
                         </p>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
+              <Button
+                size="sm"
                       onClick={() => setActiveModal('financial')}
                       className="bg-green-600 hover:bg-green-700"
-                    >
+              >
                       Start Assessment
-                    </Button>
-                  </div>
+              </Button>
+            </div>
                 </div>
 
                 {/* Property Listing */}
@@ -1500,11 +2386,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                     </Button>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+            </div>
+          </CardContent>
+        </Card>
+          </motion.div>
+        )}
       </>
       )}
 
@@ -1567,83 +2453,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         country={selectedCountry}
       />
 
-      {!isFullyVerified(user) && (
-        <AgentOnboardingModal
-          isOpen={activeModal === 'agent'}
-          onClose={() => setActiveModal(null)}
-          onComplete={() => {
-            setActiveModal(null);
-            setSuccessMessage('Agent application submitted successfully! We will review your documents and contact you soon.');
-            setShowSuccess(true);
-            // Update user roles to include agent (this would be done after verification in real app)
-            // updateUser({ roles: [...user.roles, 'agent'] });
-          }}
-        />
-      )}
 
-      {/* Real Estate Agent Registration Section */}
-      {!isFullyVerified(user) && !user.roles.includes('agent') && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-blue-700">
-                <Building className="w-5 h-5 mr-2" />
-                Become a Real Estate Agent
-                <Tooltip content="Join our network of verified real estate professionals">
-                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                </Tooltip>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-blue-700 text-sm">
-                  Are you a licensed real estate agent? Join our platform to access exclusive features and connect with more clients.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-white/50 rounded-lg">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Shield className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1">Verified Status</h4>
-                    <p className="text-xs text-blue-600">EAC registration verification</p>
-                  </div>
-                  
-                  <div className="text-center p-4 bg-white/50 rounded-lg">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <TrendingUp className="w-6 h-6 text-green-600" />
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1">Enhanced Features</h4>
-                    <p className="text-xs text-green-600">Lead management & analytics</p>
-                  </div>
-                  
-                  <div className="text-center p-4 bg-white/50 rounded-lg">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <MessageCircle className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1">Direct Communication</h4>
-                    <p className="text-xs text-purple-600">Connect with clients directly</p>
-                  </div>
-                </div>
-                
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    onClick={() => setActiveModal('agent')}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
-                  >
-                    <Building className="w-4 h-4 mr-2" />
-                    Apply as Real Estate Agent
-                  </Button>
-                </motion.div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+
+
 
       {/* Add Property Button (for verified sellers) */}
       {user.isPropertyVerified && (
