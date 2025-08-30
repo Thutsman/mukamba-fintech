@@ -44,7 +44,24 @@ import {
   BarChart3,
   FileText,
   PlusCircle,
-  Headphones
+  Headphones,
+  Eye,
+  Heart,
+  Calendar,
+  MapPin,
+  Search,
+  Percent,
+  TrendingDown,
+  AlertTriangle,
+  CheckSquare,
+  Activity,
+  Users,
+  Award,
+  Briefcase,
+  HomeIcon,
+  ShoppingCart,
+  BookOpen,
+  Globe
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -111,34 +128,7 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
         badge: 'Recommended for you'
       });
 
-      recommendations.push({
-        id: 'complete-profile',
-        type: 'secondary',
-        title: 'Complete Your Profile',
-        description: 'Add missing information to improve your experience',
-        action: 'Update Profile',
-        priority: 2,
-        icon: <User className="w-4 h-4" />,
-        benefit: 'Better property recommendations',
-        timeRequired: '3 minutes',
-        difficulty: 'Easy',
-        whatYoullUnlock: 'Personalized property suggestions'
-      });
 
-      recommendations.push({
-        id: 'browse-premium',
-        type: 'secondary',
-        title: 'Browse Premium Properties',
-        description: 'Explore exclusive properties (coming soon)',
-        action: 'Coming Soon',
-        priority: 3,
-        icon: <Star className="w-4 h-4" />,
-        benefit: 'Access to premium listings',
-        timeRequired: 'Complete later',
-        difficulty: 'Easy',
-        whatYoullUnlock: 'Premium property access',
-        badge: 'Coming Soon'
-      });
     }
 
     // Phone-Verified Users (KYC: 'phone')
@@ -760,6 +750,422 @@ const SmartRecommendations: React.FC<{
   );
 };
 
+// Recent Activity Feed Component
+const RecentActivityFeed: React.FC<{
+  user: UserType;
+}> = ({ user }) => {
+  const [activities, setActivities] = React.useState([
+    {
+      id: 1,
+      type: 'property_view',
+      title: 'You viewed Luxury Villa in Chisipite',
+      description: 'Yesterday at 2:30 PM',
+      icon: <Eye className="w-4 h-4" />,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
+    },
+    {
+      id: 2,
+      type: 'property_save',
+      title: 'You saved 3 properties this week',
+      description: 'Properties in your price range',
+      icon: <Heart className="w-4 h-4" />,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100'
+    },
+    {
+      id: 3,
+      type: 'application_update',
+      title: 'Your financing application is being processed',
+      description: 'Expected completion: 2-3 business days',
+      icon: <CheckSquare className="w-4 h-4" />,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100'
+    },
+    {
+      id: 4,
+      type: 'market_update',
+      title: '5 new properties in your price range added today',
+      description: 'In Harare and surrounding areas',
+      icon: <TrendingUp className="w-4 h-4" />,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
+    }
+  ]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.4 }}
+    >
+      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardHeader>
+          <CardTitle className="flex items-center text-slate-700">
+            <Activity className="w-5 h-5 mr-2" />
+            Recent Activity
+            <Tooltip content="Your recent interactions and updates">
+              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
+            </Tooltip>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {activities.map((activity, index) => (
+              <motion.div
+                key={activity.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors duration-200"
+              >
+                <div className={`p-2 rounded-full ${activity.bgColor}`}>
+                  <div className={activity.color}>
+                    {activity.icon}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-sm text-slate-800">{activity.title}</h4>
+                  <p className="text-xs text-slate-600">{activity.description}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-200">
+            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+              View All Activity
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+// Personalized Property Recommendations Component
+const PersonalizedPropertyRecommendations: React.FC<{
+  user: UserType;
+}> = ({ user }) => {
+  const [recommendedProperties, setRecommendedProperties] = React.useState([
+    {
+      id: 1,
+      title: 'Modern Apartment in Avondale',
+      price: '$1,200/month',
+      location: 'Avondale, Harare',
+      image: '/propertyimage.jpg',
+      type: 'Apartment',
+      beds: 2,
+      baths: 1,
+      reason: 'Similar to properties you\'ve viewed'
+    },
+    {
+      id: 2,
+      title: 'Family Home in Mount Pleasant',
+      price: '$2,800/month',
+      location: 'Mount Pleasant, Harare',
+      image: '/propertyimage.jpg',
+      type: 'House',
+      beds: 3,
+      baths: 2,
+      reason: 'Matches your price range'
+    },
+    {
+      id: 3,
+      title: 'Luxury Villa in Chisipite',
+      price: '$3,500/month',
+      location: 'Chisipite, Harare',
+      image: '/propertyimage.jpg',
+      type: 'Villa',
+      beds: 4,
+      baths: 3,
+      reason: 'Based on your preferences'
+    }
+  ]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.5 }}
+    >
+      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardHeader>
+          <CardTitle className="flex items-center text-slate-700">
+            <Star className="w-5 h-5 mr-2" />
+            Properties You Might Like
+            <Tooltip content="Personalized recommendations based on your preferences">
+              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
+            </Tooltip>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recommendedProperties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * index }}
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
+              >
+                <div className="h-32 bg-slate-200 relative">
+                  <img 
+                    src={property.image} 
+                    alt={property.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <Button size="icon" variant="ghost" className="w-8 h-8 bg-white/80 hover:bg-white">
+                      <Heart className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <h4 className="font-semibold text-sm text-slate-800 mb-1">{property.title}</h4>
+                  <p className="text-lg font-bold text-blue-600 mb-1">{property.price}</p>
+                  <div className="flex items-center text-xs text-slate-600 mb-2">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {property.location}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                    <span>{property.beds} beds</span>
+                    <span>{property.baths} baths</span>
+                    <span>{property.type}</span>
+                  </div>
+                  <p className="text-xs text-green-600 mb-2">{property.reason}</p>
+                  <div className="flex space-x-2">
+                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                      View Details
+                    </Button>
+                    <Button size="sm" variant="outline" className="px-2">
+                      <Heart className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+// Market Insights Dashboard Component
+const MarketInsightsDashboard: React.FC<{
+  user: UserType;
+}> = ({ user }) => {
+  const [marketData, setMarketData] = React.useState({
+    area: 'Harare',
+    priceRange: '$1,200 - $2,800/month',
+    avgDaysOnMarket: 45,
+    marketGrowth: 18,
+    newListings: 12,
+    priceChange: 5
+  });
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.6 }}
+    >
+      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardHeader>
+          <CardTitle className="flex items-center text-slate-700">
+            <BarChart3 className="w-5 h-5 mr-2" />
+            Your Area Market Update
+            <Tooltip content="Real-time market insights for your area">
+              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
+            </Tooltip>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-sm text-blue-900">Price Range</h4>
+                    <p className="text-lg font-bold text-blue-600">{marketData.priceRange}</p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-blue-500" />
+                </div>
+              </div>
+              
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-sm text-green-900">Market Growth</h4>
+                    <p className="text-lg font-bold text-green-600">+{marketData.marketGrowth}%</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-500" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-sm text-purple-900">Days on Market</h4>
+                    <p className="text-lg font-bold text-purple-600">{marketData.avgDaysOnMarket} days</p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-sm text-orange-900">New Listings</h4>
+                    <p className="text-lg font-bold text-orange-600">{marketData.newListings} today</p>
+                  </div>
+                  <PlusCircle className="w-8 h-8 text-orange-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <div className="flex items-center space-x-2">
+              <Lightbulb className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                Investment Tip: Best time to buy - Market showing {marketData.marketGrowth}% growth
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+
+
+
+
+
+
+// Notifications & Alerts Center Component
+const NotificationsCenter: React.FC<{
+  user: UserType;
+}> = ({ user }) => {
+  const [notifications, setNotifications] = React.useState([
+    {
+      id: 1,
+      type: 'property_alert',
+      title: '3 new properties match your criteria',
+      description: 'In Harare and surrounding areas',
+      time: '2 hours ago',
+      icon: <Bell className="w-4 h-4" />,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      unread: true
+    },
+    {
+      id: 2,
+      type: 'application_update',
+      title: 'Your financing application is being processed',
+      description: 'Expected completion: 2-3 business days',
+      time: '1 day ago',
+      icon: <CheckSquare className="w-4 h-4" />,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      unread: false
+    },
+    {
+      id: 3,
+      type: 'market_alert',
+      title: 'Prices in Glen Lorne increased 5% this month',
+      description: 'Market trend update',
+      time: '2 days ago',
+      icon: <TrendingUp className="w-4 h-4" />,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      unread: false
+    },
+    {
+      id: 4,
+      type: 'verification_reminder',
+      title: 'Complete identity verification to unlock more features',
+      description: 'Required for installment purchases',
+      time: '3 days ago',
+      icon: <Shield className="w-4 h-4" />,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100',
+      unread: true
+    }
+  ]);
+
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.7 }}
+    >
+      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        <CardHeader>
+          <CardTitle className="flex items-center text-slate-700">
+            <Bell className="w-5 h-5 mr-2" />
+            Notifications & Alerts
+            {unreadCount > 0 && (
+              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                {unreadCount}
+              </span>
+            )}
+            <Tooltip content="Stay updated with important notifications">
+              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
+            </Tooltip>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {notifications.slice(0, 4).map((notification, index) => (
+              <motion.div
+                key={notification.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className={`flex items-start space-x-3 p-3 rounded-lg transition-colors duration-200 ${
+                  notification.unread ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50'
+                }`}
+              >
+                <div className={`p-2 rounded-full ${notification.bgColor}`}>
+                  <div className={notification.color}>
+                    {notification.icon}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm text-slate-800">{notification.title}</h4>
+                    {notification.unread && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-600 mb-1">{notification.description}</p>
+                  <p className="text-xs text-slate-500">{notification.time}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-200">
+            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+              View All Notifications
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
 // Progress Gamification Component
 const ProgressGamification: React.FC<{
   user: UserType;
@@ -1043,43 +1449,48 @@ const SuccessMessage: React.FC<{
 
 // Profile Panel removed per request
 
-// Navigation Bar Component
+// Mobile-Optimized Navigation Bar Component
 const NavigationBar: React.FC<{
   user: UserType;
   onBackToHome?: () => void;
   onProfileSettings?: () => void;
   onLogout?: () => void;
 }> = ({ user, onBackToHome, onProfileSettings, onLogout }) => {
-  // Right slide-in profile panel removed
-  const [notificationCount] = React.useState(3); // Mock notification count
+  const [notificationCount] = React.useState(3);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   return (
     <>
       <motion.nav 
-        className="bg-white border-b border-slate-200 shadow-sm"
+        className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             {/* Left side - Logo and Back button */}
-            <div className="flex items-center space-x-4">
-              {/* Back to Home button */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Back to Home button - Hidden on mobile, shown on tablet+ */}
+              <motion.div 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }}
+                className="hidden sm:block"
+              >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onBackToHome}
                   className="flex items-center text-slate-600 hover:text-slate-900 transition-colors duration-200"
+                  aria-label="Back to home page"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back to Home
+                  <span className="hidden lg:inline">Back to Home</span>
                 </Button>
               </motion.div>
               
-              {/* Breadcrumb separator */}
-              <div className="text-slate-400">/</div>
+              {/* Breadcrumb separator - Hidden on mobile */}
+              <div className="hidden sm:block text-slate-400">/</div>
               
               {/* Logo/Brand */}
               <motion.div 
@@ -1089,69 +1500,149 @@ const NavigationBar: React.FC<{
                 <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">M</span>
                 </div>
-                <span className="font-bold text-xl text-slate-800">
+                <span className="font-bold text-lg sm:text-xl text-slate-800">
                   Mukamba
                 </span>
               </motion.div>
             </div>
 
-            {/* Right side - Notifications and Profile */}
-            <div className="flex items-center space-x-4">
-              {/* Notification Bell */}
-              <Tooltip content="View your notifications and updates">
-                <motion.div 
-                  whileHover={{ scale: 1.1 }} 
-                  whileTap={{ scale: 0.9 }}
-                  className="relative"
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative text-slate-600 hover:text-slate-900 transition-colors duration-200"
-                  >
-                    <motion.div
-                      animate={{ rotate: notificationCount > 0 ? [0, -10, 10, 0] : 0 }}
-                      transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
-                    >
-                      <Bell className="w-5 h-5" />
-                    </motion.div>
-                    {notificationCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
-                      >
-                        {notificationCount}
-                      </motion.span>
-                    )}
-                  </Button>
-                </motion.div>
-              </Tooltip>
+            {/* Right side - Mobile menu button and desktop items */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="sm:hidden w-10 h-10"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle mobile menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                <div className="w-5 h-5 flex flex-col justify-center items-center">
+                  <span className={`block w-4 h-0.5 bg-slate-600 transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-1'}`}></span>
+                  <span className={`block w-4 h-0.5 bg-slate-600 transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+                  <span className={`block w-4 h-0.5 bg-slate-600 transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-1'}`}></span>
+                </div>
+              </Button>
 
-              {/* User Profile Avatar */}
-              <Tooltip content="View and manage your profile">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 p-2 transition-colors duration-200"
+              {/* Desktop items - Hidden on mobile */}
+              <div className="hidden sm:flex items-center space-x-4">
+                {/* Notification Bell */}
+                <Tooltip content="View your notifications and updates">
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }} 
+                    whileTap={{ scale: 0.9 }}
+                    className="relative"
                   >
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
-                        {user.firstName[0]}{user.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:block font-medium">
-                      {user.firstName}
-                    </span>
-                  </Button>
-                </motion.div>
-              </Tooltip>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative text-slate-600 hover:text-slate-900 transition-colors duration-200"
+                      aria-label="View notifications"
+                    >
+                      <motion.div
+                        animate={{ rotate: notificationCount > 0 ? [0, -10, 10, 0] : 0 }}
+                        transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
+                      >
+                        <Bell className="w-5 h-5" />
+                      </motion.div>
+                      {notificationCount > 0 && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                          aria-label={`${notificationCount} unread notifications`}
+                        >
+                          {notificationCount}
+                        </motion.span>
+                      )}
+                    </Button>
+                  </motion.div>
+                </Tooltip>
+
+                {/* User Profile Avatar */}
+                <Tooltip content="View and manage your profile">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="ghost"
+                      className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 p-2 transition-colors duration-200"
+                      aria-label="User profile menu"
+                    >
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
+                          {user.firstName[0]}{user.lastName[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden lg:block font-medium">
+                        {user.firstName}
+                      </span>
+                    </Button>
+                  </motion.div>
+                </Tooltip>
+              </div>
             </div>
           </div>
         </div>
-      </motion.nav>
 
-      {/* Profile Panel removed */}
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="sm:hidden bg-white border-t border-slate-200 shadow-lg"
+            >
+              <div className="px-4 py-3 space-y-3">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-slate-600 hover:text-slate-900 h-12"
+                  onClick={onBackToHome}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-3" />
+                  Back to Home
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-slate-600 hover:text-slate-900 h-12"
+                  onClick={() => {
+                    // Handle notifications
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <Bell className="w-4 h-4 mr-3" />
+                  Notifications ({notificationCount})
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-slate-600 hover:text-slate-900 h-12"
+                  onClick={() => {
+                    // Handle profile settings
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <Settings className="w-4 h-4 mr-3" />
+                  Profile Settings
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-red-600 hover:text-red-700 h-12"
+                  onClick={() => {
+                    // Handle logout
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Sign Out
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
     </>
   );
 };
@@ -1561,6 +2052,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
   const handleRecommendationAction = (recommendationId: string) => {
     switch (recommendationId) {
+      // Verification actions
       case 'verify-phone':
         setActiveModal('phone');
         break;
@@ -1576,15 +2068,45 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       case 'list-property':
         setActiveModal('listing');
         break;
-      case 'complete-profile':
-        setSuccessMessage('Profile update feature coming soon!');
+      
+      // Capabilities Grid actions
+      case 'browse-properties':
+        setSuccessMessage('Property browsing feature coming soon!');
         setShowSuccess(true);
         break;
-      case 'browse-premium':
-      case 'browse-exclusive':
-        setSuccessMessage('Premium properties coming soon!');
+      case 'save-favorites':
+        setSuccessMessage('Favorites feature coming soon!');
         setShowSuccess(true);
         break;
+      case 'contact-sellers':
+        setSuccessMessage('Messaging feature coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'apply-financing':
+        if (user.buyer_type === 'cash') {
+          setSuccessMessage('Cash purchase applications coming soon!');
+        } else {
+          setActiveModal('financial');
+        }
+        setShowSuccess(true);
+        break;
+      case 'list-properties':
+        setActiveModal('listing');
+        break;
+      case 'process-applications':
+        setSuccessMessage('Application management coming soon!');
+        setShowSuccess(true);
+        break;
+      case 'installment-pre-approval':
+        setActiveModal('financial');
+        break;
+      case 'market-insights':
+        setSuccessMessage('Market insights coming soon!');
+        setShowSuccess(true);
+        break;
+      
+      // Smart Recommendations actions
+
       case 'property-alerts':
       case 'property-alerts-premium':
         setSuccessMessage('Property alerts feature coming soon!');
@@ -1610,10 +2132,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         setSuccessMessage('Property applications coming soon!');
         setShowSuccess(true);
         break;
-      case 'market-insights':
-        setSuccessMessage('Market insights coming soon!');
-        setShowSuccess(true);
-        break;
       case 'premium-support':
         setSuccessMessage('Premium support coming soon!');
         setShowSuccess(true);
@@ -1624,67 +2142,335 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     }
   };
 
-  const PermissionCard: React.FC<{
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    available: boolean;
-    requiredFor?: string;
-  }> = ({ icon, title, description, available, requiredFor }) => (
-    <motion.div 
-      whileHover={{ 
-        scale: 1.02, 
-        y: -2,
-        boxShadow: available 
-          ? '0 10px 25px -5px rgba(34, 197, 94, 0.1), 0 4px 6px -2px rgba(34, 197, 94, 0.05)'
-          : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-      }}
-      whileTap={{ scale: 0.98 }}
-      className={`p-4 rounded-lg border cursor-pointer transition-all duration-300 ${
-      available 
-        ? 'bg-green-50 border-green-200' 
-        : 'bg-gray-50 border-gray-200'
-      }`}
-    >
-      <div className="flex items-center mb-2">
-        <motion.div
-          animate={{ rotate: available ? 0 : -5 }}
-          transition={{ duration: 0.3 }}
-        >
-        {available ? (
-          <Unlock className="w-4 h-4 text-green-600 mr-2" />
-        ) : (
-          <Lock className="w-4 h-4 text-gray-400 mr-2" />
-        )}
-        </motion.div>
-        <div className="text-green-600 mr-2">{icon}</div>
-        <span className={`font-medium text-sm ${
-          available ? 'text-green-800' : 'text-gray-600'
-        }`}>
-          {title}
-        </span>
-        {!available && (
-          <Tooltip content={`Complete ${requiredFor} to unlock this feature`}>
-            <Info className="w-3 h-3 ml-1 text-gray-400 cursor-help" />
-          </Tooltip>
-        )}
-      </div>
-      <p className={`text-xs ${
-        available ? 'text-green-700' : 'text-gray-500'
-      }`}>
-        {description}
-      </p>
-      {!available && requiredFor && (
-        <motion.p 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-red-600 mt-1"
-        >
-          Requires: {requiredFor}
-        </motion.p>
-      )}
-    </motion.div>
-  );
+
+
+  // Enhanced Capabilities Grid Component
+  const CapabilitiesGrid: React.FC<{
+    user: UserType;
+    onFeatureClick: (featureId: string) => void;
+  }> = ({ user, onFeatureClick }) => {
+    const kycLevel = user.kyc_level || 'none';
+    const buyerType = user.buyer_type;
+    const isSeller = user.roles.includes('seller');
+
+    const getFeatureState = (featureId: string) => {
+      switch (featureId) {
+        case 'browse-properties':
+          return { unlocked: true, comingSoon: false };
+        case 'save-favorites':
+          return { unlocked: true, comingSoon: false };
+        case 'contact-sellers':
+          return { unlocked: user.is_phone_verified, comingSoon: false };
+        case 'apply-financing':
+          return { 
+            unlocked: user.isIdentityVerified && (buyerType === 'cash' || user.isFinanciallyVerified), 
+            comingSoon: user.isIdentityVerified && buyerType === 'installment' && !user.isFinanciallyVerified 
+          };
+        case 'list-properties':
+          return { unlocked: user.isIdentityVerified, comingSoon: false };
+        case 'process-applications':
+          return { unlocked: user.isPropertyVerified, comingSoon: false };
+        case 'installment-pre-approval':
+          return { unlocked: user.isFinanciallyVerified, comingSoon: false };
+        case 'market-insights':
+          return { unlocked: user.isIdentityVerified, comingSoon: false };
+        default:
+          return { unlocked: false, comingSoon: false };
+      }
+    };
+
+    const getFeatureRequirement = (featureId: string) => {
+      switch (featureId) {
+        case 'contact-sellers':
+          return 'Phone verification';
+        case 'apply-financing':
+          return buyerType === 'cash' ? 'Identity verification' : 'Identity & financial verification';
+        case 'list-properties':
+          return 'Identity verification';
+        case 'process-applications':
+          return 'Property verification';
+        case 'installment-pre-approval':
+          return 'Financial verification';
+        case 'market-insights':
+          return 'Identity verification';
+        default:
+          return '';
+      }
+    };
+
+    const features = [
+      {
+        id: 'browse-properties',
+        title: 'Browse Properties',
+        description: 'View all installment purchase listings',
+        icon: <Home className="w-5 h-5" />,
+        action: 'Browse Now',
+        stats: '1,247 properties available',
+        color: 'blue'
+      },
+      {
+        id: 'save-favorites',
+        title: 'Save Favorites',
+        description: 'Build your property wishlist',
+        icon: <Heart className="w-5 h-5" />,
+        action: 'View Saved',
+        stats: 'You\'ve saved 3 properties',
+        color: 'red'
+      },
+      {
+        id: 'contact-sellers',
+        title: 'Contact Sellers',
+        description: 'Message property owners directly',
+        icon: <MessageCircle className="w-5 h-5" />,
+        action: 'Start Messaging',
+        stats: 'Direct communication unlocked',
+        color: 'green'
+      },
+      {
+        id: 'apply-financing',
+        title: buyerType === 'cash' ? 'Cash Purchase' : 'Apply for Financing',
+        description: buyerType === 'cash' 
+          ? 'Submit cash purchase applications' 
+          : 'Submit installment purchase applications',
+        icon: <CreditCard className="w-5 h-5" />,
+        action: buyerType === 'cash' ? 'Apply Now' : 'Get Pre-Approved',
+        stats: buyerType === 'cash' ? 'Cash buyers get priority' : 'Flexible payment options',
+        color: 'purple'
+      },
+      {
+        id: 'list-properties',
+        title: 'List Properties',
+        description: 'Sell or rent out your properties',
+        icon: <Building className="w-5 h-5" />,
+        action: 'List Property',
+        stats: 'Reach qualified buyers',
+        color: 'orange'
+      },
+      {
+        id: 'process-applications',
+        title: 'Review Applications',
+        description: 'Review and approve purchase applications',
+        icon: <CheckSquare className="w-5 h-5" />,
+        action: 'View Applications',
+        stats: 'Manage buyer inquiries',
+        color: 'indigo'
+      },
+      {
+        id: 'installment-pre-approval',
+        title: 'Installment Pre-Approval',
+        description: 'Get pre-approved for installment purchase plans',
+        icon: <TrendingUp className="w-5 h-5" />,
+        action: 'Get Pre-Approved',
+        stats: 'Know your buying power',
+        color: 'emerald'
+      },
+      {
+        id: 'market-insights',
+        title: 'Market Insights',
+        description: 'Access detailed market analysis and trends',
+        icon: <BarChart3 className="w-5 h-5" />,
+        action: 'View Insights',
+        stats: 'Make informed decisions',
+        color: 'cyan'
+      }
+    ];
+
+    const getColorClasses = (color: string, state: 'unlocked' | 'locked' | 'coming-soon') => {
+      const baseColors = {
+        blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: 'text-blue-600' },
+        red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: 'text-red-600' },
+        green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: 'text-green-600' },
+        purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', icon: 'text-purple-600' },
+        orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: 'text-orange-600' },
+        indigo: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-700', icon: 'text-indigo-600' },
+        emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: 'text-emerald-600' },
+        cyan: { bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700', icon: 'text-cyan-600' }
+      };
+
+      const colorSet = baseColors[color as keyof typeof baseColors] || baseColors.blue;
+
+      if (state === 'unlocked') {
+        return {
+          card: `${colorSet.bg} ${colorSet.border} hover:shadow-lg`,
+          text: colorSet.text,
+          icon: colorSet.icon,
+          button: `bg-${color.split('-')[0]}-600 hover:bg-${color.split('-')[0]}-700 text-white`
+        };
+      } else if (state === 'coming-soon') {
+        return {
+          card: 'bg-blue-50 border-blue-200 hover:shadow-md',
+          text: 'text-blue-700',
+          icon: 'text-blue-600',
+          button: 'bg-blue-600 hover:bg-blue-700 text-white'
+        };
+      } else {
+        return {
+          card: 'bg-gray-50 border-gray-200 hover:shadow-sm',
+          text: 'text-gray-600',
+          icon: 'text-gray-400',
+          button: 'bg-gray-400 text-white cursor-not-allowed'
+        };
+      }
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <CardHeader>
+            <CardTitle className="flex items-center text-slate-700">
+              <Zap className="w-5 h-5 mr-2" />
+              What You Can Do Right Now
+              <Tooltip content="Features unlock as you complete verification steps">
+                <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
+              </Tooltip>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {features.map((feature, index) => {
+                const state = getFeatureState(feature.id);
+                const requirement = getFeatureRequirement(feature.id);
+                const colors = getColorClasses(feature.color, 
+                  state.comingSoon ? 'coming-soon' : state.unlocked ? 'unlocked' : 'locked'
+                );
+
+                return (
+                  <motion.div
+                    key={feature.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    whileHover={{ 
+                      scale: state.unlocked || state.comingSoon ? 1.02 : 1.01, 
+                      y: state.unlocked || state.comingSoon ? -2 : 0,
+                      boxShadow: state.unlocked || state.comingSoon 
+                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                        : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }}
+                    whileTap={{ scale: state.unlocked || state.comingSoon ? 0.98 : 1 }}
+                    className={`p-4 rounded-lg border transition-all duration-300 cursor-pointer ${colors.card}`}
+                    onClick={() => {
+                      if (state.unlocked || state.comingSoon) {
+                        onFeatureClick(feature.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <motion.div
+                          animate={{ 
+                            rotate: state.unlocked ? [0, 5, -5, 0] : 0,
+                            scale: state.unlocked ? 1.1 : 1
+                          }}
+                          transition={{ duration: 0.5, repeat: state.unlocked ? Infinity : 0, repeatDelay: 2 }}
+                          className={`p-2 rounded-lg ${state.unlocked ? 'bg-white shadow-sm' : 'bg-gray-100'}`}
+                        >
+                          <div className={colors.icon}>
+                            {feature.icon}
+                          </div>
+                        </motion.div>
+                        <div>
+                          <h4 className={`font-semibold text-sm ${colors.text}`}>
+                            {feature.title}
+                          </h4>
+                          {state.comingSoon && (
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium mt-1">
+                              Coming Soon
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {state.unlocked ? (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          </motion.div>
+                        ) : state.comingSoon ? (
+                          <motion.div
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          >
+                            <Clock className="w-4 h-4 text-blue-600" />
+                          </motion.div>
+                        ) : (
+                          <Lock className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    <p className={`text-xs mb-3 ${colors.text} opacity-80`}>
+                      {feature.description}
+                    </p>
+
+                    {state.unlocked && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mb-3"
+                      >
+                        <p className="text-xs text-green-600 font-medium">
+                          ✨ {feature.stats}
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {!state.unlocked && requirement && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-3"
+                      >
+                        <p className="text-xs text-red-600 font-medium">
+                          🔒 Requires: {requirement}
+                        </p>
+                      </motion.div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <Button
+                        size="sm"
+                        className={`${colors.button} transition-all duration-200 h-10 sm:h-8 px-3 sm:px-2 text-xs sm:text-xs`}
+                        disabled={!state.unlocked && !state.comingSoon}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (state.unlocked || state.comingSoon) {
+                            onFeatureClick(feature.id);
+                          }
+                        }}
+                        aria-label={`${state.unlocked ? feature.action : state.comingSoon ? 'Coming Soon' : 'Locked'} - ${feature.title}`}
+                      >
+                        {state.unlocked ? feature.action : 
+                         state.comingSoon ? 'Coming Soon' : 'Locked'}
+                      </Button>
+                      
+                      {state.unlocked && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.4 }}
+                        >
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
 
   const VerificationStepCard: React.FC<{
     step: VerificationStep;
@@ -1830,7 +2616,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       />
 
       {/* Main Content */}
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6 sm:space-y-8">
       {/* Header - Only show for non-verified users */}
       {!isFullyVerified(user) && (
         <motion.div 
@@ -1840,7 +2626,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">
           {getWelcomeMessage()}
             {(isFirstVisit || isNewUser) && (
               <motion.span
@@ -1853,18 +2639,18 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </motion.span>
             )}
         </h1>
-        <p className="text-slate-600">
+        <p className="text-sm sm:text-base text-slate-600 px-4">
           {progressMotivation.message}
         </p>
         
         {/* Progress Motivation Details */}
-        <div className="mt-3 flex items-center justify-center space-x-4 text-sm">
+        <div className="mt-3 flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm">
           <div className="flex items-center space-x-1 text-blue-600">
-            <Clock className="w-4 h-4" />
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>{progressMotivation.timeEstimate}</span>
           </div>
-          <div className="flex items-center space-x-1 text-green-600">
-            <ArrowRight className="w-4 h-4" />
+          <div className="flex items-center space-x-1 sm:space-x-2 text-green-600">
+            <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Next: {progressMotivation.nextStep}</span>
           </div>
         </div>
@@ -1881,15 +2667,18 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowTour(true)}
-                className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                className="text-blue-600 border-blue-300 hover:bg-blue-50 h-10 sm:h-9 px-4 sm:px-3"
+                aria-label="Take a tour of the dashboard"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Take Tour
+                <span className="text-sm sm:text-xs">Take Tour</span>
               </Button>
             </motion.div>
           )}
         </motion.div>
       )}
+
+
 
         {/* Conditional Dashboard Rendering */}
         {isFullyVerified(user) ? (
@@ -1991,117 +2780,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </Card>
         </motion.div>
 
-        {/* Progress Gamification */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-purple-700">
-                <Trophy className="w-5 h-5 mr-2" />
-                Your Achievements
-                <Tooltip content="Track your verification progress and unlock badges">
-                  <Info className="w-4 h-4 ml-2 text-purple-500 cursor-help" />
-                </Tooltip>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Achievement Badges */}
-                <div className="flex flex-wrap gap-3">
-                  {user.is_phone_verified && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center space-x-2 px-3 py-2 bg-green-100 rounded-full border border-green-200"
-                    >
-                      <Phone className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-700">Phone Champion</span>
-                    </motion.div>
-                  )}
-                  
-                  {user.isIdentityVerified && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center space-x-2 px-3 py-2 bg-blue-100 rounded-full border border-blue-200"
-                    >
-                      <Shield className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700">Identity Verified</span>
-                    </motion.div>
-                  )}
-                  
-                  {user.isFinanciallyVerified && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center space-x-2 px-3 py-2 bg-purple-100 rounded-full border border-purple-200"
-                    >
-                      <TrendingUp className="w-4 h-4 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-700">Pre-Approved Buyer</span>
-                    </motion.div>
-                  )}
-                  
-                  {user.isPropertyVerified && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center space-x-2 px-3 py-2 bg-orange-100 rounded-full border border-orange-200"
-                    >
-                      <Home className="w-4 h-4 text-orange-600" />
-                      <span className="text-sm font-medium text-orange-700">Verified Seller</span>
-                    </motion.div>
-                  )}
-                </div>
 
-                {/* Next Achievement Preview */}
-                {!user.is_phone_verified && (
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-slate-200 rounded-full">
-                        <Phone className="w-4 h-4 text-slate-600" />
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-sm text-slate-800">Next Achievement</h5>
-                        <p className="text-xs text-slate-600">Complete phone verification to unlock "Phone Champion" badge</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {user.is_phone_verified && !user.isIdentityVerified && (
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-slate-200 rounded-full">
-                        <Shield className="w-4 h-4 text-slate-600" />
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-sm text-slate-800">Next Achievement</h5>
-                        <p className="text-xs text-slate-600">Complete identity verification to unlock "Identity Verified" badge</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {user.isIdentityVerified && !user.isFinanciallyVerified && user.buyer_type === 'installment' && (
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-slate-200 rounded-full">
-                        <TrendingUp className="w-4 h-4 text-slate-600" />
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-sm text-slate-800">Next Achievement</h5>
-                        <p className="text-xs text-slate-600">Complete financial assessment to unlock "Pre-Approved Buyer" badge</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
         {/* Smart Recommendations */}
         <SmartRecommendations
@@ -2111,6 +2790,22 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
         {/* Progress Gamification */}
         <ProgressGamification user={user} />
+
+
+
+        {/* Recent Activity Feed */}
+        <RecentActivityFeed user={user} />
+
+        {/* Personalized Property Recommendations */}
+        <PersonalizedPropertyRecommendations user={user} />
+
+        {/* Market Insights Dashboard */}
+        <MarketInsightsDashboard user={user} />
+
+
+
+        {/* Notifications & Alerts Center */}
+        <NotificationsCenter user={user} />
 
       {/* Account Level */}
         <motion.div
@@ -2155,68 +2850,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       </Card>
         </motion.div>
 
-      {/* Current Permissions */}
-        <motion.div
-          id="permissions-grid"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <CardHeader>
-              <CardTitle className="flex items-center">
-                What You Can Do Right Now
-                <Tooltip content="Green = Available, Gray = Requires verification">
-                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                </Tooltip>
-              </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <PermissionCard
-              icon={<Home className="w-4 h-4" />}
-              title="Browse Properties"
-              description="View all property listings"
-              available={permissions.canBrowseProperties}
-            />
-            <PermissionCard
-              icon={<Star className="w-4 h-4" />}
-              title="Save Favorites"
-              description="Save properties you're interested in"
-              available={permissions.canSaveProperties}
-            />
-            <PermissionCard
-              icon={<Phone className="w-4 h-4" />}
-              title="Contact Sellers"
-              description="Message property owners directly"
-              available={permissions.canContactSellers}
-              requiredFor="Phone verification"
-            />
-            <PermissionCard
-              icon={<CreditCard className="w-4 h-4" />}
-              title="Apply for Financing"
-              description="Submit installment purchase applications"
-              available={permissions.canApplyForFinancing}
-              requiredFor="Identity & financial verification"
-            />
-            <PermissionCard
-              icon={<Home className="w-4 h-4" />}
-              title="List Properties"
-              description="Sell or rent out your properties"
-              available={permissions.canListProperties}
-              requiredFor="Phone & identity verification"
-            />
-            <PermissionCard
-              icon={<Shield className="w-4 h-4" />}
-              title="Process Applications"
-              description="Review and approve tenant applications"
-              available={permissions.canProcessTransactions}
-              requiredFor="Full KYC verification"
-            />
-          </div>
-        </CardContent>
-      </Card>
-        </motion.div>
+      {/* Enhanced Capabilities Grid */}
+      <CapabilitiesGrid user={user} onFeatureClick={handleRecommendationAction} />
 
       {/* Essential KYC Section */}
           <motion.div
