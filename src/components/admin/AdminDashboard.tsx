@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, 
@@ -58,9 +58,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout,
   onBackToUserView
 }) => {
-  const [activeTab, setActiveTab] = React.useState<AdminTab>('overview');
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Mock admin data
   const adminStats: AdminStats = {
@@ -292,7 +292,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     icon: React.ComponentType<{ className?: string }>;
     color: string;
     trend?: string;
-  }> = ({ title, value, subtitle, icon: Icon, color, trend }) => (
+  }> = ({ title, value, subtitle, icon: Icon, color, trend }: {
+    title: string;
+    value: string | number;
+    subtitle: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    trend?: string;
+  }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -337,7 +344,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="relative group-hover:scale-110 transition-transform duration-300">
               <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
               <div className="relative w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
-                <Icon className="w-6 h-6 text-white" />
+              <Icon className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
@@ -357,7 +364,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       />
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-blue-50/50 via-transparent to-transparent pointer-events-none" />
 
-      {/* Header */}
+        {/* Header */}
       <div className="sticky top-0 z-50">
         <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
@@ -370,23 +377,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 >
                   <Menu className="w-5 h-5 text-slate-700" />
                 </button>
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                   <div className="relative group">
                     <div className="absolute inset-0 bg-blue-500 rounded-xl blur-lg opacity-30 group-hover:opacity-40 transition-opacity duration-300" />
                     <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-500 rounded-xl flex items-center justify-center shadow-xl shadow-blue-500/20">
-                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                  </div>
-                  <div className="min-w-0">
-                    <h1 className="text-lg sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 truncate">
-                      Mukamba Admin
-                    </h1>
-                    <p className="text-xs sm:text-sm text-slate-600 truncate">
-                      Welcome back, {user.firstName}
-                    </p>
-                  </div>
-                </div>
               </div>
+              <div className="min-w-0">
+                    <h1 className="text-lg sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 truncate">
+                  Mukamba Admin
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 truncate">
+                  Welcome back, {user.firstName}
+                </p>
+                  </div>
+              </div>
+            </div>
 
               <div className="header-actions flex items-center gap-4 flex-shrink-0">
                 <button
@@ -395,20 +402,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 >
                   <Bell className="w-5 h-5" />
                 </button>
-                <button 
+              <button 
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl shadow-red-500/10 hover:shadow-red-500/20 text-white font-medium"
-                  onClick={onLogout}
-                  suppressHydrationWarning
-                >
-                  <LogOut size={18} />
+                onClick={onLogout}
+                suppressHydrationWarning
+              >
+                <LogOut size={18} />
                   <span className="hidden sm:inline text-sm">Sign Out</span>
                   <span className="sm:hidden text-sm">Logout</span>
-                </button>
+              </button>
               </div>
+            </div>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Main: Sidebar + Content */}
       <div className="relative z-10 flex min-h-[calc(100vh-4rem)]">
@@ -422,291 +429,291 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         />
         <main className="flex-1 lg:pl-6 py-6 space-y-8 sm:space-y-12 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">
-              {activeTab === 'overview' && (
-                <div className="space-y-8 sm:space-y-12">
-                  {/* Stats Grid */}
-                  <section>
-                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                      Overview
-                    </h2>
-                    <OverviewCards stats={adminStats} />
-                  </section>
+          {activeTab === 'overview' && (
+            <div className="space-y-8 sm:space-y-12">
+              {/* Stats Grid */}
+              <section>
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                  Overview
+                </h2>
+                <OverviewCards stats={adminStats} />
+              </section>
 
-                  {/* Document Review Queue */}
-                  <section>
-                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                      Review Queue
-                    </h2>
-                    <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white overflow-hidden">
-                      <CardContent className="p-4 sm:p-6 relative">
-                        <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-16 sm:-mr-32 -mt-16 sm:-mt-32" />
-                        <div className="relative">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-                            <div className="space-y-2">
-                              <h3 className="text-lg sm:text-xl font-semibold">Document Review Queue</h3>
-                              <p className="text-blue-100 text-xs sm:text-sm">
-                                {mockListings.filter(l => l.status === 'pending').length} property listings and{' '}
-                                {mockKYCVerifications.filter(v => v.status === 'pending').length} KYC verifications pending review
-                              </p>
-                            </div>
-                            <Button 
-                              variant="secondary" 
-                              className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm text-xs sm:text-sm px-3 sm:px-4 py-2"
-                              onClick={() => setActiveTab('listings')}
-                              suppressHydrationWarning
-                            >
-                              <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                              Review Now
-                            </Button>
-                          </div>
-
-                          {/* Progress Indicators */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 sm:mt-6">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-xs sm:text-sm">
-                                <span>Property Listings</span>
-                                <span className="font-medium">
-                                  {mockListings.filter(l => l.status === 'pending').length} pending
-                                </span>
-                              </div>
-                              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-white rounded-full transition-all duration-500"
-                                  style={{ 
-                                    width: `${(mockListings.filter(l => l.status === 'approved').length / mockListings.length) * 100}%` 
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-xs sm:text-sm">
-                                <span>KYC Verifications</span>
-                                <span className="font-medium">
-                                  {mockKYCVerifications.filter(v => v.status === 'pending').length} pending
-                                </span>
-                              </div>
-                              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-white rounded-full transition-all duration-500"
-                                  style={{ 
-                                    width: `${(mockKYCVerifications.filter(v => v.status === 'approved').length / mockKYCVerifications.length) * 100}%` 
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </div>
+              {/* Document Review Queue */}
+              <section>
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                  Review Queue
+                </h2>
+                <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white overflow-hidden">
+                  <CardContent className="p-4 sm:p-6 relative">
+                    <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-blue-500 rounded-full blur-3xl opacity-20 -mr-16 sm:-mr-32 -mt-16 sm:-mt-32" />
+                    <div className="relative">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+                        <div className="space-y-2">
+                          <h3 className="text-lg sm:text-xl font-semibold">Document Review Queue</h3>
+                          <p className="text-blue-100 text-xs sm:text-sm">
+                            {mockListings.filter(l => l.status === 'pending').length} property listings and{' '}
+                            {mockKYCVerifications.filter(v => v.status === 'pending').length} KYC verifications pending review
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </section>
-
-                  {/* Quick Actions */}
-                  <section>
-                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                      Quick Actions
-                    </h2>
-                    <Card>
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                          <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-                          Quick Actions
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                          <Button 
-                            className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                            onClick={() => setActiveTab('listings')}
-                            suppressHydrationWarning
-                          >
-                            <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Review Documents</span>
-                          </Button>
-                          <Button 
-                            className="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                            suppressHydrationWarning
-                          >
-                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Add User</span>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                            suppressHydrationWarning
-                          >
-                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Edit Property</span>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                            suppressHydrationWarning
-                          >
-                            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Export Data</span>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </section>
-
-                  {/* Recent Activity */}
-                  <section>
-                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                      Recent Activity
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-                      <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                            Recent Users
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-3 sm:p-6">
-                          <RecentUsersFeed 
-                            users={recentUsers}
-                            onViewUser={(userId) => console.log('View user:', userId)}
-                            onViewAll={() => setActiveTab('users')}
-                          />
-                        </CardContent>
-                      </Card>
-
-                      <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                            <Home className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
-                            Recent Properties
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-3 sm:p-6">
-                          <RecentPropertiesFeed 
-                            properties={recentProperties}
-                            onViewProperty={(propertyId) => console.log('View property:', propertyId)}
-                            onViewAll={() => setActiveTab('properties')}
-                          />
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </section>
-                </div>
-              )}
-
-              {activeTab === 'listings' && (
-                <section>
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                    Property Listings
-                  </h2>
-                  <ListingsPage
-                    listings={mockListings}
-                    onViewListing={(listingId) => console.log('View listing:', listingId)}
-                    onApproveListing={(listingId) => console.log('Approve listing:', listingId)}
-                    onRejectListing={(listingId, reason) => console.log('Reject listing:', listingId, reason)}
-                    onBulkAction={(action, listingIds) => console.log('Bulk action:', action, listingIds)}
-                    onAddToListings={(propertyListing) => {
-                      console.log('Adding property to listings:', propertyListing);
-                      // Here you would typically add the property to your PropertyListings component
-                      // For now, we'll just log it
-                      toast.success(`Property "${propertyListing.title}" added to listings successfully!`);
-                    }}
-                  />
-                </section>
-              )}
-
-              {activeTab === 'kyc' && (
-                <section>
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                    KYC Verifications
-                  </h2>
-                  <KYCPage
-                    verifications={mockKYCVerifications}
-                    onViewVerification={(verificationId) => console.log('View verification:', verificationId)}
-                    onApproveVerification={(verificationId) => console.log('Approve verification:', verificationId)}
-                    onRejectVerification={(verificationId, reason) => console.log('Reject verification:', verificationId, reason)}
-                    onBulkAction={(action, verificationIds) => console.log('Bulk action:', action, verificationIds)}
-                  />
-                </section>
-              )}
-
-              {activeTab === 'users' && (
-                <section>
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                    User Management
-                  </h2>
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className="space-y-1">
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          Manage user accounts, roles, and permissions
-                        </p>
+                        <Button 
+                          variant="secondary" 
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm text-xs sm:text-sm px-3 sm:px-4 py-2"
+                          onClick={() => setActiveTab('listings')}
+                          suppressHydrationWarning
+                        >
+                          <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          Review Now
+                        </Button>
                       </div>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                        Add User
-                      </Button>
-                    </div>
-                    
-                    <Card>
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 sm:mb-6">
-                          <div className="flex-1">
-                            <Input
-                              placeholder="Search users..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="max-w-sm text-xs sm:text-sm"
+
+                      {/* Progress Indicators */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 sm:mt-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs sm:text-sm">
+                            <span>Property Listings</span>
+                            <span className="font-medium">
+                              {mockListings.filter(l => l.status === 'pending').length} pending
+                            </span>
+                          </div>
+                          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-white rounded-full transition-all duration-500"
+                              style={{ 
+                                width: `${(mockListings.filter(l => l.status === 'approved').length / mockListings.length) * 100}%` 
+                              }}
                             />
                           </div>
-                          <Button variant="outline" className="text-xs sm:text-sm" suppressHydrationWarning>
-                            <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                            Filter
-                          </Button>
                         </div>
-                        
-                        <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
-                          User management interface coming soon...
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </section>
-              )}
 
-              {activeTab === 'properties' && (
-                <section>
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                    Property Management
-                  </h2>
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className="space-y-1">
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          Manage property listings and documentation
-                        </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs sm:text-sm">
+                            <span>KYC Verifications</span>
+                            <span className="font-medium">
+                              {mockKYCVerifications.filter(v => v.status === 'pending').length} pending
+                            </span>
+                          </div>
+                          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-white rounded-full transition-all duration-500"
+                              style={{ 
+                                width: `${(mockKYCVerifications.filter(v => v.status === 'approved').length / mockKYCVerifications.length) * 100}%` 
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                        Add Property
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+
+              {/* Quick Actions */}
+              <section>
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                  Quick Actions
+                </h2>
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+                      Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                      <Button 
+                        className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
+                        onClick={() => setActiveTab('listings')}
+                        suppressHydrationWarning
+                      >
+                        <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Review Documents</span>
+                      </Button>
+                      <Button 
+                        className="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
+                        suppressHydrationWarning
+                      >
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Add User</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
+                        suppressHydrationWarning
+                      >
+                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Edit Property</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
+                        suppressHydrationWarning
+                      >
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Export Data</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+
+              {/* Recent Activity */}
+              <section>
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                  Recent Activity
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                  <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                        Recent Users
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 sm:p-6">
+                      <RecentUsersFeed 
+                        users={recentUsers}
+                        onViewUser={(userId) => console.log('View user:', userId)}
+                        onViewAll={() => setActiveTab('users')}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <Home className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
+                        Recent Properties
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 sm:p-6">
+                      <RecentPropertiesFeed 
+                        properties={recentProperties}
+                        onViewProperty={(propertyId) => console.log('View property:', propertyId)}
+                        onViewAll={() => setActiveTab('properties')}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeTab === 'listings' && (
+            <section>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                Property Listings
+              </h2>
+              <ListingsPage
+                listings={mockListings}
+                onViewListing={(listingId) => console.log('View listing:', listingId)}
+                onApproveListing={(listingId) => console.log('Approve listing:', listingId)}
+                onRejectListing={(listingId, reason) => console.log('Reject listing:', listingId, reason)}
+                onBulkAction={(action, listingIds) => console.log('Bulk action:', action, listingIds)}
+                onAddToListings={(propertyListing) => {
+                  console.log('Adding property to listings:', propertyListing);
+                  // Here you would typically add the property to your PropertyListings component
+                  // For now, we'll just log it
+                  toast.success(`Property "${propertyListing.title}" added to listings successfully!`);
+                }}
+              />
+            </section>
+          )}
+
+          {activeTab === 'kyc' && (
+            <section>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                KYC Verifications
+              </h2>
+              <KYCPage
+                verifications={mockKYCVerifications}
+                onViewVerification={(verificationId) => console.log('View verification:', verificationId)}
+                onApproveVerification={(verificationId) => console.log('Approve verification:', verificationId)}
+                onRejectVerification={(verificationId, reason) => console.log('Reject verification:', verificationId, reason)}
+                onBulkAction={(action, verificationIds) => console.log('Bulk action:', action, verificationIds)}
+              />
+            </section>
+          )}
+
+          {activeTab === 'users' && (
+            <section>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                User Management
+              </h2>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs sm:text-sm text-slate-600">
+                      Manage user accounts, roles, and permissions
+                    </p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Add User
+                  </Button>
+                </div>
+                
+                <Card>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 sm:mb-6">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Search users..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="max-w-sm text-xs sm:text-sm"
+                        />
+                      </div>
+                      <Button variant="outline" className="text-xs sm:text-sm" suppressHydrationWarning>
+                        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                        Filter
                       </Button>
                     </div>
                     
-                    <Card>
-                      <CardContent className="p-4 sm:p-6">
-                        <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
-                          Property management interface coming soon...
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </section>
-              )}
+                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
+                      User management interface coming soon...
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )}
 
-              {activeTab === 'reports' && (
-                <section>
-                  <ReportsTab />
-                </section>
-              )}
+          {activeTab === 'properties' && (
+            <section>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                Property Management
+              </h2>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs sm:text-sm text-slate-600">
+                      Manage property listings and documentation
+                    </p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Add Property
+                  </Button>
+                </div>
+                
+                <Card>
+                  <CardContent className="p-4 sm:p-6">
+                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
+                      Property management interface coming soon...
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'reports' && (
+            <section>
+              <ReportsTab />
+            </section>
+          )}
 
               {activeTab === 'payments' && (
                 <section>
@@ -719,30 +726,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </section>
               )}
 
-              {activeTab === 'settings' && (
-                <section>
-                  <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                    System Settings
-                  </h2>
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="space-y-1">
-                      <p className="text-xs sm:text-sm text-slate-600">
-                        Configure system preferences and global settings
-                      </p>
-                    </div>
-                    
-                    <Card>
-                      <CardContent className="p-4 sm:p-6">
-                        <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
-                          System settings interface coming soon...
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </section>
-              )}
-          </div>
-        </main>
+          {activeTab === 'settings' && (
+            <section>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
+                System Settings
+              </h2>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-slate-600">
+                    Configure system preferences and global settings
+                  </p>
+                </div>
+                
+                <Card>
+                  <CardContent className="p-4 sm:p-6">
+                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
+                      System settings interface coming soon...
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )}
+        </div>
+      </main>
       </div>
     </div>
   );

@@ -44,7 +44,7 @@ export default function SupabaseConnectionTest() {
         try {
           const { data, error } = await supabase.storage.listBuckets();
           results.storageTest = error ? `❌ ${error.message}` : '✅ Storage accessible';
-          results.buckets = data?.map(bucket => bucket.name) || [];
+          results.buckets = data?.map((bucket: any) => bucket.name) || [];
         } catch (error) {
           results.storageTest = `❌ ${error}`;
         }

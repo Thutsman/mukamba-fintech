@@ -45,7 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { RentToBuyCalculator } from '@/components/ui/RentToBuyCalculator';
+
 import { useAuthStore } from '@/lib/store';
 import { toast } from 'sonner';
 
@@ -308,13 +308,13 @@ export const PropertyDetailsVerified: React.FC<PropertyDetailsVerifiedProps> = (
     </GlassCard>
   );
 
-  // Rent-to-Buy Offer Panel Component
-  const RentToBuyOfferPanel: React.FC = () => (
+  // Installment Offer Panel Component
+  const InstallmentOfferPanel: React.FC = () => (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-green-600" />
-          Rent-to-Buy Offer
+          Installment Offer
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -343,55 +343,28 @@ export const PropertyDetailsVerified: React.FC<PropertyDetailsVerifiedProps> = (
           </p>
         </div>
 
-        <RentToBuyCalculator
-          property={{
-            id: property.id,
-            title: property.title,
-            description: property.description,
-            propertyType: 'house' as any,
-            listingType: 'rent-to-buy',
-            location: {
-              country: 'ZW' as any,
-              city: property.location.city,
-              suburb: property.location.suburb,
-              streetAddress: property.location.streetAddress,
-              coordinates: property.location.coordinates
-            },
-            details: {
-              size: property.size,
-              bedrooms: property.bedrooms,
-              bathrooms: property.bathrooms,
-              features: property.features,
-              amenities: property.amenities
-            },
-            financials: {
-              price: property.price,
-              currency: 'USD',
-              rentToBuyDeposit: property.rentToBuyDeposit,
-              monthlyRental: property.monthlyRental,
-              rentCreditPercentage: property.rentCreditPercentage
-            },
-            media: {
-              mainImage: property.images[0],
-              images: property.images
-            },
-            seller: {
-              id: property.agent.id,
-              name: property.agent.name,
-              isVerified: true,
-              contactInfo: {
-                phone: property.agent.phone,
-                email: property.agent.email
-              }
-            },
-            status: property.status as any,
-            createdAt: property.createdAt,
-            updatedAt: property.createdAt,
-            views: property.views,
-            savedBy: property.savedBy,
-            inquiries: 0
-          }}
-        />
+        {/* Installment Calculator Placeholder */}
+        <div className="bg-slate-50 rounded-lg p-6">
+          <h4 className="font-semibold text-slate-800 mb-4">Installment Calculator</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-slate-600">Property Price:</span>
+              <span className="font-semibold">{formatCurrency(property.price)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-slate-600">Down Payment (20%):</span>
+              <span className="font-semibold">{formatCurrency(property.price * 0.2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-slate-600">Loan Amount:</span>
+              <span className="font-semibold">{formatCurrency(property.price * 0.8)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-slate-600">Monthly Payment (5 years):</span>
+              <span className="font-semibold text-green-600">{formatCurrency((property.price * 0.8) / 60)}</span>
+            </div>
+          </div>
+        </div>
 
         <Button 
           onClick={handlePrequalify}
@@ -659,8 +632,8 @@ export const PropertyDetailsVerified: React.FC<PropertyDetailsVerifiedProps> = (
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Rent-to-Buy Offer Panel */}
-            <RentToBuyOfferPanel />
+            {/* Installment Offer Panel */}
+            <InstallmentOfferPanel />
 
             {/* Next Steps Tracker */}
             <NextStepsTracker />

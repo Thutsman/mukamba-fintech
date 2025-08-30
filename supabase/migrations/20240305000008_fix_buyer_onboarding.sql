@@ -187,3 +187,4 @@ COMMENT ON FUNCTION handle_buyer_signup IS 'Handles buyer signup completion and 
 COMMENT ON FUNCTION handle_phone_verification IS 'Handles phone verification and updates KYC level to phone';
 COMMENT ON FUNCTION populate_missing_buyer_onboarding IS 'Populates missing buyer_onboarding_progress records for existing users';
 COMMENT ON VIEW buyer_onboarding_status IS 'View to check buyer onboarding status and KYC levels';
+

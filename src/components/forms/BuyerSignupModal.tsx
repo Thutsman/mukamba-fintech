@@ -391,10 +391,10 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                             </Badge>
                           </div>
                           <p className="text-sm text-slate-600">
-                            I need financing or rent-to-buy options
+                            I would like installment options
                           </p>
                           <div className="mt-1 text-xs text-blue-600">
-                            ✓ Pre-approved financing • ✓ Rent-to-buy available
+                            ✓ Flexible payment plan
                           </div>
                         </div>
                       </div>

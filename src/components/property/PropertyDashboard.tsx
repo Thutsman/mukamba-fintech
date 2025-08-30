@@ -4,7 +4,6 @@ import * as React from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { 
   Search, 
-  Calculator, 
   TrendingUp, 
   TrendingDown,
   MapPin, 
@@ -50,7 +49,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PropertyListings } from './PropertyListings';
-import { RentToBuyCalculator } from '@/components/ui/RentToBuyCalculator';
+
 import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } from '@/types/property';
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
 import { User as UserType } from '@/types/auth';
@@ -112,7 +111,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
     priceRange: '',
     bedrooms: '',
     propertyType: '',
-    listingType: 'rent-to-buy'
+    listingType: 'installments'
   });
   const [searchSuggestions, setSearchSuggestions] = React.useState<string[]>([]);
   const [showSearchSuggestions, setShowSearchSuggestions] = React.useState(false);
@@ -509,7 +508,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                           </Badge>
               {property.listingType === 'rent-to-buy' && (
                 <Badge className="bg-green-500 text-white text-xs">
-                  Rent-to-Buy
+                  Installments
                 </Badge>
               )}
 
@@ -521,19 +520,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               initial={{ opacity: 0, x: 20 }}
               whileHover={{ opacity: 1, x: 0 }}
             >
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="w-7 h-7 sm:w-8 sm:h-8 bg-white/90 hover:bg-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Calculate payment action
-                  }}
-                >
-                  <Calculator className="w-3 h-3 sm:w-4 sm:h-4" />
-                </Button>
-              </motion.div>
+
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <Button
                   size="icon"
@@ -668,7 +655,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      // Scroll to the top of the section with some offset for better UX
+      const offset = 80; // Account for any fixed headers
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -851,153 +846,154 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       </AnimatePresence>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100" style={{ height: '600px' }}>
-        {/* High-quality modern architecture background - mobile optimized */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" style={{ height: '90vh', minHeight: '700px' }}>
+        {/* Premium property background with parallax effect */}
         <div 
-          className="absolute inset-0 bg-cover bg-bottom bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
-            backgroundPosition: '50% 60%', // Adjust to show more of the house and less sky
+            backgroundPosition: '50% 60%',
           }}
         >
-          {/* Darker overlay to match mukambagateway.com */}
-          <div className="absolute inset-0 bg-black/30"></div>
+          {/* Enhanced gradient overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-900/80 to-slate-900/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <div className="text-center space-y-6">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
+          <div className="text-center space-y-8">
             {/* Logo and Main Headline */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="flex flex-col items-center space-y-6"
-            >
-              {/* Enhanced Logo with better visibility */}
+            <div className="flex flex-col items-center space-y-8">
+              {/* Enhanced Logo with glass effect */}
               <div className="relative mb-8">
-                <div className="bg-white rounded-2xl p-4 shadow-lg">
+                <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/30">
                   <Image
                     src="/logo.svg"
                     alt="Mukamba Logo"
-                    width={280}
-                    height={80}
-                    className="h-16 w-auto"
+                    width={320}
+                    height={90}
+                    className="h-20 w-auto"
                     priority
                   />
                 </div>
               </div>
               
               <h1 
-                className="font-sans text-4xl sm:text-5xl font-bold text-white leading-tight tracking-tight px-2 mb-2 text-center drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
+                className="font-sans text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight px-4 mb-4 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
               >
                 Sell Smarter,
                 <br />
-                <span className="text-blue-300 font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Pay less</span>
+                <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Pay Less</span>
               </h1>
-            </motion.div>
+            </div>
             
             
             {/* Subheadline */}
-            <motion.div 
-              className="text-center px-4 mb-8 max-w-4xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <p className="text-2xl sm:text-3xl text-white font-semibold leading-tight tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                Own Your Home with Flexible Installment Plans
+            <div className="text-center px-4 mb-8 max-w-5xl mx-auto">
+              <p className="text-2xl sm:text-3xl lg:text-4xl text-white font-light leading-relaxed tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+                Own Your Home with <span className="font-semibold text-orange-300">Flexible Installment Plans</span>
               </p>
-            </motion.div>
+            </div>
             
-            {/* Statistics Ticker */}
-            <motion.div 
-              className="grid grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:gap-8 md:flex md:justify-center md:gap-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
-                <div className="text-3xl font-bold text-slate-800 mb-1">500+</div>
-                <div className="text-slate-600 text-sm">Pre-Approved Properties</div>
+            {/* Enhanced Statistics Ticker */}
+            <div className="grid grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:gap-8 md:flex md:justify-center md:gap-12">
+              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
+                <div className="flex items-center justify-center mb-3">
+                  <Home className="w-8 h-8 text-orange-400 mr-3" />
+                  <div className="text-4xl font-bold text-white mb-1">500+</div>
+                </div>
+                <div className="text-white/90 text-sm font-medium">Pre-Approved Properties</div>
               </div>
-              <div className="bg-white/95 rounded-xl p-4 text-center inline-block shadow-md">
-                <div className="text-3xl font-bold text-slate-800 mb-1">2,000+</div>
-                <div className="text-slate-600 text-sm">Families Who Owned Their Home</div>
+              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
+                <div className="flex items-center justify-center mb-3">
+                  <Users className="w-8 h-8 text-orange-400 mr-3" />
+                  <div className="text-4xl font-bold text-white mb-1">2,000+</div>
+                </div>
+                <div className="text-white/90 text-sm font-medium">Families Who Owned Their Home</div>
               </div>
-            </motion.div>
+            </div>
             
-            {/* CTAs */}
+            {/* Enhanced CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center px-4"
+              className="flex flex-col sm:flex-row gap-6 justify-center px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              <Button 
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/20 hover:text-white px-5 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
-                onClick={() => {
-                  // Track analytics
-                  trackEvent('hero_sell_property_clicked', {
-                    source: 'hero_section',
-                    event_category: 'conversion',
-                    user_status: user ? 'authenticated' : 'guest'
-                  });
-                  
-                  // Smart routing based on authentication
-                  if (user) {
-                    // Authenticated user: Open seller onboarding
-                    setShowSellerModal(true);
-                  } else {
-                    // Guest user: Open signup modal with seller intent
-                    setSellerIntent(true);
-                    setShowSignupModal(true);
-                  }
-                }}
-                suppressHydrationWarning
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <PlusCircle className="w-5 h-5 mr-2" />
-                Sell Your Property
-              </Button>
-              <Button 
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/20 hover:text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/15 backdrop-blur-md w-full sm:w-auto"
-                onClick={() => {
-                  setShowSigninModal(true);
-                  // Analytics tracking for signin modal
-                  trackEvent('signin_modal_opened', {
-                    source: 'hero_section',
-                    event_category: 'conversion'
-                  });
-                }}
-                suppressHydrationWarning
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold shadow-2xl hover:shadow-orange-500/25 transition-all duration-300 w-full sm:w-auto border-0"
+                  onClick={() => {
+                    // Track analytics
+                    trackEvent('hero_sell_property_clicked', {
+                      source: 'hero_section',
+                      event_category: 'conversion',
+                      user_status: user ? 'authenticated' : 'guest'
+                    });
+                    
+                    // Smart routing based on authentication
+                    if (user) {
+                      // Authenticated user: Open seller onboarding
+                      setShowSellerModal(true);
+                    } else {
+                      // Guest user: Open signup modal with seller intent
+                      setSellerIntent(true);
+                      setShowSignupModal(true);
+                    }
+                  }}
+                  suppressHydrationWarning
+                >
+                  <PlusCircle className="w-5 h-5 mr-2" />
+                  Sell Your Property
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <LogIn className="w-5 h-5 mr-2" />
-                Sign In
-              </Button>
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="border-white/40 text-white hover:bg-white/20 hover:text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-xl w-full sm:w-auto shadow-xl hover:shadow-white/25 transition-all duration-300"
+                  onClick={() => {
+                    setShowSigninModal(true);
+                    // Analytics tracking for signin modal
+                    trackEvent('signin_modal_opened', {
+                      source: 'hero_section',
+                      event_category: 'conversion'
+                    });
+                  }}
+                  suppressHydrationWarning
+                >
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Sign In
+                </Button>
+              </motion.div>
             </motion.div>
             
             {/* Enhanced Search Bar */}
             <motion.div 
-              className="max-w-4xl mx-auto px-4"
+              className="max-w-5xl mx-auto px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
             >
-              <div className="bg-white/30 backdrop-blur-xl rounded-xl p-6 border border-white/40 shadow-[0_10px_40px_rgba(0,0,0,0.12)]">
-                <div className="space-y-4">
+              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-8 border border-white/30 shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+                <div className="space-y-6">
                   {/* Main Search Input */}
-              <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Search properties by location, type, or features..."
-                  value={quickSearchQuery}
-                  onChange={(e) => setQuickSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
-                      className="pl-12 pr-4 h-14 text-lg bg-white border-slate-300 text-slate-800 placeholder-slate-500 focus:bg-white focus:border-slate-400"
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-6 h-6" />
+                    <Input
+                      type="text"
+                      placeholder="Search properties by location, type, or features..."
+                      value={quickSearchQuery}
+                      onChange={(e) => setQuickSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
+                      className="pl-14 pr-4 h-16 text-lg bg-white/90 border-slate-300 text-slate-800 placeholder-slate-500 focus:bg-white focus:border-orange-400 focus:ring-orange-400"
                     />
                     
                     {/* Search Suggestions */}
@@ -1007,34 +1003,34 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg mt-2 z-20"
+                          className="absolute top-full left-0 right-0 bg-white rounded-xl shadow-2xl mt-2 z-20 border border-slate-200"
                         >
                           {searchSuggestions.map((suggestion, index) => (
                             <button
                               key={index}
-                              className="w-full px-4 py-3 text-left hover:bg-slate-50 text-slate-700 border-b border-slate-100 last:border-b-0"
+                              className="w-full px-4 py-3 text-left hover:bg-orange-50 text-slate-700 border-b border-slate-100 last:border-b-0 transition-colors duration-200"
                               onClick={() => handleSearchSuggestionClick(suggestion)}
                             >
-                              <MapPin className="w-4 h-4 inline mr-3 text-slate-400" />
+                              <MapPin className="w-4 h-4 inline mr-3 text-orange-400" />
                               {suggestion}
                             </button>
                           ))}
                         </motion.div>
                       )}
                     </AnimatePresence>
-            </div>
-            
-                  {/* Quick Filters */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                <CountryToggle
-                  value={selectedCountry}
-                  onChange={setSelectedCountry}
-                />
+                  </div>
+                  
+                  {/* Enhanced Quick Filters */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <CountryToggle
+                      value={selectedCountry}
+                      onChange={setSelectedCountry}
+                    />
                     
                     <select
                       value={searchFilters.priceRange}
                       onChange={(e) => handleFilterChange('priceRange', e.target.value)}
-                      className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-500 focus:border-slate-400"
+                      className="px-4 py-3 bg-white/90 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-500 focus:border-orange-400 focus:ring-orange-400 transition-all duration-200"
                     >
                       <option value="" className="text-slate-700">Price Range</option>
                       <option value="0-50000" className="text-slate-700">$0 - $50K</option>
@@ -1044,33 +1040,38 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     </select>
                     
                     <select
-                      value={searchFilters.bedrooms}
-                      onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
-                      className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-500 focus:border-slate-400"
+                      value={searchFilters.propertyType}
+                      onChange={(e) => handleFilterChange('propertyType', e.target.value)}
+                      className="px-4 py-3 bg-white/90 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-500 focus:border-orange-400 focus:ring-orange-400 transition-all duration-200"
                     >
-                      <option value="" className="text-slate-700">Bedrooms</option>
-                      <option value="1" className="text-slate-700">1 Bed</option>
-                      <option value="2" className="text-slate-700">2 Beds</option>
-                      <option value="3" className="text-slate-700">3 Beds</option>
-                      <option value="4+" className="text-slate-700">4+ Beds</option>
+                      <option value="" className="text-slate-700">Property Type</option>
+                      <option value="house" className="text-slate-700">House</option>
+                      <option value="apartment" className="text-slate-700">Apartment</option>
+                      <option value="villa" className="text-slate-700">Villa</option>
+                      <option value="townhouse" className="text-slate-700">Townhouse</option>
                     </select>
                     
-              <Button
-                onClick={handleQuickSearch}
-                disabled={isSearchLoading}
-                      className="bg-blue-600 hover:bg-blue-700 px-6 py-2"
-              >
-                {isSearchLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                    <Search className="w-4 h-4 mr-2" />
-                      )}
-                    Search
-                    </Button>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={handleQuickSearch}
+                        disabled={isSearchLoading}
+                        className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 px-8 py-3 h-full text-white font-semibold shadow-lg hover:shadow-orange-500/25 transition-all duration-300"
+                      >
+                        {isSearchLoading ? (
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        ) : (
+                          <Search className="w-5 h-5 mr-2" />
+                        )}
+                        Search
+                      </Button>
+                    </motion.div>
                   </div>
                 </div>
               </div>
-                  </motion.div>
+            </motion.div>
 
             {/* Quick Property Preview */}
             <motion.div 
@@ -1127,7 +1128,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                           </Badge>
                           {property.listingType === 'rent-to-buy' && (
                             <Badge className="bg-green-500 text-white text-xs">
-                              Rent-to-Buy
+                              Installments
                             </Badge>
                           )}
                         </div>
@@ -1250,7 +1251,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           }} 
           className="space-y-8"
         >
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4 h-auto p-1 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl shadow-sm">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 h-auto p-1 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl shadow-sm">
             <TabsTrigger 
               value="explore" 
               className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-50"
@@ -1266,14 +1267,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <Search className="w-4 h-4" />
               <span className="hidden sm:inline">All Listings</span>
               <span className="sm:hidden">Search</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="calculator" 
-              className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-50"
-            >
-              <Calculator className="w-4 h-4" />
-              <span className="hidden sm:inline">Calculator</span>
-              <span className="sm:hidden">Calc</span>
             </TabsTrigger>
             <TabsTrigger 
               value="saved" 
@@ -1376,10 +1369,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                         propertyThumbnails={featuredProperties.slice(0, 3)}
                   />
                   <MarketStatsCard
-                    title="Rent-to-buy available"
+                    title="Installment plans available"
                     value={stats.activeRentToBuy}
-                    subtitle="No Down Payment Required"
-                    description="Start with just your monthly rent payment"
+                    subtitle="Flexible Payment Options"
+                    description="Start with just your monthly installment payment"
                     trend="+25%"
                     icon={TrendingUp}
                     color="bg-green-500"
@@ -1439,7 +1432,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       </h3>
                       <p className="text-slate-600 mb-6 text-lg">
                         List your property on Mukamba and reach thousands of qualified buyers. 
-                        Get competitive offers and close deals faster with our rent-to-buy platform.
+                        Get competitive offers and close deals faster with our installment platform.
                       </p>
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button 
@@ -1568,7 +1561,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                               </Badge>
                             </div>
                             <p className="text-slate-600 text-sm mb-2">
-                              "Mukamba made my rent-to-buy journey seamless. The verification process was quick and the support team was incredibly helpful."
+                              "Mukamba made my installment journey seamless. The verification process was quick and the support team was incredibly helpful."
                             </p>
                             <div className="flex items-center gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
@@ -1593,7 +1586,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                               </Badge>
                             </div>
                             <p className="text-slate-600 text-sm mb-2">
-                              "Found my dream home through Mukamba's rent-to-buy program. The process was transparent and the financial calculations were spot on."
+                              "Found my dream home through Mukamba's installment program. The process was transparent and the financial calculations were spot on."
                             </p>
                             <div className="flex items-center gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
@@ -1654,7 +1647,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                         { step: 2, title: "Verify", description: "Complete KYC verification" },
                         { step: 3, title: "Browse", description: "Explore verified properties" },
                         { step: 4, title: "Apply", description: "Submit your application" },
-                        { step: 5, title: "Move In", description: "Start your rent-to-buy journey" }
+                        { step: 5, title: "Move In", description: "Start your installment journey" }
                       ].map((item, index) => (
                         <div key={item.step} className="flex items-center gap-4">
                           <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -1705,57 +1698,27 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     <p className="text-slate-600">Get started with these popular tools</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
-                    {/* Primary Action - Calculate Rent-to-Buy */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ scale: 1.05, y: -8 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
-                      className="group cursor-pointer"
-                      onClick={() => setActiveTab('calculator')}
-                    >
-                      <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300">
-                        {/* Popular Badge */}
-                        <div className="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">
-                          Most Popular
-                        </div>
-                        
-                        <div className="text-center space-y-4">
-                          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
-                            <Calculator className="w-8 h-8 text-white" />
-                          </div>
-                          
-                          <div>
-                            <h3 className="text-xl font-bold mb-2">Calculate Your Savings</h3>
-                            <p className="text-blue-100 text-sm mb-4">
-                              See how much you'll save vs. traditional home buying
-                            </p>
-                            
-                            {/* Preview */}
-                            <div className="bg-white/10 rounded-lg p-3 text-left">
-                              <div className="text-xs text-blue-200 mb-1">Preview:</div>
-                              <div className="text-xs space-y-1">
-                                <div>• Monthly payment: $1,200</div>
-                                <div>• Rent credit: $300/month</div>
-                                <div>• Time to ownership: 5 years</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-0">
                     {/* Advanced Search */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, y: -4 }}
                       whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
                       className="group cursor-pointer"
-                      onClick={() => setActiveTab('listings')}
+                      onClick={() => {
+                        setActiveTab('listings');
+                        // Scroll to the top of the listings section
+                        setTimeout(() => {
+                          scrollToSection('listings-section');
+                        }, 100); // Small delay to ensure tab switch completes
+                        // Track analytics
+                        trackEvent('quick_action_find_home_clicked', {
+                          source: 'quick_actions',
+                          event_category: 'navigation'
+                        });
+                      }}
                     >
                       <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-green-300">
                         <div className="text-center space-y-4">
@@ -1789,9 +1752,20 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, y: -4 }}
                       whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.3 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
                       className="group cursor-pointer"
-                      onClick={() => setActiveTab('saved')}
+                      onClick={() => {
+                        setActiveTab('saved');
+                        // Scroll to the top of the saved section
+                        setTimeout(() => {
+                          scrollToSection('saved-section');
+                        }, 100); // Small delay to ensure tab switch completes
+                        // Track analytics
+                        trackEvent('quick_action_track_favorites_clicked', {
+                          source: 'quick_actions',
+                          event_category: 'navigation'
+                        });
+                      }}
                     >
                       <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-purple-300">
                         <div className="text-center space-y-4">
@@ -1837,114 +1811,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             />
           </TabsContent>
 
-          {/* Calculator Tab */}
-          <TabsContent value="calculator">
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                  Rent-to-Buy Calculator
-                </h2>
-                <p className="text-slate-600">
-                  Calculate your potential savings and path to homeownership
-                </p>
-              </div>
 
-              {selectedProperty ? (
-                <div className="space-y-6">
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-800">
-                            Calculating for: {selectedProperty.title}
-                          </h3>
-                          <p className="text-slate-600">{selectedProperty.location.streetAddress}, {selectedProperty.location.city}</p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <Button
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => {
-                              if (user && userPhoneVerified) {
-                                // User is authenticated and phone verified - show contact info
-                                alert('Contact Seller: +27 XX XXX XXXX\nEmail: seller@example.com\nFeature coming soon!');
-                              } else if (user && !userPhoneVerified) {
-                                // User authenticated but needs phone verification
-                                setSelectedPropertyForContact(selectedProperty);
-                                setShowBuyerPhoneVerificationModal(true);
-                                
-                                // Track phone verification gate
-                                trackEvent('seller_contact_gated', {
-                                  property_id: selectedProperty.id,
-                                  property_title: selectedProperty.title,
-                                  user_status: 'authenticated_no_phone',
-                                  source: 'calculator_tab',
-                                  event_category: 'lead_generation'
-                                });
-                              } else {
-                                // User not authenticated - redirect to signup
-                                setSelectedPropertyForSignup(selectedProperty);
-                                setShowBuyerSignupModal(true);
-                                
-                                // Track signup gate
-                                trackEvent('seller_contact_signup_required', {
-                                  property_id: selectedProperty.id,
-                                  property_title: selectedProperty.title,
-                                  user_status: 'anonymous',
-                                  source: 'calculator_tab',
-                                  event_category: 'lead_generation'
-                                });
-                              }
-                            }}
-                            suppressHydrationWarning
-                          >
-                            {user && userPhoneVerified ? 'Contact Seller' : 
-                             user && !userPhoneVerified ? 'Verify Phone to Contact' : 
-                             'Sign Up to Contact Seller'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => setSelectedProperty(null)}
-                            suppressHydrationWarning
-                          >
-                            Change Property
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <RentToBuyCalculator property={selectedProperty} />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <Calculator className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-slate-600 mb-2">
-                        Select a Property to Calculate
-                      </h3>
-                      <p className="text-slate-500 mb-6">
-                        Browse our listings and select a rent-to-buy property to see your potential savings
-                      </p>
-                      <Button
-                        onClick={() => setActiveTab('listings')}
-                        className="bg-blue-600 hover:bg-blue-700"
-                        suppressHydrationWarning
-                      >
-                        Browse Properties
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Generic Calculator */}
-                  <RentToBuyCalculator />
-                </div>
-              )}
-            </div>
-          </TabsContent>
 
           {/* Saved Tab */}
-          <TabsContent value="saved">
+          <TabsContent value="saved" id="saved-section">
             {user ? (
               <Card>
                 <CardContent className="p-12 text-center">
@@ -2061,7 +1931,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               className="col-span-full mb-8"
             >
               <div className="text-center mb-8">
-                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">How Rent-to-Buy Works</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">How Installment Plans Work</h3>
                 <p className="text-slate-300 text-lg max-w-2xl mx-auto">
                   Get the keys to your home in 3 simple steps - no down payment required
                 </p>
@@ -2152,7 +2022,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Pre-Approved Properties</h3>
                 <p className="text-slate-300 text-sm">
-                  All properties are verified and ready for immediate rent-to-buy
+                  All properties are verified and ready for immediate installment purchase
                 </p>
               </div>
             </motion.div>
@@ -2168,7 +2038,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <div className="text-center mb-8">
                 <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">Frequently Asked Questions</h3>
                 <p className="text-slate-300 text-lg max-w-2xl mx-auto">
-                  Everything you need to know about rent-to-buy properties
+                  Everything you need to know about installment properties
                 </p>
               </div>
               
@@ -2182,7 +2052,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 >
                   <h4 className="text-lg font-semibold text-white mb-3">Do I need a down payment?</h4>
                   <p className="text-slate-300 text-sm">
-                    No! Rent-to-buy properties require zero down payment. You start with just your monthly rent payment.
+                    No! Installment properties require zero down payment. You start with just your monthly installment payment.
                   </p>
                 </motion.div>
 

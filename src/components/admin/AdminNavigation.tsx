@@ -96,7 +96,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
     </div>
   );
 
-  return (
+                return (
     <aside
       className={`
         bg-white/95 backdrop-blur-xl border-r border-slate-200/80
@@ -116,7 +116,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
         >
           <Menu className="w-5 h-5" />
         </button>
-      </div>
+            </div>
 
       <div className="p-4 space-y-6 h-[calc(100%-3.5rem)]">
         {/* Notifications button */}
@@ -152,9 +152,9 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${openGroups[group.id] ? 'rotate-180' : ''}`} />
                </div>
             </button>
-            <motion.div
+                <motion.div
               initial={false}
-              animate={{ 
+                  animate={{ 
                 height: openGroups[group.id] ? 'auto' : 0, 
                 opacity: openGroups[group.id] ? 1 : 0 
               }}
@@ -181,7 +181,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
                     >
                       <div className="relative flex items-center">
                         {isActive && (
-                          <motion.div
+                  <motion.div
                             layoutId="activeIndicator"
                             className="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-500 rounded-full"
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -193,9 +193,9 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
                              : 'text-slate-500 group-hover:text-slate-700 group-hover:bg-gradient-to-br group-hover:from-slate-50 group-hover:to-slate-100'
                          }`}>
                            <item.icon className="w-4 h-4" />
-                         </div>
+        </div>
                         {renderDot(count)}
-                      </div>
+      </div>
                       <span className="flex-1 text-left">{item.label}</span>
                       {count > 0 && (
                         <Badge 
@@ -218,7 +218,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
             </motion.div>
           </div>
         ))}
-      </div>
+    </div>
     </aside>
   );
-};
+}; 

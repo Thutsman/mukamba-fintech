@@ -50,7 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PropertyListing, PropertySearchFilters, PropertyType } from '@/types/property';
 import { User, getUserLevel, getUserPermissions } from '@/types/auth';
 import { searchProperties as searchPropertiesService, getFeaturedProperties as getFeaturedPropertiesService } from '@/lib/property-services';
-import { RentToBuyCalculator } from '@/components/ui/RentToBuyCalculator';
+
 import { useAuthStore } from '@/lib/store';
 import { convertToPropertyListing, getAllProperties, getPropertiesByCountry, searchProperties as searchUnifiedProperties, getFeaturedProperties as getFeaturedUnifiedProperties } from '@/lib/property-data';
 

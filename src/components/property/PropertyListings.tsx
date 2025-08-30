@@ -141,7 +141,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
             {property.listingType === 'rent-to-buy' && (
               <Badge className="bg-green-500 text-white">
-                Rent-to-Buy
+                Installments
               </Badge>
             )}
             {property.seller.isVerified && (
