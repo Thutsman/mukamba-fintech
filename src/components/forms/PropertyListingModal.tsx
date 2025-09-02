@@ -28,7 +28,7 @@ const propertySchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters"),
   description: z.string().min(50, "Description must be at least 50 characters"),
   propertyType: z.enum(['house', 'apartment', 'townhouse', 'land', 'commercial']),
-  listingType: z.enum(['rent-to-buy', 'sale']),
+  listingType: z.enum(['rent-to-buy', 'sale', 'installment']),
   
   // Location
   country: z.enum(['ZW', 'SA']),

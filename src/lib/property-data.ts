@@ -309,6 +309,7 @@ export function convertToPropertyListing(unifiedProperty: UnifiedProperty): Prop
     },
     details: {
       size: unifiedProperty.area,
+      type: unifiedProperty.propertyType as any,
       bedrooms: unifiedProperty.bedrooms,
       bathrooms: unifiedProperty.bathrooms,
       parking: unifiedProperty.parking,
@@ -334,7 +335,7 @@ export function convertToPropertyListing(unifiedProperty: UnifiedProperty): Prop
         email: `seller-${unifiedProperty.id}@example.com`
       }
     },
-    status: 'active',
+    status: 'available',
     createdAt: new Date(),
     updatedAt: new Date(),
     views: unifiedProperty.views || 0,

@@ -1396,9 +1396,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   // Track analytics
                   trackEvent('view_all_properties_clicked', {
                     source: 'featured_properties_main',
-                    event_category: 'navigation'
-                  });
-                }}
+              event_category: 'navigation'
+            });
+          }} 
                 suppressHydrationWarning
               >
                 View All {featuredProperties.length} Properties
