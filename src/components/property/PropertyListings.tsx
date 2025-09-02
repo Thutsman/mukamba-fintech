@@ -8,9 +8,9 @@ import {
   Grid, 
   List, 
   MapPin, 
-  Bed, 
-  Bath, 
-  Square, 
+  Bed,
+  Bath,
+  Square,
   Heart,
   Share2,
   Eye,
@@ -20,8 +20,36 @@ import {
   Calendar,
   ChevronDown,
   X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Map,
+  SortAsc,
+  SortDesc,
+  Save,
+  GitCompare,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Plus,
+  Minus,
+  Sliders,
+  Building,
+  Car,
+  TreePine,
+  Waves,
+  Wifi,
+  Shield,
+  Zap,
+  Users,
+  ArrowLeft,
+  ArrowRight,
+  RefreshCw,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
+
+import { useRouter } from 'next/navigation';
+import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
+import { useAuthStore } from '@/lib/store';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,13 +67,12 @@ interface PropertyListingsProps {
   initialFilters?: PropertySearchFilters;
   onPropertySelect?: (property: PropertyListing) => void;
   showFeatured?: boolean;
-  user?: User; // User from auth system
+  user?: User;
   onSignUpPrompt?: () => void;
 }
 
-// Default filter values
 const defaultFilters: PropertySearchFilters = {
-  country: 'ZW', // Default to Zimbabwe
+  country: 'ZW',
   sortBy: 'date-newest'
 };
 
@@ -56,6 +83,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   user,
   onSignUpPrompt
 }) => {
+  const router = useRouter();
   const [filters, setFilters] = React.useState<PropertySearchFilters>(
     initialFilters ? { ...defaultFilters, ...initialFilters } : defaultFilters
   );
@@ -65,15 +93,74 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   const [showFilters, setShowFilters] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [savedProperties, setSavedProperties] = React.useState<Set<string>>(new Set());
+  
+  // Phone verification modal state
+  const [showPhoneVerificationModal, setShowPhoneVerificationModal] = React.useState(false);
+  const [selectedProperty, setSelectedProperty] = React.useState<PropertyListing | null>(null);
+  
+  // Get updateUser function from auth store
+  const { updateUser } = useAuthStore();
 
-  // Load properties
+  // Parse URL query parameters and apply as initial filters (only once on mount)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlFilters: Partial<PropertySearchFilters> = {};
+      
+      // Parse propertyType array
+      const propertyTypes = urlParams.getAll('propertyType');
+      if (propertyTypes.length > 0) {
+        urlFilters.propertyType = propertyTypes as PropertyType[];
+      }
+      
+      // Parse listingType
+      const listingType = urlParams.get('listingType');
+      if (listingType) {
+        urlFilters.listingType = listingType as any;
+      }
+      
+      // Parse priceRange
+      const priceMin = urlParams.get('priceRange.min');
+      const priceMax = urlParams.get('priceRange.max');
+      if (priceMin || priceMax) {
+        urlFilters.priceRange = {
+          min: priceMin ? Number(priceMin) : 0,
+          max: priceMax ? Number(priceMax) : 999999999
+        };
+      }
+      
+      // Parse location
+      const city = urlParams.get('city');
+      const suburb = urlParams.get('suburb');
+      if (city || suburb) {
+        urlFilters.location = {
+          city: city || undefined,
+          suburb: suburb || undefined
+        };
+      }
+      
+      // Apply URL filters if any exist and filters haven't been initialized yet
+      if (Object.keys(urlFilters).length > 0) {
+        setFilters(prev => {
+          // Only apply URL filters if this is the initial load
+          const hasInitialFilters = prev.propertyType || prev.listingType || prev.priceRange || prev.location;
+          if (!hasInitialFilters) {
+            return { ...prev, ...urlFilters };
+          }
+          return prev;
+        });
+      }
+    }
+  }, []); // Empty dependency array ensures this only runs once on mount
+
+  // Load properties with debouncing to prevent excessive API calls
   React.useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       const results = searchProperties(filters);
       setProperties(results);
       setIsLoading(false);
-    }, 300);
+    }, 500); // Increased debounce time to reduce excessive calls
 
     return () => clearTimeout(timer);
   }, [filters]);
@@ -85,9 +172,22 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     }
   }, [showFeatured, filters.country]);
 
-  const updateFilter = (key: keyof PropertySearchFilters, value: unknown) => {
+  // Debounced filter update to prevent excessive re-renders
+  const updateFilter = React.useCallback((key: keyof PropertySearchFilters, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
+
+  // Debounced filter update for price range to prevent excessive API calls
+  const updatePriceFilter = React.useCallback((key: 'min' | 'max', value: number | '') => {
+    setFilters(prev => ({
+      ...prev,
+      priceRange: {
+        min: prev.priceRange?.min || 0,
+        max: prev.priceRange?.max || 999999999,
+        [key]: value === '' ? (key === 'min' ? 0 : 999999999) : value
+      }
+    }));
+  }, []);
 
   const clearFilters = () => {
     setFilters(defaultFilters);
@@ -95,8 +195,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
 
   const toggleSaveProperty = (propertyId: string) => {
     if (!user) {
-      // Show signup prompt for unauthenticated users
-      onSignUpPrompt?.() || alert('Please sign up to save properties!');
+      onSignUpPrompt?.();
       return;
     }
 
@@ -111,6 +210,43 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     });
   };
 
+  // Phone verification handlers
+  const handlePhoneVerification = (property: PropertyListing) => {
+    if (!user) {
+      onSignUpPrompt?.();
+      return;
+    }
+    
+    setSelectedProperty(property);
+    setShowPhoneVerificationModal(true);
+  };
+
+  const handlePhoneVerificationComplete = async (phoneNumber: string) => {
+    try {
+      // Update user in store with phone verification
+      if (user) {
+        updateUser({
+          ...user,
+          phone: phoneNumber,
+          is_phone_verified: true,
+          kyc_level: 'phone'
+        });
+      }
+      
+      setShowPhoneVerificationModal(false);
+      setSelectedProperty(null);
+      
+      // Show success message
+      console.log('Phone verification completed successfully');
+      
+      // You could also show a toast notification here
+      alert('Phone verification completed! You can now contact sellers.');
+    } catch (error) {
+      console.error('Error completing phone verification:', error);
+      alert('Error completing phone verification. Please try again.');
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
@@ -119,7 +255,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     }).format(amount);
   };
 
-  const PropertyCard: React.FC<{ property: PropertyListing; index: number }> = ({ property, index }) => (
+  const PropertyCard: React.FC<{ property: PropertyListing; index: number }> = React.memo(({ property, index }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -130,11 +266,11 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     >
       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
         {/* Property Image */}
-        <div className="relative overflow-hidden">
+        <div className="relative h-48 sm:h-64 overflow-hidden">
           <img
             src={property.media.mainImage}
             alt={property.title}
-            className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           
           {/* Badges */}
@@ -150,7 +286,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 Verified
               </Badge>
             )}
-            {property.status === 'active' && (
+            {property.status === 'available' && (
               <Badge className="bg-emerald-500 text-white">
                 Available
               </Badge>
@@ -199,11 +335,11 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         </div>
 
         {/* Property Details */}
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-4">
             {/* Title and Location */}
             <div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-2 group-hover:text-red-600 transition-colors">
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-800 mb-1 group-hover:text-red-600 transition-colors">
                 {property.title}
               </h3>
               <div className="flex items-center text-slate-600">
@@ -242,18 +378,6 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               )}
             </div>
 
-            {/* Rent-to-Buy Info */}
-            {property.listingType === 'rent-to-buy' && property.financials.rentCreditPercentage && (
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="text-sm text-green-700 font-medium mb-1">
-                  Rent-to-Buy Available
-                </div>
-                <div className="text-xs text-green-600">
-                  {property.financials.rentCreditPercentage}% rent credit • 36 month option
-                </div>
-              </div>
-            )}
-
             {/* Owner Info */}
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center text-slate-600">
@@ -274,19 +398,29 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               </div>
             </div>
 
-            {/* Contact Seller Button */}
-            <div className="pt-2">
+            {/* Action Buttons */}
+            <div className="pt-2 space-y-2">
+              {/* View Details Button */}
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/property/${property.id}`);
+                }}
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white"
+                size="sm"
+              >
+                View Details
+              </Button>
+              
+              {/* Contact Seller Button */}
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!user) {
-                    // User not authenticated - show buyer signup modal
-                    alert('Please sign up to contact sellers. Feature coming soon!');
+                    onSignUpPrompt?.();
                   } else if (!user.is_phone_verified) {
-                    // User authenticated but needs phone verification
-                    alert('Please verify your phone number to contact sellers. Feature coming soon!');
+                    handlePhoneVerification(property);
                   } else {
-                    // User authenticated and phone verified - show contact info
                     alert(`Contact Seller for ${property.title}:\nPhone: +27 XX XXX XXXX\nEmail: seller@example.com\nFeature coming soon!`);
                   }
                 }}
@@ -300,9 +434,11 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             </div>
           </div>
         </CardContent>
-      </Card>
-    </motion.div>
-  );
+             </Card>
+     </motion.div>
+   ));
+   
+   PropertyCard.displayName = 'PropertyCard';
 
   const FilterPanel: React.FC = () => (
     <Card className="sticky top-4">
@@ -351,19 +487,13 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               placeholder="Min"
               type="number"
               value={filters.priceRange?.min || ''}
-              onChange={(e) => updateFilter('priceRange', {
-                ...filters.priceRange,
-                min: Number(e.target.value) || 0
-              })}
+              onChange={(e) => updatePriceFilter('min', Number(e.target.value) || 0)}
             />
             <Input
               placeholder="Max"
               type="number"
               value={filters.priceRange?.max || ''}
-              onChange={(e) => updateFilter('priceRange', {
-                ...filters.priceRange,
-                max: Number(e.target.value) || 999999999
-              })}
+              onChange={(e) => updatePriceFilter('max', Number(e.target.value) || 999999999)}
             />
           </div>
         </div>
@@ -415,119 +545,182 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">
-            {showFeatured && properties.length === 0 ? 'Featured Properties' : 'Property Listings'}
-          </h2>
-          <p className="text-slate-600">
-            {properties.length} properties found
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {/* Back to Home Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/')}
+                className="flex items-center gap-2 text-slate-600 hover:text-slate-800"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Back to Home</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
+              
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">
+                  {showFeatured && properties.length === 0 ? 'Featured Properties' : 'Property Listings'}
+                </h2>
+                <p className="text-slate-600">
+                  {properties.length} properties found
+                </p>
+              </div>
+            </div>
 
-        <div className="flex items-center space-x-2">
-          {/* View Mode Toggle */}
-          <div className="flex items-center border rounded-lg">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="rounded-r-none"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="rounded-l-none"
-            >
-              <List className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* View Mode Toggle */}
+              <div className="hidden sm:flex items-center border rounded-lg">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="rounded-r-none"
+                >
+                  <Grid className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="rounded-l-none"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Filter Toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+              </Button>
+            </div>
           </div>
 
-          {/* Mobile Filter Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="lg:hidden"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-4 gap-6">
-        {/* Filter Sidebar */}
-        <div className={`lg:col-span-1 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-          <FilterPanel />
-        </div>
-
-        {/* Properties Grid */}
-        <div className="lg:col-span-3">
-          <AnimatePresence>
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-slate-200 h-64 rounded-lg mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="bg-slate-200 h-4 rounded w-3/4"></div>
-                      <div className="bg-slate-200 h-4 rounded w-1/2"></div>
-                    </div>
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Filter Sidebar - Mobile Drawer */}
+            <div className="lg:hidden">
+              <div
+                className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity ${
+                  showFilters ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                onClick={() => setShowFilters(false)}
+              />
+              <div
+                className={`fixed inset-y-0 left-0 w-full max-w-xs bg-white z-50 transform transition-transform duration-300 ease-in-out ${
+                  showFilters ? 'translate-x-0' : '-translate-x-full'
+                }`}
+              >
+                <div className="h-full overflow-y-auto">
+                  <div className="flex items-center justify-between p-4 border-b">
+                    <h3 className="text-lg font-semibold">Filters</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowFilters(false)}
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
                   </div>
-                ))}
-              </div>
-            ) : properties.length > 0 ? (
-              <div className={`grid gap-6 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
-                  : 'grid-cols-1'
-              }`}>
-                {properties.map((property, index) => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    index={index}
-                  />
-                ))}
-              </div>
-            ) : showFeatured && featuredProperties.length > 0 ? (
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Featured Properties</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {featuredProperties.map((property, index) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      index={index}
-                    />
-                  ))}
+                  <div className="p-4">
+                    <FilterPanel />
+                  </div>
                 </div>
               </div>
-            ) : (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Home className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-slate-600 mb-2">
-                    No Properties Found
-                  </h3>
-                  <p className="text-slate-500 mb-4">
-                    Try adjusting your search filters to find more properties.
-                  </p>
-                  <Button onClick={clearFilters}>
-                    Clear Filters
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </AnimatePresence>
+            </div>
+
+            {/* Filter Sidebar - Desktop */}
+            <div className="hidden lg:block lg:col-span-1">
+              <div className="sticky top-8">
+                <FilterPanel />
+              </div>
+            </div>
+
+            {/* Properties Grid */}
+            <div className="lg:col-span-3">
+              <AnimatePresence>
+                {isLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="bg-slate-200 h-48 sm:h-64 rounded-lg mb-4"></div>
+                        <div className="space-y-2 px-1">
+                          <div className="bg-slate-200 h-4 rounded w-3/4"></div>
+                          <div className="bg-slate-200 h-4 rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : properties.length > 0 ? (
+                  <div className={`grid gap-4 sm:gap-6 ${
+                    viewMode === 'grid' 
+                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' 
+                      : 'grid-cols-1'
+                  }`}>
+                    {properties.map((property, index) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                ) : showFeatured && featuredProperties.length > 0 ? (
+                  <div>
+                    <h3 className="text-xl font-semibold mb-4">Featured Properties</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                      {featuredProperties.map((property, index) => (
+                        <PropertyCard
+                          key={property.id}
+                          property={property}
+                          index={index}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Home className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-slate-600 mb-2">
+                        No Properties Found
+                      </h3>
+                      <p className="text-slate-500 mb-4">
+                        Try adjusting your search filters to find more properties.
+                      </p>
+                      <Button onClick={clearFilters}>
+                        Clear Filters
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Phone Verification Modal */}
+      <BuyerPhoneVerificationModal
+        isOpen={showPhoneVerificationModal}
+        onClose={() => {
+          setShowPhoneVerificationModal(false);
+          setSelectedProperty(null);
+        }}
+        onVerificationComplete={handlePhoneVerificationComplete}
+        buyerType={user?.buyer_type}
+        userEmail={user?.email}
+      />
     </div>
   );
-}; 
+};

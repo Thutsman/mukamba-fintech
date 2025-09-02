@@ -81,7 +81,7 @@ import {
 import { useAuthStore } from '@/lib/store';
 
 // Verification Modals
-import { PhoneVerificationModal } from '@/components/forms/PhoneVerificationModal';
+import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { IdentityVerificationModal } from '@/components/forms/IdentityVerificationModal';
 import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
 import { PropertyDocumentationModal } from '@/components/forms/PropertyDocumentationModal';
@@ -224,14 +224,14 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
           whatYoullUnlock: 'Premium buyer status'
         });
       } else if (buyerType === 'installment') {
-        recommendations.push({
-          id: 'financial-assessment',
+      recommendations.push({
+        id: 'financial-assessment',
           type: 'primary',
-          title: 'Complete Financial Assessment',
+        title: 'Complete Financial Assessment',
           description: 'Get pre-approved for installment purchase options',
-          action: 'Start Assessment',
+        action: 'Start Assessment',
           priority: 1,
-          icon: <TrendingUp className="w-4 h-4" />,
+        icon: <TrendingUp className="w-4 h-4" />,
           benefit: 'Access to installment purchase financing',
           timeRequired: '5 minutes',
           difficulty: 'Comprehensive',
@@ -319,11 +319,11 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
     if (isSeller) {
       if (!user.isPropertyVerified) {
         recommendations.unshift({
-          id: 'property-documents',
+        id: 'property-documents',
           type: 'primary',
-          title: 'Upload Property Documents',
-          description: 'Verify your properties to attract serious buyers',
-          action: 'Upload Documents',
+        title: 'Upload Property Documents',
+        description: 'Verify your properties to attract serious buyers',
+        action: 'Upload Documents',
           priority: 1,
           icon: <FileText className="w-4 h-4" />,
           benefit: 'Increased visibility and buyer trust',
@@ -684,15 +684,15 @@ const SmartRecommendations: React.FC<{
             {/* Secondary Recommendations */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {secondaryRecommendations.slice(0, showAll ? undefined : 2).map((rec, index) => (
-                <motion.div
-                  key={rec.id}
+              <motion.div
+                key={rec.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + index * 0.1 }}
                   whileHover={{ scale: 1.02, y: -1 }}
                   className="p-4 rounded-lg border border-slate-200 bg-white hover:shadow-md cursor-pointer transition-all duration-200"
-                  onClick={() => onActionClick(rec.id)}
-                >
+                onClick={() => onActionClick(rec.id)}
+              >
                   <div className="flex items-start space-x-3">
                     <div className="p-2 bg-slate-100 rounded-lg">
                       {rec.icon}
@@ -722,7 +722,7 @@ const SmartRecommendations: React.FC<{
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-blue-600">{rec.whatYoullUnlock}</span>
                         <ChevronRight className="w-3 h-3 text-slate-400" />
-                      </div>
+                    </div>
                     </div>
                   </div>
                 </motion.div>
@@ -827,8 +827,8 @@ const RecentActivityFeed: React.FC<{
                 <div className="flex-1">
                   <h4 className="font-medium text-sm text-slate-800">{activity.title}</h4>
                   <p className="text-xs text-slate-600">{activity.description}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
               </motion.div>
             ))}
           </div>
@@ -1526,61 +1526,61 @@ const NavigationBar: React.FC<{
 
               {/* Desktop items - Hidden on mobile */}
               <div className="hidden sm:flex items-center space-x-4">
-                {/* Notification Bell */}
-                <Tooltip content="View your notifications and updates">
-                  <motion.div 
-                    whileHover={{ scale: 1.1 }} 
-                    whileTap={{ scale: 0.9 }}
-                    className="relative"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon"
+              {/* Notification Bell */}
+              <Tooltip content="View your notifications and updates">
+                <motion.div 
+                  whileHover={{ scale: 1.1 }} 
+                  whileTap={{ scale: 0.9 }}
+                  className="relative"
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
                       className="relative text-slate-600 hover:text-slate-900 transition-colors duration-200"
                       aria-label="View notifications"
+                  >
+                    <motion.div
+                      animate={{ rotate: notificationCount > 0 ? [0, -10, 10, 0] : 0 }}
+                      transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
                     >
-                      <motion.div
-                        animate={{ rotate: notificationCount > 0 ? [0, -10, 10, 0] : 0 }}
-                        transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
-                      >
-                        <Bell className="w-5 h-5" />
-                      </motion.div>
-                      {notificationCount > 0 && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                      <Bell className="w-5 h-5" />
+                    </motion.div>
+                    {notificationCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
                           aria-label={`${notificationCount} unread notifications`}
-                        >
-                          {notificationCount}
-                        </motion.span>
-                      )}
-                    </Button>
-                  </motion.div>
-                </Tooltip>
+                      >
+                        {notificationCount}
+                      </motion.span>
+                    )}
+                  </Button>
+                </motion.div>
+              </Tooltip>
 
-                {/* User Profile Avatar */}
-                <Tooltip content="View and manage your profile">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="ghost"
+              {/* User Profile Avatar */}
+              <Tooltip content="View and manage your profile">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    variant="ghost"
                       className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 p-2 transition-colors duration-200"
                       aria-label="User profile menu"
-                    >
-                      <Avatar className="w-8 h-8">
+                  >
+                    <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
-                          {user.firstName[0]}{user.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                        {user.firstName[0]}{user.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
                       <span className="hidden lg:block font-medium">
-                        {user.firstName}
-                      </span>
-                    </Button>
-                  </motion.div>
-                </Tooltip>
-              </div>
+                      {user.firstName}
+                    </span>
+                  </Button>
+                </motion.div>
+              </Tooltip>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Mobile Menu Overlay */}
@@ -2314,7 +2314,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     };
 
     return (
-      <motion.div
+    <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -2344,7 +2344,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 * index }}
-                    whileHover={{ 
+      whileHover={{ 
                       scale: state.unlocked || state.comingSoon ? 1.02 : 1.01, 
                       y: state.unlocked || state.comingSoon ? -2 : 0,
                       boxShadow: state.unlocked || state.comingSoon 
@@ -2361,7 +2361,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
-                        <motion.div
+        <motion.div
                           animate={{ 
                             rotate: state.unlocked ? [0, 5, -5, 0] : 0,
                             scale: state.unlocked ? 1.1 : 1
@@ -2372,7 +2372,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                           <div className={colors.icon}>
                             {feature.icon}
                           </div>
-                        </motion.div>
+        </motion.div>
                         <div>
                           <h4 className={`font-semibold text-sm ${colors.text}`}>
                             {feature.title}
@@ -2380,9 +2380,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                           {state.comingSoon && (
                             <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium mt-1">
                               Coming Soon
-                            </span>
-                          )}
-                        </div>
+        </span>
+        )}
+      </div>
                       </div>
                       <div className="flex items-center space-x-1">
                         {state.unlocked ? (
@@ -2425,8 +2425,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
                     {!state.unlocked && requirement && (
                       <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
                         className="mb-3"
                       >
                         <p className="text-xs text-red-600 font-medium">
@@ -2462,8 +2462,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                         </motion.div>
                       )}
                     </div>
-                  </motion.div>
-                );
+    </motion.div>
+  );
               })}
             </div>
           </CardContent>
@@ -3051,11 +3051,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       />
 
       {/* Verification Modals */}
-      <PhoneVerificationModal
+      <BuyerPhoneVerificationModal
         isOpen={activeModal === 'phone'}
         onClose={() => setActiveModal(null)}
-        onComplete={() => handleVerificationComplete('phone')}
-        initialPhone={user.phone}
+        onVerificationComplete={(phoneNumber: string) => handleVerificationComplete('phone')}
+        buyerType={user.buyer_type}
+        userEmail={user.email}
       />
 
       <IdentityVerificationModal

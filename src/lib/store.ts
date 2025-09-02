@@ -132,6 +132,9 @@ export const useAuthStore = create<AuthStore>()(
 
           console.log('Created new user:', newUser);
 
+          // Set timestamp for fresh signup to prevent unwanted redirects
+          localStorage.setItem('userSignupTime', Date.now().toString());
+          
           set({
             user: newUser,
             isAuthenticated: true,
@@ -323,6 +326,11 @@ export const useAuthStore = create<AuthStore>()(
             // Check if user just confirmed their email and needs to complete KYC
             const needsKYC = !profileData?.is_phone_verified && profileData?.kyc_level === 'none';
             const isNewlyConfirmed = Boolean(user.email_confirmed_at) && !profileData?.is_phone_verified;
+            
+            // Set timestamp for fresh email confirmation to prevent unwanted redirects
+            if (isNewlyConfirmed) {
+              localStorage.setItem('userEmailConfirmTime', Date.now().toString());
+            }
 
             set({
               user: userData,
@@ -409,6 +417,9 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       markUserAsReturning: () => {
+        // Clear timestamps when user is no longer considered new
+        localStorage.removeItem('userSignupTime');
+        localStorage.removeItem('userEmailConfirmTime');
         set({ isNewUser: false });
       }
     }),

@@ -49,6 +49,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 import { PropertyListings } from './PropertyListings';
+import { EnhancedPropertyCard } from './EnhancedPropertyCard';
+import { EnhancedPropertyCardSkeleton } from './EnhancedPropertyCardSkeleton';
 
 import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } from '@/types/property';
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
@@ -61,6 +63,7 @@ import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal'
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // Analytics tracking function
 const trackEvent = (eventName: string, parameters: Record<string, any>) => {
@@ -81,6 +84,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   user,
   onPropertySelect
 }) => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = React.useState('explore');
   const [quickSearchQuery, setQuickSearchQuery] = React.useState('');
   const [selectedProperty, setSelectedProperty] = React.useState<Property | null>(null);
@@ -144,6 +148,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const handlePropertySelect = (property: Property) => {
     setSelectedProperty(property);
     onPropertySelect?.(property);
+    
+    // Navigate to property details page
+    router.push(`/property/${property.id}`);
     
     // Analytics tracking
     trackEvent('property_view', {
@@ -445,7 +452,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                           <Badge className="bg-blue-500 text-white text-xs">
                             Featured
                           </Badge>
-              {property.listingType === 'rent-to-buy' && (
+              {property.listingType === 'installment' && (
                 <Badge className="bg-green-500 text-white text-xs">
                   Installments
                 </Badge>
@@ -583,190 +590,34 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
     }
   };
 
-  // Enhanced Property Card Skeleton
-  const EnhancedPropertyCardSkeleton: React.FC<{ index: number }> = ({ index }) => (
-          <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="group"
-    >
-      <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300">
-        {/* Image skeleton */}
-        <div className="relative h-48 overflow-hidden bg-gray-200 animate-pulse">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300"></div>
-        </div>
 
-        {/* Content skeleton */}
-        <div className="p-4">
-                    <div className="space-y-3">
-            {/* Title skeleton */}
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-            </div>
 
-            {/* Stats skeleton */}
-            <div className="flex items-center gap-4">
-              <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
-            </div>
-
-            {/* Price and button skeleton */}
-                      <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="h-5 bg-gray-200 rounded w-20 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-12 animate-pulse"></div>
-                      </div>
-              <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-
-  // Enhanced Property Card Component
-  const EnhancedPropertyCard: React.FC<{
+  // Enhanced Property Card Component - Now using the imported component
+  const EnhancedPropertyCardWrapper: React.FC<{
     property: Property;
     index: number;
     onPropertySelect: (property: Property) => void;
     user: any;
   }> = ({ property, index, onPropertySelect, user }) => {
-    const [isFavorite, setIsFavorite] = React.useState(false);
-    const [showQuickView, setShowQuickView] = React.useState(false);
-
     return (
-                            <motion.div
-        initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 + index * 0.1 }}
-        whileHover={{ scale: 1.02, y: -4 }}
-        whileTap={{ scale: 0.98 }}
-        className="group cursor-pointer"
-        onClick={() => onPropertySelect(property)}
-      >
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 relative">
-          {/* Property Image with Gradient Overlay */}
-          <div className="relative h-48 overflow-hidden">
-            {imageLoadErrors.has(property.media.mainImage) ? (
-              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                <Home className="w-12 h-12 text-slate-400" />
-                      </div>
-            ) : (
-              <Image
-                src={property.media.mainImage}
-                alt={property.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                onError={() => {
-                  setImageLoadErrors(prev => new Set(prev).add(property.media.mainImage));
-                }}
-              />
-            )}
-            
-            {/* Gradient Overlay for Better Text Readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-            
-            {/* Favorite Button */}
-                                <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsFavorite(!isFavorite);
-              }}
-              className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-200 shadow-lg"
-              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart 
-                className={`w-4 h-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-slate-600'}`} 
-              />
-                                </button>
-            
-            {/* Property Badges */}
-            <div className="absolute top-3 left-3 flex gap-2">
-              <Badge className="bg-blue-600 text-white text-xs font-medium px-2 py-1">
-                Featured
-              </Badge>
-              {property.listingType === 'rent-to-buy' && (
-                <Badge className="bg-green-600 text-white text-xs font-medium px-2 py-1">
-                  Installments
-                </Badge>
-              )}
-                    </div>
-                      
-            {/* Quick View Button (appears on hover) */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <Button
-                size="sm"
-                className="bg-white text-slate-800 hover:bg-slate-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowQuickView(true);
-                }}
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                Quick View
-              </Button>
-                    </div>
-          </div>
-          
-          {/* Property Details */}
-          <div className="p-4">
-            <h4 className="font-semibold text-slate-900 text-sm mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-              {property.title}
-            </h4>
-            
-            {/* Location with Pin */}
-            <p className="text-slate-600 text-xs mb-3 flex items-center">
-              <MapPin className="w-3 h-3 mr-1 text-blue-500" />
-              {property.location.city}, {property.location.country}
-            </p>
-            
-            {/* Property Features */}
-            <div className="flex items-center gap-4 mb-3 text-xs text-slate-600">
-              <span className="flex items-center">
-                <Bed className="w-3 h-3 mr-1" />
-                {property.details.bedrooms} bed
-              </span>
-              <span className="flex items-center">
-                <Bath className="w-3 h-3 mr-1" />
-                {property.details.bathrooms} bath
-              </span>
-              {property.details.size && (
-                <span className="flex items-center">
-                  <Square className="w-3 h-3 mr-1" />
-                  {property.details.size} m²
-                </span>
-              )}
-            </div>
-            
-            {/* Price and Action */}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-slate-900 font-bold text-lg">
-                  ${property.financials.monthlyRental?.toLocaleString()}/mo
-                </div>
-                <div className="text-slate-500 text-xs">
-                  {property.listingType === 'rent-to-buy' ? 'Rent-to-Buy' : 'Monthly Rent'}
-                </div>
-              </div>
-              
-              <Button
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPropertySelect(property);
-                }}
-              >
-                View Details
-              </Button>
-            </div>
-          </div>
-        </div>
-            </motion.div>
+      <EnhancedPropertyCard
+        property={property}
+        index={index}
+        user={user}
+        onPropertySelect={onPropertySelect}
+        onAddToComparison={(property) => {
+          // Handle comparison logic
+          console.log('Add to comparison:', property.title);
+        }}
+        onContactSeller={(property) => {
+          // Handle contact seller logic
+          console.log('Contact seller for:', property.title);
+        }}
+        onSignUpPrompt={() => {
+          setShowBuyerSignupModal(true);
+        }}
+        showComparisonButton={true}
+      />
     );
   };
 
@@ -1020,6 +871,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   <Button
                     size="lg"
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+                    onClick={() => {
+                      // Navigate to listings page
+                      router.push('/listings');
+                      // Track analytics
+                      trackEvent('view_all_properties_clicked', {
+                        source: 'featured_properties',
+                        event_category: 'navigation'
+                      });
+                    }}
                     suppressHydrationWarning
                   >
                     View All {featuredProperties.length} Properties
@@ -1514,7 +1374,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 ))
               ) : (
                 featuredProperties.slice(0, 6).map((property, index) => (
-                  <EnhancedPropertyCard
+                  <EnhancedPropertyCardWrapper
                     key={`property-${property.id}`}
                     property={property}
                     index={index}
@@ -1530,6 +1390,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => {
+                  // Navigate to listings page
+                  router.push('/listings');
+                  // Track analytics
+                  trackEvent('view_all_properties_clicked', {
+                    source: 'featured_properties_main',
+                    event_category: 'navigation'
+                  });
+                }}
                 suppressHydrationWarning
               >
                 View All {featuredProperties.length} Properties
@@ -1579,7 +1448,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     title="Zero-down properties"
                     value={stats.totalListings}
                     subtitle="Pre-Approved Listings"
-                    description="Properties ready for immediate rent-to-buy"
+                    description="Properties ready for immediate installment purchase"
                     trend="+12%"
                     icon={Home}
                     color="bg-blue-500"
@@ -2451,15 +2320,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         userEmail={user?.email}
       />
 
-      {/* Floating "Want to Sell?" Button - Show to all users with smart routing */}
+      {/* Floating "Want to Sell?" Button - Repositioned to avoid collisions */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 2, duration: 0.5 }}
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-6 left-6 z-50 lg:bottom-8 lg:left-8"
       >
         <Button
-          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"
+          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-4 sm:px-6 py-3 text-sm sm:text-base"
           size="lg"
           onClick={() => {
             trackEvent('floating_sell_button_clicked', {
@@ -2479,9 +2348,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             }
           }}
         >
-          <Home className="w-5 h-5 mr-2" />
-          Want to Sell?
-          <ArrowRight className="w-4 h-4 ml-2" />
+          <Home className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+          <span className="hidden sm:inline">Want to Sell?</span>
+          <span className="sm:hidden">Sell</span>
+          <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-2" />
         </Button>
       </motion.div>
 

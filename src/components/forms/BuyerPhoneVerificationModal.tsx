@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CountryCodeSelector } from '@/components/ui/country-code-selector';
+import { CountryCode, getDefaultCountry } from '@/data/country-codes';
+import { buyerServices } from '@/lib/buyer-services';
+import { useAuthStore } from '@/lib/store';
 
 interface BuyerPhoneVerificationModalProps {
   isOpen: boolean;
@@ -23,12 +27,19 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
   buyerType,
   userEmail
 }) => {
+  const { user } = useAuthStore();
   const [step, setStep] = useState<'phone' | 'verification'>('phone');
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>(getDefaultCountry());
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [errors, setErrors] = useState<{ phone?: string; otp?: string }>({});
+
+  // Get full phone number with country code
+  const getFullPhoneNumber = () => {
+    return selectedCountry.dialCode + phoneNumber.replace(/\D/g, '');
+  };
 
   // Countdown timer for resend OTP
   useEffect(() => {
@@ -39,8 +50,8 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
   }, [countdown]);
 
   const validatePhoneNumber = (phone: string) => {
-    // Basic phone validation - adjust regex based on your requirements
-    const phoneRegex = /^(\+?27|0)[6-8][0-9]{8}$/; // South African format
+    // International phone validation - more flexible for global users
+    const phoneRegex = /^\+?[1-9]\d{7,14}$/; // International format
     return phoneRegex.test(phone.replace(/\s/g, ''));
   };
 
@@ -53,7 +64,12 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
     }
     
     if (!validatePhoneNumber(phoneNumber)) {
-      setErrors({ phone: 'Please enter a valid phone number' });
+      setErrors({ phone: 'Please enter a valid international phone number' });
+      return;
+    }
+    
+    if (!user) {
+      setErrors({ phone: 'User not authenticated' });
       return;
     }
     
@@ -61,16 +77,25 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
     setErrors({});
     
     try {
-      // Simulate API call to send OTP
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Use the actual buyerServices to send OTP
+      const result = await buyerServices.sendPhoneOTP(
+        user.id,
+        getFullPhoneNumber(),
+        'property_details_page',
+        undefined // propertyId - could be passed as prop if needed
+      );
       
-      console.log('Sending OTP to:', phoneNumber);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send verification code');
+      }
+      
+      console.log('OTP sent successfully to:', getFullPhoneNumber());
       
       setStep('verification');
       setCountdown(60); // 60 seconds countdown
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending OTP:', error);
-      setErrors({ phone: 'Failed to send verification code. Please try again.' });
+      setErrors({ phone: error.message || 'Failed to send verification code. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -89,44 +114,67 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
       return;
     }
     
+    if (!user) {
+      setErrors({ otp: 'User not authenticated' });
+      return;
+    }
+    
     setIsLoading(true);
     setErrors({});
     
     try {
-      // Simulate API call to verify OTP
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Use the actual buyerServices to verify OTP
+      const result = await buyerServices.verifyPhoneOTP(
+        user.id,
+        getFullPhoneNumber(),
+        otp
+      );
       
-      console.log('Verifying OTP:', otp, 'for phone:', phoneNumber);
+      if (!result.success) {
+        throw new Error(result.error || 'Invalid verification code');
+      }
       
-      // Simulate successful verification
-      onVerificationComplete(phoneNumber);
+      console.log('Phone verification completed successfully');
+      
+      // Call the completion handler
+      onVerificationComplete(getFullPhoneNumber());
       
       // Reset form
       setStep('phone');
       setPhoneNumber('');
       setOtp('');
       setCountdown(0);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error verifying OTP:', error);
-      setErrors({ otp: 'Invalid verification code. Please try again.' });
+      setErrors({ otp: error.message || 'Invalid verification code. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendOTP = async () => {
-    if (countdown > 0) return;
+    if (countdown > 0 || !user) return;
     
     setIsLoading(true);
     
     try {
-      // Simulate API call to resend OTP
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use the actual buyerServices to resend OTP
+      const result = await buyerServices.sendPhoneOTP(
+        user.id,
+        getFullPhoneNumber(),
+        'property_details_page_resend',
+        undefined
+      );
       
-      console.log('Resending OTP to:', phoneNumber);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to resend verification code');
+      }
+      
+      console.log('OTP resent successfully to:', getFullPhoneNumber());
       setCountdown(60);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resending OTP:', error);
+      setErrors({ otp: error.message || 'Failed to resend verification code' });
     } finally {
       setIsLoading(false);
     }
@@ -173,12 +221,12 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
               <h2 className="text-2xl font-bold mb-2">
                 {step === 'phone' ? 'Verify Your Phone' : 'Enter Verification Code'}
               </h2>
-              <p className="text-green-100 text-sm">
-                {step === 'phone' 
-                  ? 'Required to contact sellers and receive property updates'
-                  : `We sent a 6-digit code to ${phoneNumber}`
-                }
-              </p>
+                              <p className="text-green-100 text-sm">
+                  {step === 'phone' 
+                    ? 'Required to contact sellers and receive property updates'
+                    : `We sent a 6-digit code to ${getFullPhoneNumber()}`
+                  }
+                </p>
             </div>
           </div>
 
@@ -217,16 +265,26 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Phone Number
                   </label>
-                  <Input
-                    type="tel"
-                    placeholder="+27 XX XXX XXXX or 0XX XXX XXXX"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className={`w-full ${errors.phone ? 'border-red-500' : ''}`}
-                  />
+                  <div className="flex space-x-2">
+                    <CountryCodeSelector
+                      value={selectedCountry}
+                      onChange={setSelectedCountry}
+                      className="w-32"
+                    />
+                    <Input
+                      type="tel"
+                      placeholder="123 456 7890"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className={`flex-1 ${errors.phone ? 'border-red-500' : ''} rounded-l-none`}
+                    />
+                  </div>
                   {errors.phone && (
                     <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
                   )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Full number: {getFullPhoneNumber()}
+                  </p>
                 </div>
 
                 {/* Benefits */}

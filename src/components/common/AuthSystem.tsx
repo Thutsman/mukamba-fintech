@@ -21,6 +21,7 @@ export const AuthSystem: React.FC = () => {
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile'>('properties');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
   const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
+  const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
   
   const router = useRouter();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth } = useAuthStore();
@@ -44,21 +45,52 @@ export const AuthSystem: React.FC = () => {
     localStorage.setItem('signupWidgetClosed', 'true');
   };
 
-  // Automatically redirect new users to profile view
+  // Only redirect new users to profile view if they just signed up (not on every load)
   React.useEffect(() => {
-    if (isAuthenticated && isNewUser) {
-      console.log('New user detected, redirecting to profile');
-      setCurrentView('profile');
+    // Only redirect if user is new, on properties view, hasn't been redirected yet, and JUST signed up
+    if (isAuthenticated && isNewUser && currentView === 'properties' && !hasRedirectedToProfile) {
+      // Check if this is a fresh signup (within last 5 minutes) to prevent unwanted redirects
+      const signupTime = localStorage.getItem('userSignupTime');
+      const now = Date.now();
+      const fiveMinutesAgo = now - (5 * 60 * 1000);
+      
+      if (signupTime && parseInt(signupTime) > fiveMinutesAgo) {
+        // Add a small delay to prevent immediate redirects
+        const timer = setTimeout(() => {
+          console.log('Fresh signup detected, redirecting to profile for onboarding');
+          setCurrentView('profile');
+          setHasRedirectedToProfile(true);
+        }, 2000); // 2 second delay to allow user to see the dashboard first
+        
+        return () => clearTimeout(timer);
+      } else {
+        // User is not a fresh signup, mark them as returning
+        markUserAsReturning();
+      }
     }
-  }, [isAuthenticated, isNewUser]);
+  }, [isAuthenticated, isNewUser, currentView, hasRedirectedToProfile, markUserAsReturning]);
 
-  // Check if user just confirmed their email and redirect to profile
+  // Only redirect users who just confirmed email and need immediate KYC (not on every load)
   React.useEffect(() => {
-    if (isAuthenticated && user && !user.is_phone_verified && user.kyc_level === 'none') {
-      console.log('User just confirmed email, redirecting to profile for KYC');
-      setCurrentView('profile');
+    // Only redirect if user needs KYC, is on properties view, hasn't been redirected yet, and JUST confirmed email
+    if (isAuthenticated && user && !user.is_phone_verified && user.kyc_level === 'none' && currentView === 'properties' && !hasRedirectedToProfile) {
+      // Check if this is a fresh email confirmation (within last 2 minutes) to prevent unwanted redirects
+      const emailConfirmTime = localStorage.getItem('userEmailConfirmTime');
+      const now = Date.now();
+      const twoMinutesAgo = now - (2 * 60 * 1000);
+      
+      if (emailConfirmTime && parseInt(emailConfirmTime) > twoMinutesAgo) {
+        // Add a small delay to prevent immediate redirects
+        const timer = setTimeout(() => {
+          console.log('Fresh email confirmation detected, redirecting to profile for KYC');
+          setCurrentView('profile');
+          setHasRedirectedToProfile(true);
+        }, 2000); // 2 second delay to allow user to see the dashboard first
+        
+        return () => clearTimeout(timer);
+      }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, currentView, hasRedirectedToProfile]);
 
   // Debug authentication state changes
   React.useEffect(() => {
@@ -68,6 +100,15 @@ export const AuthSystem: React.FC = () => {
       user: user ? { id: user.id, email: user.email } : null 
     });
   }, [isAuthenticated, user, isNewUser]);
+
+  // Cleanup timestamps when component unmounts or user changes
+  React.useEffect(() => {
+    return () => {
+      // Clear timestamps on cleanup to prevent stale redirects
+      localStorage.removeItem('userSignupTime');
+      localStorage.removeItem('userEmailConfirmTime');
+    };
+  }, [user?.id]); // Re-run when user ID changes
 
   // Close modals when authentication state changes (but not on initial load)
   const [isInitialLoad, setIsInitialLoad] = React.useState(true);
@@ -117,6 +158,10 @@ export const AuthSystem: React.FC = () => {
     // Close any open modals first
     setShowRegister(false);
     setShowSigninModal(false);
+    // Clear timestamps and redirect flags
+    localStorage.removeItem('userSignupTime');
+    localStorage.removeItem('userEmailConfirmTime');
+    setHasRedirectedToProfile(false);
     // Then logout
     logout();
   };
@@ -126,6 +171,14 @@ export const AuthSystem: React.FC = () => {
     console.log(`Starting ${type} verification for step: ${step}`);
     // For now, just simulate the verification
     startVerification(type, step);
+  };
+
+  const handleManualProfileNavigation = () => {
+    // Clear redirect flag and timestamps when user manually navigates to profile
+    setHasRedirectedToProfile(false);
+    localStorage.removeItem('userSignupTime');
+    localStorage.removeItem('userEmailConfirmTime');
+    setCurrentView('profile');
   };
 
   // Render logic - all conditional returns moved to the end
@@ -154,6 +207,7 @@ export const AuthSystem: React.FC = () => {
           onLogout={handleLogout}
           onBackToHome={() => {
             setCurrentView('properties');
+            setHasRedirectedToProfile(false); // Reset redirect flag when user manually navigates
             if (isNewUser) {
               markUserAsReturning(); // Mark user as no longer new when they navigate away from profile
             }
@@ -236,7 +290,7 @@ export const AuthSystem: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <Button size="sm" variant="outline" onClick={() => setCurrentView('profile')} className="flex-1 border-slate-300">Profile</Button>
+                          <Button size="sm" variant="outline" onClick={handleManualProfileNavigation} className="flex-1 border-slate-300">Profile</Button>
                           <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800" onClick={handleLogout}>Sign Out</Button>
                         </>
                       )}
@@ -287,7 +341,7 @@ export const AuthSystem: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setCurrentView('profile')}
+                      onClick={handleManualProfileNavigation}
                       className="border-slate-300 text-slate-700 hover:bg-slate-50"
                       suppressHydrationWarning
                     >
@@ -359,7 +413,7 @@ export const AuthSystem: React.FC = () => {
             {/* Profile Button with Tooltip */}
             <div className="group relative">
               <Button
-                onClick={() => setCurrentView('profile')}
+                onClick={handleManualProfileNavigation}
                 className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 shadow-2xl hover:shadow-red-500/30 transition-all duration-300 border-4 border-white"
                 size="icon"
                 suppressHydrationWarning

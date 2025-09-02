@@ -2,7 +2,7 @@ export type PropertyCountry = 'ZW' | 'SA';
 
 export type PropertyType = 'house' | 'apartment' | 'townhouse' | 'land' | 'commercial';
 
-export type ListingType = 'rent-to-buy' | 'sale';
+export type ListingType = 'rent-to-buy' | 'sale' | 'installment';
 
 export interface PropertyLocation {
   country: PropertyCountry;
@@ -17,6 +17,7 @@ export interface PropertyLocation {
 
 export interface PropertyDetails {
   size: number; // in square meters
+  type: PropertyType; // property type (villa, apartment, etc.)
   bedrooms?: number;
   bathrooms?: number;
   parking?: number;
@@ -58,7 +59,7 @@ export interface PropertyListing {
       email: string;
     };
   };
-  status: 'draft' | 'pending' | 'active' | 'sold' | 'rented';
+  status: 'available' | 'pending' | 'sold' | 'new';
   createdAt: Date;
   updatedAt: Date;
   views: number;
