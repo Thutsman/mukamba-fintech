@@ -1,11 +1,5 @@
 import React from 'react';
-
-interface PropertyListing {
-  id: string;
-  title: string;
-  // Add other property fields as needed
-  [key: string]: any;
-}
+import { PropertyListing } from '@/types/property';
 
 interface PropertyDocumentsProps {
   property: PropertyListing;

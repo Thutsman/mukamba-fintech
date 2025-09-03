@@ -1,32 +1,19 @@
 import React from 'react';
-
-interface PropertyListing {
-  id: string;
-  title: string;
-  address: string;
-  latitude?: number;
-  longitude?: number;
-  // Add other property fields as needed
-  [key: string]: any;
-}
+import { PropertyListing } from '@/types/property';
 
 interface LocationMapProps {
   property: PropertyListing;
-  address?: string;
-  latitude?: number;
-  longitude?: number;
 }
 
-const LocationMap: React.FC<LocationMapProps> = ({ 
-  property, 
-  address, 
-  latitude, 
-  longitude 
-}) => {
-  // Use property data if available, otherwise fall back to individual props
-  const displayAddress = property?.address || address || 'Location not specified';
-  const lat = property?.latitude || latitude;
-  const lng = property?.longitude || longitude;
+const LocationMap: React.FC<LocationMapProps> = ({ property }) => {
+  // Extract address from the property's location structure
+  const displayAddress = property?.location?.streetAddress 
+    ? `${property.location.streetAddress}, ${property.location.suburb}, ${property.location.city}`
+    : 'Location not specified';
+  
+  const coordinates = property?.location?.coordinates;
+  const lat = coordinates?.latitude;
+  const lng = coordinates?.longitude;
 
   return (
     <div className="space-y-4">
@@ -46,11 +33,11 @@ const LocationMap: React.FC<LocationMapProps> = ({
       <div className="bg-gray-50 p-4 rounded-lg">
         <h4 className="font-semibold text-gray-900 mb-2">Location Details</h4>
         <p className="text-gray-700">{displayAddress}</p>
-        {property?.neighborhood && (
-          <p className="text-sm text-gray-600 mt-1">
-            Neighborhood: {property.neighborhood}
-          </p>
-        )}
+        <div className="mt-2 space-y-1 text-sm text-gray-600">
+          <p>City: {property.location.city}</p>
+          <p>Suburb: {property.location.suburb}</p>
+          <p>Country: {property.location.country}</p>
+        </div>
       </div>
     </div>
   );
