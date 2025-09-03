@@ -56,7 +56,6 @@ const adminListingSchema = z.object({
   currency: z.enum(['USD', 'ZAR', 'GBP']),
   rentToBuyDeposit: z.string().optional(),
   monthlyRental: z.string().optional(),
-  rentCreditPercentage: z.string().optional(),
   sellerName: z.string().min(2, "Seller name is required"),
   sellerEmail: z.string().email("Valid email is required"),
   sellerPhone: z.string().optional(),
@@ -105,7 +104,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
       sellerEmail: '',
       sellerPhone: '',
       rentToBuyDeposit: '',
-      rentCreditPercentage: '',
     }
   });
 
@@ -169,7 +167,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
         },
         details: {
           size: parseInt(formData.size),
-          type: formData.propertyType,
+          type: formData.propertyType as any,
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
           bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
           parking: formData.parking ? parseInt(formData.parking) : undefined,
@@ -181,7 +179,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
           currency: formData.currency,
           rentToBuyDeposit: formData.rentToBuyDeposit ? parseInt(formData.rentToBuyDeposit) : undefined,
           monthlyRental: formData.monthlyRental ? parseInt(formData.monthlyRental) : undefined,
-          rentCreditPercentage: formData.rentCreditPercentage ? parseInt(formData.rentCreditPercentage) : undefined,
         },
         media: {
           mainImage: imageUrls[0] || '/placeholder-property.jpg',
@@ -568,7 +565,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                         </div>
 
                         {watchListingType === 'rent-to-buy' && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                               <Label htmlFor="rentToBuyDeposit" className="text-base font-medium text-slate-700 mb-2 block">
                                 Required Deposit
@@ -591,23 +588,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                                 className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 {...form.register('monthlyRental')}
                               />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="rentCreditPercentage" className="text-base font-medium text-slate-700 mb-2 block">
-                                Rent Credit Percentage
-                              </Label>
-                              <select
-                                id="rentCreditPercentage"
-                                {...form.register('rentCreditPercentage')}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                              >
-                                <option value="">Select percentage</option>
-                                <option value="20">20% of monthly rental</option>
-                                <option value="25">25% of monthly rental</option>
-                                <option value="30">30% of monthly rental</option>
-                                <option value="35">35% of monthly rental</option>
-                              </select>
                             </div>
                           </div>
                         )}
