@@ -539,7 +539,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 
                 <Button
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
+                  className="bg-slate-800 hover:bg-slate-900 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (user) {
@@ -1396,9 +1396,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   // Track analytics
                   trackEvent('view_all_properties_clicked', {
                     source: 'featured_properties_main',
-              event_category: 'navigation'
-            });
-          }} 
+                    event_category: 'navigation'
+                  });
+                }}
                 suppressHydrationWarning
               >
                 View All {featuredProperties.length} Properties
@@ -2320,15 +2320,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         userEmail={user?.email}
       />
 
-      {/* Floating "Want to Sell?" Button - Repositioned to avoid collisions */}
+      {/* Floating "Want to Sell?" Button - Show to all users with smart routing */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 2, duration: 0.5 }}
-        className="fixed bottom-6 left-6 z-50 lg:bottom-8 lg:left-8"
+        className="fixed bottom-6 right-6 z-50"
       >
         <Button
-          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-4 sm:px-6 py-3 text-sm sm:text-base"
+          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"
           size="lg"
           onClick={() => {
             trackEvent('floating_sell_button_clicked', {
@@ -2348,10 +2348,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             }
           }}
         >
-          <Home className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-          <span className="hidden sm:inline">Want to Sell?</span>
-          <span className="sm:hidden">Sell</span>
-          <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-2" />
+          <Home className="w-5 h-5 mr-2" />
+          Want to Sell?
+          <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </motion.div>
 

@@ -1,25 +1,41 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
+  Heart, 
+  Share2, 
+  GitCompare, 
+  Eye, 
+  Star, 
   MapPin, 
   Bed, 
   Bath, 
   Square, 
-  Heart,
-  Share2,
-  Eye,
-  Star,
-  Calendar,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Home,
+  Building,
+  TreePine,
+  Car,
+  Wifi,
+  Snowflake,
+  Dumbbell,
+  TrendingUp,
   Phone,
-  MessageCircle,
-  GitCompare
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Shield
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+
 import { PropertyListing } from '@/types/property';
 import { User } from '@/types/auth';
 
@@ -31,8 +47,61 @@ interface EnhancedPropertyCardProps {
   onAddToComparison?: (property: PropertyListing) => void;
   onContactSeller?: (property: PropertyListing) => void;
   onSignUpPrompt?: () => void;
+  isInComparison?: boolean;
   showComparisonButton?: boolean;
 }
+
+// Property status configuration
+const PROPERTY_STATUS_CONFIG = {
+  available: {
+    label: 'Available',
+    color: 'bg-green-500',
+    textColor: 'text-green-700',
+    bgColor: 'bg-green-50',
+    icon: CheckCircle
+  },
+  pending: {
+    label: 'Pending',
+    color: 'bg-orange-500',
+    textColor: 'text-orange-700',
+    bgColor: 'bg-orange-50',
+    icon: Clock
+  },
+  sold: {
+    label: 'Sold',
+    color: 'bg-red-500',
+    textColor: 'text-red-700',
+    bgColor: 'bg-red-50',
+    icon: CheckCircle
+  },
+  new: {
+    label: 'New Listing',
+    color: 'bg-blue-500',
+    textColor: 'text-blue-700',
+    bgColor: 'bg-blue-50',
+    icon: TrendingUp
+  }
+};
+
+// Property type icons
+const PROPERTY_TYPE_ICONS = {
+  villa: Home,
+  apartment: Building,
+  townhouse: Building,
+  house: Home,
+  land: TreePine,
+  commercial: Building
+};
+
+// Amenity icons
+const AMENITY_ICONS = {
+  parking: Car,
+  wifi: Wifi,
+  ac: Snowflake,
+  gym: Dumbbell,
+  pool: TreePine,
+  garden: TreePine
+};
 
 export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
   property,
@@ -42,14 +111,112 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
   onAddToComparison,
   onContactSeller,
   onSignUpPrompt,
-  showComparisonButton = false
+  isInComparison = false,
+  showComparisonButton = true
 }) => {
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const [isFavorite, setIsFavorite] = React.useState(false);
+  const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
+  const [isImageLoading, setIsImageLoading] = React.useState(true);
+  const [showQuickContact, setShowQuickContact] = React.useState(false);
+
+  // Get all images for carousel
+  const images = React.useMemo(() => {
+    const allImages = [property.media.mainImage, ...(property.media.images || [])];
+    return allImages.filter((img, index, arr) => arr.indexOf(img) === index); // Remove duplicates
+  }, [property.media]);
+
+  // Property status
+  const statusConfig = PROPERTY_STATUS_CONFIG[property.status as keyof typeof PROPERTY_STATUS_CONFIG] || PROPERTY_STATUS_CONFIG.available;
+  const StatusIcon = statusConfig.icon;
+
+  // Property type icon
+  const PropertyTypeIcon = PROPERTY_TYPE_ICONS[property.details.type as keyof typeof PROPERTY_TYPE_ICONS] || Home;
+
+  // Calculate property stats
+  const pricePerSqm = property.details.size ? Math.round(property.financials.price / property.details.size) : 0;
+  const yieldPercentage = property.financials.monthlyRental ? Math.round((property.financials.monthlyRental * 12 / property.financials.price) * 100) : 0;
+
+  // Financing options
+  const financingOptions = React.useMemo(() => {
+    const options = [];
+    if (property.financials.price <= 500000) options.push('Cash');
+    if (property.listingType === 'installment') options.push('Installment');
+    if (options.length === 2) options.push('Both');
+    return options;
+  }, [property.financials.price, property.listingType]);
+
+  // Property age calculation (mock data - replace with actual data)
+  const propertyAge = React.useMemo(() => {
+    const years = Math.floor(Math.random() * 20) + 1;
+    return years === 1 ? '1 year' : `${years} years`;
+  }, []);
+
+  // Property condition (mock data - replace with actual data)
+  const propertyCondition = React.useMemo(() => {
+    const conditions = ['Excellent', 'Good', 'Fair', 'New'];
+    return conditions[Math.floor(Math.random() * conditions.length)];
+  }, []);
+
+  // Image carousel navigation
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  // Handle image load errors
+  const handleImageError = (imageUrl: string) => {
+    setImageLoadErrors(prev => new Set(prev).add(imageUrl));
+  };
+
+  // Handle image load success
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
+
+  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: property.financials.currency,
+      currency: 'USD',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Handle property selection
+  const handlePropertyClick = () => {
+    if (user) {
+      onPropertySelect(property);
+    } else {
+      onSignUpPrompt?.();
+    }
+  };
+
+  // Handle comparison toggle
+  const handleComparisonToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      onSignUpPrompt?.();
+      return;
+    }
+    onAddToComparison?.(property);
+  };
+
+  // Handle contact seller
+  const handleContactSeller = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      onSignUpPrompt?.();
+      return;
+    }
+    if (!user.is_phone_verified) {
+      alert('Please verify your phone number to contact sellers.');
+      return;
+    }
+    onContactSeller?.(property);
   };
 
   return (
@@ -58,113 +225,192 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       className="group cursor-pointer"
-      onClick={() => onPropertySelect(property)}
+      onClick={handlePropertyClick}
     >
-      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
-        {/* Property Image */}
-        <div className="relative h-48 sm:h-64 overflow-hidden">
-          <img
-            src={property.media.mainImage}
-            alt={property.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          
-          {/* Badges */}
-          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white">
+        {/* Image Carousel Section */}
+        <div className="relative h-64 overflow-hidden">
+          {/* Loading Skeleton */}
+          {isImageLoading && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+            </div>
+          )}
+
+          {/* Property Image */}
+          {!imageLoadErrors.has(images[currentImageIndex]) ? (
+            <Image
+              src={images[currentImageIndex]}
+              alt={property.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              onError={() => handleImageError(images[currentImageIndex])}
+              onLoad={handleImageLoad}
+              priority={index < 3}
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <Home className="w-12 h-12 mx-auto mb-2" />
+                <p className="text-sm">Image unavailable</p>
+              </div>
+            </div>
+          )}
+
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+          {/* Top Badges */}
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+            {/* Status Badge */}
+            <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor} border-0`}>
+              <StatusIcon className="w-3 h-3 mr-1" />
+              {statusConfig.label}
+            </Badge>
+
+            {/* Property Type Badge */}
+            <Badge className="bg-blue-100 text-blue-700 border-0">
+              <PropertyTypeIcon className="w-3 h-3 mr-1" />
+              {property.details.type}
+            </Badge>
+
+            {/* Installment Badge */}
             {property.listingType === 'installment' && (
-              <Badge className="bg-green-500 text-white text-xs">
+              <Badge className="bg-green-100 text-green-700 border-0">
                 Installments
               </Badge>
             )}
-            {property.seller.isVerified && (
-              <Badge className="bg-blue-500 text-white text-xs">
-                <Star className="w-3 h-3 mr-1" />
-                Verified
-              </Badge>
-            )}
-            {property.status === 'available' && (
-              <Badge className="bg-emerald-500 text-white text-xs">
-                Available
-              </Badge>
-            )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {/* Top Action Buttons */}
+          <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {/* Comparison Button */}
+            {showComparisonButton && (
+              <Button
+                size="icon"
+                variant="secondary"
+                className="w-8 h-8 bg-white/90 hover:bg-white"
+                onClick={handleComparisonToggle}
+              >
+                <Heart className={`w-4 h-4 ${isInComparison ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+              </Button>
+            )}
+
+            {/* Share Button */}
             <Button
               size="icon"
               variant="secondary"
               className="w-8 h-8 bg-white/90 hover:bg-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Save functionality
-              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Heart className="w-4 h-4 text-slate-600" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              className="w-8 h-8 bg-white/90 hover:bg-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Share functionality
-              }}
-            >
-              <Share2 className="w-4 h-4 text-slate-600" />
+              <Share2 className="w-4 h-4 text-gray-600" />
             </Button>
           </div>
+
+          {/* Image Navigation */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Image Indicators */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(idx);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      idx === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Price Badge */}
-          <div className="absolute bottom-4 left-4">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2">
-              <div className="text-lg font-bold text-slate-800">
+          <div className="absolute bottom-3 left-3">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
+              <div className="text-lg font-bold text-gray-900">
                 {formatCurrency(property.financials.price)}
               </div>
               {property.financials.monthlyRental && (
-                <div className="text-sm text-slate-600">
-                  {formatCurrency(property.financials.monthlyRental)}/month
+                <div className="text-sm text-gray-600">
+                  {formatCurrency(property.financials.monthlyRental)}/mo
                 </div>
               )}
             </div>
           </div>
+
+          {/* Seller Verification Badge */}
+          {property.seller.isVerified && (
+            <div className="absolute bottom-3 right-3">
+              <Badge className="bg-blue-500 text-white border-0">
+                <Shield className="w-3 h-3 mr-1" />
+                Verified Seller
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Property Details */}
-        <CardContent className="p-4 sm:p-6">
-          <div className="space-y-4">
+        <CardContent className="p-4">
+          <div className="space-y-3">
             {/* Title and Location */}
             <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-800 mb-1 group-hover:text-red-600 transition-colors">
+              <h3 className="font-semibold text-gray-900 text-lg mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
                 {property.title}
               </h3>
-              <div className="flex items-center text-slate-600">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span className="text-sm">{property.location.streetAddress}, {property.location.city}</span>
+              <div className="flex items-center text-gray-600 text-sm">
+                <MapPin className="w-4 h-4 mr-1 text-blue-500" />
+                <span className="line-clamp-1">{property.location.streetAddress}, {property.location.city}</span>
               </div>
             </div>
 
             {/* Property Stats */}
-            <div className="flex items-center space-x-4 text-sm text-slate-600">
-              <div className="flex items-center">
-                <Bed className="w-4 h-4 mr-1" />
-                {property.details.bedrooms || 0} bed{(property.details.bedrooms || 0) !== 1 ? 's' : ''}
-              </div>
-              <div className="flex items-center">
-                <Bath className="w-4 h-4 mr-1" />
-                {property.details.bathrooms || 0} bath{(property.details.bathrooms || 0) !== 1 ? 's' : ''}
-              </div>
-              <div className="flex items-center">
-                <Square className="w-4 h-4 mr-1" />
-                {property.details.size.toLocaleString()} m²
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center">
+                  <Bed className="w-4 h-4 mr-1" />
+                  {property.details.bedrooms} bed
+                </div>
+                <div className="flex items-center">
+                  <Bath className="w-4 h-4 mr-1" />
+                  {property.details.bathrooms} bath
+                </div>
+                <div className="flex items-center">
+                  <Square className="w-4 h-4 mr-1" />
+                  {property.details.size?.toLocaleString()} m²
+                </div>
               </div>
             </div>
 
-            {/* Features */}
-            <div className="flex flex-wrap gap-2">
-              {property.details.features?.slice(0, 3).map((feature: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs">
+            {/* Property Highlights */}
+            <div className="flex flex-wrap gap-1">
+              {property.details.features?.slice(0, 3).map((feature, idx) => (
+                <Badge key={idx} variant="outline" className="text-xs">
                   {feature}
                 </Badge>
               ))}
@@ -175,9 +421,84 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
               )}
             </div>
 
-            {/* Owner Info */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center text-slate-600">
+            {/* Property Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-gray-50 rounded-lg p-2">
+                <div className="text-gray-500">Price/m²</div>
+                <div className="font-semibold text-gray-900">{formatCurrency(pricePerSqm)}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2">
+                <div className="text-gray-500">Yield</div>
+                <div className="font-semibold text-green-600">{yieldPercentage}%</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2">
+                <div className="text-gray-500">Age</div>
+                <div className="font-semibold text-gray-900">{propertyAge}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2">
+                <div className="text-gray-500">Condition</div>
+                <div className="font-semibold text-gray-900">{propertyCondition}</div>
+              </div>
+            </div>
+
+            {/* Financing Options */}
+            <div className="flex flex-wrap gap-1">
+              {financingOptions.map((option, idx) => (
+                <Badge key={idx} variant="outline" className="text-xs">
+                  {option}
+                </Badge>
+              ))}
+            </div>
+
+            {/* Installment Preview */}
+            {property.listingType === 'installment' && property.financials.monthlyRental && (
+              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-sm font-medium text-green-800">Installment Preview</div>
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                </div>
+                <div className="text-lg font-bold text-green-900">
+                  {formatCurrency(property.financials.monthlyRental)}/month
+                </div>
+                <div className="text-xs text-green-600">
+                  Flexible payment plan • Contact seller for terms
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                size="sm"
+                className="flex-1 bg-slate-800 hover:bg-slate-900 text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (user) {
+                    onPropertySelect(property);
+                  } else {
+                    onSignUpPrompt?.();
+                  }
+                }}
+              >
+                {user ? 'View Details' : 'Sign Up to View Details'}
+              </Button>
+
+              {/* Quick Contact Button */}
+              {user && user.is_phone_verified && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="px-3"
+                  onClick={handleContactSeller}
+                >
+                  <Phone className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
+            {/* Seller Info */}
+            <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+              <div className="flex items-center">
                 <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
                   <span className="text-xs font-medium text-red-600">
                     {property.seller.name[0]}
@@ -189,46 +510,10 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
                 )}
               </div>
               
-              <div className="flex items-center text-slate-500">
+              <div className="flex items-center">
                 <Eye className="w-3 h-3 mr-1" />
-                <span className="text-xs">{property.views}</span>
+                <span>{property.views || 0}</span>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-2 space-y-2">
-              {/* View Details Button */}
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPropertySelect(property);
-                }}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white"
-                size="sm"
-              >
-                View Details
-              </Button>
-              
-              {/* Contact Seller Button */}
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!user) {
-                    onSignUpPrompt?.();
-                  } else if (!user.is_phone_verified) {
-                    // Show phone verification prompt
-                    alert('Please verify your phone number to contact sellers.');
-                  } else {
-                    onContactSeller?.(property);
-                  }
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                {!user ? 'Sign Up to Contact' : 
-                 !user.is_phone_verified ? 'Verify Phone to Contact' : 
-                 'Contact Seller'}
-              </Button>
             </div>
           </div>
         </CardContent>
@@ -236,3 +521,4 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
     </motion.div>
   );
 };
+

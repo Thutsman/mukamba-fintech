@@ -49,6 +49,7 @@ import {
 
 import { useRouter } from 'next/navigation';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
+import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { useAuthStore } from '@/lib/store';
 
 import { Button } from '@/components/ui/button';
@@ -97,6 +98,11 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   // Phone verification modal state
   const [showPhoneVerificationModal, setShowPhoneVerificationModal] = React.useState(false);
   const [selectedProperty, setSelectedProperty] = React.useState<PropertyListing | null>(null);
+  
+  // Buyer signup modal state
+  const [showBuyerSignupModal, setShowBuyerSignupModal] = React.useState(false);
+  const [selectedPropertyForSignup, setSelectedPropertyForSignup] = React.useState<PropertyListing | null>(null);
+  const [userBuyerType, setUserBuyerType] = React.useState<'cash' | 'installment' | undefined>(undefined);
   
   // Get updateUser function from auth store
   const { updateUser } = useAuthStore();
@@ -210,6 +216,12 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     });
   };
 
+  // Buyer signup handlers
+  const handleBuyerSignup = (property: PropertyListing) => {
+    setSelectedPropertyForSignup(property);
+    setShowBuyerSignupModal(true);
+  };
+
   // Phone verification handlers
   const handlePhoneVerification = (property: PropertyListing) => {
     if (!user) {
@@ -262,7 +274,15 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
       className="group cursor-pointer"
-      onClick={() => onPropertySelect?.(property)}
+      onClick={() => {
+        if (user) {
+          // User is authenticated - allow property selection
+          onPropertySelect?.(property);
+        } else {
+          // User not authenticated - show signup prompt
+          onSignUpPrompt?.();
+        }
+      }}
     >
       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
         {/* Property Image */}
@@ -399,37 +419,23 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-2 space-y-2">
+            <div className="pt-2">
               {/* View Details Button */}
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/property/${property.id}`);
+                  if (user) {
+                    // User is authenticated - navigate to property details
+                    router.push(`/property/${property.id}`);
+                  } else {
+                    // User not authenticated - show buyer signup modal
+                    handleBuyerSignup(property);
+                  }
                 }}
                 className="w-full bg-slate-800 hover:bg-slate-900 text-white"
                 size="sm"
               >
-                View Details
-              </Button>
-              
-              {/* Contact Seller Button */}
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!user) {
-                    onSignUpPrompt?.();
-                  } else if (!user.is_phone_verified) {
-                    handlePhoneVerification(property);
-                  } else {
-                    alert(`Contact Seller for ${property.title}:\nPhone: +27 XX XXX XXXX\nEmail: seller@example.com\nFeature coming soon!`);
-                  }
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                {!user ? 'Sign Up to Contact' : 
-                 !user.is_phone_verified ? 'Verify Phone to Contact' : 
-                 'Message Seller'}
+                {user ? 'View Details' : 'Sign Up to View Details'}
               </Button>
             </div>
           </div>
@@ -720,6 +726,33 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         onVerificationComplete={handlePhoneVerificationComplete}
         buyerType={user?.buyer_type}
         userEmail={user?.email}
+      />
+
+      {/* Buyer Signup Modal */}
+      <BuyerSignupModal
+        isOpen={showBuyerSignupModal}
+        onClose={() => {
+          setShowBuyerSignupModal(false);
+          setSelectedPropertyForSignup(null);
+        }}
+        onSignupComplete={async (email, buyerType) => {
+          setShowBuyerSignupModal(false);
+          
+          // Store buyer type for future use
+          setUserBuyerType(buyerType);
+          
+          // Show success message
+          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
+          
+          // Show property details after signup (user now has email-level access)
+          if (selectedPropertyForSignup) {
+            router.push(`/property/${selectedPropertyForSignup.id}`);
+          }
+          
+          // Reset state
+          setSelectedPropertyForSignup(null);
+        }}
+        propertyTitle={selectedPropertyForSignup?.title}
       />
     </div>
   );
