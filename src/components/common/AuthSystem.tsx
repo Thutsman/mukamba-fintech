@@ -254,14 +254,24 @@ export const AuthSystem: React.FC = () => {
 
               {/* Navigation */}
               <div className="hidden md:flex items-center space-x-8">
-                <a href="#" className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium">
+                <button 
+                  onClick={() => {
+                    setCurrentView('properties');
+                    // Scroll to top of the page to show the hero section
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                >
                   <User className="w-4 h-4 mr-2" />
                   Home
-                </a>
-                <a href="#" className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium">
+                </button>
+                <button 
+                  onClick={() => router.push('/listings')}
+                  className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                >
                   <User className="w-4 h-4 mr-2" />
                   Properties
-                </a>
+                </button>
               </div>
 
               {/* Mobile hamburger */}
@@ -276,8 +286,23 @@ export const AuthSystem: React.FC = () => {
                     </div>
                   </summary>
                   <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs bg-white border border-slate-200 rounded-lg shadow-lg p-3 space-y-2">
-                    <a href="#" className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50">Home</a>
-                    <a href="#" className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50">Properties</a>
+                    <button 
+                      onClick={() => { 
+                        setCurrentView('properties'); 
+                        // Scroll to top of the page to show the hero section
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (mobileMenuRef.current) mobileMenuRef.current.open = false; 
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Home
+                    </button>
+                    <button 
+                      onClick={() => { router.push('/listings'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Properties
+                    </button>
                     {isAuthenticated && user?.roles.includes('seller') && (
                       <a href="/dashboard/seller" className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50">Seller Dashboard</a>
                     )}

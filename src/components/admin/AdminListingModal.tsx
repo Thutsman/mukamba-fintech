@@ -18,7 +18,8 @@ import {
   DollarSign,
   Plus,
   Trash2,
-  User
+  User,
+  Zap
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { PropertyType, ListingType, PropertyCountry, PropertyListing } from '@/types/property';
 import { AdminListing } from '@/types/admin';
 
@@ -77,6 +79,8 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
   const [images, setImages] = React.useState<File[]>([]);
   const [imageUrls, setImageUrls] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [newFeature, setNewFeature] = React.useState('');
+  const [newAmenity, setNewAmenity] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -116,6 +120,33 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
     console.log('Current property type:', watchPropertyType);
     console.log('Form values:', form.getValues());
   }, [watchPropertyType, form]);
+
+  // Helper functions for features and amenities
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      const currentFeatures = form.getValues('features') || [];
+      form.setValue('features', [...currentFeatures, newFeature.trim()]);
+      setNewFeature('');
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    const currentFeatures = form.getValues('features') || [];
+    form.setValue('features', currentFeatures.filter((_, i) => i !== index));
+  };
+
+  const addAmenity = () => {
+    if (newAmenity.trim()) {
+      const currentAmenities = form.getValues('amenities') || [];
+      form.setValue('amenities', [...currentAmenities, newAmenity.trim()]);
+      setNewAmenity('');
+    }
+  };
+
+  const removeAmenity = (index: number) => {
+    const currentAmenities = form.getValues('amenities') || [];
+    form.setValue('amenities', currentAmenities.filter((_, i) => i !== index));
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -595,77 +626,106 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Seller Information */}
+                  {/* Features & Amenities */}
                   <div className="space-y-6">
                     <div className="bg-slate-50/50 rounded-lg p-4 border border-slate-200">
                       <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-3 mb-4">
-                        <User className="w-5 h-5 text-blue-600" />
-                        Seller Information
+                        <Zap className="w-5 h-5 text-blue-600" />
+                        Features & Amenities
                       </h3>
                       
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <Label htmlFor="sellerName" className="text-base font-medium text-slate-700 mb-2 block">
-                              Seller Name
-                            </Label>
+                      <div className="space-y-6">
+                        {/* Property Features */}
+                        <div>
+                          <Label className="text-base font-medium text-slate-700 mb-2 block">
+                            Property Features
+                          </Label>
+                          <div className="flex gap-2 mb-3">
                             <Input
-                              id="sellerName"
-                              placeholder="e.g., John Smith"
+                              value={newFeature}
+                              onChange={(e) => setNewFeature(e.target.value)}
+                              placeholder="e.g., Hardwood floors, Built-in wardrobes"
                               className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              {...form.register('sellerName')}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addFeature();
+                                }
+                              }}
                             />
-                            {form.formState.errors.sellerName && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.sellerName.message}
-                              </p>
-                            )}
+                            <Button
+                              type="button"
+                              onClick={addFeature}
+                              disabled={!newFeature.trim()}
+                              className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
                           </div>
-
-                          <div>
-                            <Label htmlFor="sellerEmail" className="text-base font-medium text-slate-700 mb-2 block">
-                              Seller Email
-                            </Label>
-                            <Input
-                              id="sellerEmail"
-                              type="email"
-                              placeholder="e.g., john@example.com"
-                              className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              {...form.register('sellerEmail')}
-                            />
-                            {form.formState.errors.sellerEmail && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.sellerEmail.message}
-                              </p>
-                            )}
+                          <div className="flex flex-wrap gap-2">
+                            {(form.watch('features') || []).map((feature, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 flex items-center gap-1"
+                              >
+                                {feature}
+                                <button
+                                  type="button"
+                                  onClick={() => removeFeature(index)}
+                                  className="ml-1 hover:text-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            ))}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <Label htmlFor="sellerPhone" className="text-base font-medium text-slate-700 mb-2 block">
-                              Seller Phone (Optional)
-                            </Label>
+                        {/* Property Amenities */}
+                        <div>
+                          <Label className="text-base font-medium text-slate-700 mb-2 block">
+                            Amenities
+                          </Label>
+                          <div className="flex gap-2 mb-3">
                             <Input
-                              id="sellerPhone"
-                              placeholder="e.g., +263 77 123 4567"
+                              value={newAmenity}
+                              onChange={(e) => setNewAmenity(e.target.value)}
+                              placeholder="e.g., Swimming pool, Gym, 24/7 Security"
                               className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              {...form.register('sellerPhone')}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addAmenity();
+                                }
+                              }}
                             />
+                            <Button
+                              type="button"
+                              onClick={addAmenity}
+                              disabled={!newAmenity.trim()}
+                              className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
                           </div>
-
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="checkbox"
-                              id="sellerIsVerified"
-                              {...form.register('sellerIsVerified')}
-                              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Label htmlFor="sellerIsVerified" className="text-base font-medium text-slate-700">
-                              Seller is verified
-                            </Label>
+                          <div className="flex flex-wrap gap-2">
+                            {(form.watch('amenities') || []).map((amenity, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="px-3 py-1 bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1"
+                              >
+                                {amenity}
+                                <button
+                                  type="button"
+                                  onClick={() => removeAmenity(index)}
+                                  className="ml-1 hover:text-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -768,11 +828,10 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                     </div>
 
                     <div className="space-y-4">
-                      <h4 className="font-medium text-slate-800">Seller Information</h4>
+                      <h4 className="font-medium text-slate-800">Features & Amenities</h4>
                       <div className="space-y-2 text-sm">
-                        <div><span className="font-medium">Name:</span> {form.getValues('sellerName')}</div>
-                        <div><span className="font-medium">Email:</span> {form.getValues('sellerEmail')}</div>
-                        <div><span className="font-medium">Verified:</span> {form.getValues('sellerIsVerified') ? 'Yes' : 'No'}</div>
+                        <div><span className="font-medium">Features:</span> {(form.getValues('features') || []).length > 0 ? (form.getValues('features') || []).join(', ') : 'None added'}</div>
+                        <div><span className="font-medium">Amenities:</span> {(form.getValues('amenities') || []).length > 0 ? (form.getValues('amenities') || []).join(', ') : 'None added'}</div>
                       </div>
                     </div>
                   </div>
