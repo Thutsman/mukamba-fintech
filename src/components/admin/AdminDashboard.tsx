@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, 
@@ -44,6 +44,7 @@ import { KYCPage } from './KYCPage';
 import { ReportsTab } from './ReportsTab';
 import PaymentTrackingTab from './PaymentTrackingTab';
 import type { AdminTab, AdminStats, AdminUser, AdminProperty, AdminListing, KYCVerification } from '@/types/admin';
+import { getPropertyListingsStats } from '@/lib/property-application-services';
 import { theme, getColor } from '@/lib/theme';
 import { toast } from 'sonner';
 
@@ -61,6 +62,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [propertyStats, setPropertyStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // Load real property stats
+  useEffect(() => {
+    const loadPropertyStats = async () => {
+      try {
+        const stats = await getPropertyListingsStats();
+        setPropertyStats(stats);
+      } catch (error) {
+        console.error('Error loading property stats:', error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadPropertyStats();
+  }, []);
 
   // Mock admin data
   const adminStats: AdminStats = {
@@ -200,56 +219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   ];
 
-  // Update the mock listings data
-  const mockListings: AdminListing[] = [
-    {
-      id: '1',
-      propertyId: 'prop_1',
-      propertyTitle: 'Modern 3-Bedroom House',
-      sellerId: 'seller_1',
-      sellerName: 'John Smith',
-      status: 'pending',
-      submittedAt: new Date().toISOString(),
-      price: 250000,
-      monthlyRental: 1200,
-      rentToBuy: true,
-      location: 'Harare, Zimbabwe',
-      type: 'residential',
-      bedrooms: 3,
-      bathrooms: 2,
-      size: 150,
-      description: 'Beautiful modern house in a prime location',
-      images: [
-        '/mock/properties/1/main.jpg',
-        '/mock/properties/1/1.jpg',
-        '/mock/properties/1/2.jpg'
-      ]
-    },
-    {
-      id: '2',
-      propertyId: 'prop_2',
-      propertyTitle: 'Luxury Apartment',
-      sellerId: 'seller_2',
-      sellerName: 'Sarah Wilson',
-      status: 'approved',
-      submittedAt: new Date().toISOString(),
-      reviewedAt: new Date().toISOString(),
-      reviewedBy: 'admin',
-      price: 180000,
-      rentToBuy: false,
-      location: 'Johannesburg, SA',
-      type: 'residential',
-      bedrooms: 2,
-      bathrooms: 1,
-      size: 80,
-      description: 'Modern apartment with great city views',
-      images: [
-        '/mock/properties/2/main.jpg',
-        '/mock/properties/2/1.jpg',
-        '/mock/properties/2/2.jpg'
-      ]
-    }
-  ];
+
 
   // Update the mock KYC verifications data
   const mockKYCVerifications: KYCVerification[] = [
@@ -452,7 +422,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="space-y-2">
                           <h3 className="text-lg sm:text-xl font-semibold">Document Review Queue</h3>
                           <p className="text-blue-100 text-xs sm:text-sm">
-                            {mockListings.filter(l => l.status === 'pending').length} property listings and{' '}
+                            {isLoadingStats ? 'Loading...' : `${propertyStats.pending} property listings`} and{' '}
                             {mockKYCVerifications.filter(v => v.status === 'pending').length} KYC verifications pending review
                           </p>
                         </div>
@@ -473,14 +443,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="flex items-center justify-between text-xs sm:text-sm">
                             <span>Property Listings</span>
                             <span className="font-medium">
-                              {mockListings.filter(l => l.status === 'pending').length} pending
+                              {isLoadingStats ? 'Loading...' : `${propertyStats.pending} pending`}
                             </span>
                           </div>
                           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-white rounded-full transition-all duration-500"
                               style={{ 
-                                width: `${(mockListings.filter(l => l.status === 'approved').length / mockListings.length) * 100}%` 
+                                width: isLoadingStats ? '0%' : `${(propertyStats.approved / propertyStats.total) * 100}%` 
                               }}
                             />
                           </div>
@@ -606,10 +576,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Property Listings
               </h2>
               <ListingsPage
-                listings={mockListings}
                 onViewListing={(listingId) => console.log('View listing:', listingId)}
-                onApproveListing={(listingId) => console.log('Approve listing:', listingId)}
-                onRejectListing={(listingId, reason) => console.log('Reject listing:', listingId, reason)}
+                onApproveListing={async (listingId) => {
+                  console.log('Approve listing:', listingId);
+                  // Here you would call the approvePropertyApplication function
+                  toast.success('Listing approved successfully!');
+                }}
+                onRejectListing={async (listingId, reason) => {
+                  console.log('Reject listing:', listingId, reason);
+                  // Here you would call the rejectPropertyApplication function
+                  toast.success('Listing rejected successfully!');
+                }}
                 onBulkAction={(action, listingIds) => console.log('Bulk action:', action, listingIds)}
                 onAddToListings={(propertyListing) => {
                   console.log('Adding property to listings:', propertyListing);

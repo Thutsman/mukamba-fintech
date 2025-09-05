@@ -53,12 +53,12 @@ interface EnhancedPropertyCardProps {
 
 // Property status configuration
 const PROPERTY_STATUS_CONFIG = {
-  available: {
-    label: 'Available',
-    color: 'bg-green-500',
-    textColor: 'text-green-700',
-    bgColor: 'bg-green-50',
-    icon: CheckCircle
+  draft: {
+    label: 'Draft',
+    color: 'bg-gray-500',
+    textColor: 'text-gray-700',
+    bgColor: 'bg-gray-50',
+    icon: Clock
   },
   pending: {
     label: 'Pending',
@@ -67,6 +67,13 @@ const PROPERTY_STATUS_CONFIG = {
     bgColor: 'bg-orange-50',
     icon: Clock
   },
+  active: {
+    label: 'Available',
+    color: 'bg-green-500',
+    textColor: 'text-green-700',
+    bgColor: 'bg-green-50',
+    icon: CheckCircle
+  },
   sold: {
     label: 'Sold',
     color: 'bg-red-500',
@@ -74,12 +81,12 @@ const PROPERTY_STATUS_CONFIG = {
     bgColor: 'bg-red-50',
     icon: CheckCircle
   },
-  new: {
-    label: 'New Listing',
-    color: 'bg-blue-500',
-    textColor: 'text-blue-700',
-    bgColor: 'bg-blue-50',
-    icon: TrendingUp
+  rented: {
+    label: 'Rented',
+    color: 'bg-purple-500',
+    textColor: 'text-purple-700',
+    bgColor: 'bg-purple-50',
+    icon: CheckCircle
   }
 };
 
@@ -127,15 +134,13 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
   }, [property.media]);
 
   // Property status
-  const statusConfig = PROPERTY_STATUS_CONFIG[property.status as keyof typeof PROPERTY_STATUS_CONFIG] || PROPERTY_STATUS_CONFIG.available;
+  const statusConfig = PROPERTY_STATUS_CONFIG[property.status as keyof typeof PROPERTY_STATUS_CONFIG] || PROPERTY_STATUS_CONFIG.active;
   const StatusIcon = statusConfig.icon;
 
   // Property type icon
   const PropertyTypeIcon = PROPERTY_TYPE_ICONS[property.details.type as keyof typeof PROPERTY_TYPE_ICONS] || Home;
 
-  // Calculate property stats
-  const pricePerSqm = property.details.size ? Math.round(property.financials.price / property.details.size) : 0;
-  const yieldPercentage = property.financials.monthlyRental ? Math.round((property.financials.monthlyRental * 12 / property.financials.price) * 100) : 0;
+
 
   // Financing options
   const financingOptions = React.useMemo(() => {
@@ -146,17 +151,7 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
     return options;
   }, [property.financials.price, property.listingType]);
 
-  // Property age calculation (mock data - replace with actual data)
-  const propertyAge = React.useMemo(() => {
-    const years = Math.floor(Math.random() * 20) + 1;
-    return years === 1 ? '1 year' : `${years} years`;
-  }, []);
 
-  // Property condition (mock data - replace with actual data)
-  const propertyCondition = React.useMemo(() => {
-    const conditions = ['Excellent', 'Good', 'Fair', 'New'];
-    return conditions[Math.floor(Math.random() * conditions.length)];
-  }, []);
 
   // Image carousel navigation
   const nextImage = () => {
@@ -356,9 +351,9 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
               <div className="text-lg font-bold text-gray-900">
                 {formatCurrency(property.financials.price)}
               </div>
-              {property.financials.monthlyRental && (
+              {property.financials.monthlyInstallment && (
                 <div className="text-sm text-gray-600">
-                  {formatCurrency(property.financials.monthlyRental)}/mo
+                  {formatCurrency(property.financials.monthlyInstallment)}/mo
                 </div>
               )}
             </div>
@@ -421,25 +416,7 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
               )}
             </div>
 
-            {/* Property Stats Grid */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-gray-50 rounded-lg p-2">
-                <div className="text-gray-500">Price/m²</div>
-                <div className="font-semibold text-gray-900">{formatCurrency(pricePerSqm)}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2">
-                <div className="text-gray-500">Yield</div>
-                <div className="font-semibold text-green-600">{yieldPercentage}%</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2">
-                <div className="text-gray-500">Age</div>
-                <div className="font-semibold text-gray-900">{propertyAge}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2">
-                <div className="text-gray-500">Condition</div>
-                <div className="font-semibold text-gray-900">{propertyCondition}</div>
-              </div>
-            </div>
+
 
             {/* Financing Options */}
             <div className="flex flex-wrap gap-1">
@@ -451,14 +428,14 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
             </div>
 
             {/* Installment Preview */}
-            {property.listingType === 'installment' && property.financials.monthlyRental && (
+            {property.listingType === 'installment' && property.financials.monthlyInstallment && (
               <div className="bg-green-50 rounded-lg p-3 border border-green-200">
                 <div className="flex items-center justify-between mb-1">
                   <div className="text-sm font-medium text-green-800">Installment Preview</div>
                   <TrendingUp className="w-4 h-4 text-green-600" />
                 </div>
                 <div className="text-lg font-bold text-green-900">
-                  {formatCurrency(property.financials.monthlyRental)}/month
+                  {formatCurrency(property.financials.monthlyInstallment)}/month
                 </div>
                 <div className="text-xs text-green-600">
                   Flexible payment plan • Contact seller for terms

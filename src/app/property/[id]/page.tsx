@@ -1,7 +1,7 @@
 'use client';
 
 import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
-import { getPropertyById } from '@/lib/property-services';
+import { getPropertyByIdFromSupabase } from '@/lib/property-services-supabase';
 import { useAuthStore } from '@/lib/store';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -17,8 +17,13 @@ export default function PropertyPage() {
     const loadProperty = async () => {
       if (params.id) {
         const propertyId = Array.isArray(params.id) ? params.id[0] : params.id;
-        const foundProperty = getPropertyById(propertyId);
-        setProperty(foundProperty || null);
+        try {
+          const foundProperty = await getPropertyByIdFromSupabase(propertyId);
+          setProperty(foundProperty || null);
+        } catch (error) {
+          console.error('Error loading property:', error);
+          setProperty(null);
+        }
       }
       setLoading(false);
     };

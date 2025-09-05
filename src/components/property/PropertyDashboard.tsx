@@ -54,6 +54,7 @@ import { EnhancedPropertyCardSkeleton } from './EnhancedPropertyCardSkeleton';
 
 import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } from '@/types/property';
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
+import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { User as UserType } from '@/types/auth';
 import { CountryToggle } from '@/components/ui/country-toggle';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
@@ -92,6 +93,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [stats, setStats] = React.useState(getPropertyStats(selectedCountry));
   const [popularCities, setPopularCities] = React.useState(getPopularCities(selectedCountry));
   const [featuredProperties, setFeaturedProperties] = React.useState<Property[]>([]);
+  const [totalPropertiesCount, setTotalPropertiesCount] = React.useState(0);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
   const [showBuyerSignupModal, setShowBuyerSignupModal] = React.useState(false);
   const [showBuyerPhoneVerificationModal, setShowBuyerPhoneVerificationModal] = React.useState(false);
@@ -111,7 +113,23 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
 
   React.useEffect(() => {
-    setFeaturedProperties(getFeaturedProperties(selectedCountry));
+    const loadFeaturedProperties = async () => {
+      try {
+        const supabaseProperties = await getPropertiesFromSupabase();
+        // Store total count
+        setTotalPropertiesCount(supabaseProperties.length);
+        // Show first 6 properties as featured
+        setFeaturedProperties(supabaseProperties.slice(0, 6));
+      } catch (error) {
+        console.error('Error loading featured properties:', error);
+        // Fallback to mock data
+        const mockProperties = getFeaturedProperties(selectedCountry);
+        setTotalPropertiesCount(mockProperties.length);
+        setFeaturedProperties(mockProperties);
+      }
+    };
+
+    loadFeaturedProperties();
   }, [selectedCountry]);
 
   React.useEffect(() => {
@@ -128,7 +146,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
     const timer = setTimeout(() => {
       try {
         setStats(getPropertyStats(selectedCountry));
-        setFeaturedProperties(getFeaturedProperties(selectedCountry));
+        // Featured properties are loaded separately via Supabase
         setPopularCities(getPopularCities(selectedCountry));
         setIsDataLoading(false);
       } catch (err) {
@@ -157,7 +175,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       property_id: property.id,
       property_title: property.title,
       property_location: `${property.location.city}, ${property.location.country}`,
-      property_price: property.financials.monthlyRental,
+      property_price: property.financials.monthlyInstallment,
       event_category: 'property_interaction'
     });
   };
@@ -448,10 +466,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             )}
             
             {/* Property Badges */}
-                                    <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap gap-1 sm:gap-2">
+            <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap gap-1 sm:gap-2">
                           <Badge className="bg-blue-500 text-white text-xs">
-                            Featured
-                          </Badge>
+                Featured
+              </Badge>
               {property.listingType === 'installment' && (
                 <Badge className="bg-green-500 text-white text-xs">
                   Installments
@@ -532,7 +550,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-base sm:text-lg font-bold text-slate-900">
-                    {formatCurrency(property.financials.monthlyRental || 0)}
+                    {formatCurrency(property.financials.monthlyInstallment || 0)}
                   </div>
                   <div className="text-xs sm:text-sm text-slate-600">/month</div>
                 </div>
@@ -638,8 +656,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           {/* Enhanced gradient overlay for better text readability */}
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-900/80 to-slate-900/90"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent"></div>
-        </div>
-        
+                      </div>
+                      
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
           <div className="text-center space-y-8">
             {/* Logo and Main Headline */}
@@ -647,22 +665,22 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               {/* Enhanced Logo with glass effect */}
               <div className="relative mb-8">
                 <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/30">
-                  <Image
+          <Image
                     src="/logo.svg"
                     alt="Mukamba Logo"
                     width={320}
                     height={90}
                     className="h-20 w-auto"
-                    priority
-                  />
-                </div>
+            priority
+          />
+        </div>
               </div>
               
               <h1 
                 className="font-sans text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight px-4 mb-4 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
               >
                 Sell Smarter,
-                <br />
+              <br />
                 <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Pay Less</span>
               </h1>
             </div>
@@ -882,7 +900,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     }}
                     suppressHydrationWarning
                   >
-                    View All {featuredProperties.length} Properties
+                    View All {totalPropertiesCount} Properties
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
               </div>
@@ -1299,7 +1317,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     setTimeout(() => {
                       try {
                         setStats(getPropertyStats(selectedCountry));
-                        setFeaturedProperties(getFeaturedProperties(selectedCountry));
+                        // Featured properties are loaded separately via Supabase
                         setPopularCities(getPopularCities(selectedCountry));
                         setIsDataLoading(false);
                       } catch (err) {
@@ -1396,12 +1414,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   // Track analytics
                   trackEvent('view_all_properties_clicked', {
                     source: 'featured_properties_main',
-                    event_category: 'navigation'
-                  });
-                }}
+              event_category: 'navigation'
+            });
+          }} 
                 suppressHydrationWarning
               >
-                View All {featuredProperties.length} Properties
+                View All {totalPropertiesCount} Properties
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>

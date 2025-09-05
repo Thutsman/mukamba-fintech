@@ -533,9 +533,15 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Monthly Rental</span>
+                  <span className="text-sm text-gray-600">Monthly Installment</span>
                   <span className="font-semibold">
-                    {property.financials.monthlyRental ? formatCurrency(property.financials.monthlyRental) : 'N/A'}
+                    {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Payment Duration</span>
+                  <span className="font-semibold">
+                    {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : 'N/A'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

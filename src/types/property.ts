@@ -29,7 +29,8 @@ export interface PropertyFinancials {
   price: number;
   currency: 'USD' | 'ZAR' | 'GBP';
   rentToBuyDeposit?: number;
-  monthlyRental?: number;
+  monthlyInstallment?: number;
+  paymentDuration?: number;
   rentCreditPercentage?: number;
 }
 
@@ -59,7 +60,7 @@ export interface PropertyListing {
       email: string;
     };
   };
-  status: 'available' | 'pending' | 'sold' | 'new';
+  status: 'draft' | 'pending' | 'active' | 'sold' | 'rented';
   createdAt: Date;
   updatedAt: Date;
   views: number;

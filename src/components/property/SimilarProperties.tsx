@@ -68,7 +68,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
         price: currentProperty.financials.price * 0.95, // 5% less
         currency: currentProperty.financials.currency,
         rentToBuyDeposit: currentProperty.financials.rentToBuyDeposit,
-        monthlyRental: currentProperty.financials.monthlyRental ? currentProperty.financials.monthlyRental * 0.95 : undefined,
+        monthlyInstallment: currentProperty.financials.monthlyInstallment ? currentProperty.financials.monthlyInstallment * 0.95 : undefined,
         rentCreditPercentage: currentProperty.financials.rentCreditPercentage
       },
       media: {
@@ -86,7 +86,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
           email: 'info@similarproperties.com'
         }
       },
-      status: 'available',
+      status: 'active',
       createdAt: new Date('2024-02-10'),
       updatedAt: new Date('2024-02-10'),
       views: 156,
@@ -118,7 +118,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
         price: currentProperty.financials.price * 1.1, // 10% more
         currency: currentProperty.financials.currency,
         rentToBuyDeposit: currentProperty.financials.rentToBuyDeposit,
-        monthlyRental: currentProperty.financials.monthlyRental ? currentProperty.financials.monthlyRental * 1.1 : undefined,
+        monthlyInstallment: currentProperty.financials.monthlyInstallment ? currentProperty.financials.monthlyInstallment * 1.1 : undefined,
         rentCreditPercentage: currentProperty.financials.rentCreditPercentage
       },
       media: {
@@ -136,7 +136,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
           email: 'sales@familyhomes.com'
         }
       },
-      status: 'available',
+      status: 'active',
       createdAt: new Date('2024-02-08'),
       updatedAt: new Date('2024-02-08'),
       views: 203,
@@ -168,7 +168,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
         price: currentProperty.financials.price * 0.9, // 10% less
         currency: currentProperty.financials.currency,
         rentToBuyDeposit: currentProperty.financials.rentToBuyDeposit,
-        monthlyRental: currentProperty.financials.monthlyRental ? currentProperty.financials.monthlyRental * 0.9 : undefined,
+        monthlyInstallment: currentProperty.financials.monthlyInstallment ? currentProperty.financials.monthlyInstallment * 0.9 : undefined,
         rentCreditPercentage: currentProperty.financials.rentCreditPercentage
       },
       media: {
@@ -186,7 +186,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
           email: 'info@townhouseproperties.com'
         }
       },
-      status: 'available',
+      status: 'active',
       createdAt: new Date('2024-02-05'),
       updatedAt: new Date('2024-02-05'),
       views: 134,
@@ -243,9 +243,9 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
               <div className="text-lg font-bold text-gray-900">
                 {formatCurrency(property.financials.price)}
               </div>
-              {property.financials.monthlyRental && (
+              {property.financials.monthlyInstallment && (
                 <div className="text-sm text-gray-600">
-                  {formatCurrency(property.financials.monthlyRental)}/mo
+                  {formatCurrency(property.financials.monthlyInstallment)}/mo
                 </div>
               )}
             </div>

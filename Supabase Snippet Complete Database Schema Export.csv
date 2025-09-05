@@ -1,0 +1,225 @@
+table_name,column_name,data_type,character_maximum_length,is_nullable,column_default,key_type,referenced_table_name,referenced_column_name
+admin_reviews,id,uuid,null,NO,gen_random_uuid(),PRIMARY KEY,null,null
+admin_reviews,application_id,uuid,null,YES,null,FOREIGN KEY,property_applications,id
+admin_reviews,admin_id,uuid,null,YES,null,,null,null
+admin_reviews,action,text,null,NO,null,,null,null
+admin_reviews,reason,text,null,YES,null,,null,null
+admin_reviews,notes,text,null,YES,null,,null,null
+admin_reviews,reviewed_at,timestamp with time zone,null,YES,now(),,null,null
+buyer_contact_requests,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+buyer_contact_requests,buyer_id,uuid,null,YES,null,,null,null
+buyer_contact_requests,property_id,uuid,null,YES,null,,null,null
+buyer_contact_requests,seller_id,uuid,null,YES,null,,null,null
+buyer_contact_requests,buyer_type,character varying,20,NO,null,,null,null
+buyer_contact_requests,contact_method,character varying,20,NO,null,,null,null
+buyer_contact_requests,message,text,null,YES,null,,null,null
+buyer_contact_requests,status,character varying,20,YES,'pending'::character varying,,null,null
+buyer_contact_requests,created_at,timestamp with time zone,null,YES,now(),,null,null
+buyer_contact_requests,updated_at,timestamp with time zone,null,YES,now(),,null,null
+buyer_onboarding_progress,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+buyer_onboarding_progress,user_id,uuid,null,YES,null,,null,null
+buyer_onboarding_progress,current_step,character varying,50,NO,'email_signup'::character varying,,null,null
+buyer_onboarding_progress,form_data,jsonb,null,NO,'{}'::jsonb,,null,null
+buyer_onboarding_progress,completed_steps,ARRAY,null,YES,'{}'::text[],,null,null
+buyer_onboarding_progress,buyer_type,character varying,20,YES,null,,null,null
+buyer_onboarding_progress,signup_source,character varying,50,YES,null,,null,null
+buyer_onboarding_progress,property_id,uuid,null,YES,null,,null,null
+buyer_onboarding_progress,created_at,timestamp with time zone,null,YES,now(),,null,null
+buyer_onboarding_progress,updated_at,timestamp with time zone,null,YES,now(),,null,null
+buyer_onboarding_progress,completed_at,timestamp with time zone,null,YES,null,,null,null
+buyer_phone_verifications,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+buyer_phone_verifications,user_id,uuid,null,YES,null,,null,null
+buyer_phone_verifications,phone_number,character varying,20,NO,null,,null,null
+buyer_phone_verifications,otp_code,character varying,6,NO,null,,null,null
+buyer_phone_verifications,otp_expires_at,timestamp with time zone,null,NO,null,,null,null
+buyer_phone_verifications,verified_at,timestamp with time zone,null,YES,null,,null,null
+buyer_phone_verifications,verification_source,character varying,50,YES,null,,null,null
+buyer_phone_verifications,property_id,uuid,null,YES,null,,null,null
+buyer_phone_verifications,created_at,timestamp with time zone,null,YES,now(),,null,null
+early_access_signups,id,uuid,null,NO,gen_random_uuid(),PRIMARY KEY,null,null
+early_access_signups,first_name,text,null,NO,null,,null,null
+early_access_signups,last_name,text,null,NO,null,,null,null
+early_access_signups,email,text,null,NO,null,,null,null
+early_access_signups,phone,text,null,NO,null,,null,null
+early_access_signups,current_location,text,null,NO,null,,null,null
+early_access_signups,user_type,text,null,NO,null,,null,null
+early_access_signups,interest,text,null,NO,null,,null,null
+early_access_signups,notes,text,null,YES,null,,null,null
+early_access_signups,created_at,timestamp with time zone,null,YES,now(),,null,null
+financial_assessments,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+financial_assessments,user_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+financial_assessments,id_number,text,null,NO,null,,null,null
+financial_assessments,date_of_birth,date,null,NO,null,,null,null
+financial_assessments,nationality,text,null,NO,null,,null,null
+financial_assessments,residential_address,jsonb,null,NO,null,,null,null
+financial_assessments,employment_status,text,null,NO,null,,null,null
+financial_assessments,monthly_income,numeric,null,NO,null,,null,null
+financial_assessments,employer_name,text,null,NO,null,,null,null
+financial_assessments,job_title,text,null,NO,null,,null,null
+financial_assessments,employment_duration,text,null,NO,null,,null,null
+financial_assessments,additional_income,numeric,null,YES,null,,null,null
+financial_assessments,monthly_expenses,numeric,null,NO,null,,null,null
+financial_assessments,has_debts,text,null,NO,null,,null,null
+financial_assessments,debt_details,text,null,YES,null,,null,null
+financial_assessments,credit_score,integer,null,YES,null,,null,null
+financial_assessments,risk_level,text,null,YES,null,,null,null
+financial_assessments,debt_to_income_ratio,numeric,null,YES,null,,null,null
+financial_assessments,disposable_income,numeric,null,YES,null,,null,null
+financial_assessments,pre_approved_amount,numeric,null,YES,null,,null,null
+financial_assessments,status,text,null,YES,'pending'::text,,null,null
+financial_assessments,reviewed_by,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+financial_assessments,reviewed_at,timestamp with time zone,null,YES,null,,null,null
+financial_assessments,rejection_reason,text,null,YES,null,,null,null
+financial_assessments,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+financial_assessments,updated_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+kyc_documents,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+kyc_documents,user_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+kyc_documents,verification_id,uuid,null,YES,null,FOREIGN KEY,kyc_verifications,id
+kyc_documents,document_type,text,null,NO,null,,null,null
+kyc_documents,document_side,text,null,YES,null,,null,null
+kyc_documents,file_url,text,null,NO,null,,null,null
+kyc_documents,file_name,text,null,NO,null,,null,null
+kyc_documents,file_size,integer,null,YES,null,,null,null
+kyc_documents,mime_type,text,null,YES,null,,null,null
+kyc_documents,verification_status,text,null,YES,'pending'::text,,null,null
+kyc_documents,verification_notes,text,null,YES,null,,null,null
+kyc_documents,verified_by,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+kyc_documents,verified_at,timestamp with time zone,null,YES,null,,null,null
+kyc_documents,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+kyc_documents,updated_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+kyc_verifications,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+kyc_verifications,user_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+kyc_verifications,verification_type,text,null,NO,null,,null,null
+kyc_verifications,status,text,null,YES,'pending'::text,,null,null
+kyc_verifications,verification_data,jsonb,null,YES,null,,null,null
+kyc_verifications,verification_level,text,null,YES,'basic'::text,,null,null
+kyc_verifications,submitted_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+kyc_verifications,reviewed_at,timestamp with time zone,null,YES,null,,null,null
+kyc_verifications,reviewed_by,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+kyc_verifications,review_notes,text,null,YES,null,,null,null
+kyc_verifications,rejection_reason,text,null,YES,null,,null,null
+kyc_verifications,expires_at,timestamp with time zone,null,YES,null,,null,null
+kyc_verifications,certificate_url,text,null,YES,null,,null,null
+kyc_verifications,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+kyc_verifications,updated_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+phone_verification_attempts,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+phone_verification_attempts,user_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+phone_verification_attempts,phone_number,text,null,NO,null,,null,null
+phone_verification_attempts,otp_code,text,null,NO,null,,null,null
+phone_verification_attempts,otp_hash,text,null,NO,null,,null,null
+phone_verification_attempts,attempts_count,integer,null,YES,0,,null,null
+phone_verification_attempts,max_attempts,integer,null,YES,3,,null,null
+phone_verification_attempts,expires_at,timestamp with time zone,null,NO,null,,null,null
+phone_verification_attempts,verified_at,timestamp with time zone,null,YES,null,,null,null
+phone_verification_attempts,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+properties,id,uuid,null,NO,gen_random_uuid(),PRIMARY KEY,null,null
+properties,title,character varying,255,NO,null,,null,null
+properties,description,text,null,NO,null,,null,null
+properties,property_type,character varying,50,NO,null,,null,null
+properties,listing_type,character varying,50,NO,null,,null,null
+properties,country,character varying,2,NO,null,,null,null
+properties,city,character varying,100,NO,null,,null,null
+properties,suburb,character varying,100,NO,null,,null,null
+properties,street_address,text,null,NO,null,,null,null
+properties,size_sqm,integer,null,NO,null,,null,null
+properties,bedrooms,integer,null,YES,null,,null,null
+properties,bathrooms,integer,null,YES,null,,null,null
+properties,parking_spaces,integer,null,YES,null,,null,null
+properties,price,numeric,null,NO,null,,null,null
+properties,currency,character varying,3,NO,null,,null,null
+properties,rent_to_buy_deposit,numeric,null,YES,null,,null,null
+properties,monthly_installment,numeric,null,YES,null,,null,null
+properties,features,ARRAY,null,YES,null,,null,null
+properties,amenities,ARRAY,null,YES,null,,null,null
+properties,status,character varying,20,YES,'available'::character varying,,null,null
+properties,seller_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+properties,admin_created_by,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+properties,created_at,timestamp with time zone,null,YES,now(),,null,null
+properties,updated_at,timestamp with time zone,null,YES,now(),,null,null
+properties,views,integer,null,YES,0,,null,null
+properties,saved_by,integer,null,YES,0,,null,null
+properties,inquiries,integer,null,YES,0,,null,null
+properties,listing_status,text,null,YES,'draft'::text,,null,null
+properties,payment_duration,integer,null,YES,null,,null,null
+property_applications,id,uuid,null,NO,gen_random_uuid(),PRIMARY KEY,null,null
+property_applications,seller_id,uuid,null,YES,null,,null,null
+property_applications,property_id,uuid,null,YES,null,FOREIGN KEY,properties,id
+property_applications,status,text,null,YES,'pending'::text,,null,null
+property_applications,submitted_at,timestamp with time zone,null,YES,now(),,null,null
+property_applications,reviewed_at,timestamp with time zone,null,YES,null,,null,null
+property_applications,reviewed_by,uuid,null,YES,null,,null,null
+property_applications,rejection_reason,text,null,YES,null,,null,null
+property_applications,admin_notes,text,null,YES,null,,null,null
+property_applications,created_at,timestamp with time zone,null,YES,now(),,null,null
+property_applications,updated_at,timestamp with time zone,null,YES,now(),,null,null
+property_images,id,uuid,null,NO,gen_random_uuid(),PRIMARY KEY,null,null
+property_images,property_id,uuid,null,YES,null,FOREIGN KEY,properties,id
+property_images,image_url,text,null,NO,null,,null,null
+property_images,image_order,integer,null,YES,0,,null,null
+property_images,is_main_image,boolean,null,YES,false,,null,null
+property_images,created_at,timestamp with time zone,null,YES,now(),,null,null
+property_inquiries,id,uuid,null,NO,gen_random_uuid(),PRIMARY KEY,null,null
+property_inquiries,property_id,uuid,null,YES,null,FOREIGN KEY,properties,id
+property_inquiries,buyer_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+property_inquiries,inquiry_type,character varying,50,NO,null,,null,null
+property_inquiries,message,text,null,YES,null,,null,null
+property_inquiries,status,character varying,20,YES,'pending'::character varying,,null,null
+property_inquiries,created_at,timestamp with time zone,null,YES,now(),,null,null
+seller_onboarding_progress,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+seller_onboarding_progress,user_id,uuid,null,NO,null,,null,null
+seller_onboarding_progress,current_step,character varying,50,NO,'welcome'::character varying,,null,null
+seller_onboarding_progress,form_data,jsonb,null,NO,'{}'::jsonb,,null,null
+seller_onboarding_progress,completed_steps,ARRAY,null,YES,'{}'::text[],,null,null
+seller_onboarding_progress,completed_at,timestamp with time zone,null,YES,null,,null,null
+seller_onboarding_progress,created_at,timestamp with time zone,null,YES,now(),,null,null
+seller_onboarding_progress,updated_at,timestamp with time zone,null,YES,now(),,null,null
+user_login_history,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+user_login_history,user_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+user_login_history,login_method,text,null,NO,null,,null,null
+user_login_history,ip_address,inet,null,YES,null,,null,null
+user_login_history,user_agent,text,null,YES,null,,null,null
+user_login_history,location_info,jsonb,null,YES,null,,null,null
+user_login_history,success,boolean,null,NO,null,,null,null
+user_login_history,failure_reason,text,null,YES,null,,null,null
+user_login_history,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+user_profiles,id,uuid,null,NO,null,PRIMARY KEY,null,null
+user_profiles,first_name,text,null,NO,null,,null,null
+user_profiles,last_name,text,null,NO,null,,null,null
+user_profiles,email,text,null,NO,null,,null,null
+user_profiles,phone,text,null,YES,null,,null,null
+user_profiles,user_level,text,null,YES,'new_user'::text,,null,null
+user_profiles,user_role,text,null,YES,'user'::text,,null,null
+user_profiles,is_phone_verified,boolean,null,YES,false,,null,null
+user_profiles,is_identity_verified,boolean,null,YES,false,,null,null
+user_profiles,is_financially_verified,boolean,null,YES,false,,null,null
+user_profiles,is_address_verified,boolean,null,YES,false,,null,null
+user_profiles,is_property_verified,boolean,null,YES,false,,null,null
+user_profiles,date_of_birth,date,null,YES,null,,null,null
+user_profiles,id_number,text,null,YES,null,,null,null
+user_profiles,nationality,text,null,YES,null,,null,null
+user_profiles,residential_address,jsonb,null,YES,null,,null,null
+user_profiles,employment_info,jsonb,null,YES,null,,null,null
+user_profiles,financial_profile,jsonb,null,YES,null,,null,null
+user_profiles,verification_certificates,ARRAY,null,YES,null,,null,null
+user_profiles,is_active,boolean,null,YES,true,,null,null
+user_profiles,is_suspended,boolean,null,YES,false,,null,null
+user_profiles,suspension_reason,text,null,YES,null,,null,null
+user_profiles,suspension_expires_at,timestamp with time zone,null,YES,null,,null,null
+user_profiles,notification_preferences,jsonb,null,YES,"'{""sms"": true, ""push"": true, ""email"": true}'::jsonb",,null,null
+user_profiles,privacy_settings,jsonb,null,YES,"'{""contact_visible"": true, ""profile_visible"": true}'::jsonb",,null,null
+user_profiles,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+user_profiles,updated_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+user_profiles,last_login_at,timestamp with time zone,null,YES,null,,null,null
+user_profiles,last_active_at,timestamp with time zone,null,YES,null,,null,null
+user_profiles,additional_info,jsonb,null,YES,'{}'::jsonb,,null,null
+user_profiles,roles,ARRAY,null,YES,ARRAY['user'::text],,null,null
+user_profiles,buyer_type,character varying,20,YES,null,,null,null
+user_profiles,kyc_level,character varying,20,YES,'none'::character varying,,null,null
+user_sessions,id,uuid,null,NO,uuid_generate_v4(),PRIMARY KEY,null,null
+user_sessions,user_id,uuid,null,YES,null,FOREIGN KEY,user_profiles,id
+user_sessions,session_token,text,null,NO,null,,null,null
+user_sessions,device_info,jsonb,null,YES,null,,null,null
+user_sessions,is_active,boolean,null,YES,true,,null,null
+user_sessions,expires_at,timestamp with time zone,null,NO,null,,null,null
+user_sessions,created_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null
+user_sessions,last_used_at,timestamp with time zone,null,YES,"timezone('utc'::text, now())",,null,null

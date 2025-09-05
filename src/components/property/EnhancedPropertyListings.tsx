@@ -452,9 +452,9 @@ export const EnhancedPropertyListings: React.FC<EnhancedPropertyListingsProps> =
                 <div className="font-bold text-slate-900">
                   {formatCurrency(property.financials.price)}
                 </div>
-                {property.financials.monthlyRental && (
+                {property.financials.monthlyInstallment && (
                   <div className="text-xs text-slate-600">
-                    {formatCurrency(property.financials.monthlyRental)}/month
+                    {formatCurrency(property.financials.monthlyInstallment)}/month
                   </div>
                 )}
               </div>

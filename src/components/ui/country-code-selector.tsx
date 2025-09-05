@@ -4,21 +4,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CountryCode, countryCodes } from '@/data/country-codes';
+import { CountryCode, sortedCountryCodes, getDefaultCountry } from '@/data/country-codes';
 
 interface CountryCodeSelectorProps {
-  selectedCountry: CountryCode;
-  onCountryChange: (country: CountryCode) => void;
+  value: CountryCode;
+  onChange: (country: CountryCode) => void;
   className?: string;
 }
 
 export const CountryCodeSelector: React.FC<CountryCodeSelectorProps> = ({
-  selectedCountry,
-  onCountryChange,
+  value,
+  onChange,
   className = ''
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -33,17 +33,17 @@ export const CountryCodeSelector: React.FC<CountryCodeSelectorProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter countries based on search query
-  const filteredCountries = countryCodes.filter(country =>
-    country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    country.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    country.dialCode.includes(searchQuery)
+  // Filter countries based on search term
+  const filteredCountries = sortedCountryCodes.filter(country =>
+    country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    country.dialCode.includes(searchTerm) ||
+    country.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCountrySelect = (country: CountryCode) => {
-    onCountryChange(country);
+    onChange(country);
     setIsOpen(false);
-    setSearchQuery('');
+    setSearchTerm('');
   };
 
   return (
@@ -52,17 +52,17 @@ export const CountryCodeSelector: React.FC<CountryCodeSelectorProps> = ({
         type="button"
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full min-w-[140px] px-3 py-2 text-left"
+        className="w-full justify-between border-r-0 rounded-r-none h-10 px-3"
       >
         <div className="flex items-center space-x-2">
-          <span className="text-lg">{selectedCountry.flag}</span>
-          <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
+          <span className="text-lg">{value.flag}</span>
+          <span className="text-sm font-medium">{value.dialCode}</span>
         </div>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-80 max-h-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute top-full left-0 z-50 w-80 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-hidden">
           {/* Search Input */}
           <div className="p-3 border-b border-gray-200">
             <div className="relative">
@@ -70,40 +70,44 @@ export const CountryCodeSelector: React.FC<CountryCodeSelectorProps> = ({
               <Input
                 type="text"
                 placeholder="Search countries..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-3 py-2 text-sm"
-                autoFocus
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 border-gray-200"
               />
             </div>
           </div>
 
           {/* Country List */}
-          <div className="max-h-48 overflow-y-auto">
-            {filteredCountries.length > 0 ? (
-              filteredCountries.map((country) => (
-                <button
-                  key={country.code}
-                  onClick={() => handleCountrySelect(country)}
-                  className="w-full flex items-center space-x-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
-                >
+          <div className="max-h-64 overflow-y-auto">
+            {filteredCountries.map((country) => (
+              <button
+                key={country.code}
+                type="button"
+                onClick={() => handleCountrySelect(country)}
+                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                  country.code === value.code ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                }`}
+              >
+                <div className="flex items-center space-x-3">
                   <span className="text-lg">{country.flag}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {country.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {country.code} • {country.dialCode}
-                    </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{country.name}</div>
+                    <div className="text-sm text-gray-500">{country.dialCode}</div>
                   </div>
-                </button>
-              ))
-            ) : (
-              <div className="px-3 py-4 text-center text-sm text-gray-500">
-                No countries found matching "{searchQuery}"
-              </div>
-            )}
+                  {country.code === value.code && (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  )}
+                </div>
+              </button>
+            ))}
           </div>
+
+          {/* No Results */}
+          {filteredCountries.length === 0 && (
+            <div className="p-4 text-center text-gray-500">
+              No countries found matching "{searchTerm}"
+            </div>
+          )}
         </div>
       )}
     </div>

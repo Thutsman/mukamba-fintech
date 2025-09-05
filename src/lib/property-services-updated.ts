@@ -28,7 +28,7 @@ const zwProperties: Property[] = [
       currency: 'USD',
       rentToBuyDeposit: 35000,
       monthlyInstallment: 1500,
-    paymentDuration: 240,
+      paymentDuration: 240,
       rentCreditPercentage: 30
     },
     media: {
@@ -468,3 +468,4 @@ export {
   getPropertyById,
   allProperties
 };
+

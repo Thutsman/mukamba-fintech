@@ -106,7 +106,8 @@ export interface AdminListing {
   reviewedAt?: string;
   reviewedBy?: string;
   price: number;
-  monthlyRental?: number;
+  monthlyInstallment?: number;
+  paymentDuration?: number;
   rentToBuy: boolean;
   location: string;
   type: 'residential' | 'commercial' | 'mixed';

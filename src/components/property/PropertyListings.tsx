@@ -13,6 +13,7 @@ import {
   Square,
   Heart,
   Share2,
+  
   Eye,
   Star,
   DollarSign,
@@ -63,6 +64,7 @@ import { Separator } from '@/components/ui/separator';
 import { PropertyListing, PropertySearchFilters, PropertyType } from '@/types/property';
 import { User } from '@/types/auth';
 import { searchProperties, getFeaturedProperties } from '@/lib/property-services';
+import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 
 interface PropertyListingsProps {
   initialFilters?: PropertySearchFilters;
@@ -159,17 +161,25 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     }
   }, []); // Empty dependency array ensures this only runs once on mount
 
-  // Load properties with debouncing to prevent excessive API calls
+  // Load properties from Supabase instead of mock data
   React.useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const results = searchProperties(filters);
-      setProperties(results);
-      setIsLoading(false);
-    }, 500); // Increased debounce time to reduce excessive calls
+    const loadProperties = async () => {
+      setIsLoading(true);
+      try {
+        const supabaseProperties = await getPropertiesFromSupabase();
+        setProperties(supabaseProperties);
+      } catch (error) {
+        console.error('Error loading properties:', error);
+        // Fallback to mock data if Supabase fails
+        const results = searchProperties(filters);
+        setProperties(results);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, [filters]);
+    loadProperties();
+  }, []); // Only run once on mount
 
   // Load featured properties
   React.useEffect(() => {
@@ -287,11 +297,28 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
         {/* Property Image */}
         <div className="relative h-48 sm:h-64 overflow-hidden">
-          <img
-            src={property.media.mainImage}
-            alt={property.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+          {property.media?.mainImage && property.media.mainImage !== '/placeholder-property.jpg' ? (
+            <img
+              src={property.media.mainImage}
+              alt={property.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                // Fallback to placeholder if image fails to load
+                e.currentTarget.src = '/placeholder-property.jpg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-200">
+              <div className="text-center text-slate-500">
+                <div className="w-16 h-16 mx-auto mb-2">
+                  <svg className="w-full h-full text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <p className="text-sm">Image unavailable</p>
+              </div>
+            </div>
+          )}
           
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
@@ -306,7 +333,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 Verified
               </Badge>
             )}
-            {property.status === 'available' && (
+            {property.status === 'active' && (
               <Badge className="bg-emerald-500 text-white">
                 Available
               </Badge>
@@ -345,9 +372,9 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               <div className="text-lg font-bold text-slate-800">
                 {formatCurrency(property.financials.price)}
               </div>
-              {property.financials.monthlyRental && (
+              {property.financials.monthlyInstallment && (
                 <div className="text-sm text-slate-600">
-                  {formatCurrency(property.financials.monthlyRental)}/month
+                  {formatCurrency(property.financials.monthlyInstallment)}/month
                 </div>
               )}
             </div>

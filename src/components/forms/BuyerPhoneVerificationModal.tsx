@@ -267,8 +267,8 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
                   </label>
                   <div className="flex space-x-2">
                     <CountryCodeSelector
-                      selectedCountry={selectedCountry}
-                      onCountryChange={setSelectedCountry}
+                      value={selectedCountry}
+                      onChange={setSelectedCountry}
                       className="w-32"
                     />
                     <Input

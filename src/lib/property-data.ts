@@ -25,7 +25,8 @@ export interface UnifiedProperty {
   // Additional fields for enhanced features
   country?: 'ZW' | 'SA';
   currency?: 'USD' | 'ZAR' | 'GBP';
-  monthlyRental?: number;
+  monthlyInstallment?: number;
+  paymentDuration?: number;
   rentCreditPercentage?: number;
   seller?: {
     name: string;
@@ -61,7 +62,8 @@ export const unifiedPropertyData: UnifiedProperty[] = [
     description: 'Beautiful modern house with open plan living, perfect for families.',
     features: ['Garden', 'Security', 'Pool', 'Garage'],
     currency: 'ZAR',
-    monthlyRental: 8500,
+    monthlyInstallment: 8500,
+    paymentDuration: 120,
     rentCreditPercentage: 25,
     seller: {
       name: 'John Smith',
@@ -123,7 +125,8 @@ export const unifiedPropertyData: UnifiedProperty[] = [
     description: 'Spacious family home with large garden and entertainment area.',
     features: ['Garden', 'Pool', 'Security', 'Garage', 'Study'],
     currency: 'ZAR',
-    monthlyRental: 12000,
+    monthlyInstallment: 12000,
+    paymentDuration: 180,
     rentCreditPercentage: 30,
     seller: {
       name: 'David Wilson',
@@ -155,7 +158,8 @@ export const unifiedPropertyData: UnifiedProperty[] = [
     description: 'Perfect starter home in a vibrant neighborhood.',
     features: ['Balcony', 'Security', 'Near Transport'],
     currency: 'ZAR',
-    monthlyRental: 4500,
+    monthlyInstallment: 4500,
+    paymentDuration: 96,
     rentCreditPercentage: 20,
     seller: {
       name: 'Sarah Brown',
@@ -249,7 +253,8 @@ export const unifiedPropertyData: UnifiedProperty[] = [
     description: 'Spacious 4-bedroom home in upscale Borrowdale. Features include a swimming pool, staff quarters, and borehole.',
     features: ['Swimming Pool', 'Borehole', 'Staff Quarters', 'Electric Fence'],
     currency: 'USD',
-    monthlyRental: 1500,
+    monthlyInstallment: 1500,
+    paymentDuration: 240,
     rentCreditPercentage: 30,
     seller: {
       name: 'John Moyo',
@@ -281,7 +286,8 @@ export const unifiedPropertyData: UnifiedProperty[] = [
     description: 'Modern 3-bedroom apartment with stunning city views. Located in the prestigious Mount Pleasant area.',
     features: ['City Views', 'Modern Kitchen', 'Built-in Wardrobes', 'Balcony'],
     currency: 'USD',
-    monthlyRental: 1200,
+    monthlyInstallment: 1200,
+    paymentDuration: 180,
     rentCreditPercentage: 25,
     seller: {
       name: 'Maria Chikomba',
@@ -319,8 +325,9 @@ export function convertToPropertyListing(unifiedProperty: UnifiedProperty): Prop
     financials: {
       price: unifiedProperty.price,
       currency: unifiedProperty.currency || 'ZAR',
-      rentToBuyDeposit: unifiedProperty.monthlyRental ? unifiedProperty.monthlyRental * 12 : undefined,
-      monthlyRental: unifiedProperty.monthlyRental,
+      rentToBuyDeposit: unifiedProperty.monthlyInstallment ? unifiedProperty.monthlyInstallment * 12 : undefined,
+      monthlyInstallment: unifiedProperty.monthlyInstallment,
+      paymentDuration: unifiedProperty.paymentDuration,
       rentCreditPercentage: unifiedProperty.rentCreditPercentage
     },
     media: {
@@ -335,7 +342,7 @@ export function convertToPropertyListing(unifiedProperty: UnifiedProperty): Prop
         email: `seller-${unifiedProperty.id}@example.com`
       }
     },
-    status: 'available',
+    status: 'active',
     createdAt: new Date(),
     updatedAt: new Date(),
     views: unifiedProperty.views || 0,
@@ -362,7 +369,8 @@ export function convertFromPropertyListing(propertyListing: PropertyListing): Un
     description: propertyListing.description,
     features: propertyListing.details.features,
     currency: propertyListing.financials.currency,
-    monthlyRental: propertyListing.financials.monthlyRental,
+    monthlyInstallment: propertyListing.financials.monthlyInstallment,
+    paymentDuration: propertyListing.financials.paymentDuration,
     rentCreditPercentage: propertyListing.financials.rentCreditPercentage,
     seller: {
       name: propertyListing.seller.name,

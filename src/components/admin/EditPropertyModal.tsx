@@ -19,31 +19,64 @@ import {
   Plus,
   Trash2,
   User,
-  Zap
+  Zap,
+  Save
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { PropertyType, ListingType, PropertyCountry, PropertyListing } from '@/types/property';
-import { AdminListing } from '@/types/admin';
-import { createPropertyApplicationInSupabase } from '@/lib/property-application-services';
-import { uploadMultipleImages } from '@/lib/uploads';
+import { PropertyType, ListingType, PropertyCountry } from '@/types/property';
+import { createClient } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { updatePropertyStatus, logPropertyActivity } from '@/lib/property-management-services';
 
-interface AdminListingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onComplete: (propertyListing: PropertyListing) => void;
-  adminListing?: AdminListing;
-  country?: PropertyCountry;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+interface PropertyData {
+  id: string;
+  title: string;
+  description: string;
+  property_type: string;
+  listing_type: string;
+  country: string;
+  city: string;
+  suburb: string;
+  street_address: string;
+  size_sqm: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  parking_spaces?: number;
+  price: number;
+  currency: string;
+  rent_to_buy_deposit?: number;
+  monthly_installment?: number;
+  payment_duration?: number;
+  features: string[];
+  amenities: string[];
+  status: string;
+  property_images?: Array<{
+    id: string;
+    image_url: string;
+    is_main_image: boolean;
+  }>;
 }
 
-const adminListingSchema = z.object({
+interface EditPropertyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  propertyId: string | null;
+  onSuccess?: () => void;
+}
+
+const editPropertySchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters"),
   description: z.string().min(50, "Description must be at least 50 characters"),
   propertyType: z.enum(['house', 'apartment', 'townhouse', 'land', 'commercial']),
@@ -61,53 +94,34 @@ const adminListingSchema = z.object({
   rentToBuyDeposit: z.string().optional(),
   monthlyInstallment: z.string().optional(),
   paymentDuration: z.string().optional(),
+  status: z.enum(['available', 'sold', 'rented', 'pending', 'draft']),
   features: z.array(z.string()).optional(),
   amenities: z.array(z.string()).optional(),
 });
 
-type AdminListingFormData = z.infer<typeof adminListingSchema>;
+type EditPropertyFormData = z.infer<typeof editPropertySchema>;
 
-export const AdminListingModal: React.FC<AdminListingModalProps> = ({
+export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
   isOpen,
   onClose,
-  onComplete,
-  adminListing,
-  country = 'ZW'
+  propertyId,
+  onSuccess
 }) => {
   const [step, setStep] = React.useState<'details' | 'media' | 'preview' | 'submitting' | 'success'>('details');
-  
-  // Debug step changes
-  React.useEffect(() => {
-    console.log('Step changed to:', step);
-  }, [step]);
-  const [images, setImages] = React.useState<File[]>([]);
-  const [imageUrls, setImageUrls] = React.useState<string[]>([]);
+  const [property, setProperty] = React.useState<PropertyData | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [newFeature, setNewFeature] = React.useState('');
   const [newAmenity, setNewAmenity] = React.useState('');
+  const [newImages, setNewImages] = React.useState<File[]>([]);
+  const [newImageUrls, setNewImageUrls] = React.useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
-  const form = useForm<AdminListingFormData>({
-    resolver: zodResolver(adminListingSchema),
+  const form = useForm<EditPropertyFormData>({
+    resolver: zodResolver(editPropertySchema),
     defaultValues: {
-      country,
-      listingType: 'rent-to-buy',
-      propertyType: adminListing?.type === 'residential' ? 'house' : (adminListing?.type === 'commercial' ? 'commercial' : 'house'),
-      currency: country === 'ZW' ? 'USD' : 'ZAR',
       features: [],
       amenities: [],
-      title: adminListing?.propertyTitle || '',
-      description: adminListing?.description || '',
-      price: adminListing?.price.toString() || '',
-      monthlyInstallment: adminListing?.monthlyInstallment?.toString() || '',
-      city: adminListing?.location.split(',')[0]?.trim() || '',
-      suburb: adminListing?.location.split(',')[1]?.trim() || '',
-      streetAddress: adminListing?.location.split(',')[2]?.trim() || '',
-      size: adminListing?.size?.toString() || '',
-      bedrooms: adminListing?.bedrooms?.toString() || '',
-      bathrooms: adminListing?.bathrooms?.toString() || '',
-      rentToBuyDeposit: '',
     }
   });
 
@@ -115,24 +129,69 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
   const watchPropertyType = form.watch('propertyType');
   const watchCountry = form.watch('country');
 
-  // Debug logging
+  // Load property data when modal opens
   React.useEffect(() => {
-    console.log('Current property type:', watchPropertyType);
-    console.log('Form values:', form.getValues());
-    console.log('Form errors:', form.formState.errors);
-    console.log('Form valid:', form.formState.isValid);
-  }, [watchPropertyType, form, form.formState.errors, form.formState.isValid]);
+    if (isOpen && propertyId) {
+      loadPropertyData();
+    }
+  }, [isOpen, propertyId]);
 
-  // Trigger validation when form values change
-  React.useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      if (type === 'change') {
-        // Trigger validation for the changed field
-        form.trigger(name as keyof AdminListingFormData);
+  const loadPropertyData = async () => {
+    if (!propertyId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          property_images (
+            id,
+            image_url,
+            is_main_image
+          )
+        `)
+        .eq('id', propertyId)
+        .single();
+
+      if (error) {
+        console.error('Error loading property:', error);
+        toast.error('Failed to load property data');
+        return;
       }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+
+      setProperty(data);
+      
+      // Populate form with existing data
+      form.reset({
+        title: data.title,
+        description: data.description,
+        propertyType: data.property_type as PropertyType,
+        listingType: data.listing_type as ListingType,
+        country: data.country as PropertyCountry,
+        city: data.city,
+        suburb: data.suburb,
+        streetAddress: data.street_address,
+        size: data.size_sqm.toString(),
+        bedrooms: data.bedrooms?.toString() || '',
+        bathrooms: data.bathrooms?.toString() || '',
+        parking: data.parking_spaces?.toString() || '',
+        price: data.price.toString(),
+        currency: data.currency as 'USD' | 'ZAR' | 'GBP',
+        rentToBuyDeposit: data.rent_to_buy_deposit?.toString() || '',
+        monthlyInstallment: data.monthly_installment?.toString() || '',
+        paymentDuration: data.payment_duration?.toString() || '',
+        status: data.status as 'available' | 'sold' | 'rented' | 'pending' | 'draft',
+        features: data.features || [],
+        amenities: data.amenities || [],
+      });
+    } catch (error) {
+      console.error('Error loading property:', error);
+      toast.error('Failed to load property data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Helper functions for features and amenities
   const addFeature = () => {
@@ -165,221 +224,93 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
     form.setValue('amenities', updatedAmenities, { shouldValidate: true });
   };
 
-  // Image compression function
-  const compressImage = (file: File, maxWidth: number = 1920, quality: number = 0.8): Promise<File> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calculate new dimensions
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        
-        // Set canvas dimensions
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              // Create new file with compressed data
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
-            } else {
-              resolve(file); // Fallback to original if compression fails
-            }
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newImages = Array.from(files);
+      const newFiles = Array.from(files);
+      setNewImages(prev => [...prev, ...newFiles]);
       
-      // Compress images before adding them
-      const compressedImages: File[] = [];
-      const compressedUrls: string[] = [];
-      
-      for (const file of newImages) {
-        try {
-          console.log(`Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-          
-          // Compress image
-          const compressedFile = await compressImage(file, 1920, 0.8);
-          compressedImages.push(compressedFile);
-          
-          console.log(`Compressed file size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
-          
-          // Create blob URL for preview
-          const url = URL.createObjectURL(compressedFile);
-          compressedUrls.push(url);
-        } catch (error) {
-          console.error('Error compressing image:', error);
-          // Fallback to original file
-          compressedImages.push(file);
-        const url = URL.createObjectURL(file);
-          compressedUrls.push(url);
-        }
-      }
-      
-      setImages(prev => [...prev, ...compressedImages]);
-      setImageUrls(prev => [...prev, ...compressedUrls]);
+      // Create preview URLs
+      const urls = newFiles.map(file => URL.createObjectURL(file));
+      setNewImageUrls(prev => [...prev, ...urls]);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  const removeNewImage = (index: number) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
+    setNewImageUrls(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleDetailsSubmit = async (data: AdminListingFormData) => {
-    console.log('Form data submitted:', data);
-    console.log('Form errors:', form.formState.errors);
-    
-    // Trigger validation manually to ensure form state is up to date
+  const handleDetailsSubmit = async (data: EditPropertyFormData) => {
     const isValid = await form.trigger();
-    console.log('Form validation result:', isValid);
-    
-    // Check if there are any validation errors
-    if (!isValid) {
-      console.error('Form validation failed:', form.formState.errors);
-      // Don't return, let the form show the errors
-      return;
-    }
-    
-    console.log('Form is valid, proceeding to media step');
+    if (!isValid) return;
     setStep('media');
   };
 
   const handleMediaSubmit = async () => {
-    if (images.length < 3) {
-      alert('Please upload at least 3 images of the property');
-      return;
-    }
     setStep('preview');
   };
 
   const handleFinalSubmit = async () => {
+    if (!propertyId) return;
+    
     setIsLoading(true);
     setStep('submitting');
     
     try {
       const formData = form.getValues();
       
-      // Convert blob URLs back to files for upload
-      const imageFiles = images.map((file, index) => {
-        if (file instanceof File) {
-          return file;
-        }
-        return null;
-      }).filter(Boolean) as File[];
-      
-      if (imageFiles.length === 0) {
-        throw new Error('No images uploaded');
-      }
-      
-      // Upload images to Supabase storage first
-      console.log('Uploading images to Supabase storage...');
-      const uploadResults = await uploadMultipleImages(imageFiles);
-      
-      // Check upload results and handle partial failures
-      const successfulUploads = uploadResults.filter(result => result.success);
-      const failedUploads = uploadResults.filter(result => !result.success);
-      
-      if (successfulUploads.length === 0) {
-        throw new Error('All image uploads failed');
-      }
-      
-      if (failedUploads.length > 0) {
-        console.warn(`${failedUploads.length} images failed to upload, but ${successfulUploads.length} succeeded`);
-        console.warn('Failed uploads:', failedUploads);
-      }
-      
-      // Extract successful image URLs
-      const imageUrls = successfulUploads.map(result => result.url!);
-      console.log(`${imageUrls.length} images uploaded successfully:`, imageUrls);
-      
-      // Create property application instead of direct listing
-      const propertyApplication = {
-        id: `temp_${Date.now()}`, // Temporary ID for the interface
+      // Prepare update data
+      const updateData = {
         title: formData.title,
         description: formData.description,
-        propertyType: formData.propertyType,
-        listingType: formData.listingType,
-        location: {
-          country: formData.country,
-          city: formData.city,
-          suburb: formData.suburb,
-          streetAddress: formData.streetAddress,
-        },
-        details: {
-          size: parseInt(formData.size),
-          type: formData.propertyType as any,
-          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
-          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
-          parking: formData.parking ? parseInt(formData.parking) : undefined,
-          features: formData.features || [],
-          amenities: formData.amenities || [],
-        },
-        financials: {
-          price: parseInt(formData.price),
-          currency: formData.currency,
-          rentToBuyDeposit: formData.rentToBuyDeposit ? parseInt(formData.rentToBuyDeposit) : undefined,
-          monthlyInstallment: formData.monthlyInstallment ? parseInt(formData.monthlyInstallment) : undefined,
-          paymentDuration: formData.paymentDuration ? parseInt(formData.paymentDuration) : undefined,
-        },
-        media: {
-          mainImage: imageUrls[0] || '/placeholder-property.jpg',
-          images: imageUrls, // Now using the uploaded image URLs instead of File objects
-        },
-        seller: {
-          id: crypto.randomUUID(),
-          name: 'Admin User',
-          isVerified: true,
-          contactInfo: {
-            phone: '',
-            email: 'admin@mukamba.com',
-          },
-        },
-        status: 'pending' as const, // Set as pending for admin review
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        views: 0,
-        savedBy: 0,
-        inquiries: 0,
+        property_type: formData.propertyType,
+        listing_type: formData.listingType,
+        country: formData.country,
+        city: formData.city,
+        suburb: formData.suburb,
+        street_address: formData.streetAddress,
+        size_sqm: parseInt(formData.size),
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+        parking_spaces: formData.parking ? parseInt(formData.parking) : null,
+        price: parseInt(formData.price),
+        currency: formData.currency,
+        rent_to_buy_deposit: formData.rentToBuyDeposit ? parseInt(formData.rentToBuyDeposit) : null,
+        monthly_installment: formData.monthlyInstallment ? parseInt(formData.monthlyInstallment) : null,
+        payment_duration: formData.paymentDuration ? parseInt(formData.paymentDuration) : null,
+        status: formData.status,
+        features: formData.features || [],
+        amenities: formData.amenities || [],
+        updated_at: new Date().toISOString(),
       };
 
-      // Save to Supabase as a pending application
-      const applicationId = await createPropertyApplicationInSupabase(propertyApplication);
-      
-      if (applicationId) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        onComplete(propertyApplication);
-        setStep('success');
-        setTimeout(() => handleClose(), 2000);
-      } else {
-        throw new Error('Failed to create property application in database');
+      // Update property in database
+      const { error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', propertyId);
+
+      if (error) {
+        console.error('Error updating property:', error);
+        toast.error('Failed to update property');
+        return;
       }
+
+      // Log the activity
+      await logPropertyActivity(propertyId, 'admin-user-id', 'updated', {
+        updated_fields: Object.keys(updateData),
+        updated_at: new Date().toISOString()
+      });
+
+      toast.success('Property updated successfully');
+      setStep('success');
+      onSuccess?.();
+      
+      setTimeout(() => handleClose(), 2000);
     } catch (error) {
-      console.error('Failed to add property application:', error);
-      alert('Failed to create property application. Please try again.');
+      console.error('Error updating property:', error);
+      toast.error('Failed to update property');
       setStep('preview');
     } finally {
       setIsLoading(false);
@@ -390,8 +321,9 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
     if (!isLoading) {
       setStep('details');
       form.reset();
-      setImages([]);
-      setImageUrls([]);
+      setNewImages([]);
+      setNewImageUrls([]);
+      setProperty(null);
       onClose();
     }
   };
@@ -402,7 +334,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
     <AnimatePresence mode="wait">
       <div 
         className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" 
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
         onClick={step === 'success' ? undefined : handleClose}
       >
         <motion.div
@@ -412,10 +343,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white rounded-lg relative"
-          style={{ maxHeight: '90vh', overflow: 'hidden' }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
         >
           <Card className="shadow-2xl border-0 isolate">
             <CardHeader className="text-center">
@@ -434,24 +361,28 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                   <X className="w-5 h-5" />
                 </Button>
               </div>
-              <CardTitle className="text-xl" id="modal-title">
-                {step === 'details' && 'Add Property Listing'}
-                {step === 'media' && 'Add Property Photos'}
-                {step === 'preview' && 'Review Listing'}
-                {step === 'submitting' && 'Adding Listing'}
-                {step === 'success' && 'Property Added!'}
+              <CardTitle className="text-xl">
+                {step === 'details' && 'Edit Property Details'}
+                {step === 'media' && 'Update Property Photos'}
+                {step === 'preview' && 'Review Changes'}
+                {step === 'submitting' && 'Updating Property'}
+                {step === 'success' && 'Property Updated!'}
               </CardTitle>
               <p className="text-sm text-slate-600 mt-2">
-                {step === 'details' && 'Complete property information for public listing'}
-                {step === 'media' && 'Upload high-quality photos of the property'}
-                {step === 'preview' && 'Review the property listing before publishing'}
-                {step === 'submitting' && 'Please wait while we add the property to listings'}
-                {step === 'success' && 'Property has been successfully added to listings'}
+                {step === 'details' && 'Update property information'}
+                {step === 'media' && 'Add or update property photos'}
+                {step === 'preview' && 'Review changes before saving'}
+                {step === 'submitting' && 'Please wait while we update the property'}
+                {step === 'success' && 'Property has been successfully updated'}
               </p>
             </CardHeader>
 
-            <CardContent className="space-y-8 max-h-[calc(90vh-16rem)] overflow-y-auto px-6 pb-6" style={{ maxHeight: 'calc(90vh - 16rem)' }}>
-              {step === 'details' && (
+            <CardContent className="space-y-8 max-h-[calc(90vh-16rem)] overflow-y-auto px-6 pb-6">
+              {isLoading && step === 'details' ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                </div>
+              ) : step === 'details' && property ? (
                 <form onSubmit={form.handleSubmit(handleDetailsSubmit)} className="space-y-8">
                   {/* Basic Information */}
                   <div className="space-y-6">
@@ -499,7 +430,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <div>
                             <Label htmlFor="propertyType" className="text-base font-medium text-slate-700 mb-2 block">
                               Property Type
@@ -509,7 +440,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               {...form.register('propertyType')}
                               className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                             >
-                              <option value="">Select property type</option>
                               <option value="house">House</option>
                               <option value="apartment">Apartment</option>
                               <option value="townhouse">Townhouse</option>
@@ -522,20 +452,37 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                             <Label className="text-base font-medium text-slate-700 mb-2 block">
                               Listing Type
                             </Label>
-                                                         <RadioGroup
-                               value={form.watch('listingType')}
-                               onValueChange={(value: ListingType) => form.setValue('listingType', value)}
-                               className="grid grid-cols-2 gap-4 mt-2"
-                             >
-                               <div className="flex items-center space-x-2">
-                                 <RadioGroupItem value="rent-to-buy" id="rent-to-buy" />
-                                 <Label htmlFor="rent-to-buy" className="text-sm">Installments</Label>
-                               </div>
-                               <div className="flex items-center space-x-2">
-                                 <RadioGroupItem value="sale" id="sale" />
-                                 <Label htmlFor="sale" className="text-sm">Direct Sale</Label>
-                               </div>
-                             </RadioGroup>
+                            <RadioGroup
+                              value={form.watch('listingType')}
+                              onValueChange={(value: ListingType) => form.setValue('listingType', value)}
+                              className="grid grid-cols-2 gap-4 mt-2"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="rent-to-buy" id="rent-to-buy" />
+                                <Label htmlFor="rent-to-buy" className="text-sm">Installments</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="sale" id="sale" />
+                                <Label htmlFor="sale" className="text-sm">Direct Sale</Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="status" className="text-base font-medium text-slate-700 mb-2 block">
+                              Status
+                            </Label>
+                            <select
+                              id="status"
+                              {...form.register('status')}
+                              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                            >
+                              <option value="available">Available</option>
+                              <option value="sold">Sold</option>
+                              <option value="rented">Rented</option>
+                              <option value="pending">Pending</option>
+                              <option value="draft">Draft</option>
+                            </select>
                           </div>
                         </div>
                       </div>
@@ -562,12 +509,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               {...form.register('city')}
                             />
-                            {form.formState.errors.city && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.city.message}
-                              </p>
-                            )}
                           </div>
 
                           <div>
@@ -580,12 +521,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               {...form.register('suburb')}
                             />
-                            {form.formState.errors.suburb && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.suburb.message}
-                              </p>
-                            )}
                           </div>
                         </div>
 
@@ -599,12 +534,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                             className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             {...form.register('streetAddress')}
                           />
-                          {form.formState.errors.streetAddress && (
-                            <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                              <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                              {form.formState.errors.streetAddress.message}
-                            </p>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -631,12 +560,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               {...form.register('size')}
                             />
-                            {form.formState.errors.size && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.size.message}
-                              </p>
-                            )}
                           </div>
 
                           {watchPropertyType !== 'land' && (
@@ -706,12 +629,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               {...form.register('price')}
                             />
-                            {form.formState.errors.price && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.price.message}
-                              </p>
-                            )}
                           </div>
 
                           <div>
@@ -723,17 +640,10 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               {...form.register('currency')}
                               className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                             >
-                              <option value="">Select currency</option>
                               <option value="USD">USD</option>
                               <option value="ZAR">ZAR</option>
                               <option value="GBP">GBP</option>
                             </select>
-                            {form.formState.errors.currency && (
-                              <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {form.formState.errors.currency.message}
-                              </p>
-                            )}
                           </div>
                         </div>
 
@@ -751,7 +661,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                               />
                             </div>
 
-                                                        <div>
+                            <div>
                               <Label htmlFor="monthlyInstallment" className="text-base font-medium text-slate-700 mb-2 block">
                                 Monthly Installment
                               </Label>
@@ -791,10 +701,10 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                       
                       <div className="space-y-6">
                         {/* Property Features */}
-                          <div>
+                        <div>
                           <Label className="text-base font-medium text-slate-700 mb-2 block">
                             Property Features
-                            </Label>
+                          </Label>
                           <div className="flex gap-2 mb-3">
                             <Input
                               value={newFeature}
@@ -838,10 +748,10 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                         </div>
 
                         {/* Property Amenities */}
-                          <div>
+                        <div>
                           <Label className="text-base font-medium text-slate-700 mb-2 block">
                             Amenities
-                            </Label>
+                          </Label>
                           <div className="flex gap-2 mb-3">
                             <Input
                               value={newAmenity}
@@ -887,61 +797,16 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-6 space-y-3">
-                    {/* Debug info */}
-                    <div className="text-xs text-slate-500 p-2 bg-slate-50 rounded">
-                      <div>Form valid: {form.formState.isValid ? 'Yes' : 'No'}</div>
-                      <div>Errors: {Object.keys(form.formState.errors).length}</div>
-                      <div>Dirty: {form.formState.isDirty ? 'Yes' : 'No'}</div>
-                      <div>Submitted: {form.formState.isSubmitted ? 'Yes' : 'No'}</div>
-                      {Object.keys(form.formState.errors).length > 0 && (
-                        <div className="text-red-500">
-                          {Object.entries(form.formState.errors).map(([key, error]) => (
-                            <div key={key}>{key}: {error?.message}</div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="mt-2 text-xs">
-                        <div>Required fields status:</div>
-                        <div>Title: {form.watch('title') ? '✓' : '✗'} (min 10 chars)</div>
-                        <div>Description: {form.watch('description') ? '✓' : '✗'} (min 50 chars)</div>
-                        <div>Property Type: {form.watch('propertyType') ? '✓' : '✗'}</div>
-                        <div>Listing Type: {form.watch('listingType') ? '✓' : '✗'}</div>
-                        <div>City: {form.watch('city') ? '✓' : '✗'} (min 2 chars)</div>
-                        <div>Suburb: {form.watch('suburb') ? '✓' : '✗'} (min 2 chars)</div>
-                        <div>Street Address: {form.watch('streetAddress') ? '✓' : '✗'} (min 5 chars)</div>
-                        <div>Size: {form.watch('size') ? '✓' : '✗'}</div>
-                        <div>Price: {form.watch('price') ? '✓' : '✗'}</div>
-                        <div>Currency: {form.watch('currency') ? '✓' : '✗'}</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          console.log('Manual validation check');
-                          console.log('Form values:', form.getValues());
-                          console.log('Form errors:', form.formState.errors);
-                          console.log('Form valid:', form.formState.isValid);
-                          console.log('Form dirty:', form.formState.isDirty);
-                          console.log('Form submitted:', form.formState.isSubmitted);
-                          // Trigger validation manually
-                          form.trigger();
-                        }}
-                        className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded"
-                      >
-                        Debug Form
-                      </button>
-                    </div>
-                    
+                  <div className="pt-6">
                     <Button
                       type="submit"
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-                      disabled={!form.formState.isValid}
                     >
                       Continue to Photos
                     </Button>
                   </div>
                 </form>
-              )}
+              ) : null}
 
               {step === 'media' && (
                 <div className="space-y-6">
@@ -950,40 +815,67 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                       Property Photos
                     </h3>
                     <p className="text-sm text-slate-600">
-                      Upload clear, high-quality photos of the property (minimum 3)
+                      Add new photos or keep existing ones
                     </p>
                   </div>
 
+                  {/* Existing Images */}
+                  {property?.property_images && property.property_images.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-3">Current Images</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {property.property_images.map((image, index) => (
+                          <div key={image.id} className="relative group">
+                            <img
+                              src={image.image_url}
+                              alt={`Property photo ${index + 1}`}
+                              className="w-full h-40 object-cover rounded-lg"
+                            />
+                            {image.is_main_image && (
+                              <Badge className="absolute top-2 left-2 bg-blue-600 text-white">
+                                Main
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add New Images */}
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-blue-400 hover:bg-blue-50"
                   >
                     <Camera className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-slate-600">
-                      Click to upload photos
+                      Click to add new photos
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       JPG, PNG up to 10MB each
                     </p>
                   </div>
 
-                  {imageUrls.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {imageUrls.map((url, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={url}
-                            alt={`Property photo ${index + 1}`}
-                            className="w-full h-40 object-cover rounded-lg"
-                          />
-                          <button
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                  {newImageUrls.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-3">New Images</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {newImageUrls.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={url}
+                              alt={`New property photo ${index + 1}`}
+                              className="w-full h-40 object-cover rounded-lg"
+                            />
+                            <button
+                              onClick={() => removeNewImage(index)}
+                              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -997,7 +889,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                     </Button>
                     <Button
                       onClick={handleMediaSubmit}
-                      disabled={images.length < 3}
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
                       Continue to Preview
@@ -1009,9 +900,9 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
               {step === 'preview' && (
                 <div className="space-y-6">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-800 mb-2">Preview</h3>
+                    <h3 className="font-semibold text-blue-800 mb-2">Review Changes</h3>
                     <p className="text-sm text-blue-700">
-                      Review the property information before adding it to the listings
+                      Review the property information before saving changes
                     </p>
                   </div>
 
@@ -1022,16 +913,17 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                         <div><span className="font-medium">Title:</span> {form.getValues('title')}</div>
                         <div><span className="font-medium">Type:</span> {form.getValues('propertyType')}</div>
                         <div><span className="font-medium">Listing:</span> {form.getValues('listingType')}</div>
+                        <div><span className="font-medium">Status:</span> {form.getValues('status')}</div>
                         <div><span className="font-medium">Price:</span> {form.getValues('currency')} {form.getValues('price')}</div>
                         <div><span className="font-medium">Location:</span> {form.getValues('city')}, {form.getValues('suburb')}</div>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h4 className="font-medium text-slate-800">Features & Amenities</h4>
+                      <h4 className="font-medium text-slate-800">Features & Amenities</h4>
                       <div className="space-y-2 text-sm">
-                          <div><span className="font-medium">Features:</span> {(form.watch('features') || []).length > 0 ? (form.watch('features') || []).join(', ') : 'None added'}</div>
-                          <div><span className="font-medium">Amenities:</span> {(form.watch('amenities') || []).length > 0 ? (form.watch('amenities') || []).join(', ') : 'None added'}</div>
+                        <div><span className="font-medium">Features:</span> {(form.watch('features') || []).length > 0 ? (form.watch('features') || []).join(', ') : 'None added'}</div>
+                        <div><span className="font-medium">Amenities:</span> {(form.watch('amenities') || []).length > 0 ? (form.watch('amenities') || []).join(', ') : 'None added'}</div>
                       </div>
                     </div>
                   </div>
@@ -1048,7 +940,8 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                       onClick={handleFinalSubmit}
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
-                      Add to Listings
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
                     </Button>
                   </div>
                 </div>
@@ -1064,9 +957,9 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                     <Building className="w-8 h-8 text-blue-600" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-slate-800">Adding Property to Listings</h3>
+                    <h3 className="font-semibold text-slate-800">Updating Property</h3>
                     <p className="text-sm text-slate-600 mt-1">
-                      Please wait while we add the property to the public listings...
+                      Please wait while we update the property information...
                     </p>
                   </div>
                 </div>
@@ -1082,19 +975,10 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                     <Check className="w-8 h-8 text-green-600" />
                   </motion.div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-800">Property Added Successfully!</h3>
+                    <h3 className="text-lg font-semibold text-slate-800">Property Updated Successfully!</h3>
                     <p className="text-sm text-slate-600 mt-1">
-                      The property has been added to the public listings and is now visible to potential buyers
+                      The property information has been updated and is now live
                     </p>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Button
-                      onClick={handleClose}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      Close
-                    </Button>
                   </div>
                 </div>
               )}
