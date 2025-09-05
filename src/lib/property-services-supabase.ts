@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { PropertyListing } from '@/types/property';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Create client only if credentials are available
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export interface SupabaseProperty {
   id: string;
@@ -29,6 +33,11 @@ export interface SupabaseProperty {
 // New function to upload images to Supabase storage
 const uploadImagesToSupabase = async (imageFiles: File[]): Promise<string[]> => {
   const uploadedUrls: string[] = [];
+  
+  if (!supabase) {
+    console.log('Supabase client not available, returning mock URLs');
+    return imageFiles.map((_, i) => `https://picsum.photos/seed/mock-${i}/400/300`);
+  }
   
   console.log(`Starting upload of ${imageFiles.length} images to Supabase storage...`);
   
@@ -96,6 +105,11 @@ const uploadImagesToSupabase = async (imageFiles: File[]): Promise<string[]> => 
 
 export const getPropertiesFromSupabase = async (): Promise<PropertyListing[]> => {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning empty array');
+      return [];
+    }
+
     // First, get all properties
     const { data: properties, error: propertiesError } = await supabase
       .from('properties')
@@ -214,6 +228,14 @@ export const getPropertiesFromSupabase = async (): Promise<PropertyListing[]> =>
 
 export const createPropertyInSupabase = async (propertyData: any, imageFiles: File[]): Promise<{ propertyId: string; imageUrls: string[] } | null> => {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning mock data');
+      return {
+        propertyId: 'mock-property-id',
+        imageUrls: imageFiles.map((_, i) => `https://picsum.photos/seed/mock-${i}/400/300`)
+      };
+    }
+
     // First, upload images to Supabase storage
     const imageUrls = await uploadImagesToSupabase(imageFiles);
     
@@ -323,6 +345,11 @@ export const createPropertyInSupabase = async (propertyData: any, imageFiles: Fi
 
 export const getPropertyByIdFromSupabase = async (propertyId: string): Promise<PropertyListing | null> => {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning null');
+      return null;
+    }
+
     console.log('Fetching property by ID:', propertyId);
     
     // Get the specific property

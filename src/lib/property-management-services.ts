@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Create client only if credentials are available
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export interface PropertyManagementFilters {
   search?: string;
@@ -67,6 +70,16 @@ export async function getProperties(filters: PropertyManagementFilters = {}): Pr
   totalPages: number;
 }> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning empty results');
+      return {
+        properties: [],
+        total: 0,
+        page: 1,
+        totalPages: 0
+      };
+    }
+
     let query = supabase
       .from('properties')
       .select(`
@@ -139,6 +152,19 @@ export async function getProperties(filters: PropertyManagementFilters = {}): Pr
 
 export async function getPropertyStats(): Promise<PropertyManagementStats> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning zero stats');
+      return {
+        total: 0,
+        available: 0,
+        sold: 0,
+        rented: 0,
+        pending: 0,
+        draft: 0,
+        deleted: 0
+      };
+    }
+
     // Get counts for different statuses
     const [totalResult, availableResult, soldResult, rentedResult, pendingResult, draftResult, deletedResult] = await Promise.all([
       supabase.from('properties').select('*', { count: 'exact', head: true }).is('deleted_at', null),
@@ -167,6 +193,11 @@ export async function getPropertyStats(): Promise<PropertyManagementStats> {
 
 export async function softDeleteProperty(propertyId: string, adminId: string): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
+
     const { error } = await supabase
       .from('properties')
       .update({
@@ -194,6 +225,11 @@ export async function softDeleteProperty(propertyId: string, adminId: string): P
 
 export async function bulkSoftDeleteProperties(propertyIds: string[], adminId: string): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
+
     const { error } = await supabase
       .from('properties')
       .update({
@@ -226,6 +262,11 @@ export async function bulkSoftDeleteProperties(propertyIds: string[], adminId: s
 
 export async function restoreProperty(propertyId: string, adminId: string): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
+
     const { error } = await supabase
       .from('properties')
       .update({
@@ -253,6 +294,11 @@ export async function restoreProperty(propertyId: string, adminId: string): Prom
 
 export async function updatePropertyStatus(propertyId: string, status: string, adminId: string): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
+
     const { error } = await supabase
       .from('properties')
       .update({ status })
@@ -284,6 +330,11 @@ export async function logPropertyActivity(
   details?: any
 ): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
+
     const { error } = await supabase
       .from('property_activity_log')
       .insert({
@@ -307,6 +358,11 @@ export async function logPropertyActivity(
 
 export async function getPropertyActivityLog(propertyId: string): Promise<any[]> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning empty array');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('property_activity_log')
       .select(`
@@ -334,6 +390,11 @@ export async function getPropertyActivityLog(propertyId: string): Promise<any[]>
 
 export async function getCities(): Promise<string[]> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning empty array');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('properties')
       .select('city')

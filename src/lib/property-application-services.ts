@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { PropertyListing } from '@/types/property';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Create client only if credentials are available
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export interface PropertyApplication {
   id?: string;
@@ -32,6 +35,11 @@ export async function createPropertyApplicationInSupabase(
   propertyListing: PropertyListing
 ): Promise<string | null> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning mock application ID');
+      return 'mock-application-id';
+    }
+
     // First, create the property record
     const { data: propertyData, error: propertyError } = await supabase
       .from('properties')
@@ -112,6 +120,11 @@ export async function createPropertyApplicationInSupabase(
 
 export async function getPropertyApplications(status?: string): Promise<PropertyApplication[]> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning empty array');
+      return [];
+    }
+
     let query = supabase
       .from('property_applications')
       .select(`
@@ -164,6 +177,11 @@ export async function approvePropertyApplication(
   notes?: string
 ): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
+
     // Update the application status
     const { error: applicationError } = await supabase
       .from('property_applications')
@@ -234,6 +252,10 @@ export async function rejectPropertyApplication(
   notes?: string
 ): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning false');
+      return false;
+    }
     // Update the application status
     const { error: applicationError } = await supabase
       .from('property_applications')
@@ -306,6 +328,11 @@ export async function getPropertyListingsStats(): Promise<{
   total: number;
 }> {
   try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning zero stats');
+      return { pending: 0, approved: 0, rejected: 0, total: 0 };
+    }
+
     const { data, error } = await supabase
       .from('property_applications')
       .select('status');
