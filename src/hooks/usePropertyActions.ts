@@ -12,7 +12,7 @@ const supabase = createClient(
 // Types
 export interface PropertyActionOptions {
   propertyId: string;
-  adminId: string;
+  adminId?: string;
   details?: Record<string, any>;
 }
 
