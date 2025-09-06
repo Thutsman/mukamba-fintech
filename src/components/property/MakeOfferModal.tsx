@@ -18,7 +18,6 @@ import {
   Shield,
   Calculator,
   Percent,
-  CreditCard,
   Banknote
 } from 'lucide-react';
 
@@ -42,7 +41,7 @@ interface MakeOfferModalProps {
 
 interface OfferData {
   offerPrice: number;
-  financingMethod: 'cash' | 'installment' | 'bank_loan';
+  financingMethod: 'cash' | 'installment';
   downPayment?: number;
   monthlyPayment?: number;
   offerExpiration: number; // days
@@ -266,7 +265,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       onValueChange={(value: OfferData['financingMethod']) => 
                         setFormData(prev => ({ ...prev, financingMethod: value }))
                       }
-                      className="grid grid-cols-3 gap-3"
+                      className="grid grid-cols-2 gap-3"
                     >
                       <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                         <RadioGroupItem value="cash" id="cash" />
@@ -283,15 +282,6 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                           <div className="flex items-center">
                             <Calculator className="w-4 h-4 mr-2" />
                             Installment
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="bank_loan" id="bank_loan" />
-                        <Label htmlFor="bank_loan" className="cursor-pointer">
-                          <div className="flex items-center">
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Bank Loan
                           </div>
                         </Label>
                       </div>

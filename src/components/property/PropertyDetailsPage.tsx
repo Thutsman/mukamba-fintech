@@ -175,10 +175,6 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
     setIsFavorite(!isFavorite);
   };
 
-  const handleGetFinancing = () => {
-    // Navigate to financing page or show financing modal
-    console.log('Navigate to financing');
-  };
 
   const handleExpressInterest = async (data: any) => {
     // In real app, this would call an API
@@ -221,6 +217,10 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
   // Get user access level based on KYC
   const getUserAccessLevel = () => {
+    console.log('PropertyDetailsPage - User object:', user);
+    console.log('PropertyDetailsPage - is_phone_verified:', user?.is_phone_verified);
+    console.log('PropertyDetailsPage - kyc_level:', user?.kyc_level);
+    
     if (!user) return 'anonymous';
     if (!user.is_phone_verified) return 'email_verified';
     if (user.kyc_level === 'identity') return 'phone_verified';
@@ -230,6 +230,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   };
 
   const accessLevel = getUserAccessLevel();
+  console.log('PropertyDetailsPage - Access level determined:', accessLevel);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -514,7 +515,6 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               onScheduleViewing={handleScheduleViewing}
               onMakeOffer={handleMakeOffer}
               onAddToFavorites={handleAddToFavorites}
-              onGetFinancing={handleGetFinancing}
               onSignUpPrompt={onSignUpPrompt || (() => {})}
               onPhoneVerification={handlePhoneVerification}
               isFavorite={isFavorite}

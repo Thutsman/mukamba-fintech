@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PropertyListing } from '@/types/property';
 import { User } from '@/types/auth';
+import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 
 interface SimilarPropertiesProps {
   currentProperty: PropertyListing;
@@ -34,166 +35,57 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
 }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [similarProperties, setSimilarProperties] = React.useState<PropertyListing[]>([]);
+
+  // Load similar properties from Supabase
+  React.useEffect(() => {
+    const loadSimilarProperties = async () => {
+      setIsLoading(true);
+      try {
+        const allProperties = await getPropertiesFromSupabase();
+        
+        // Filter out the current property and find similar ones
+        const filtered = allProperties.filter(property => 
+          property.id !== currentProperty.id && 
+          property.status === 'active'
+        );
+        
+        // Sort by similarity (same city, then same property type, then by price proximity)
+        const sorted = filtered.sort((a, b) => {
+          // Same city gets priority
+          const aSameCity = a.location.city === currentProperty.location.city ? 1 : 0;
+          const bSameCity = b.location.city === currentProperty.location.city ? 1 : 0;
+          if (aSameCity !== bSameCity) return bSameCity - aSameCity;
+          
+          // Same property type gets priority
+          const aSameType = a.details.type === currentProperty.details.type ? 1 : 0;
+          const bSameType = b.details.type === currentProperty.details.type ? 1 : 0;
+          if (aSameType !== bSameType) return bSameType - aSameType;
+          
+          // Then by price proximity
+          const aPriceDiff = Math.abs(a.financials.price - currentProperty.financials.price);
+          const bPriceDiff = Math.abs(b.financials.price - currentProperty.financials.price);
+          return aPriceDiff - bPriceDiff;
+        });
+        
+        // Take the top 2 most similar properties
+        setSimilarProperties(sorted.slice(0, 2));
+      } catch (error) {
+        console.error('Error loading similar properties:', error);
+        setSimilarProperties([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSimilarProperties();
+  }, [currentProperty.id, currentProperty.location.city, currentProperty.details.type, currentProperty.financials.price]);
 
   // Handle View All button click
   const handleViewAll = () => {
     // Navigate to PropertyListings without any filters to show all properties
     router.push('/listings');
   };
-
-  // Mock similar properties data
-  const similarProperties: PropertyListing[] = [
-    {
-      id: 'similar-1',
-      title: 'Modern Apartment in Same Area',
-      description: 'Similar 3-bedroom apartment in the same neighborhood with modern amenities.',
-      propertyType: 'apartment',
-      listingType: 'rent-to-buy',
-      location: {
-        country: currentProperty.location.country,
-        city: currentProperty.location.city,
-        suburb: currentProperty.location.suburb,
-        streetAddress: '456 Similar Street',
-      },
-      details: {
-        size: 180,
-        type: 'apartment',
-        bedrooms: 3,
-        bathrooms: 2,
-        parking: 1,
-        features: ['Modern Kitchen', 'Built-in Wardrobes', 'Balcony'],
-        amenities: ['24/7 Security', 'Gym', 'Pool', 'Parking']
-      },
-      financials: {
-        price: currentProperty.financials.price * 0.95, // 5% less
-        currency: currentProperty.financials.currency,
-        rentToBuyDeposit: currentProperty.financials.rentToBuyDeposit,
-        monthlyInstallment: currentProperty.financials.monthlyInstallment ? currentProperty.financials.monthlyInstallment * 0.95 : undefined,
-        rentCreditPercentage: currentProperty.financials.rentCreditPercentage
-      },
-      media: {
-        mainImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop',
-        images: [
-          'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop'
-        ]
-      },
-      seller: {
-        id: 'seller-similar-1',
-        name: 'Similar Properties Ltd',
-        isVerified: true,
-        contactInfo: {
-          email: 'info@similarproperties.com'
-        }
-      },
-      status: 'active',
-      createdAt: new Date('2024-02-10'),
-      updatedAt: new Date('2024-02-10'),
-      views: 156,
-      savedBy: 8,
-      inquiries: 5
-    },
-    {
-      id: 'similar-2',
-      title: 'Family Home Nearby',
-      description: 'Spacious family home in the same area with garden and modern features.',
-      propertyType: 'house',
-      listingType: 'rent-to-buy',
-      location: {
-        country: currentProperty.location.country,
-        city: currentProperty.location.city,
-        suburb: currentProperty.location.suburb,
-        streetAddress: '789 Nearby Avenue',
-      },
-      details: {
-        size: 250,
-        type: 'house',
-        bedrooms: 4,
-        bathrooms: 3,
-        parking: 2,
-        features: ['Garden', 'Modern Kitchen', 'Fireplace', 'Study'],
-        amenities: ['Security System', 'Garden', 'Parking', 'Storage']
-      },
-      financials: {
-        price: currentProperty.financials.price * 1.1, // 10% more
-        currency: currentProperty.financials.currency,
-        rentToBuyDeposit: currentProperty.financials.rentToBuyDeposit,
-        monthlyInstallment: currentProperty.financials.monthlyInstallment ? currentProperty.financials.monthlyInstallment * 1.1 : undefined,
-        rentCreditPercentage: currentProperty.financials.rentCreditPercentage
-      },
-      media: {
-        mainImage: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
-        images: [
-          'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&h=600&fit=crop'
-        ]
-      },
-      seller: {
-        id: 'seller-similar-2',
-        name: 'Family Homes Co',
-        isVerified: true,
-        contactInfo: {
-          email: 'sales@familyhomes.com'
-        }
-      },
-      status: 'active',
-      createdAt: new Date('2024-02-08'),
-      updatedAt: new Date('2024-02-08'),
-      views: 203,
-      savedBy: 12,
-      inquiries: 8
-    },
-    {
-      id: 'similar-3',
-      title: 'Townhouse in Same Suburb',
-      description: 'Beautiful townhouse with modern amenities in the same suburb.',
-      propertyType: 'townhouse',
-      listingType: 'rent-to-buy',
-      location: {
-        country: currentProperty.location.country,
-        city: currentProperty.location.city,
-        suburb: currentProperty.location.suburb,
-        streetAddress: '321 Suburb Lane',
-      },
-      details: {
-        size: 200,
-        type: 'townhouse',
-        bedrooms: 3,
-        bathrooms: 2,
-        parking: 2,
-        features: ['Garden', 'Garage', 'Modern Kitchen', 'Built-in Wardrobes'],
-        amenities: ['Security System', 'Garden', 'Parking', 'Storage']
-      },
-      financials: {
-        price: currentProperty.financials.price * 0.9, // 10% less
-        currency: currentProperty.financials.currency,
-        rentToBuyDeposit: currentProperty.financials.rentToBuyDeposit,
-        monthlyInstallment: currentProperty.financials.monthlyInstallment ? currentProperty.financials.monthlyInstallment * 0.9 : undefined,
-        rentCreditPercentage: currentProperty.financials.rentCreditPercentage
-      },
-      media: {
-        mainImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop',
-        images: [
-          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'
-        ]
-      },
-      seller: {
-        id: 'seller-similar-3',
-        name: 'Townhouse Properties',
-        isVerified: false,
-        contactInfo: {
-          email: 'info@townhouseproperties.com'
-        }
-      },
-      status: 'active',
-      createdAt: new Date('2024-02-05'),
-      updatedAt: new Date('2024-02-05'),
-      views: 134,
-      savedBy: 6,
-      inquiries: 3
-    }
-  ];
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -345,19 +237,31 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
         </Button>
       </div>
 
-             {/* Properties Grid - Reduced to 2 cards for better sizing */}
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-         {similarProperties.slice(0, 2).map((property, index) => (
-           <PropertyCard
-             key={property.id}
-             property={property}
-             index={index}
-           />
-         ))}
-       </div>
-
-      {/* No Similar Properties State */}
-      {similarProperties.length === 0 && (
+      {/* Properties Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="animate-pulse">
+              <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+              <div className="space-y-2 px-1">
+                <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                <div className="bg-gray-200 h-4 rounded w-1/2"></div>
+                <div className="bg-gray-200 h-4 rounded w-2/3"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : similarProperties.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {similarProperties.map((property, index) => (
+            <PropertyCard
+              key={property.id}
+              property={property}
+              index={index}
+            />
+          ))}
+        </div>
+      ) : (
         <Card>
           <CardContent className="p-12 text-center">
             <Home className="w-16 h-16 text-gray-300 mx-auto mb-4" />
