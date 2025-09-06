@@ -133,6 +133,22 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
     return allImages.filter((img, index, arr) => arr.indexOf(img) === index); // Remove duplicates
   }, [property.media]);
 
+  // Check if current image is a placeholder
+  const currentImage = images[currentImageIndex];
+  const isPlaceholder = currentImage === '/placeholder-property.jpg' || 
+                       currentImage?.includes('placeholder') ||
+                       !currentImage ||
+                       currentImage === '';
+
+  // Set initial loading state based on whether image is a placeholder
+  React.useEffect(() => {
+    if (isPlaceholder) {
+      setIsImageLoading(false);
+    } else {
+      setIsImageLoading(true);
+    }
+  }, [isPlaceholder]);
+
   // Property status
   const statusConfig = PROPERTY_STATUS_CONFIG[property.status as keyof typeof PROPERTY_STATUS_CONFIG] || PROPERTY_STATUS_CONFIG.active;
   const StatusIcon = statusConfig.icon;
@@ -227,32 +243,32 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white">
         {/* Image Carousel Section */}
         <div className="relative h-64 overflow-hidden">
-          {/* Loading Skeleton */}
-          {isImageLoading && (
+          {/* Loading Skeleton - only show if not a placeholder */}
+          {isImageLoading && !isPlaceholder && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
             </div>
           )}
 
           {/* Property Image */}
-          {!imageLoadErrors.has(images[currentImageIndex]) ? (
-            <Image
-              src={images[currentImageIndex]}
-              alt={property.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              onError={() => handleImageError(images[currentImageIndex])}
-              onLoad={handleImageLoad}
-              priority={index < 3}
-            />
-          ) : (
+          {isPlaceholder || imageLoadErrors.has(currentImage) ? (
             <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <Home className="w-12 h-12 mx-auto mb-2" />
                 <p className="text-sm">Image unavailable</p>
               </div>
             </div>
+          ) : (
+            <Image
+              src={currentImage}
+              alt={property.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              onError={() => handleImageError(currentImage)}
+              onLoad={handleImageLoad}
+              priority={index < 3}
+            />
           )}
 
           {/* Gradient Overlay */}
@@ -306,7 +322,7 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
           </div>
 
           {/* Image Navigation */}
-          {images.length > 1 && (
+          {images.length > 1 && !isPlaceholder && (
             <>
               <button
                 onClick={(e) => {

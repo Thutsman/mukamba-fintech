@@ -338,22 +338,31 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       transition={{ delay: index * 0.1 }}
                       className="relative w-12 h-8 rounded overflow-hidden"
                     >
-                      {imageLoadErrors.has(property.media.mainImage) ? (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <Home className="w-4 h-4 text-gray-400" />
-                        </div>
-                      ) : (
-                        <Image
-                          src={property.media.mainImage}
-                          alt={property.title}
-                          fill
-                          className="object-cover"
-                          sizes="48px"
-                          onError={() => {
-                            setImageLoadErrors(prev => new Set(prev).add(property.media.mainImage));
-                          }}
-                        />
-                      )}
+                      {(() => {
+                        const mainImage = property.media.mainImage;
+                        const isPlaceholder = mainImage === '/placeholder-property.jpg' || 
+                                             mainImage?.includes('placeholder') ||
+                                             !mainImage ||
+                                             mainImage === '';
+                        const hasImageError = imageLoadErrors.has(mainImage);
+                        
+                        return (isPlaceholder || hasImageError) ? (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <Home className="w-4 h-4 text-gray-400" />
+                          </div>
+                        ) : (
+                          <Image
+                            src={mainImage}
+                            alt={property.title}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                            onError={() => {
+                              setImageLoadErrors(prev => new Set(prev).add(mainImage));
+                            }}
+                          />
+                        );
+                      })()}
                     </motion.div>
                   ))}
                 </div>
@@ -391,6 +400,14 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
+    // Check if the current image is a placeholder or has failed to load
+    const currentImage = images[currentImageIndex];
+    const isPlaceholder = currentImage === '/placeholder-property.jpg' || 
+                         currentImage?.includes('placeholder') ||
+                         !currentImage ||
+                         currentImage === '';
+    const hasImageError = imageLoadErrors.has(currentImage);
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -404,7 +421,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
           {/* Image Carousel */}
           <div className="relative h-40 sm:h-48 overflow-hidden">
-            {imageLoadErrors.has(images[currentImageIndex]) ? (
+            {isPlaceholder || hasImageError ? (
               <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                 <div className="text-gray-400 text-center">
                   <Home className="w-8 h-8 mx-auto mb-2" />
@@ -413,20 +430,20 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               </div>
             ) : (
               <Image
-                src={images[currentImageIndex]}
+                src={currentImage}
                 alt={property.title}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 onError={() => {
-                  setImageLoadErrors(prev => new Set(prev).add(images[currentImageIndex]));
+                  setImageLoadErrors(prev => new Set(prev).add(currentImage));
                 }}
                 priority={index < 2} // Prioritize first 2 images
               />
             )}
             
             {/* Image Navigation */}
-            {images.length > 1 && (
+            {images.length > 1 && !isPlaceholder && (
               <>
                 <button
                   onClick={(e) => {

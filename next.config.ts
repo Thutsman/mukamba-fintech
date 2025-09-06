@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'kiptlccxjvbxcwspozwz.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   eslint: {
