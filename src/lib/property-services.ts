@@ -418,7 +418,8 @@ const searchProperties = (filters: PropertySearchFilters): Property[] => {
     
     // Price range filter
     if (filters.priceRange) {
-      if (property.financials.price < filters.priceRange.min || property.financials.price > filters.priceRange.max) return false;
+      if (filters.priceRange.min !== undefined && property.financials.price < filters.priceRange.min) return false;
+      if (filters.priceRange.max !== undefined && property.financials.price > filters.priceRange.max) return false;
     }
     
     // Location filter
