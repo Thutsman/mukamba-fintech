@@ -51,7 +51,6 @@ export const AdminListingIntegrationExample: React.FC<AdminListingIntegrationExa
           <PropertyListings 
             initialFilters={{ country: 'ZW' }}
             onPropertySelect={(property) => console.log('Selected property:', property)}
-            showFeatured={true}
             user={user}
           />
         </div>

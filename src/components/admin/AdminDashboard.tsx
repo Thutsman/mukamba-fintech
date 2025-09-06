@@ -26,7 +26,8 @@ import {
   FileText,
   Zap,
   Bell,
-  Menu
+  Menu,
+  ArrowLeft
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -346,6 +347,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   aria-label="Toggle navigation menu"
                 >
                   <Menu className="w-5 h-5 text-slate-700" />
+                </button>
+                <button
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 transition-colors duration-200 text-slate-700"
+                  onClick={onBackToUserView}
+                  aria-label="Back to home"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline text-sm font-medium">Back to Home</span>
                 </button>
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                   <div className="relative group">

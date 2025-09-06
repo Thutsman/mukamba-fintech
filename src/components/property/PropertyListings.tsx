@@ -63,13 +63,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PropertyListing, PropertySearchFilters, PropertyType } from '@/types/property';
 import { User } from '@/types/auth';
-import { searchProperties, getFeaturedProperties } from '@/lib/property-services';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 
 interface PropertyListingsProps {
   initialFilters?: PropertySearchFilters;
   onPropertySelect?: (property: PropertyListing) => void;
-  showFeatured?: boolean;
   user?: User;
   onSignUpPrompt?: () => void;
 }
@@ -82,7 +80,6 @@ const defaultFilters: PropertySearchFilters = {
 export const PropertyListings: React.FC<PropertyListingsProps> = ({
   initialFilters,
   onPropertySelect,
-  showFeatured = true,
   user,
   onSignUpPrompt
 }) => {
@@ -91,7 +88,6 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     initialFilters ? { ...defaultFilters, ...initialFilters } : defaultFilters
   );
   const [properties, setProperties] = React.useState<PropertyListing[]>([]);
-  const [featuredProperties, setFeaturedProperties] = React.useState<PropertyListing[]>([]);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -161,7 +157,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     }
   }, []); // Empty dependency array ensures this only runs once on mount
 
-  // Load properties from Supabase instead of mock data
+  // Load properties from Supabase only
   React.useEffect(() => {
     const loadProperties = async () => {
       setIsLoading(true);
@@ -170,9 +166,8 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         setProperties(supabaseProperties);
       } catch (error) {
         console.error('Error loading properties:', error);
-        // Fallback to mock data if Supabase fails
-        const results = searchProperties(filters);
-        setProperties(results);
+        // Don't fallback to mock data - just show empty state
+        setProperties([]);
       } finally {
         setIsLoading(false);
       }
@@ -181,29 +176,71 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     loadProperties();
   }, []); // Only run once on mount
 
-  // Load featured properties
-  React.useEffect(() => {
-    if (showFeatured) {
-      setFeaturedProperties(getFeaturedProperties(filters.country));
-    }
-  }, [showFeatured, filters.country]);
-
   // Debounced filter update to prevent excessive re-renders
   const updateFilter = React.useCallback((key: keyof PropertySearchFilters, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
   // Debounced filter update for price range to prevent excessive API calls
-  const updatePriceFilter = React.useCallback((key: 'min' | 'max', value: number | '') => {
+  const updatePriceFilter = React.useCallback((key: 'min' | 'max', value: number | undefined) => {
     setFilters(prev => ({
       ...prev,
       priceRange: {
         min: prev.priceRange?.min || 0,
-        max: prev.priceRange?.max || 999999999,
-        [key]: value === '' ? (key === 'min' ? 0 : 999999999) : value
+        max: prev.priceRange?.max,
+        [key]: value
       }
     }));
   }, []);
+
+  // Filter properties based on current filters
+  const filteredProperties = React.useMemo(() => {
+    return properties.filter(property => {
+      // Property type filter
+      if (filters.propertyType && filters.propertyType.length > 0) {
+        if (!filters.propertyType.includes(property.details.type)) {
+          return false;
+        }
+      }
+
+      // Price range filter
+      if (filters.priceRange) {
+        const price = property.financials.price;
+        if (filters.priceRange.min !== undefined && filters.priceRange.min > 0 && price < filters.priceRange.min) {
+          return false;
+        }
+        if (filters.priceRange.max !== undefined && price > filters.priceRange.max) {
+          return false;
+        }
+      }
+
+      // Bedrooms filter
+      if (filters.bedrooms !== undefined && filters.bedrooms !== null) {
+        if (property.details.bedrooms !== filters.bedrooms) {
+          return false;
+        }
+      }
+
+      // Listing type filter
+      if (filters.listingType) {
+        if (property.listingType !== filters.listingType) {
+          return false;
+        }
+      }
+
+      // Location filter
+      if (filters.location) {
+        if (filters.location.city && !property.location.city.toLowerCase().includes(filters.location.city.toLowerCase())) {
+          return false;
+        }
+        if (filters.location.suburb && !property.location.suburb.toLowerCase().includes(filters.location.suburb.toLowerCase())) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [properties, filters]);
 
   const clearFilters = () => {
     setFilters(defaultFilters);
@@ -473,109 +510,169 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
    
    PropertyCard.displayName = 'PropertyCard';
 
-  const FilterPanel: React.FC = () => (
-    <Card className="sticky top-4">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <SlidersHorizontal className="w-5 h-5 mr-2" />
-            Filters
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear All
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Property Type */}
-        <div className="space-y-2">
-          <Label>Property Type</Label>
+  const FilterPanel: React.FC = () => {
+    // Local state for input fields to prevent focus loss
+    const [minPrice, setMinPrice] = React.useState('');
+    const [maxPrice, setMaxPrice] = React.useState('');
+    const [bedrooms, setBedrooms] = React.useState('');
+
+    // Update local state when filters change
+    React.useEffect(() => {
+      setMinPrice(filters.priceRange?.min !== undefined ? filters.priceRange.min.toString() : '');
+      setMaxPrice(filters.priceRange?.max !== undefined ? filters.priceRange.max.toString() : '');
+      setBedrooms(filters.bedrooms?.toString() || '');
+    }, [filters.priceRange?.min, filters.priceRange?.max, filters.bedrooms]);
+
+    // Debounced update for price inputs
+    const updateMinPrice = React.useCallback(
+      React.useMemo(() => {
+        let timeoutId: NodeJS.Timeout;
+        return (value: string) => {
+          setMinPrice(value);
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            const numValue = value === '' ? undefined : Number(value);
+            updatePriceFilter('min', numValue);
+          }, 500);
+        };
+      }, [updatePriceFilter]),
+      [updatePriceFilter]
+    );
+
+    const updateMaxPrice = React.useCallback(
+      React.useMemo(() => {
+        let timeoutId: NodeJS.Timeout;
+        return (value: string) => {
+          setMaxPrice(value);
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            const numValue = value === '' ? undefined : Number(value);
+            updatePriceFilter('max', numValue);
+          }, 500);
+        };
+      }, [updatePriceFilter]),
+      [updatePriceFilter]
+    );
+
+    const updateBedrooms = React.useCallback(
+      React.useMemo(() => {
+        let timeoutId: NodeJS.Timeout;
+        return (value: string) => {
+          setBedrooms(value);
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            const numValue = value === '' ? undefined : Number(value);
+            updateFilter('bedrooms', numValue);
+          }, 500);
+        };
+      }, [updateFilter]),
+      [updateFilter]
+    );
+
+    return (
+      <Card className="sticky top-4">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center">
+              <SlidersHorizontal className="w-5 h-5 mr-2" />
+              Filters
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              Clear All
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Property Type */}
           <div className="space-y-2">
-            {['house', 'apartment', 'townhouse', 'land', 'commercial'].map(type => (
-              <div key={type} className="flex items-center space-x-2">
-                <Checkbox
-                  id={type}
-                  checked={filters.propertyType?.includes(type as PropertyType) || false}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      updateFilter('propertyType', [...(filters.propertyType || []), type]);
-                    } else {
-                      updateFilter('propertyType', (filters.propertyType || []).filter(t => t !== type));
-                    }
-                  }}
-                />
-                <Label htmlFor={type} className="capitalize text-sm">
-                  {type}
-                </Label>
-              </div>
-            ))}
+            <Label>Property Type</Label>
+            <div className="space-y-2">
+              {['house', 'apartment', 'townhouse', 'land', 'commercial'].map(type => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={type}
+                    checked={filters.propertyType?.includes(type as PropertyType) || false}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        updateFilter('propertyType', [...(filters.propertyType || []), type]);
+                      } else {
+                        updateFilter('propertyType', (filters.propertyType || []).filter(t => t !== type));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={type} className="capitalize text-sm">
+                    {type}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Price Range */}
-        <div className="space-y-2">
-          <Label>Price Range</Label>
-          <div className="grid grid-cols-2 gap-2">
+          {/* Price Range */}
+          <div className="space-y-2">
+            <Label>Price Range</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Min price"
+                type="number"
+                value={minPrice}
+                onChange={(e) => updateMinPrice(e.target.value)}
+              />
+              <Input
+                placeholder="Max price"
+                type="number"
+                value={maxPrice}
+                onChange={(e) => updateMaxPrice(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Bedrooms */}
+          <div className="space-y-2">
+            <Label>Bedrooms</Label>
             <Input
-              placeholder="Min"
+              placeholder="Number of bedrooms"
               type="number"
-              value={filters.priceRange?.min || ''}
-              onChange={(e) => updatePriceFilter('min', Number(e.target.value) || 0)}
-            />
-            <Input
-              placeholder="Max"
-              type="number"
-              value={filters.priceRange?.max || ''}
-              onChange={(e) => updatePriceFilter('max', Number(e.target.value) || 999999999)}
+              value={bedrooms}
+              onChange={(e) => updateBedrooms(e.target.value)}
             />
           </div>
-        </div>
 
-        {/* Bedrooms */}
-        <div className="space-y-2">
-          <Label>Bedrooms</Label>
-          <Input
-            placeholder="Number of bedrooms"
-            type="number"
-            value={filters.bedrooms || ''}
-            onChange={(e) => updateFilter('bedrooms', Number(e.target.value) || undefined)}
-          />
-        </div>
+          {/* Listing Type */}
+          <div className="space-y-2">
+            <Label>Listing Type</Label>
+            <Select value={filters.listingType || ''} onValueChange={(value) => updateFilter('listingType', value === 'all' ? undefined : value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="sale">For Sale</SelectItem>
+                <SelectItem value="rent-to-buy">Rent-to-Buy</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Listing Type */}
-        <div className="space-y-2">
-          <Label>Listing Type</Label>
-          <Select value={filters.listingType || ''} onValueChange={(value) => updateFilter('listingType', value === 'all' ? undefined : value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="All types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="sale">For Sale</SelectItem>
-              <SelectItem value="rent-to-buy">Rent-to-Buy</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Sort By */}
-        <div className="space-y-2">
-          <Label>Sort By</Label>
-          <Select value={filters.sortBy || ''} onValueChange={(value) => updateFilter('sortBy', value === 'default' ? 'date-newest' : value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sort by..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="date-newest">Newest First</SelectItem>
-              <SelectItem value="price-asc">Price: Low to High</SelectItem>
-              <SelectItem value="price-desc">Price: High to Low</SelectItem>
-              <SelectItem value="date-oldest">Oldest First</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
-  );
+          {/* Sort By */}
+          <div className="space-y-2">
+            <Label>Sort By</Label>
+            <Select value={filters.sortBy || ''} onValueChange={(value) => updateFilter('sortBy', value === 'default' ? 'date-newest' : value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sort by..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="date-newest">Newest First</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                <SelectItem value="date-oldest">Oldest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -598,10 +695,10 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               
               <div>
                 <h2 className="text-2xl font-bold text-slate-800">
-                  {showFeatured && properties.length === 0 ? 'Featured Properties' : 'Property Listings'}
+                  Property Listings
                 </h2>
                 <p className="text-slate-600">
-                  {properties.length} properties found
+                  {filteredProperties.length} properties found
                 </p>
               </div>
             </div>
@@ -694,32 +791,19 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                       </div>
                     ))}
                   </div>
-                ) : properties.length > 0 ? (
+                ) : filteredProperties.length > 0 ? (
                   <div className={`grid gap-4 sm:gap-6 ${
                     viewMode === 'grid' 
                       ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' 
                       : 'grid-cols-1'
                   }`}>
-                    {properties.map((property, index) => (
+                    {filteredProperties.map((property, index) => (
                       <PropertyCard
                         key={property.id}
                         property={property}
                         index={index}
                       />
                     ))}
-                  </div>
-                ) : showFeatured && featuredProperties.length > 0 ? (
-                  <div>
-                    <h3 className="text-xl font-semibold mb-4">Featured Properties</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                      {featuredProperties.map((property, index) => (
-                        <PropertyCard
-                          key={property.id}
-                          property={property}
-                          index={index}
-                        />
-                      ))}
-                    </div>
                   </div>
                 ) : (
                   <Card>

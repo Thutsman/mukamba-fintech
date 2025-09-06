@@ -73,8 +73,8 @@ export interface PropertySearchFilters {
   listingType?: ListingType;
   propertyType?: PropertyType[];
   priceRange?: {
-    min: number;
-    max: number;
+    min?: number;
+    max?: number;
   };
   location?: {
     city?: string;

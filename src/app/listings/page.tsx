@@ -18,7 +18,6 @@ export default function ListingsPage() {
         // Handle signup prompt
         console.log('Sign up prompt');
       }}
-      showFeatured={true}
     />
   );
 }
