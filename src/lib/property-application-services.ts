@@ -40,32 +40,49 @@ export async function createPropertyApplicationInSupabase(
       return 'mock-application-id';
     }
 
+    // Debug logging for features and amenities
+    console.log('createPropertyApplicationInSupabase received:');
+    console.log('Property listing details:', propertyListing.details);
+    console.log('Features:', propertyListing.details.features);
+    console.log('Amenities:', propertyListing.details.amenities);
+    console.log('Features type:', typeof propertyListing.details.features, Array.isArray(propertyListing.details.features));
+    console.log('Amenities type:', typeof propertyListing.details.amenities, Array.isArray(propertyListing.details.amenities));
+
+    // Debug the data being inserted into the database
+    const propertyInsertData = {
+      title: propertyListing.title,
+      description: propertyListing.description,
+      property_type: propertyListing.propertyType,
+      listing_type: propertyListing.listingType,
+      country: propertyListing.location.country,
+      city: propertyListing.location.city,
+      suburb: propertyListing.location.suburb,
+      street_address: propertyListing.location.streetAddress,
+      size_sqm: propertyListing.details.size,
+      bedrooms: propertyListing.details.bedrooms,
+      bathrooms: propertyListing.details.bathrooms,
+      parking_spaces: propertyListing.details.parking,
+      price: propertyListing.financials.price,
+      currency: propertyListing.financials.currency,
+      rent_to_buy_deposit: propertyListing.financials.rentToBuyDeposit,
+      monthly_installment: propertyListing.financials.monthlyInstallment,
+      payment_duration: propertyListing.financials.paymentDuration,
+      features: propertyListing.details.features,
+      amenities: propertyListing.details.amenities,
+      status: 'active',
+      seller_id: null,
+    };
+    
+    console.log('Data being inserted into properties table:');
+    console.log('Features being inserted:', propertyInsertData.features);
+    console.log('Amenities being inserted:', propertyInsertData.amenities);
+    console.log('Features type:', typeof propertyInsertData.features, Array.isArray(propertyInsertData.features));
+    console.log('Amenities type:', typeof propertyInsertData.amenities, Array.isArray(propertyInsertData.amenities));
+
     // First, create the property record
     const { data: propertyData, error: propertyError } = await supabase
       .from('properties')
-      .insert({
-        title: propertyListing.title,
-        description: propertyListing.description,
-        property_type: propertyListing.propertyType,
-        listing_type: propertyListing.listingType,
-        country: propertyListing.location.country,
-        city: propertyListing.location.city,
-        suburb: propertyListing.location.suburb,
-        street_address: propertyListing.location.streetAddress,
-        size_sqm: propertyListing.details.size,
-        bedrooms: propertyListing.details.bedrooms,
-        bathrooms: propertyListing.details.bathrooms,
-        parking_spaces: propertyListing.details.parking,
-        price: propertyListing.financials.price,
-        currency: propertyListing.financials.currency,
-        rent_to_buy_deposit: propertyListing.financials.rentToBuyDeposit,
-        monthly_installment: propertyListing.financials.monthlyInstallment,
-        payment_duration: propertyListing.financials.paymentDuration,
-        features: propertyListing.details.features,
-        amenities: propertyListing.details.amenities,
-        status: 'pending',
-        seller_id: null,
-      })
+      .insert([propertyInsertData])
       .select('id')
       .single();
 
@@ -101,7 +118,7 @@ export async function createPropertyApplicationInSupabase(
       .insert({
         property_id: propertyData.id,
         seller_id: null,
-        status: 'pending',
+        status: 'approved',
       })
       .select('id')
       .single();

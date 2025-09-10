@@ -92,7 +92,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
     resolver: zodResolver(adminListingSchema),
     defaultValues: {
       country,
-      listingType: 'rent-to-buy',
+      listingType: 'installment',
       propertyType: adminListing?.type === 'residential' ? 'house' : (adminListing?.type === 'commercial' ? 'commercial' : 'house'),
       currency: country === 'ZW' ? 'USD' : 'ZAR',
       features: [],
@@ -283,6 +283,13 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
     try {
       const formData = form.getValues();
       
+      // Debug logging for features and amenities
+      console.log('Final form data:', formData);
+      console.log('Features from form:', formData.features);
+      console.log('Amenities from form:', formData.amenities);
+      console.log('Features type:', typeof formData.features, Array.isArray(formData.features));
+      console.log('Amenities type:', typeof formData.amenities, Array.isArray(formData.amenities));
+      
       // Convert blob URLs back to files for upload
       const imageFiles = images.map((file, index) => {
         if (file instanceof File) {
@@ -315,6 +322,11 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
       // Extract successful image URLs
       const imageUrls = successfulUploads.map(result => result.url!);
       console.log(`${imageUrls.length} images uploaded successfully:`, imageUrls);
+      
+      // Debug the property application data before creation
+      console.log('Creating property application with data:');
+      console.log('Features for property application:', formData.features);
+      console.log('Amenities for property application:', formData.amenities);
       
       // Create property application instead of direct listing
       const propertyApplication = {
@@ -358,7 +370,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
             email: 'admin@mukamba.com',
           },
         },
-        status: 'pending' as const, // Set as pending for admin review
+        status: 'active' as const, // Admin-created properties are automatically active
         createdAt: new Date(),
         updatedAt: new Date(),
         views: 0,
@@ -528,12 +540,12 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                                className="grid grid-cols-2 gap-4 mt-2"
                              >
                                <div className="flex items-center space-x-2">
-                                 <RadioGroupItem value="rent-to-buy" id="rent-to-buy" />
-                                 <Label htmlFor="rent-to-buy" className="text-sm">Installments</Label>
+                                 <RadioGroupItem value="installment" id="installment" />
+                                 <Label htmlFor="installment" className="text-sm">Installments</Label>
                                </div>
                                <div className="flex items-center space-x-2">
                                  <RadioGroupItem value="sale" id="sale" />
-                                 <Label htmlFor="sale" className="text-sm">Direct Sale</Label>
+                                 <Label htmlFor="sale" className="text-sm">Cash Sale</Label>
                                </div>
                              </RadioGroup>
                           </div>
@@ -737,7 +749,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                           </div>
                         </div>
 
-                        {watchListingType === 'rent-to-buy' && (
+                        {watchListingType === 'installment' && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                               <Label htmlFor="rentToBuyDeposit" className="text-base font-medium text-slate-700 mb-2 block">
@@ -913,6 +925,8 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                         <div>Size: {form.watch('size') ? '✓' : '✗'}</div>
                         <div>Price: {form.watch('price') ? '✓' : '✗'}</div>
                         <div>Currency: {form.watch('currency') ? '✓' : '✗'}</div>
+                        <div>Features: {(form.watch('features') || []).length} items</div>
+                        <div>Amenities: {(form.watch('amenities') || []).length} items</div>
                       </div>
                       <button
                         type="button"

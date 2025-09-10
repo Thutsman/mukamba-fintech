@@ -22,10 +22,15 @@ export interface SupabaseProperty {
   size_sqm: number;
   bedrooms?: number;
   bathrooms?: number;
+  parking_spaces?: number;
   price: number;
   currency: string;
+  rent_to_buy_deposit?: number;
+  monthly_installment?: number;
+  payment_duration?: number;
   features: string[];
   amenities: string[];
+  status: 'draft' | 'pending' | 'active' | 'sold' | 'rented';
   created_at: string;
   updated_at: string;
 }
@@ -192,8 +197,8 @@ export const getPropertiesFromSupabase = async (): Promise<PropertyListing[]> =>
           type: prop.property_type as any,
           bedrooms: prop.bedrooms,
           bathrooms: prop.bathrooms,
-          features: [], // Database doesn't have these columns
-          amenities: [], // Database doesn't have these columns
+          features: prop.features || [],
+          amenities: prop.amenities || [],
         },
         financials: {
           price: prop.price,
@@ -212,7 +217,7 @@ export const getPropertiesFromSupabase = async (): Promise<PropertyListing[]> =>
             email: '',
           },
         },
-        status: 'active',
+        status: prop.status || 'active',
         createdAt: new Date(prop.created_at),
         updatedAt: new Date(prop.updated_at),
         views: 0,
@@ -270,6 +275,8 @@ export const createPropertyInSupabase = async (propertyData: any, imageFiles: Fi
         rent_to_buy_deposit: propertyData.financials.rentToBuyDeposit,
         monthly_installment: propertyData.financials.monthlyInstallment,
         payment_duration: propertyData.financials.paymentDuration,
+        features: propertyData.details.features || [],
+        amenities: propertyData.details.amenities || [],
         status: 'active'
       }])
       .select('id')
@@ -406,8 +413,8 @@ export const getPropertyByIdFromSupabase = async (propertyId: string): Promise<P
           type: property.property_type as any,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
-          features: [], // Database doesn't have these columns
-          amenities: [], // Database doesn't have these columns
+          features: property.features || [],
+          amenities: property.amenities || [],
         },
       financials: {
         price: property.price,
