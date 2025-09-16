@@ -63,6 +63,29 @@ import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { PropertyListing } from '@/types/property';
+
+// Local interface to ensure type compatibility
+interface LocalProperty {
+  id: string;
+  title: string;
+  location: {
+    city: string;
+    country: string;
+  };
+  financials: {
+    price: number;
+  };
+  details: {
+    bedrooms?: number;
+    bathrooms?: number;
+    size: number;
+  };
+  media?: {
+    mainImage?: string;
+    images?: string[];
+  };
+  status: 'active' | 'under_offer' | 'sold' | 'rented' | 'pending' | 'draft';
+}
 import { useRouter } from 'next/navigation';
 import { 
   type User as UserType,
@@ -411,14 +434,14 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const fetchLiveProperties = React.useCallback(async () => {
     try {
       setIsLoadingProperties(true);
-      const properties: PropertyListing[] = await getPropertiesFromSupabase();
+      const properties = await getPropertiesFromSupabase();
       
       // Filter for active and under_offer properties and limit to 3
       const activeProperties = properties
-        .filter((property: PropertyListing) => property.status === 'active' || property.status === 'under_offer')
+        .filter((property: LocalProperty) => property.status === 'active' || property.status === 'under_offer')
         .slice(0, 3);
       
-      const previewProperties = activeProperties.map(property => ({
+      const previewProperties = activeProperties.map((property: LocalProperty) => ({
         id: property.id,
         title: property.title,
         address: `${property.location.city}, ${property.location.country === 'SA' ? 'South Africa' : 'Zimbabwe'}`,
