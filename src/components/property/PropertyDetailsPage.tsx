@@ -53,6 +53,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PropertyListing } from '@/types/property';
 import { User } from '@/types/auth';
+
+// Local interface to ensure type compatibility for property status
+interface LocalPropertyWithStatus {
+  status: 'active' | 'under_offer' | 'sold' | 'rented' | 'pending' | 'draft';
+}
 import { useRouter } from 'next/navigation';
 import { PropertyGallery } from './PropertyGallery';
 import LocationMap from './LocationMap';
@@ -283,7 +288,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   // Helper functions for offer status
   const hasUserOffer = () => userOffer !== null;
   const hasAnyOffers = () => propertyOffers.length > 0;
-  const isPropertyUnderOffer = () => property.status === 'under_offer' || hasAnyOffers();
+  const isPropertyUnderOffer = () => (property as LocalPropertyWithStatus).status === 'under_offer' || hasAnyOffers();
   const canMakeOffer = () => user && !hasUserOffer() && accessLevel !== 'anonymous';
 
   // Offer status banner component
