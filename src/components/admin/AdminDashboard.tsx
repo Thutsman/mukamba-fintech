@@ -44,6 +44,7 @@ import { ListingsPage } from './ListingsPage';
 import { KYCPage } from './KYCPage';
 import { ReportsTab } from './ReportsTab';
 import PaymentTrackingTab from './PaymentTrackingTab';
+import { OffersPage } from './OffersPage';
 import type { AdminTab, AdminStats, AdminUser, AdminProperty, AdminListing, KYCVerification } from '@/types/admin';
 import { getPropertyListingsStats } from '@/lib/property-application-services';
 import { theme, getColor } from '@/lib/theme';
@@ -602,6 +603,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   // Here you would typically add the property to your PropertyListings component
                   // For now, we'll just log it
                   toast.success(`Property "${propertyListing.title}" added to listings successfully!`);
+                }}
+              />
+            </section>
+          )}
+
+          {activeTab === 'offers' && (
+            <section>
+              <OffersPage
+                onViewOffer={(offerId) => console.log('View offer:', offerId)}
+                onApproveOffer={(offerId) => {
+                  console.log('Approve offer:', offerId);
+                  toast.success('Offer approved successfully!');
+                }}
+                onRejectOffer={(offerId, reason) => {
+                  console.log('Reject offer:', offerId, reason);
+                  toast.success('Offer rejected successfully!');
                 }}
               />
             </section>

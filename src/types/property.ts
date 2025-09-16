@@ -60,7 +60,7 @@ export interface PropertyListing {
       email: string;
     };
   };
-  status: 'draft' | 'pending' | 'active' | 'sold' | 'rented';
+  status: 'draft' | 'pending' | 'active' | 'under_offer' | 'sold' | 'rented';
   createdAt: Date;
   updatedAt: Date;
   views: number;

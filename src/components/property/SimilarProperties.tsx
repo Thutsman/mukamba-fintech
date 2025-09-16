@@ -116,9 +116,14 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
           
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-            {property.listingType === 'rent-to-buy' && (
+            {property.listingType === 'installment' && (
               <Badge className="bg-green-500 text-white text-xs">
                 Installments
+              </Badge>
+            )}
+            {property.listingType === 'sale' && (
+              <Badge className="bg-blue-500 text-white text-xs">
+                Cash Sale
               </Badge>
             )}
             {property.seller.isVerified && (

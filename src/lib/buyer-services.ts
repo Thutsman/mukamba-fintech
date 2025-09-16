@@ -76,9 +76,28 @@ export const buyerServices = {
         return { success: false, error: error.message };
       }
 
-      // TODO: Integrate with actual SMS service
-      console.log(`OTP for ${phoneNumber}: ${otpCode}`);
+      // Send SMS via Supabase Edge Function
+      const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+        body: {
+          phoneNumber,
+          otpCode,
+          userId,
+          verificationSource
+        }
+      });
 
+      if (smsError) {
+        console.error('Error calling SMS function:', smsError);
+        const errorMessage = (smsError as any)?.message || JSON.stringify(smsError) || 'Unknown error during SMS function call';
+        return { success: false, error: `Failed to send SMS: ${errorMessage}` };
+      }
+
+      if (!smsResult?.success) {
+        console.error('SMS function returned error:', smsResult?.error);
+        return { success: false, error: smsResult?.error || 'Failed to send SMS' };
+      }
+
+      console.log(`SMS sent successfully to ${phoneNumber}. Message ID: ${smsResult.messageId}`);
       return { success: true };
     } catch (error: any) {
       console.error('Error in sendPhoneOTP:', error);

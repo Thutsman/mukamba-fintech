@@ -492,6 +492,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   Installments
                 </Badge>
               )}
+              {property.listingType === 'sale' && (
+                <Badge className="bg-blue-500 text-white text-xs">
+                  Cash Sale
+                </Badge>
+              )}
 
             </div>
 

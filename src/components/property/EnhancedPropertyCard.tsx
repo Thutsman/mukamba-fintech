@@ -161,11 +161,16 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
   // Financing options
   const financingOptions = React.useMemo(() => {
     const options = [];
-    if (property.financials.price <= 500000) options.push('Cash');
-    if (property.listingType === 'installment') options.push('Installment');
-    if (options.length === 2) options.push('Both');
+    
+    // Show payment type based on actual listing type
+    if (property.listingType === 'sale') {
+      options.push('Cash');
+    } else if (property.listingType === 'installment') {
+      options.push('Installment');
+    }
+    
     return options;
-  }, [property.financials.price, property.listingType]);
+  }, [property.listingType]);
 
 
 
