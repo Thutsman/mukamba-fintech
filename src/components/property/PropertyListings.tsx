@@ -63,6 +63,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PropertyListing, PropertySearchFilters, PropertyType } from '@/types/property';
 import { User } from '@/types/auth';
+
+// Local interface to ensure type compatibility for property status
+interface LocalPropertyWithStatus {
+  status: 'active' | 'under_offer' | 'sold' | 'rented' | 'pending' | 'draft';
+}
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 
 interface PropertyListingsProps {
@@ -380,7 +385,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 Available
               </Badge>
             )}
-            {property.status === 'under_offer' && (
+            {(property as LocalPropertyWithStatus).status === 'under_offer' && (
               <Badge className="bg-orange-500 text-white">
                 Under Offer
               </Badge>
