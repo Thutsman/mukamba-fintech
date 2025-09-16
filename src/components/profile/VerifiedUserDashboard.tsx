@@ -415,7 +415,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       
       // Filter for active and under_offer properties and limit to 3
       const activeProperties = properties
-        .filter(property => property.status === 'active' || property.status === 'under_offer')
+        .filter((property: PropertyListing) => property.status === 'active' || property.status === 'under_offer')
         .slice(0, 3);
       
       const previewProperties = activeProperties.map(property => ({
