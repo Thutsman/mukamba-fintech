@@ -62,6 +62,7 @@ import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
 import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
+import { PropertyListing } from '@/types/property';
 import { useRouter } from 'next/navigation';
 import { 
   type User as UserType,
@@ -410,7 +411,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const fetchLiveProperties = React.useCallback(async () => {
     try {
       setIsLoadingProperties(true);
-      const properties = await getPropertiesFromSupabase();
+      const properties: PropertyListing[] = await getPropertiesFromSupabase();
       
       // Filter for active and under_offer properties and limit to 3
       const activeProperties = properties
