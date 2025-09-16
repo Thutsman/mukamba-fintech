@@ -30,7 +30,7 @@ export interface SupabaseProperty {
   payment_duration?: number;
   features: string[];
   amenities: string[];
-  status: 'draft' | 'pending' | 'active' | 'sold' | 'rented';
+  status: 'draft' | 'pending' | 'active' | 'under_offer' | 'sold' | 'rented';
   created_at: string;
   updated_at: string;
 }
