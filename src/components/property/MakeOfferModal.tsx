@@ -1,24 +1,37 @@
 'use client';
 
+/**
+ * MakeOfferModal - Simplified buyer offer flow for Mukamba Gateway
+ * 
+ * Features:
+ * - Admin-defined financial terms validation
+ * - Simplified form with 5 key fields
+ * - Real-time validation against property requirements
+ * - Prepared for Ecocash payment integration
+ * - Mobile-responsive design with accessibility features
+ * 
+ * Next Steps for Ecocash Integration:
+ * - After form submission, trigger Ecocash payment modal for deposit
+ * - On payment success, mark offer as "Deposit Paid"
+ * - Store transaction in offer_payments table
+ */
+
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   DollarSign, 
-  Calendar, 
-  Clock,
-  User,
   CheckCircle,
   AlertCircle,
   Send,
   Loader2,
   TrendingUp,
   TrendingDown,
-  FileText,
-  Shield,
   Calculator,
-  Percent,
-  Banknote
+  Banknote,
+  Clock,
+  Info,
+  CreditCard
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -27,34 +40,26 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PropertyListing } from '@/types/property';
 import { User as UserType } from '@/types/auth';
+import { createPropertyOffer } from '@/lib/offer-services';
 
 interface MakeOfferModalProps {
   isOpen: boolean;
   onClose: () => void;
   property: PropertyListing;
   user: UserType;
-  onSubmit: (data: OfferData) => Promise<void>;
+  onSubmit?: (data: OfferData) => Promise<void>;
 }
 
 interface OfferData {
   offerPrice: number;
-  financingMethod: 'cash' | 'installment';
-  downPayment?: number;
-  monthlyPayment?: number;
-  offerExpiration: number; // days
-  conditions: string[];
-  additionalConditions: string;
-  earnestMoney: number;
-  closingDate: string;
-  contingencies: {
-    inspection: boolean;
-    financing: boolean;
-    appraisal: boolean;
-    saleOfCurrentHome: boolean;
-  };
+  depositOffered: number;
+  paymentMethod: 'cash' | 'installments';
+  estimatedTimeline: string;
+  additionalNotes: string;
 }
 
 export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
@@ -66,62 +71,110 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
 }) => {
   const [step, setStep] = React.useState<'form' | 'review' | 'submitting' | 'success'>('form');
   const [formData, setFormData] = React.useState<OfferData>({
-    offerPrice: property.financials.price,
-    financingMethod: 'cash',
-    offerExpiration: 7,
-    conditions: [],
-    additionalConditions: '',
-    earnestMoney: Math.round(property.financials.price * 0.02), // 2% default
-    closingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-    contingencies: {
-      inspection: true,
-      financing: false,
-      appraisal: false,
-      saleOfCurrentHome: false
-    }
+    offerPrice: 0, // Start with 0, let user input their own amount
+    depositOffered: 0, // Start with 0, let user input their own amount
+    paymentMethod: 'cash',
+    estimatedTimeline: '', // Start empty, let user input their own timeline
+    additionalNotes: ''
   });
   const [isLoading, setIsLoading] = React.useState(false);
+  const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
 
-  // Calculate monthly payment for installment
-  React.useEffect(() => {
-    if (formData.financingMethod === 'installment' && formData.downPayment) {
-      const remainingAmount = formData.offerPrice - formData.downPayment;
-      const monthlyPayment = Math.round(remainingAmount / 12); // Simple 12-month calculation
-      setFormData(prev => ({ ...prev, monthlyPayment }));
+  // Validation function
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Validate that offer price is provided
+    if (formData.offerPrice <= 0) {
+      errors.offerPrice = 'Please enter an offer price';
     }
-  }, [formData.financingMethod, formData.downPayment, formData.offerPrice]);
+
+    // Only validate deposit and timeline for installments
+    if (formData.paymentMethod === 'installments') {
+      // Validate deposit against required deposit
+      if (property.financials.rentToBuyDeposit && formData.depositOffered < property.financials.rentToBuyDeposit) {
+        errors.depositOffered = `Deposit must be at least ${formatCurrency(property.financials.rentToBuyDeposit)}`;
+      }
+
+      // Validate that deposit is provided
+      if (formData.depositOffered <= 0) {
+        errors.depositOffered = 'Please enter a deposit amount';
+      }
+
+      // Validate that timeline is provided
+      if (!formData.estimatedTimeline) {
+        errors.estimatedTimeline = 'Please enter an estimated completion timeline';
+      }
+
+      // Validate timeline against payment duration
+      if (property.financials.paymentDuration) {
+        const timelineMonths = getTimelineMonths(formData.estimatedTimeline);
+        if (timelineMonths > property.financials.paymentDuration) {
+          errors.estimatedTimeline = `Timeline cannot exceed ${property.financials.paymentDuration} months`;
+        }
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Helper function to get timeline in months
+  const getTimelineMonths = (timeline: string): number => {
+    switch (timeline) {
+      case '1_month': return 1;
+      case '3_months': return 3;
+      case '6_months': return 6;
+      case '9_months': return 9;
+      case '12_months': return 12;
+      case 'ready_to_pay_in_full': return 0;
+      default: return 0;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (validateForm()) {
     setStep('review');
+    }
   };
 
   const handleConfirmOffer = async () => {
+    if (!validateForm()) return;
+    
     setIsLoading(true);
     setStep('submitting');
     
     try {
-      await onSubmit(formData);
-      setStep('success');
-      setTimeout(() => {
-        onClose();
-        setStep('form');
-        setFormData({
-          offerPrice: property.financials.price,
-          financingMethod: 'cash',
-          offerExpiration: 7,
-          conditions: [],
-          additionalConditions: '',
-          earnestMoney: Math.round(property.financials.price * 0.02),
-          closingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          contingencies: {
-            inspection: true,
-            financing: false,
-            appraisal: false,
-            saleOfCurrentHome: false
-          }
-        });
-      }, 3000);
+      // Prepare offer data with appropriate defaults for cash payments
+      const offerData = {
+        property_id: property.id,
+        buyer_id: user.id,
+        // seller_id is optional for admin-listed properties
+        offer_price: formData.offerPrice,
+        deposit_amount: formData.paymentMethod === 'cash' ? formData.offerPrice : formData.depositOffered,
+        payment_method: formData.paymentMethod,
+        estimated_timeline: formData.paymentMethod === 'cash' ? 'ready_to_pay_in_full' : formData.estimatedTimeline,
+        additional_notes: formData.additionalNotes
+      };
+
+      // Submit to property_offers table
+      const offerId = await createPropertyOffer(offerData);
+
+      if (offerId) {
+        // Call custom onSubmit if provided
+        if (onSubmit) {
+          await onSubmit(formData);
+        }
+        
+        setStep('success');
+        setTimeout(() => {
+          onClose();
+          resetForm();
+        }, 3000);
+      } else {
+        throw new Error('Failed to create offer');
+      }
     } catch (error) {
       console.error('Failed to submit offer:', error);
       setStep('review');
@@ -130,25 +183,22 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
     }
   };
 
+  const resetForm = () => {
+    setStep('form');
+    setFormData({
+      offerPrice: 0,
+      depositOffered: 0,
+      paymentMethod: 'cash',
+      estimatedTimeline: '',
+      additionalNotes: ''
+    });
+    setValidationErrors({});
+  };
+
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setStep('form');
-      setFormData({
-        offerPrice: property.financials.price,
-        financingMethod: 'cash',
-        offerExpiration: 7,
-        conditions: [],
-        additionalConditions: '',
-        earnestMoney: Math.round(property.financials.price * 0.02),
-        closingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        contingencies: {
-          inspection: true,
-          financing: false,
-          appraisal: false,
-          saleOfCurrentHome: false
-        }
-      });
+      resetForm();
     }
   };
 
@@ -167,12 +217,13 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
 
   return (
     <AnimatePresence mode="wait">
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white rounded-lg shadow-2xl"
+          className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white rounded-lg shadow-2xl mx-4 sm:mx-0"
+          onClick={(e) => e.stopPropagation()}
         >
           <Card className="border-0">
             <CardHeader className="text-center pb-4">
@@ -207,6 +258,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
 
             <CardContent className="px-6 pb-6 max-h-[70vh] overflow-y-auto">
               {step === 'form' && (
+                <TooltipProvider>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Property Info */}
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -229,11 +281,19 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       <Input
                         id="offerPrice"
                         type="number"
-                        value={formData.offerPrice}
-                        onChange={(e) => setFormData(prev => ({ ...prev, offerPrice: Number(e.target.value) }))}
-                        className="text-lg font-semibold pr-20"
+                          value={formData.offerPrice || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              offerPrice: value === '' ? 0 : Number(value) 
+                            }));
+                          }}
+                          className="text-lg font-semibold pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                         required
                         min={1}
+                          placeholder="Enter your offer price"
+                          aria-describedby="offer-price-help"
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                         {property.financials.currency}
@@ -241,6 +301,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     </div>
                     
                     {/* Price comparison */}
+                      {formData.offerPrice > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Price difference:</span>
                       <div className={`flex items-center ${
@@ -255,17 +316,74 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                         {formatCurrency(Math.abs(priceDifference))} ({priceDifferencePercent.toFixed(1)}%)
                       </div>
                     </div>
+                      )}
+                      {validationErrors.offerPrice && (
+                        <p className="text-xs text-red-600 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {validationErrors.offerPrice}
+                        </p>
+                      )}
                   </div>
 
-                  {/* Financing Method */}
+                    {/* Deposit Offered - Only show for installments */}
+                    {formData.paymentMethod === 'installments' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="depositOffered" className="text-base font-medium">Deposit Offered</Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="w-4 h-4 text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>This shows your commitment to purchase. Must match or exceed the required deposit.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="depositOffered"
+                            type="number"
+                            value={formData.depositOffered || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                depositOffered: value === '' ? 0 : Number(value) 
+                              }));
+                            }}
+                            className="pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            required
+                            min={0}
+                            placeholder="Enter deposit amount"
+                            aria-describedby="deposit-help"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            {property.financials.currency}
+                          </div>
+                        </div>
+                        {property.financials.rentToBuyDeposit && (
+                          <p className="text-xs text-gray-500">
+                            Required deposit: {formatCurrency(property.financials.rentToBuyDeposit)}
+                          </p>
+                        )}
+                        {validationErrors.depositOffered && (
+                          <p className="text-xs text-red-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {validationErrors.depositOffered}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Payment Method */}
                   <div className="space-y-3">
-                    <Label className="text-base font-medium">Financing Method</Label>
+                      <Label className="text-base font-medium">How will you pay?</Label>
                     <RadioGroup
-                      value={formData.financingMethod}
-                      onValueChange={(value: OfferData['financingMethod']) => 
-                        setFormData(prev => ({ ...prev, financingMethod: value }))
+                        value={formData.paymentMethod}
+                        onValueChange={(value: OfferData['paymentMethod']) => 
+                          setFormData(prev => ({ ...prev, paymentMethod: value }))
                       }
-                      className="grid grid-cols-2 gap-3"
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                     >
                       <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                         <RadioGroupItem value="cash" id="cash" />
@@ -277,161 +395,77 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="installment" id="installment" />
-                        <Label htmlFor="installment" className="cursor-pointer">
+                          <RadioGroupItem value="installments" id="installments" />
+                          <Label htmlFor="installments" className="cursor-pointer">
                           <div className="flex items-center">
-                            <Calculator className="w-4 h-4 mr-2" />
-                            Installment
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Installments
                           </div>
                         </Label>
                       </div>
                     </RadioGroup>
                   </div>
 
-                  {/* Down Payment (for installment) */}
-                  {formData.financingMethod === 'installment' && (
-                    <div className="space-y-3">
-                      <Label htmlFor="downPayment" className="text-base font-medium">Down Payment</Label>
-                      <div className="relative">
-                        <Input
-                          id="downPayment"
-                          type="number"
-                          value={formData.downPayment || ''}
-                          onChange={(e) => setFormData(prev => ({ ...prev, downPayment: Number(e.target.value) }))}
-                          className="pr-20"
-                          placeholder="Enter down payment amount"
-                          required
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                          {property.financials.currency}
+                    {/* Estimated Completion Timeline - Only show for installments */}
+                    {formData.paymentMethod === 'installments' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="estimatedTimeline" className="text-base font-medium">Estimated Completion Timeline</Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="w-4 h-4 text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>How long do you expect to complete full payment? Enter number of months or "0" for ready to pay in full.</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
-                      </div>
-                      {formData.downPayment && (
-                        <div className="text-sm text-gray-600">
-                          Monthly payment: {formatCurrency(formData.monthlyPayment || 0)} for 12 months
+                        <div className="relative">
+                          <Input
+                            id="estimatedTimeline"
+                            type="number"
+                            value={formData.estimatedTimeline === 'ready_to_pay_in_full' ? '0' : (formData.estimatedTimeline.replace('_months', '') || '')}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === '') {
+                                setFormData(prev => ({ ...prev, estimatedTimeline: '' }));
+                              } else if (value === '0') {
+                                setFormData(prev => ({ ...prev, estimatedTimeline: 'ready_to_pay_in_full' }));
+                              } else {
+                                setFormData(prev => ({ ...prev, estimatedTimeline: `${value}_months` }));
+                              }
+                            }}
+                            className="pr-16 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            placeholder="Enter number of months (0 for ready to pay in full)"
+                            min={0}
+                            aria-describedby="timeline-help"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                            months
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Offer Expiration */}
-                  <div className="space-y-3">
-                    <Label htmlFor="offerExpiration" className="text-base font-medium">Offer Expires In</Label>
-                    <select
-                      id="offerExpiration"
-                      value={formData.offerExpiration}
-                      onChange={(e) => setFormData(prev => ({ ...prev, offerExpiration: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    >
-                      <option value={1}>1 day</option>
-                      <option value={3}>3 days</option>
-                      <option value={7}>7 days</option>
-                      <option value={14}>14 days</option>
-                      <option value={30}>30 days</option>
-                    </select>
-                  </div>
-
-                  {/* Earnest Money */}
-                  <div className="space-y-3">
-                    <Label htmlFor="earnestMoney" className="text-base font-medium">Earnest Money Deposit</Label>
-                    <div className="relative">
-                      <Input
-                        id="earnestMoney"
-                        type="number"
-                        value={formData.earnestMoney}
-                        onChange={(e) => setFormData(prev => ({ ...prev, earnestMoney: Number(e.target.value) }))}
-                        className="pr-20"
-                        required
-                      />
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                        {property.financials.currency}
+                        {property.financials.paymentDuration && (
+                          <p className="text-xs text-gray-500">
+                            Maximum allowed: {property.financials.paymentDuration} months
+                          </p>
+                        )}
+                        {validationErrors.estimatedTimeline && (
+                          <p className="text-xs text-red-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {validationErrors.estimatedTimeline}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Typically 1-3% of the offer price. This shows your serious intent to purchase.
-                    </p>
-                  </div>
+                    )}
 
-                  {/* Closing Date */}
+                    {/* Additional Notes */}
                   <div className="space-y-3">
-                    <Label htmlFor="closingDate" className="text-base font-medium">Preferred Closing Date</Label>
-                    <Input
-                      id="closingDate"
-                      type="date"
-                      value={formData.closingDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, closingDate: e.target.value }))}
-                      min={new Date().toISOString().split('T')[0]}
-                      required
-                    />
-                  </div>
-
-                  {/* Contingencies */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">Contingencies</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="inspection"
-                          checked={formData.contingencies.inspection}
-                          onCheckedChange={(checked) => 
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              contingencies: { ...prev.contingencies, inspection: checked as boolean }
-                            }))
-                          }
-                        />
-                        <Label htmlFor="inspection" className="cursor-pointer">Home Inspection</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="financing"
-                          checked={formData.contingencies.financing}
-                          onCheckedChange={(checked) => 
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              contingencies: { ...prev.contingencies, financing: checked as boolean }
-                            }))
-                          }
-                        />
-                        <Label htmlFor="financing" className="cursor-pointer">Financing Approval</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="appraisal"
-                          checked={formData.contingencies.appraisal}
-                          onCheckedChange={(checked) => 
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              contingencies: { ...prev.contingencies, appraisal: checked as boolean }
-                            }))
-                          }
-                        />
-                        <Label htmlFor="appraisal" className="cursor-pointer">Appraisal</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="saleOfCurrentHome"
-                          checked={formData.contingencies.saleOfCurrentHome}
-                          onCheckedChange={(checked) => 
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              contingencies: { ...prev.contingencies, saleOfCurrentHome: checked as boolean }
-                            }))
-                          }
-                        />
-                        <Label htmlFor="saleOfCurrentHome" className="cursor-pointer">Sale of Current Home</Label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional Conditions */}
-                  <div className="space-y-3">
-                    <Label htmlFor="additionalConditions" className="text-base font-medium">Additional Conditions or Notes</Label>
+                      <Label htmlFor="additionalNotes" className="text-base font-medium">Message to Seller (optional)</Label>
                     <Textarea
-                      id="additionalConditions"
-                      value={formData.additionalConditions}
-                      onChange={(e) => setFormData(prev => ({ ...prev, additionalConditions: e.target.value }))}
-                      placeholder="Any additional conditions, requests, or notes for the seller..."
+                        id="additionalNotes"
+                        value={formData.additionalNotes}
+                        onChange={(e) => setFormData(prev => ({ ...prev, additionalNotes: e.target.value }))}
+                        placeholder="Any additional message or notes for the seller..."
                       rows={3}
                     />
                   </div>
@@ -456,6 +490,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     </Button>
                   </div>
                 </form>
+                </TooltipProvider>
               )}
 
               {step === 'review' && (
@@ -469,40 +504,86 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                         <div className="font-semibold text-lg">{formatCurrency(formData.offerPrice)}</div>
                       </div>
                       <div>
-                        <span className="text-gray-600">Financing:</span>
-                        <div className="font-semibold capitalize">{formData.financingMethod.replace('_', ' ')}</div>
+                        <span className="text-gray-600">Payment Method:</span>
+                        <div className="font-semibold capitalize">{formData.paymentMethod}</div>
                       </div>
-                      <div>
-                        <span className="text-gray-600">Earnest Money:</span>
-                        <div className="font-semibold">{formatCurrency(formData.earnestMoney)}</div>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Closing Date:</span>
-                        <div className="font-semibold">{new Date(formData.closingDate).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contingencies Summary */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-800 mb-3">Contingencies</h3>
-                    <div className="space-y-1">
-                      {Object.entries(formData.contingencies).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                          <span className={`text-sm font-medium ${value ? 'text-green-600' : 'text-gray-500'}`}>
-                            {value ? 'Yes' : 'No'}
-                          </span>
+                      {formData.paymentMethod === 'installments' && (
+                        <>
+                          <div>
+                            <span className="text-gray-600">Deposit Offered:</span>
+                            <div className="font-semibold">{formatCurrency(formData.depositOffered)}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Timeline:</span>
+                            <div className="font-semibold">
+                              {formData.estimatedTimeline === 'ready_to_pay_in_full' 
+                                ? 'Ready to pay in full' 
+                                : `${formData.estimatedTimeline.replace('_months', '')} months`
+                              }
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      {formData.paymentMethod === 'cash' && (
+                        <div>
+                          <span className="text-gray-600">Payment Type:</span>
+                          <div className="font-semibold">Full payment upfront</div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
 
-                  {/* Additional Conditions */}
-                  {formData.additionalConditions && (
+                  {/* Payment Details */}
+                  {formData.paymentMethod === 'installments' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-blue-800 mb-3">Payment Plan</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Deposit:</span>
+                          <span className="font-medium">{formatCurrency(formData.depositOffered)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Remaining Amount:</span>
+                          <span className="font-medium">{formatCurrency(formData.offerPrice - formData.depositOffered)}</span>
+                        </div>
+                        {formData.estimatedTimeline !== 'ready_to_pay_in_full' && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Monthly Payment:</span>
+                            <span className="font-medium">
+                              {formatCurrency((formData.offerPrice - formData.depositOffered) / getTimelineMonths(formData.estimatedTimeline))}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cash Payment Details */}
+                  {formData.paymentMethod === 'cash' && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-blue-800 mb-3">Cash Payment Details</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Total Amount:</span>
+                          <span className="font-medium">{formatCurrency(formData.offerPrice)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Payment Type:</span>
+                          <span className="font-medium">Full payment upfront</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Timeline:</span>
+                          <span className="font-medium">Immediate payment</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Notes */}
+                  {formData.additionalNotes && (
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-2">Additional Conditions</h3>
-                      <p className="text-sm text-gray-700">{formData.additionalConditions}</p>
+                      <h3 className="font-semibold text-gray-800 mb-2">Message to Seller</h3>
+                      <p className="text-sm text-gray-700">{formData.additionalNotes}</p>
                     </div>
                   )}
 
@@ -559,7 +640,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                   <div>
                     <h3 className="font-semibold text-gray-800">Offer Submitted Successfully!</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Your offer has been sent to the seller. You'll receive a response within {formData.offerExpiration} days.
+                      Your offer has been sent to the seller. You'll receive a response soon.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Next step: Complete your deposit payment via Ecocash to secure your offer.
                     </p>
                   </div>
                 </div>

@@ -33,6 +33,8 @@ interface PropertyActionsProps {
   onSignUpPrompt: () => void;
   onPhoneVerification: () => void;
   isFavorite: boolean;
+  hasUserOffer?: boolean;
+  canMakeOffer?: boolean;
 }
 
 export const PropertyActions: React.FC<PropertyActionsProps> = ({
@@ -44,7 +46,9 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
   onAddToFavorites,
   onSignUpPrompt,
   onPhoneVerification,
-  isFavorite
+  isFavorite,
+  hasUserOffer = false,
+  canMakeOffer = true
 }) => {
   // Determine user's access level based on KYC
   const getAccessLevel = () => {
@@ -59,8 +63,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
 
   const accessLevel = getAccessLevel();
 
-  // Check if user can make offers and contact seller
-  const canMakeOffer = accessLevel === 'phone' || accessLevel === 'identity' || accessLevel === 'financial';
+  // Check if user can contact seller
   const canContactSeller = accessLevel === 'phone' || accessLevel === 'identity' || accessLevel === 'financial';
 
   // Check if user needs phone verification for any action
@@ -118,20 +121,22 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
         {/* Make Offer - Only show if user can make offers or is not logged in */}
         {(!user || canMakeOffer) && (
           <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: hasUserOffer ? 1 : 1.02 }}
+            whileTap={{ scale: hasUserOffer ? 1 : 0.98 }}
           >
             <Button
-              onClick={canMakeOffer ? onMakeOffer : onSignUpPrompt}
+              onClick={hasUserOffer ? undefined : (canMakeOffer ? onMakeOffer : onSignUpPrompt)}
               className={`w-full h-14 font-semibold transition-all duration-200 ${
-                canMakeOffer 
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
-                  : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
+                hasUserOffer
+                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed shadow-md'
+                  : canMakeOffer 
+                    ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
+                    : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
               } text-white border-0 text-base`}
-              disabled={!user}
+              disabled={!user || hasUserOffer}
             >
               <DollarSign className="w-5 h-5 mr-3" />
-              {canMakeOffer ? 'Make Offer' : 'Sign Up to Offer'}
+              {hasUserOffer ? 'Offer Submitted' : (canMakeOffer ? 'Make Offer' : 'Sign Up to Offer')}
             </Button>
           </motion.div>
         )}

@@ -359,9 +359,14 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            {property.listingType === 'rent-to-buy' && (
+            {property.listingType === 'installment' && (
               <Badge className="bg-green-500 text-white">
                 Installments
+              </Badge>
+            )}
+            {property.listingType === 'sale' && (
+              <Badge className="bg-blue-500 text-white">
+                Cash Sale
               </Badge>
             )}
             {property.seller.isVerified && (
@@ -373,6 +378,11 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             {property.status === 'active' && (
               <Badge className="bg-emerald-500 text-white">
                 Available
+              </Badge>
+            )}
+            {property.status === 'under_offer' && (
+              <Badge className="bg-orange-500 text-white">
+                Under Offer
               </Badge>
             )}
           </div>

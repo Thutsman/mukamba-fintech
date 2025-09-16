@@ -57,7 +57,12 @@ import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { ApplicationForm, ApplicationStatus, ApplicationHistory } from '@/components/applications';
 import { ApplicationStatus as AppStatus } from '@/components/applications/ApplicationForm';
 import { BuyerMessaging } from '@/components/messaging';
+import { BuyerOffers } from './BuyerOffers';
+import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
+import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
+import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
+import { useRouter } from 'next/navigation';
 import { 
   type User as UserType,
   type FinancialProfile,
@@ -346,13 +351,20 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   onStartNewApplication,
   onViewMarketInsights
 }) => {
+  const router = useRouter();
   const isVerified = isFullyVerified(user);
   const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'searches' | 'saved' | 'applications' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'searches' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
   const [showPropertySearch, setShowPropertySearch] = React.useState(false);
   const [showPropertyGrid, setShowPropertyGrid] = React.useState(false);
+  const [showPropertyListings, setShowPropertyListings] = React.useState(false);
+  const [showPropertyDetails, setShowPropertyDetails] = React.useState(false);
+  const [showMakeOfferModal, setShowMakeOfferModal] = React.useState(false);
+  const [selectedProperty, setSelectedProperty] = React.useState<any>(null);
   const [showMobileNav, setShowMobileNav] = React.useState(false);
+  const [showOfferDetailsModal, setShowOfferDetailsModal] = React.useState(false);
+  const [selectedOffer, setSelectedOffer] = React.useState<any>(null);
   
   // Application management states
   const [showApplicationForm, setShowApplicationForm] = React.useState(false);
@@ -373,11 +385,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     budgetApproved: number;
   }
   interface RecentActivityItem { text: string; time: string }
-  interface PreviewProperty { id: string; title: string; address: string; price: number; beds: number; baths: number; area: number; imageUrl?: string }
+  interface PreviewProperty { id: string; title: string; address: string; price: number; beds: number; baths: number; area: number; imageUrl?: string; status?: string }
 
   const stats: BuyerStats = {
     savedCount: 8,
-    activeApps: 2,
+    activeApps: 2, // This will show active offers count
     viewsThisMonth: 745,
     viewsGrowthPct: 15,
     budgetApproved: 2500000,
@@ -385,33 +397,71 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   const recentActivities: RecentActivityItem[] = [
     { text: 'Property viewed: 3BR House in Sandton', time: '2 hours ago' },
-    { text: 'Application submitted for property in Rosebank', time: '5 hours ago' },
+    { text: 'Offer submitted for property in Rosebank', time: '5 hours ago' },
     { text: 'New property matching your criteria available', time: '1 day ago' },
     { text: 'Financing pre-approval updated', time: '2 days ago' },
   ];
 
-  // Use centralized property data for consistency
-  const previews: PreviewProperty[] = React.useMemo(() => {
-    const recentProperties = getRecentlyViewedProperties();
-    const featuredProperties = getFeaturedProperties(3);
-    
-    // Combine and take the first 3 properties
-    const allProperties = [...recentProperties, ...featuredProperties];
-    const uniqueProperties = allProperties.filter((property, index, self) => 
-      index === self.findIndex(p => p.id === property.id)
-    );
-    
-    return uniqueProperties.slice(0, 3).map(property => ({
-      id: property.id,
-      title: property.title,
-      address: `${property.city}, ${property.country === 'SA' ? 'South Africa' : 'Zimbabwe'}`,
-      price: property.price,
-      beds: property.bedrooms,
-      baths: property.bathrooms,
-      area: property.area,
-      imageUrl: property.imageUrl
-    }));
+  // State for live properties
+  const [liveProperties, setLiveProperties] = React.useState<PreviewProperty[]>([]);
+  const [isLoadingProperties, setIsLoadingProperties] = React.useState(true);
+
+  // Fetch live properties from database
+  const fetchLiveProperties = React.useCallback(async () => {
+    try {
+      setIsLoadingProperties(true);
+      const properties = await getPropertiesFromSupabase();
+      
+      // Filter for active and under_offer properties and limit to 3
+      const activeProperties = properties
+        .filter(property => property.status === 'active' || property.status === 'under_offer')
+        .slice(0, 3);
+      
+      const previewProperties = activeProperties.map(property => ({
+        id: property.id,
+        title: property.title,
+        address: `${property.location.city}, ${property.location.country === 'SA' ? 'South Africa' : 'Zimbabwe'}`,
+        price: property.financials.price,
+        beds: property.details.bedrooms || 0,
+        baths: property.details.bathrooms || 0,
+        area: property.details.size,
+        imageUrl: property.media?.mainImage || property.media?.images?.[0] || '',
+        status: property.status
+      }));
+      
+      setLiveProperties(previewProperties);
+    } catch (error) {
+      console.error('Error fetching live properties:', error);
+      // Fallback to mock data if live data fails
+      const recentProperties = getRecentlyViewedProperties();
+      const featuredProperties = getFeaturedProperties(3);
+      const allProperties = [...recentProperties, ...featuredProperties];
+      const uniqueProperties = allProperties.filter((property, index, self) => 
+        index === self.findIndex(p => p.id === property.id)
+      );
+      
+        setLiveProperties(uniqueProperties.slice(0, 3).map(property => ({
+          id: property.id,
+          title: property.title,
+          address: `${property.city}, ${property.country === 'SA' ? 'South Africa' : 'Zimbabwe'}`,
+          price: property.price,
+          beds: property.bedrooms || 0,
+          baths: property.bathrooms || 0,
+          area: property.area,
+          imageUrl: property.imageUrl || '',
+          status: 'active' // Default status for mock data
+        })));
+    } finally {
+      setIsLoadingProperties(false);
+    }
   }, []);
+
+  React.useEffect(() => {
+    fetchLiveProperties();
+  }, [fetchLiveProperties]);
+
+  // Use live properties for previews
+  const previews: PreviewProperty[] = liveProperties;
 
   if (!isVerified) {
     return null; // This component is only for verified users
@@ -420,12 +470,129 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const handleBackToDashboard = () => {
     setShowPropertySearch(false);
     setShowPropertyGrid(false);
+    setShowPropertyListings(false);
+    setShowPropertyDetails(false);
+    setShowMakeOfferModal(false);
+    setSelectedProperty(null);
     setActiveSection('overview');
   };
 
   const handleSaveProperty = (propertyId: string) => {
     // Mock save property functionality
     console.log('Saving property:', propertyId);
+  };
+
+  // Helper function to generate a UUID
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+  const handleViewPropertyDetails = (previewProperty: any) => {
+    // Convert preview property to full PropertyListing format
+    const propertyListing = {
+      id: previewProperty.id || generateUUID(), // Ensure we have a valid ID
+      title: previewProperty.title,
+      description: `Property located in ${previewProperty.address}`,
+      propertyType: 'house' as const,
+      listingType: 'rent-to-buy' as const,
+      location: {
+        country: previewProperty.address.includes('South Africa') ? 'SA' as const : 'ZW' as const,
+        city: previewProperty.address.split(',')[1]?.trim() || 'Unknown',
+        suburb: previewProperty.address.split(',')[0]?.trim() || 'Unknown',
+        streetAddress: previewProperty.address
+      },
+      details: {
+        size: previewProperty.area,
+        type: 'house' as const,
+        bedrooms: previewProperty.beds,
+        bathrooms: previewProperty.baths,
+        parking: 1,
+        features: ['Modern Design', 'Well Maintained'],
+        amenities: ['Garden', 'Security']
+      },
+      financials: {
+        price: previewProperty.price,
+        currency: 'USD' as const,
+        rentToBuyDeposit: Math.round(previewProperty.price * 0.1),
+        monthlyInstallment: Math.round(previewProperty.price * 0.005),
+        paymentDuration: 240,
+        rentCreditPercentage: 25
+      },
+      media: {
+        mainImage: previewProperty.imageUrl || '',
+        images: [previewProperty.imageUrl || '']
+      },
+      seller: {
+        id: '', // No seller ID for admin-listed properties
+        name: 'Admin Listed',
+        isVerified: true,
+        contactInfo: {
+          email: 'owner@example.com'
+        }
+      },
+      status: 'active' as const,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    setSelectedProperty(propertyListing);
+    setShowPropertyDetails(true);
+  };
+
+  const handleMakeOffer = (previewProperty: any) => {
+    // Convert preview property to full PropertyListing format
+    const propertyListing = {
+      id: previewProperty.id || generateUUID(), // Ensure we have a valid ID
+      title: previewProperty.title,
+      description: `Property located in ${previewProperty.address}`,
+      propertyType: 'house' as const,
+      listingType: 'rent-to-buy' as const,
+      location: {
+        country: previewProperty.address.includes('South Africa') ? 'SA' as const : 'ZW' as const,
+        city: previewProperty.address.split(',')[1]?.trim() || 'Unknown',
+        suburb: previewProperty.address.split(',')[0]?.trim() || 'Unknown',
+        streetAddress: previewProperty.address
+      },
+      details: {
+        size: previewProperty.area,
+        type: 'house' as const,
+        bedrooms: previewProperty.beds,
+        bathrooms: previewProperty.baths,
+        parking: 1,
+        features: ['Modern Design', 'Well Maintained'],
+        amenities: ['Garden', 'Security']
+      },
+      financials: {
+        price: previewProperty.price,
+        currency: 'USD' as const,
+        rentToBuyDeposit: Math.round(previewProperty.price * 0.1),
+        monthlyInstallment: Math.round(previewProperty.price * 0.005),
+        paymentDuration: 240,
+        rentCreditPercentage: 25
+      },
+      media: {
+        mainImage: previewProperty.imageUrl || '',
+        images: [previewProperty.imageUrl || '']
+      },
+      seller: {
+        id: '', // No seller ID for admin-listed properties
+        name: 'Admin Listed',
+        isVerified: true,
+        contactInfo: {
+          email: 'owner@example.com'
+        }
+      },
+      status: 'active' as const,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    setSelectedProperty(propertyListing);
+    setShowMakeOfferModal(true);
   };
 
   // Application management functions
@@ -508,6 +675,24 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         onViewProperty={onViewProperty}
         onSaveProperty={handleSaveProperty}
         onBackToDashboard={handleBackToDashboard}
+      />
+    );
+  }
+
+  if (showPropertyListings) {
+    return (
+      <PropertyListings
+        onPropertySelect={(property) => onViewProperty(property.id)}
+        user={user}
+      />
+    );
+  }
+
+  if (showPropertyDetails && selectedProperty) {
+    return (
+      <PropertyDetailsPage
+        property={selectedProperty}
+        user={user}
       />
     );
   }
@@ -615,7 +800,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             {key:'overview', label:'Overview', icon:Home},
             {key:'searches', label:'Property Searches', icon:Search},
             {key:'saved', label:'Saved Properties', icon:Bookmark},
-            {key:'applications', label:'Applications', icon:FileText},
+            {key:'offers', label:'Offers', icon:FileText},
             {key:'messages', label:'Messages', icon:MessageCircle},
             {key:'documents', label:'Documents', icon:FileText},
             {key:'profile', label:'Profile', icon:UserIcon},
@@ -728,7 +913,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     {key: 'overview', label: 'Overview', icon: Home},
                     {key: 'searches', label: 'Property Searches', icon: Search},
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark},
-                    {key: 'applications', label: 'Applications', icon: FileText},
+                    {key: 'offers', label: 'Offers', icon: FileText},
                     {key: 'messages', label: 'Messages', icon: MessageCircle},
                     {key: 'documents', label: 'Documents', icon: FileText},
                     {key: 'profile', label: 'Profile', icon: UserIcon},
@@ -783,12 +968,15 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
         <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/>Verified</Badge>
-            <Button className="bg-red-600 hover:bg-red-700" size="sm" onClick={() => setShowPropertySearch(true)}>Start New Search</Button>
+            <Button className="bg-red-600 hover:bg-red-700" size="sm" onClick={() => setShowPropertyListings(true)}>Start New Search</Button>
           </div>
         </div>
 
-        {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 px-1 md:px-0">
+        {/* Overview Section */}
+        {activeSection === 'overview' && (
+          <>
+            {/* Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 px-1 md:px-0">
           <Card className="border-slate-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -802,7 +990,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           <Card className="border-slate-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-xs uppercase tracking-wide text-slate-600">Active Applications</div>
+                <div className="text-xs uppercase tracking-wide text-slate-600">Active Offers</div>
                 <FileText className="w-4 h-4 text-emerald-600"/>
                   </div>
               <div className="text-2xl font-bold">{stats.activeApps}</div>
@@ -838,20 +1026,12 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors duration-200" 
-                onClick={() => setShowPropertySearch(true)}
+                onClick={() => setShowPropertyListings(true)}
               >
                 <Home className="w-4 h-4"/>
                 Browse Properties
           </Button>
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300 transition-colors duration-200" 
-                onClick={() => handleStartApplication()}
-              >
-                <FileText className="w-4 h-4"/>
-                Start Application
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2" onClick={()=>setActiveSection('applications')}><FileText className="w-4 h-4"/>View Applications</Button>
+              <Button variant="outline" className="flex items-center gap-2" onClick={()=>setActiveSection('offers')}><FileText className="w-4 h-4"/>View Offers</Button>
               <Button variant="outline" className="flex items-center gap-2" onClick={()=>setShowMessaging(true)}><MessageCircle className="w-4 h-4"/>Messages</Button>
         </div>
         </CardContent>
@@ -865,7 +1045,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => setShowPropertyGrid(true)}
+                onClick={() => setShowPropertyListings(true)}
                 className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors duration-200"
               >
                 <Eye className="w-4 h-4 mr-1" />
@@ -874,6 +1054,24 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {isLoadingProperties ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading properties...</span>
+            </div>
+          ) : previews.length === 0 ? (
+            <div className="text-center py-8">
+              <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Properties Available</h3>
+              <p className="text-gray-600 mb-4">No active properties found at the moment.</p>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => setShowPropertyListings(true)}
+              >
+                Browse All Properties
+              </Button>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {previews.map((p)=> (
                 <div key={p.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -896,7 +1094,12 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               </div>
                     {/* Property badges */}
                     <div className="absolute top-2 left-2 flex gap-1">
-                      <Badge className="bg-green-100 text-green-800 text-xs">Available</Badge>
+                      {p.status === 'active' && (
+                        <Badge className="bg-green-100 text-green-800 text-xs">Available</Badge>
+                      )}
+                      {p.status === 'under_offer' && (
+                        <Badge className="bg-orange-100 text-orange-800 text-xs">Under Offer</Badge>
+                      )}
                 </div>
                 </div>
                   <div className="p-3">
@@ -921,29 +1124,23 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                       </span>
               </div>
                     <div className="flex gap-2">
-                      <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => onViewProperty(p.id)}>
+                      <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => handleViewPropertyDetails(p)}>
                         View Details
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline" 
                         className="flex-1 bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300" 
-                        onClick={() => handleStartApplication({
-                          id: p.id,
-                          title: p.title,
-                          address: p.address,
-                          city: p.address.split(', ')[1] || p.address,
-                          price: p.price,
-                          imageUrl: p.imageUrl
-                        })}
+                        onClick={() => handleMakeOffer(p)}
                       >
-                        Apply Now
+                        Make Offer
                       </Button>
           </div>
           </div>
         </div>
               ))}
-        </div>
+            </div>
+          )}
           </CardContent>
         </Card>
 
@@ -963,74 +1160,23 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
         </CardContent>
       </Card>
+          </>
+        )}
 
-      {/* Applications Section */}
-      {activeSection === 'applications' && (
-          <Card>
-            <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>My Applications</span>
-              <Button 
-                size="sm" 
-                className="bg-green-600 hover:bg-green-700" 
-                onClick={() => handleStartApplication()}
-              >
-                <FileText className="w-4 h-4 mr-1" />
-                New Application
-              </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-              {mockApplications.length > 0 ? (
-                mockApplications.map((app) => (
-                  <div key={app.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
-                        <Building className="w-6 h-6 text-slate-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-slate-900">{app.propertyTitle}</div>
-                        <div className="text-sm text-slate-500">{app.propertyAddress}</div>
-                        <div className="text-xs text-slate-400">Submitted: {app.submittedDate.toLocaleDateString()}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className={
-                        app.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        app.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        app.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      }>
-                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                      </Badge>
-                <Button
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => handleViewApplicationStatus(app.id)}
-                >
-                        View Status
-                </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-slate-900 mb-2">No Applications Yet</h3>
-                  <p className="text-slate-500 mb-4">Start your first property application to get started.</p>
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700" 
-                    onClick={() => handleStartApplication()}
-                  >
-                    <FileText className="w-4 h-4 mr-1" />
-                    Start Your First Application
-                  </Button>
-                </div>
-              )}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Offers Section */}
+      {activeSection === 'offers' && (
+        <BuyerOffers
+          user={user}
+          onViewOffer={(offer) => {
+            // Show offer details modal with full offer data
+            setSelectedOffer(offer);
+            setShowOfferDetailsModal(true);
+          }}
+          onViewProperty={(propertyId) => {
+            // Navigate to property details page
+            router.push(`/property/${propertyId}`);
+          }}
+        />
       )}
 
 
@@ -1204,6 +1350,131 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         </Card>
       )}
       </main>
+
+      {/* Make Offer Modal */}
+      {showMakeOfferModal && selectedProperty && (
+        <MakeOfferModal
+          isOpen={showMakeOfferModal}
+          onClose={() => {
+            setShowMakeOfferModal(false);
+            setSelectedProperty(null);
+          }}
+          property={selectedProperty}
+          user={user}
+          onSubmit={async (offerData) => {
+            console.log('Offer submitted:', offerData);
+            // The modal handles the submission internally
+            // Refresh the live properties to show updated status
+            await fetchLiveProperties();
+          }}
+        />
+      )}
+
+      {/* Offer Details Modal */}
+      {showOfferDetailsModal && selectedOffer && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white rounded-lg shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold">Offer Details</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowOfferDetailsModal(false);
+                    setSelectedOffer(null);
+                  }}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Property Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">Property</h3>
+                  <p className="text-gray-700">{selectedOffer.property?.title || 'Property Not Found'}</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedOffer.property?.location?.city || 'Unknown City'}, {selectedOffer.property?.location?.country || 'Unknown Country'}
+                  </p>
+                </div>
+
+                {/* Offer Information */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <h4 className="font-medium text-blue-900 mb-2">Your Offer</h4>
+                    <p className="text-2xl font-bold text-blue-800">
+                      ${selectedOffer.offer_price?.toLocaleString() || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <h4 className="font-medium text-green-900 mb-2">Deposit</h4>
+                    <p className="text-2xl font-bold text-green-800">
+                      ${selectedOffer.deposit_amount?.toLocaleString() || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Payment Method</h4>
+                    <p className="text-gray-700 capitalize">{selectedOffer.payment_method || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
+                    <p className="text-gray-700">
+                      {selectedOffer.estimated_timeline === 'ready_to_pay_in_full' 
+                        ? 'Ready to pay in full' 
+                        : selectedOffer.estimated_timeline ? `${selectedOffer.estimated_timeline.replace('_months', '')} months` : 'N/A'
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-gray-900">Status</h4>
+                  <Badge className={
+                    selectedOffer.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    selectedOffer.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    selectedOffer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }>
+                    {selectedOffer.status?.toUpperCase() || 'UNKNOWN'}
+                  </Badge>
+                </div>
+
+                {/* Additional Notes */}
+                {selectedOffer.additional_notes && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Additional Notes</h4>
+                    <p className="text-gray-700 bg-gray-50 rounded-lg p-3">
+                      {selectedOffer.additional_notes}
+                    </p>
+                  </div>
+                )}
+
+                {/* Rejection Reason */}
+                {selectedOffer.status === 'rejected' && selectedOffer.rejection_reason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 className="font-medium text-red-900 mb-2">Rejection Reason</h4>
+                    <p className="text-red-800">{selectedOffer.rejection_reason}</p>
+                  </div>
+                )}
+
+                {/* Timestamps */}
+                <div className="text-sm text-gray-500 space-y-1">
+                  <p>Submitted: {selectedOffer.submitted_at ? new Date(selectedOffer.submitted_at).toLocaleDateString() : 'N/A'}</p>
+                  {selectedOffer.admin_reviewed_at && (
+                    <p>Reviewed: {new Date(selectedOffer.admin_reviewed_at).toLocaleDateString()}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }; 

@@ -38,7 +38,10 @@ import {
   Calculator,
   FileText,
   Award,
-  Zap
+  Zap,
+  Info,
+  UserCheck,
+  Timer
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -46,6 +49,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PropertyListing } from '@/types/property';
 import { User } from '@/types/auth';
 import { useRouter } from 'next/navigation';
@@ -61,6 +66,7 @@ import { OfferStatusTracker } from './OfferStatusTracker';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { buyerServices } from '@/lib/buyer-services';
 import { useAuthStore } from '@/lib/store';
+import { getPropertyOffers } from '@/lib/offer-services';
 
 interface PropertyDetailsPageProps {
   property: PropertyListing;
@@ -91,8 +97,33 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   // Phone verification modal state
   const [showPhoneVerificationModal, setShowPhoneVerificationModal] = React.useState(false);
   
-  // Mock offers data - in real app this would come from API
-  const [userOffers, setUserOffers] = React.useState<any[]>([]);
+  // Offer status tracking
+  const [propertyOffers, setPropertyOffers] = React.useState<any[]>([]);
+  const [userOffer, setUserOffer] = React.useState<any>(null);
+  const [isLoadingOffers, setIsLoadingOffers] = React.useState(false);
+
+  // Load offers for this property
+  React.useEffect(() => {
+    const loadOffers = async () => {
+      if (!user) return;
+      
+      setIsLoadingOffers(true);
+      try {
+        const offers = await getPropertyOffers({ property_id: property.id });
+        setPropertyOffers(offers);
+        
+        // Find the current user's offer
+        const currentUserOffer = offers.find(offer => offer.buyer_id === user.id);
+        setUserOffer(currentUserOffer || null);
+      } catch (error) {
+        console.error('Error loading offers:', error);
+      } finally {
+        setIsLoadingOffers(false);
+      }
+    };
+
+    loadOffers();
+  }, [property.id, user]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -164,6 +195,10 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       onSignUpPrompt?.();
       return;
     }
+    if (hasUserOffer()) {
+      // User already has an offer, don't allow another one
+      return;
+    }
     setShowMakeOfferModal(true);
   };
 
@@ -184,10 +219,23 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   };
 
   const handleSubmitOffer = async (data: any) => {
-    // In real app, this would call an API
-    console.log('Submit offer:', data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // The MakeOfferModal now handles the API call directly
+    // This is just for any additional custom logic if needed
+    console.log('Offer submitted:', data);
+    
+    // Refresh offers after submission
+    if (user) {
+      try {
+        const offers = await getPropertyOffers({ property_id: property.id });
+        setPropertyOffers(offers);
+        
+        // Find the current user's offer
+        const currentUserOffer = offers.find(offer => offer.buyer_id === user.id);
+        setUserOffer(currentUserOffer || null);
+      } catch (error) {
+        console.error('Error refreshing offers:', error);
+      }
+    }
   };
 
   const handleScheduleViewingSubmit = async (data: any) => {
@@ -231,6 +279,136 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
   const accessLevel = getUserAccessLevel();
   console.log('PropertyDetailsPage - Access level determined:', accessLevel);
+
+  // Helper functions for offer status
+  const hasUserOffer = () => userOffer !== null;
+  const hasAnyOffers = () => propertyOffers.length > 0;
+  const isPropertyUnderOffer = () => property.status === 'under_offer' || hasAnyOffers();
+  const canMakeOffer = () => user && !hasUserOffer() && accessLevel !== 'anonymous';
+
+  // Offer status banner component
+  const OfferStatusBanner = () => {
+    if (!user || !hasUserOffer()) return null;
+
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'pending': return 'bg-blue-50 border-blue-200 text-blue-800';
+        case 'approved': return 'bg-green-50 border-green-200 text-green-800';
+        case 'rejected': return 'bg-red-50 border-red-200 text-red-800';
+        default: return 'bg-gray-50 border-gray-200 text-gray-800';
+      }
+    };
+
+    const getStatusIcon = (status: string) => {
+      switch (status) {
+        case 'pending': return <Timer className="w-4 h-4" />;
+        case 'approved': return <CheckCircle className="w-4 h-4" />;
+        case 'rejected': return <AlertCircle className="w-4 h-4" />;
+        default: return <Info className="w-4 h-4" />;
+      }
+    };
+
+    const getStatusMessage = (status: string) => {
+      switch (status) {
+        case 'pending': return 'Your offer is under review';
+        case 'approved': return 'Your offer has been approved!';
+        case 'rejected': return 'Your offer was not accepted';
+        default: return 'Offer status unknown';
+      }
+    };
+
+    return (
+      <Alert className={`mb-6 ${getStatusColor(userOffer.status)}`}>
+        <div className="flex items-center">
+          {getStatusIcon(userOffer.status)}
+          <AlertDescription className="ml-2">
+            <div className="font-medium">{getStatusMessage(userOffer.status)}</div>
+            {userOffer.status === 'pending' && (
+              <div className="text-sm mt-1 opacity-90">
+                We'll notify you once the seller responds to your offer.
+              </div>
+            )}
+          </AlertDescription>
+        </div>
+      </Alert>
+    );
+  };
+
+  // Offer summary component
+  const OfferSummary = () => {
+    if (!user || !hasUserOffer()) return null;
+
+    return (
+      <Card className="mb-6 bg-blue-50 border-blue-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg text-blue-900 flex items-center">
+            <UserCheck className="w-5 h-5 mr-2" />
+            Your Offer Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-blue-700 font-medium">Offer Price:</span>
+              <div className="text-blue-900 font-semibold">
+                {formatCurrency(userOffer.offer_price)}
+              </div>
+            </div>
+            <div>
+              <span className="text-blue-700 font-medium">Deposit:</span>
+              <div className="text-blue-900 font-semibold">
+                {formatCurrency(userOffer.deposit_amount)}
+              </div>
+            </div>
+            <div>
+              <span className="text-blue-700 font-medium">Payment Method:</span>
+              <div className="text-blue-900 font-semibold capitalize">
+                {userOffer.payment_method}
+              </div>
+            </div>
+            <div>
+              <span className="text-blue-700 font-medium">Timeline:</span>
+              <div className="text-blue-900 font-semibold">
+                {userOffer.estimated_timeline === 'ready_to_pay_in_full' 
+                  ? 'Ready to pay in full' 
+                  : `${userOffer.estimated_timeline.replace('_months', '')} months`
+                }
+              </div>
+            </div>
+          </div>
+          {userOffer.additional_notes && (
+            <div className="pt-2 border-t border-blue-200">
+              <span className="text-blue-700 font-medium text-sm">Additional Notes:</span>
+              <div className="text-blue-900 text-sm mt-1">
+                {userOffer.additional_notes}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Under offer badge component
+  const UnderOfferBadge = () => {
+    if (!isPropertyUnderOffer() || hasUserOffer()) return null;
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className="bg-orange-500 text-white hover:bg-orange-600">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Under Offer
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>An offer is under review. You may still submit an offer.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -289,6 +467,10 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Offer Status Components */}
+        <OfferStatusBanner />
+        <OfferSummary />
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -309,6 +491,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                         Verified Seller
                       </Badge>
                     )}
+                    <UnderOfferBadge />
                   </div>
                 </div>
               </CardHeader>
@@ -518,6 +701,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               onSignUpPrompt={onSignUpPrompt || (() => {})}
               onPhoneVerification={handlePhoneVerification}
               isFavorite={isFavorite}
+              hasUserOffer={hasUserOffer()}
+              canMakeOffer={canMakeOffer()}
             />
 
             {/* Property Stats */}
