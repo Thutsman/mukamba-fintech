@@ -33,12 +33,14 @@ interface BuyerOffersProps {
   user: UserType;
   onViewOffer?: (offer: PropertyOffer) => void;
   onViewProperty?: (propertyId: string) => void;
+  onMakePayment?: (offer: PropertyOffer) => void;
 }
 
 export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   user,
   onViewOffer,
-  onViewProperty
+  onViewProperty,
+  onMakePayment
 }) => {
   const [offers, setOffers] = useState<PropertyOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -418,6 +420,16 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                             <X className="w-4 h-4 mr-2" />
                           )}
                           Cancel Offer
+                        </Button>
+                      )}
+                      {offer.status === 'approved' && (
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => onMakePayment?.(offer)}
+                        >
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Make Payment
                         </Button>
                       )}
                     </div>

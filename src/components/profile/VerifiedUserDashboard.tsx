@@ -60,6 +60,7 @@ import { BuyerMessaging } from '@/components/messaging';
 import { BuyerOffers } from './BuyerOffers';
 import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
 import { MakeOfferModal } from '@/components/property/MakeOfferModal';
+import { PaymentModal } from '@/components/property/PaymentModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { PropertyListing } from '@/types/property';
@@ -389,6 +390,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [showMobileNav, setShowMobileNav] = React.useState(false);
   const [showOfferDetailsModal, setShowOfferDetailsModal] = React.useState(false);
   const [selectedOffer, setSelectedOffer] = React.useState<any>(null);
+  const [showPaymentModal, setShowPaymentModal] = React.useState(false);
+  const [selectedOfferForPayment, setSelectedOfferForPayment] = React.useState<any>(null);
   
   // Application management states
   const [showApplicationForm, setShowApplicationForm] = React.useState(false);
@@ -632,6 +635,29 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   const handleViewApplicationHistory = () => {
     setShowApplicationHistory(true);
+  };
+
+  // Payment handler functions
+  const handleMakePayment = (offer: any) => {
+    setSelectedOfferForPayment(offer);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData: any) => {
+    try {
+      // TODO: Implement payment processing
+      console.log('Payment submitted:', paymentData);
+      
+      // Update offer status to paid
+      // await updateOfferPaymentStatus(selectedOfferForPayment.id, paymentData);
+      
+      // Refresh offers to show updated status
+      // await fetchOffers();
+      
+      console.log('Payment processed successfully');
+    } catch (error) {
+      console.error('Payment processing failed:', error);
+    }
   };
 
   const handleCloseApplicationModals = () => {
@@ -1200,6 +1226,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             // Navigate to property details page
             router.push(`/property/${propertyId}`);
           }}
+          onMakePayment={(offer) => {
+            // Open payment modal for approved offers
+            handleMakePayment(offer);
+          }}
         />
       )}
 
@@ -1498,6 +1528,20 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedOfferForPayment && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedOfferForPayment(null);
+          }}
+          offer={selectedOfferForPayment}
+          user={user}
+          onSubmit={handlePaymentSubmit}
+        />
       )}
     </div>
   );
