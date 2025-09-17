@@ -383,23 +383,39 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                         onValueChange={(value: OfferData['paymentMethod']) => 
                           setFormData(prev => ({ ...prev, paymentMethod: value }))
                       }
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                      className="grid grid-cols-1 gap-3"
                     >
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="cash" id="cash" />
-                        <Label htmlFor="cash" className="cursor-pointer">
+                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        formData.paymentMethod === 'cash' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      }`}>
+                        <RadioGroupItem 
+                          value="cash" 
+                          id="cash" 
+                          className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
+                        />
+                        <Label htmlFor="cash" className="cursor-pointer flex-1">
                           <div className="flex items-center">
-                            <Banknote className="w-4 h-4 mr-2" />
-                            Cash
+                            <Banknote className="w-5 h-5 mr-3 text-gray-600" />
+                            <span className="text-base font-medium">Cash</span>
                           </div>
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                          <RadioGroupItem value="installments" id="installments" />
-                          <Label htmlFor="installments" className="cursor-pointer">
+                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        formData.paymentMethod === 'installments' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      }`}>
+                          <RadioGroupItem 
+                            value="installments" 
+                            id="installments" 
+                            className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
+                          />
+                          <Label htmlFor="installments" className="cursor-pointer flex-1">
                           <div className="flex items-center">
-                              <CreditCard className="w-4 h-4 mr-2" />
-                              Installments
+                              <CreditCard className="w-5 h-5 mr-3 text-gray-600" />
+                              <span className="text-base font-medium">Installments</span>
                           </div>
                         </Label>
                       </div>
