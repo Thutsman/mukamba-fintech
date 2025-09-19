@@ -159,7 +159,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
                </h3>
                <div className="flex items-center text-gray-600 text-sm">
                  <MapPin className="w-4 h-4 mr-1 text-blue-500 flex-shrink-0" />
-                 <span className="truncate">{property.location.streetAddress}</span>
+                 <span className="truncate">{property.location.suburb}</span>
                </div>
              </div>
 

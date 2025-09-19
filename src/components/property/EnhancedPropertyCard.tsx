@@ -401,7 +401,7 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
               </h3>
               <div className="flex items-center text-gray-600 text-sm">
                 <MapPin className="w-4 h-4 mr-1 text-blue-500" />
-                <span className="line-clamp-1">{property.location.streetAddress}, {property.location.city}</span>
+                <span className="line-clamp-1">{property.location.suburb}, {property.location.city}</span>
               </div>
             </div>
 

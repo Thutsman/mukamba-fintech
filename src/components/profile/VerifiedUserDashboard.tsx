@@ -278,7 +278,7 @@ const RecommendationCard: React.FC<{
                     {recommendation.propertyData.bathrooms}
                   </span>
                   <span className="font-medium text-slate-700">
-                    R{recommendation.propertyData.price.toLocaleString()}
+                    ${recommendation.propertyData.price.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -1157,8 +1157,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                       {p.title} • {p.address}
               </div>
                     <div className="text-lg font-bold text-slate-900 mb-1">
-                      R{p.price.toLocaleString()}
-            </div>
+                      ${p.price.toLocaleString()}
+                    </div>
                     <div className="text-xs text-slate-500 mb-3 flex gap-3">
                       <span className="flex items-center gap-1">
                         <Bed className="w-3 h-3" />

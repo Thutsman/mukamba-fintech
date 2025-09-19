@@ -175,7 +175,7 @@ export const ScheduleViewingModal: React.FC<ScheduleViewingModalProps> = ({
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900">{property.title}</h4>
-                        <p className="text-sm text-gray-600">{property.location.streetAddress}, {property.location.city}</p>
+                        <p className="text-sm text-gray-600">{property.location.suburb}, {property.location.city}</p>
                       </div>
                     </div>
                   </div>

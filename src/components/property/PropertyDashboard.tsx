@@ -546,7 +546,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-600 flex items-center">
                   <MapPin className="w-3 h-3 mr-1" />
-                  {property.location.streetAddress}, {property.location.city}
+                  {property.location.suburb}, {property.location.city}
                 </p>
               </div>
 

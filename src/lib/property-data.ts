@@ -355,7 +355,7 @@ export function convertFromPropertyListing(propertyListing: PropertyListing): Un
   return {
     id: propertyListing.id,
     title: propertyListing.title,
-    address: propertyListing.location.streetAddress,
+    address: propertyListing.location.streetAddress || '',
     city: propertyListing.location.city,
     country: propertyListing.location.country,
     price: propertyListing.financials.price,

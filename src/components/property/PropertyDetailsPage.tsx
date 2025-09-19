@@ -597,7 +597,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                 </h1>
                 <p className="text-sm text-gray-500 flex items-center">
                   <MapPin className="w-3 h-3 mr-1" />
-                  {property.location.streetAddress}, {property.location.city}
+                  {property.location.suburb}, {property.location.city}
                 </p>
               </div>
             </div>
@@ -733,105 +733,214 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-lg font-semibold mb-4">Payment Terms</h3>
-                        <div className="bg-blue-50 rounded-lg p-6">
-                          <div className="flex items-center mb-4">
-                            <Calculator className="w-6 h-6 text-blue-600 mr-3" />
-                            <h4 className="text-lg font-medium text-blue-900">Installment Payment Plan</h4>
-                          </div>
-                          
-                          <div className="space-y-4">
-                            <div className="bg-white rounded-lg p-4 border border-blue-200">
-                              <h5 className="font-medium text-gray-900 mb-2">Payment Structure</h5>
-                              <div className="space-y-2 text-sm text-gray-600">
-                                <div className="flex justify-between">
-                                  <span>Deposit Required:</span>
-                                  <span className="font-medium">50% of total price</span>
+                        
+                        {property.listingType === 'installment' ? (
+                          <div className="bg-blue-50 rounded-lg p-6">
+                            <div className="flex items-center mb-4">
+                              <Calculator className="w-6 h-6 text-blue-600 mr-3" />
+                              <h4 className="text-lg font-medium text-blue-900">Installment Payment Plan</h4>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div className="bg-white rounded-lg p-4 border border-blue-200">
+                                <h5 className="font-medium text-gray-900 mb-2">Payment Structure</h5>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                  <div className="flex justify-between">
+                                    <span>Required Deposit:</span>
+                                    <span className="font-medium">
+                                      {property.financials.rentToBuyDeposit ? formatCurrency(property.financials.rentToBuyDeposit) : 'Contact seller'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Payment Duration:</span>
+                                    <span className="font-medium">
+                                      {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : 'Contact seller'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Monthly Payment:</span>
+                                    <span className="font-medium">
+                                      {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : 'Contact seller'}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span>Balance Payment:</span>
-                                  <span className="font-medium">Over 6 months</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Monthly Payment:</span>
-                                  <span className="font-medium">{formatCurrency(Math.round(property.financials.price * 0.5 / 6))}</span>
-                                </div>
+                              </div>
+
+                              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                                <h5 className="font-medium text-green-900 mb-2">Key Benefits</h5>
+                                <ul className="space-y-2 text-sm text-green-800">
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>No interest charges on installment payments</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Flexible payment schedule</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Property ownership upon completion</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>No hidden fees or charges</span>
+                                  </li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                <h5 className="font-medium text-yellow-900 mb-2">Important Notes</h5>
+                                <ul className="space-y-2 text-sm text-yellow-800">
+                                  <li className="flex items-start">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Property possession only after full payment completion</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Payment terms are set by the seller and may vary</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Contact seller for specific payment arrangements</span>
+                                  </li>
+                                </ul>
                               </div>
                             </div>
 
-                            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                              <h5 className="font-medium text-green-900 mb-2">Key Benefits</h5>
-                              <ul className="space-y-2 text-sm text-green-800">
-                                <li className="flex items-start">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>No interest charges on installment payments</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>Flexible payment schedule</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>Property ownership upon completion</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>No hidden fees or charges</span>
-                                </li>
-                              </ul>
-                            </div>
-
-                            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                              <h5 className="font-medium text-yellow-900 mb-2">Important Notes</h5>
-                              <ul className="space-y-2 text-sm text-yellow-800">
-                                <li className="flex items-start">
-                                  <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>Property possession only after full payment completion</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>Payment terms are set by the seller and may vary</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                                  <span>Contact seller for specific payment arrangements</span>
-                                </li>
-                              </ul>
-                            </div>
+                            {accessLevel === 'anonymous' ? (
+                              <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                <p className="text-sm text-blue-700 mb-3">
+                                  Sign up to get detailed payment information and contact the seller
+                                </p>
+                                <Button 
+                                  className="w-full"
+                                  onClick={onSignUpPrompt}
+                                >
+                                  Sign Up Now
+                                </Button>
+                              </div>
+                            ) : accessLevel === 'email_verified' ? (
+                              <div className="mt-6 bg-orange-50 rounded-lg p-4 border border-orange-200">
+                                <p className="text-sm text-orange-700 mb-3">
+                                  Verify your phone number to contact the seller for payment details
+                                </p>
+                                <Button 
+                                  className="w-full"
+                                  onClick={handlePhoneVerification}
+                                >
+                                  Verify Phone
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="mt-6">
+                                <Button className="w-full">
+                                  <Phone className="w-4 h-4 mr-2" />
+                                  Contact Seller for Payment Details
+                                </Button>
+                              </div>
+                            )}
                           </div>
+                        ) : (
+                          <div className="bg-green-50 rounded-lg p-6">
+                            <div className="flex items-center mb-4">
+                              <DollarSign className="w-6 h-6 text-green-600 mr-3" />
+                              <h4 className="text-lg font-medium text-green-900">Cash Sale</h4>
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div className="bg-white rounded-lg p-4 border border-green-200">
+                                <h5 className="font-medium text-gray-900 mb-2">Sale Details</h5>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                  <div className="flex justify-between">
+                                    <span>Selling Price:</span>
+                                    <span className="font-medium">{formatCurrency(property.financials.price)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Currency:</span>
+                                    <span className="font-medium">{property.financials.currency}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Price per m²:</span>
+                                    <span className="font-medium">{formatCurrency(Math.round(property.financials.price / property.details.size))}</span>
+                                  </div>
+                                </div>
+                              </div>
 
-                          {accessLevel === 'anonymous' ? (
-                            <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-                              <p className="text-sm text-blue-700 mb-3">
-                                Sign up to get detailed payment information and contact the seller
-                              </p>
-                              <Button 
-                                className="w-full"
-                                onClick={onSignUpPrompt}
-                              >
-                                Sign Up Now
-                              </Button>
+                              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                <h5 className="font-medium text-blue-900 mb-2">Cash Sale Benefits</h5>
+                                <ul className="space-y-2 text-sm text-blue-800">
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Immediate property ownership</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>No monthly payments required</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Simplified transaction process</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Potential for better negotiation</span>
+                                  </li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                <h5 className="font-medium text-yellow-900 mb-2">Important Notes</h5>
+                                <ul className="space-y-2 text-sm text-yellow-800">
+                                  <li className="flex items-start">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Full payment required at time of purchase</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Legal documentation and transfer fees apply</span>
+                                  </li>
+                                  <li className="flex items-start">
+                                    <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>Contact seller for payment arrangements</span>
+                                  </li>
+                                </ul>
+                              </div>
                             </div>
-                          ) : accessLevel === 'email_verified' ? (
-                            <div className="mt-6 bg-orange-50 rounded-lg p-4 border border-orange-200">
-                              <p className="text-sm text-orange-700 mb-3">
-                                Verify your phone number to contact the seller for payment details
-                              </p>
-                              <Button 
-                                className="w-full"
-                                onClick={handlePhoneVerification}
-                              >
-                                Verify Phone
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="mt-6">
-                              <Button className="w-full">
-                                <Phone className="w-4 h-4 mr-2" />
-                                Contact Seller for Payment Details
-                              </Button>
-                            </div>
-                          )}
-                        </div>
+
+                            {accessLevel === 'anonymous' ? (
+                              <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                <p className="text-sm text-blue-700 mb-3">
+                                  Sign up to contact the seller and arrange payment
+                                </p>
+                                <Button 
+                                  className="w-full"
+                                  onClick={onSignUpPrompt}
+                                >
+                                  Sign Up Now
+                                </Button>
+                              </div>
+                            ) : accessLevel === 'email_verified' ? (
+                              <div className="mt-6 bg-orange-50 rounded-lg p-4 border border-orange-200">
+                                <p className="text-sm text-orange-700 mb-3">
+                                  Verify your phone number to contact the seller
+                                </p>
+                                <Button 
+                                  className="w-full"
+                                  onClick={handlePhoneVerification}
+                                >
+                                  Verify Phone
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="mt-6">
+                                <Button className="w-full">
+                                  <Phone className="w-4 h-4 mr-2" />
+                                  Contact Seller for Purchase
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </TabsContent>
@@ -878,24 +987,55 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                 <CardTitle className="text-lg">Property Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Price per m²</span>
-                  <span className="font-semibold">
-                    {formatCurrency(Math.round(property.financials.price / property.details.size))}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Monthly Installment</span>
-                  <span className="font-semibold">
-                    {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Payment Duration</span>
-                  <span className="font-semibold">
-                    {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : 'N/A'}
-                  </span>
-                </div>
+                {property.listingType === 'installment' ? (
+                  <>
+                    {/* Installment Listing Stats */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Required Deposit</span>
+                      <span className="font-semibold">
+                        {property.financials.rentToBuyDeposit ? formatCurrency(property.financials.rentToBuyDeposit) : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Payment Duration</span>
+                      <span className="font-semibold">
+                        {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Currency</span>
+                      <span className="font-semibold">{property.financials.currency}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Monthly Installment</span>
+                      <span className="font-semibold">
+                        {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : 'N/A'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Cash Sale Listing Stats */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Selling Price</span>
+                      <span className="font-semibold">
+                        {formatCurrency(property.financials.price)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Currency</span>
+                      <span className="font-semibold">{property.financials.currency}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Price per m²</span>
+                      <span className="font-semibold">
+                        {formatCurrency(Math.round(property.financials.price / property.details.size))}
+                      </span>
+                    </div>
+                  </>
+                )}
+                
+                {/* Common Stats */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Views</span>
                   <span className="font-semibold">{property.views}</span>

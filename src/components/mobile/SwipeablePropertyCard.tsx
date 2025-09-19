@@ -169,7 +169,7 @@ export const SwipeablePropertyCard: React.FC<SwipeablePropertyCardProps> = ({
             </h3>
             <div className="flex items-center text-slate-600">
               <MapPin className="w-4 h-4 mr-1" />
-              <span className="text-sm">{property.location.streetAddress}, {property.location.city}</span>
+              <span className="text-sm">{property.location.suburb}, {property.location.city}</span>
             </div>
           </div>
 

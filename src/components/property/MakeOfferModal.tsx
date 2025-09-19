@@ -164,12 +164,12 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
       if (offerId) {
         // Call custom onSubmit if provided
         if (onSubmit) {
-          await onSubmit(formData);
+      await onSubmit(formData);
         }
         
-        setStep('success');
-        setTimeout(() => {
-          onClose();
+      setStep('success');
+      setTimeout(() => {
+        onClose();
           resetForm();
         }, 3000);
       } else {
@@ -265,7 +265,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-medium text-gray-900">{property.title}</h4>
-                        <p className="text-sm text-gray-600">{property.location.streetAddress}, {property.location.city}</p>
+                        <p className="text-sm text-gray-600">{property.location.suburb}, {property.location.city}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-600">Listed Price</p>
@@ -424,7 +424,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
 
                     {/* Estimated Completion Timeline - Only show for installments */}
                     {formData.paymentMethod === 'installments' && (
-                      <div className="space-y-3">
+                    <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Label htmlFor="estimatedTimeline" className="text-base font-medium">Estimated Completion Timeline</Label>
                           <Tooltip>
@@ -436,10 +436,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                             </TooltipContent>
                           </Tooltip>
                         </div>
-                        <div className="relative">
-                          <Input
+                    <div className="relative">
+                      <Input
                             id="estimatedTimeline"
-                            type="number"
+                        type="number"
                             value={formData.estimatedTimeline === 'ready_to_pay_in_full' ? '0' : (formData.estimatedTimeline.replace('_months', '') || '')}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -458,10 +458,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                           />
                           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
                             months
-                          </div>
-                        </div>
+                      </div>
+                    </div>
                         {property.financials.paymentDuration && (
-                          <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500">
                             Maximum allowed: {property.financials.paymentDuration} months
                           </p>
                         )}
@@ -525,11 +525,11 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       </div>
                       {formData.paymentMethod === 'installments' && (
                         <>
-                          <div>
+                      <div>
                             <span className="text-gray-600">Deposit Offered:</span>
                             <div className="font-semibold">{formatCurrency(formData.depositOffered)}</div>
-                          </div>
-                          <div>
+                      </div>
+                      <div>
                             <span className="text-gray-600">Timeline:</span>
                             <div className="font-semibold">
                               {formData.estimatedTimeline === 'ready_to_pay_in_full' 
@@ -544,7 +544,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                         <div>
                           <span className="text-gray-600">Payment Type:</span>
                           <div className="font-semibold">Full payment upfront</div>
-                        </div>
+                      </div>
                       )}
                     </div>
                   </div>
@@ -567,7 +567,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                             <span className="text-gray-600">Monthly Payment:</span>
                             <span className="font-medium">
                               {formatCurrency((formData.offerPrice - formData.depositOffered) / getTimelineMonths(formData.estimatedTimeline))}
-                            </span>
+                          </span>
                           </div>
                         )}
                       </div>

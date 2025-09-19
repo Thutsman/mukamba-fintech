@@ -18,7 +18,7 @@ import { isFullyVerified } from '@/types/auth';
 export const AuthSystem: React.FC = () => {
   const [showRegister, setShowRegister] = React.useState(false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
-  const [currentView, setCurrentView] = React.useState<'properties' | 'profile'>('properties');
+  const [currentView, setCurrentView] = React.useState<'properties' | 'profile' | 'home'>('properties');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
   const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
   const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
@@ -183,16 +183,17 @@ export const AuthSystem: React.FC = () => {
 
   // Render logic - all conditional returns moved to the end
   const renderContent = () => {
-    // If authenticated and user is admin, show admin dashboard
-    if (isAuthenticated && user && user.roles.includes('admin')) {
+    // If authenticated and user is admin, show admin dashboard (unless they want to see home)
+    if (isAuthenticated && user && user.roles.includes('admin') && currentView !== 'home') {
       return (
         <AdminDashboard 
           user={user}
           onLogout={handleLogout}
           onBackToUserView={() => {
-            // For now, just logout and go back to user view
-            // In a real app, you might want to switch to a different user account
-            handleLogout();
+            // Navigate to PropertyDashboard while keeping admin logged in
+            setCurrentView('home');
+            // Scroll to top of the page to show the hero section
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         />
       );
@@ -256,7 +257,7 @@ export const AuthSystem: React.FC = () => {
               <div className="hidden md:flex items-center space-x-8">
                 <button 
                   onClick={() => {
-                    setCurrentView('properties');
+                    setCurrentView('home');
                     // Scroll to top of the page to show the hero section
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
@@ -272,6 +273,33 @@ export const AuthSystem: React.FC = () => {
                   <User className="w-4 h-4 mr-2" />
                   Properties
                 </button>
+                {isAuthenticated && user && user.roles.includes('admin') && (
+                  <button 
+                    onClick={() => {
+                      // Admin users go back to admin dashboard
+                      setCurrentView('properties');
+                      // Scroll to top of the page
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Admin Dashboard
+                  </button>
+                )}
+                {isAuthenticated && user && isFullyVerified(user) && !user.roles.includes('admin') && (
+                  <button 
+                    onClick={() => {
+                      setCurrentView('properties');
+                      // Scroll to top of the page
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </button>
+                )}
               </div>
 
               {/* Mobile hamburger */}
@@ -288,7 +316,7 @@ export const AuthSystem: React.FC = () => {
                   <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs bg-white border border-slate-200 rounded-lg shadow-lg p-3 space-y-2">
                     <button 
                       onClick={() => { 
-                        setCurrentView('properties'); 
+                        setCurrentView('home'); 
                         // Scroll to top of the page to show the hero section
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         if (mobileMenuRef.current) mobileMenuRef.current.open = false; 
@@ -303,6 +331,28 @@ export const AuthSystem: React.FC = () => {
                     >
                       Properties
                     </button>
+                    {isAuthenticated && user && user.roles.includes('admin') && (
+                      <button 
+                        onClick={() => { 
+                          setCurrentView('properties'); 
+                          if (mobileMenuRef.current) mobileMenuRef.current.open = false; 
+                        }}
+                        className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Admin Dashboard
+                      </button>
+                    )}
+                    {isAuthenticated && user && isFullyVerified(user) && !user.roles.includes('admin') && (
+                      <button 
+                        onClick={() => { 
+                          setCurrentView('properties'); 
+                          if (mobileMenuRef.current) mobileMenuRef.current.open = false; 
+                        }}
+                        className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Dashboard
+                      </button>
+                    )}
                     {isAuthenticated && user?.roles.includes('seller') && (
                       <a href="/dashboard/seller" className="block px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50">Seller Dashboard</a>
                     )}
@@ -390,8 +440,8 @@ export const AuthSystem: React.FC = () => {
         </header>
 
         {/* Conditional Dashboard Rendering */}
-        {isAuthenticated && user && isFullyVerified(user) ? (
-          // Show VerifiedUserDashboard for fully verified users
+        {isAuthenticated && user && isFullyVerified(user) && currentView !== 'home' ? (
+          // Show VerifiedUserDashboard for fully verified users (unless they want to see home)
           <VerifiedUserDashboard
             user={user}
             onViewProperty={(propertyId) => {
@@ -412,7 +462,7 @@ export const AuthSystem: React.FC = () => {
             }}
           />
         ) : (
-          // Show PropertyDashboard for unauthenticated or non-verified users
+          // Show PropertyDashboard for unauthenticated, non-verified users, or when user wants to see home
           <PropertyDashboard 
             user={user || undefined}
             onPropertySelect={(property) => {

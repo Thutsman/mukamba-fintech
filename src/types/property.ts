@@ -8,7 +8,7 @@ export interface PropertyLocation {
   country: PropertyCountry;
   city: string;
   suburb: string;
-  streetAddress: string;
+  streetAddress?: string; // Optional for security reasons
   coordinates?: {
     latitude: number;
     longitude: number;

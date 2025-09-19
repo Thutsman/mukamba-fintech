@@ -57,7 +57,7 @@ export async function createPropertyApplicationInSupabase(
       country: propertyListing.location.country,
       city: propertyListing.location.city,
       suburb: propertyListing.location.suburb,
-      street_address: propertyListing.location.streetAddress,
+      street_address: propertyListing.location.streetAddress || '',
       size_sqm: propertyListing.details.size,
       bedrooms: propertyListing.details.bedrooms,
       bathrooms: propertyListing.details.bathrooms,

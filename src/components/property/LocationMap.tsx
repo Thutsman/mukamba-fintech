@@ -7,9 +7,7 @@ interface LocationMapProps {
 
 const LocationMap: React.FC<LocationMapProps> = ({ property }) => {
   // Extract address from the property's location structure
-  const displayAddress = property?.location?.streetAddress 
-    ? `${property.location.streetAddress}, ${property.location.suburb}, ${property.location.city}`
-    : 'Location not specified';
+  const displayAddress = `${property.location.suburb}, ${property.location.city}`;
   
   const coordinates = property?.location?.coordinates;
   const lat = coordinates?.latitude;

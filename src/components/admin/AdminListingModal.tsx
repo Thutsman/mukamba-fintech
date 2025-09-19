@@ -51,7 +51,6 @@ const adminListingSchema = z.object({
   country: z.enum(['ZW', 'SA']),
   city: z.string().min(2, "City is required"),
   suburb: z.string().min(2, "Suburb/Area is required"),
-  streetAddress: z.string().min(5, "Street address is required"),
   size: z.string().min(1, "Property size is required"),
   bedrooms: z.string().optional(),
   bathrooms: z.string().optional(),
@@ -103,7 +102,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
       monthlyInstallment: adminListing?.monthlyInstallment?.toString() || '',
       city: adminListing?.location.split(',')[0]?.trim() || '',
       suburb: adminListing?.location.split(',')[1]?.trim() || '',
-      streetAddress: adminListing?.location.split(',')[2]?.trim() || '',
       size: adminListing?.size?.toString() || '',
       bedrooms: adminListing?.bedrooms?.toString() || '',
       bathrooms: adminListing?.bathrooms?.toString() || '',
@@ -339,7 +337,7 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
           country: formData.country,
           city: formData.city,
           suburb: formData.suburb,
-          streetAddress: formData.streetAddress,
+          streetAddress: '', // No street address for security
         },
         details: {
           size: parseInt(formData.size),
@@ -601,23 +599,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                           </div>
                         </div>
 
-                        <div>
-                          <Label htmlFor="streetAddress" className="text-base font-medium text-slate-700 mb-2 block">
-                            Street Address
-                          </Label>
-                          <Input
-                            id="streetAddress"
-                            placeholder="e.g., 123 Example Street"
-                            className="px-4 py-3 rounded-lg border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            {...form.register('streetAddress')}
-                          />
-                          {form.formState.errors.streetAddress && (
-                            <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                              <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                              {form.formState.errors.streetAddress.message}
-                            </p>
-                          )}
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -921,7 +902,6 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                         <div>Listing Type: {form.watch('listingType') ? '✓' : '✗'}</div>
                         <div>City: {form.watch('city') ? '✓' : '✗'} (min 2 chars)</div>
                         <div>Suburb: {form.watch('suburb') ? '✓' : '✗'} (min 2 chars)</div>
-                        <div>Street Address: {form.watch('streetAddress') ? '✓' : '✗'} (min 5 chars)</div>
                         <div>Size: {form.watch('size') ? '✓' : '✗'}</div>
                         <div>Price: {form.watch('price') ? '✓' : '✗'}</div>
                         <div>Currency: {form.watch('currency') ? '✓' : '✗'}</div>
