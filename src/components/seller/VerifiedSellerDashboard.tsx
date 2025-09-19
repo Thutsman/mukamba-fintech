@@ -52,7 +52,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
   const [isDocsLoading, setIsDocsLoading] = React.useState(false);
   const [docsError, setDocsError] = React.useState<string | null>(null);
   // Page section state must be declared before any effects that depend on it
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'listings' | 'analytics' | 'documents' | 'profile' | 'settings'>('overview');
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'listings' | 'offers' | 'analytics' | 'documents' | 'profile' | 'settings'>('overview');
   // Mobile sidebar drawer
   const [showMobileNav, setShowMobileNav] = React.useState(false);
   
@@ -677,6 +677,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
   const navigationItems = [
     { icon: Home, label: 'Overview', key: 'overview' as const },
     { icon: FileText, label: 'Listings', key: 'listings' as const },
+    { icon: MessageSquare, label: 'Offers', key: 'offers' as const },
     { icon: BarChart3, label: 'Analytics', key: 'analytics' as const },
     { icon: FileText, label: 'Documents', key: 'documents' as const },
     { icon: UserIcon, label: 'Profile', key: 'profile' as const },
@@ -1376,6 +1377,115 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
           </>
         )}
       </div>
+      )}
+
+      {/* Seller Offers Section */}
+      {activeSection === 'offers' && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 text-slate-800">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold text-slate-900">Property Offers</h3>
+            <div className="text-sm text-slate-600">
+              Offers received for your properties
+            </div>
+          </div>
+
+          {/* Mock offers data - in real app, this would come from API */}
+          <div className="space-y-4">
+            <div className="border border-slate-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-slate-900">3BR House • Borrowdale, Harare</h4>
+                    <span className="text-xs font-mono bg-blue-100 px-2 py-1 rounded text-blue-700">
+                      OFF-2024-000001
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600">From: John Doe • john@example.com</p>
+                </div>
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                  Pending
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-slate-500">Offer Price:</span>
+                  <div className="font-semibold">R1,200,000</div>
+                </div>
+                <div>
+                  <span className="text-slate-500">Payment Method:</span>
+                  <div className="font-semibold capitalize">Cash</div>
+                </div>
+                <div>
+                  <span className="text-slate-500">Submitted:</span>
+                  <div className="font-semibold">Sep 18, 2024</div>
+                </div>
+              </div>
+              
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Approve
+                </Button>
+                <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                  <XCircle className="w-4 h-4 mr-1" />
+                  Reject
+                </Button>
+                <Button size="sm" variant="outline">
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Message
+                </Button>
+              </div>
+            </div>
+
+            <div className="border border-slate-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-slate-900">2BR Apartment • Avondale, Harare</h4>
+                    <span className="text-xs font-mono bg-blue-100 px-2 py-1 rounded text-blue-700">
+                      OFF-2024-000002
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600">From: Jane Smith • jane@example.com</p>
+                </div>
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                  Approved
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-slate-500">Offer Price:</span>
+                  <div className="font-semibold">R850,000</div>
+                </div>
+                <div>
+                  <span className="text-slate-500">Payment Method:</span>
+                  <div className="font-semibold capitalize">Installments</div>
+                </div>
+                <div>
+                  <span className="text-slate-500">Approved:</span>
+                  <div className="font-semibold">Sep 15, 2024</div>
+                </div>
+              </div>
+              
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline">
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Message Buyer
+                </Button>
+                <Button size="sm" variant="outline">
+                  <FileText className="w-4 h-4 mr-1" />
+                  View Details
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-500 text-center py-8">
+              No more offers to display
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Enhanced New Listing Modal */}

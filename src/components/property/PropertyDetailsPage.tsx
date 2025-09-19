@@ -104,6 +104,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   
   // Offer status tracking
   const [propertyOffers, setPropertyOffers] = React.useState<any[]>([]);
+  const [userOffers, setUserOffers] = React.useState<any[]>([]);
   const [userOffer, setUserOffer] = React.useState<any>(null);
   const [isLoadingOffers, setIsLoadingOffers] = React.useState(false);
 
@@ -117,9 +118,13 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         const offers = await getPropertyOffers({ property_id: property.id });
         setPropertyOffers(offers);
         
-        // Find the current user's offer
-        const currentUserOffer = offers.find(offer => offer.buyer_id === user.id);
-        setUserOffer(currentUserOffer || null);
+        // Get ALL user's offers for this property
+        const allUserOffers = offers.filter(offer => offer.buyer_id === user.id);
+        setUserOffers(allUserOffers);
+        
+        // Set the most recent offer as the current user offer
+        const currentUserOffer = allUserOffers.length > 0 ? allUserOffers[0] : null;
+        setUserOffer(currentUserOffer);
       } catch (error) {
         console.error('Error loading offers:', error);
       } finally {
@@ -200,8 +205,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       onSignUpPrompt?.();
       return;
     }
-    if (hasUserOffer()) {
-      // User already has an offer, don't allow another one
+    if (hasUserOffer() && userOffer?.status !== 'rejected') {
+      // User already has an active offer (not rejected), don't allow another one
       return;
     }
     setShowMakeOfferModal(true);
@@ -234,9 +239,13 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         const offers = await getPropertyOffers({ property_id: property.id });
         setPropertyOffers(offers);
         
-        // Find the current user's offer
-        const currentUserOffer = offers.find(offer => offer.buyer_id === user.id);
-        setUserOffer(currentUserOffer || null);
+        // Get ALL user's offers for this property
+        const allUserOffers = offers.filter(offer => offer.buyer_id === user.id);
+        setUserOffers(allUserOffers);
+        
+        // Set the most recent offer as the current user offer
+        const currentUserOffer = allUserOffers.length > 0 ? allUserOffers[0] : null;
+        setUserOffer(currentUserOffer);
       } catch (error) {
         console.error('Error refreshing offers:', error);
       }
@@ -289,18 +298,43 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const hasUserOffer = () => userOffer !== null;
   const hasAnyOffers = () => propertyOffers.length > 0;
   const isPropertyUnderOffer = () => (property as LocalPropertyWithStatus).status === 'under_offer' || hasAnyOffers();
-  const canMakeOffer = () => user && !hasUserOffer() && accessLevel !== 'anonymous';
+  const canMakeOffer = () => {
+    if (!user || accessLevel === 'anonymous') return false;
+    
+    // If user has no offer, they can make one
+    if (!hasUserOffer()) return true;
+    
+    // If user has an offer, they can only make a new one if the current offer is rejected
+    return userOffer && userOffer.status === 'rejected';
+  };
 
-  // Offer status banner component
-  const OfferStatusBanner = () => {
+  // Format date and time
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    };
+  };
+
+  // Compact offer status component for sidebar
+  const CompactOfferStatus = () => {
     if (!user || !hasUserOffer()) return null;
 
     const getStatusColor = (status: string) => {
       switch (status) {
-        case 'pending': return 'bg-blue-50 border-blue-200 text-blue-800';
-        case 'approved': return 'bg-green-50 border-green-200 text-green-800';
-        case 'rejected': return 'bg-red-50 border-red-200 text-red-800';
-        default: return 'bg-gray-50 border-gray-200 text-gray-800';
+        case 'pending': return 'bg-blue-50 border-blue-200 text-blue-900';
+        case 'approved': return 'bg-green-50 border-green-200 text-green-900';
+        case 'rejected': return 'bg-red-50 border-red-200 text-red-900';
+        default: return 'bg-gray-50 border-gray-200 text-gray-900';
       }
     };
 
@@ -315,80 +349,205 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
     const getStatusMessage = (status: string) => {
       switch (status) {
-        case 'pending': return 'Your offer is under review';
-        case 'approved': return 'Your offer has been approved!';
-        case 'rejected': return 'Your offer was not accepted';
-        default: return 'Offer status unknown';
+        case 'pending': return 'Under Review';
+        case 'approved': return 'Approved';
+        case 'rejected': return 'Not Accepted';
+        default: return 'Unknown Status';
       }
     };
 
-    return (
-      <Alert className={`mb-6 ${getStatusColor(userOffer.status)}`}>
-        <div className="flex items-center">
-          {getStatusIcon(userOffer.status)}
-          <AlertDescription className="ml-2">
-            <div className="font-medium">{getStatusMessage(userOffer.status)}</div>
-            {userOffer.status === 'pending' && (
-              <div className="text-sm mt-1 opacity-90">
-                We'll notify you once the seller responds to your offer.
-              </div>
-            )}
-          </AlertDescription>
-        </div>
-      </Alert>
-    );
-  };
-
-  // Offer summary component
-  const OfferSummary = () => {
-    if (!user || !hasUserOffer()) return null;
+    const submittedDateTime = formatDateTime(userOffer.submitted_at);
+    const reviewedDateTime = userOffer.admin_reviewed_at ? formatDateTime(userOffer.admin_reviewed_at) : null;
 
     return (
-      <Card className="mb-6 bg-blue-50 border-blue-200">
+      <Card className={`${getStatusColor(userOffer.status)}`}>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-blue-900 flex items-center">
-            <UserCheck className="w-5 h-5 mr-2" />
-            Your Offer Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-blue-700 font-medium">Offer Price:</span>
-              <div className="text-blue-900 font-semibold">
-                {formatCurrency(userOffer.offer_price)}
-              </div>
-            </div>
-            <div>
-              <span className="text-blue-700 font-medium">Deposit:</span>
-              <div className="text-blue-900 font-semibold">
-                {formatCurrency(userOffer.deposit_amount)}
-              </div>
-            </div>
-            <div>
-              <span className="text-blue-700 font-medium">Payment Method:</span>
-              <div className="text-blue-900 font-semibold capitalize">
-                {userOffer.payment_method}
-              </div>
-            </div>
-            <div>
-              <span className="text-blue-700 font-medium">Timeline:</span>
-              <div className="text-blue-900 font-semibold">
-                {userOffer.estimated_timeline === 'ready_to_pay_in_full' 
-                  ? 'Ready to pay in full' 
-                  : `${userOffer.estimated_timeline.replace('_months', '')} months`
-                }
-              </div>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center">
+              <UserCheck className="w-4 h-4 mr-2" />
+              Your Offer
+            </CardTitle>
+            <div className="flex items-center space-x-1">
+              {getStatusIcon(userOffer.status)}
+              <span className="text-sm font-semibold">{getStatusMessage(userOffer.status)}</span>
             </div>
           </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* Status-specific message */}
+          {userOffer.status === 'rejected' && (
+            <div className="bg-red-100 rounded-lg p-2 border border-red-200">
+              <p className="text-xs text-red-800 font-medium">
+                Your offer was not accepted.
+              </p>
+              {userOffer.rejection_reason && (
+                <p className="text-xs text-red-700 mt-1">
+                  <span className="font-medium">Reason:</span> {userOffer.rejection_reason}
+                </p>
+              )}
+            </div>
+          )}
+
+          {userOffer.status === 'pending' && (
+            <div className="bg-blue-100 rounded-lg p-2 border border-blue-200">
+              <p className="text-xs text-blue-800">
+                Your offer is under review.
+              </p>
+            </div>
+          )}
+
+          {userOffer.status === 'approved' && (
+            <div className="bg-green-100 rounded-lg p-2 border border-green-200">
+              <p className="text-xs text-green-800 font-medium">
+                Congratulations! Your offer has been approved.
+              </p>
+            </div>
+          )}
+
+          {/* Offer details - compact */}
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="opacity-75">Ref #:</span>
+              <span className="font-semibold font-mono">{userOffer.offer_reference}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-75">Price:</span>
+              <span className="font-semibold">{formatCurrency(userOffer.offer_price)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-75">Deposit:</span>
+              <span className="font-semibold">{formatCurrency(userOffer.deposit_amount)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-75">Method:</span>
+              <span className="font-semibold capitalize">{userOffer.payment_method}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-75">Timeline:</span>
+              <span className="font-semibold">
+                {userOffer.estimated_timeline === 'ready_to_pay_in_full' 
+                  ? 'Full payment' 
+                  : `${userOffer.estimated_timeline.replace('_months', '')} months`
+                }
+              </span>
+            </div>
+          </div>
+
+          {/* Timestamps - compact */}
+          <div className="pt-2 border-t border-current border-opacity-20 space-y-1">
+            <div className="text-xs">
+              <span className="opacity-75">Submitted:</span>
+              <div className="font-semibold">
+                {submittedDateTime.date} at {submittedDateTime.time}
+              </div>
+            </div>
+            {reviewedDateTime && (
+              <div className="text-xs">
+                <span className="opacity-75">
+                  {userOffer.status === 'rejected' ? 'Rejected:' : 'Reviewed:'}
+                </span>
+                <div className="font-semibold">
+                  {reviewedDateTime.date} at {reviewedDateTime.time}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Additional notes - compact */}
           {userOffer.additional_notes && (
-            <div className="pt-2 border-t border-blue-200">
-              <span className="text-blue-700 font-medium text-sm">Additional Notes:</span>
-              <div className="text-blue-900 text-sm mt-1">
+            <div className="pt-2 border-t border-current border-opacity-20">
+              <span className="text-xs opacity-75">Notes:</span>
+              <div className="text-xs mt-1 font-medium line-clamp-2">
                 {userOffer.additional_notes}
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Offer history component
+  const OfferHistory = () => {
+    if (!user || userOffers.length <= 1) return null; // Only show if more than 1 offer
+
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'pending': return 'text-blue-600';
+        case 'approved': return 'text-green-600';
+        case 'rejected': return 'text-red-600';
+        default: return 'text-gray-600';
+      }
+    };
+
+    const getStatusIcon = (status: string) => {
+      switch (status) {
+        case 'pending': return <Timer className="w-3 h-3" />;
+        case 'approved': return <CheckCircle className="w-3 h-3" />;
+        case 'rejected': return <AlertCircle className="w-3 h-3" />;
+        default: return <Info className="w-3 h-3" />;
+      }
+    };
+
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center">
+            <Clock className="w-4 h-4 mr-2" />
+            Offer History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {userOffers.slice(1).map((offer, index) => {
+            const submittedDateTime = formatDateTime(offer.submitted_at);
+            const reviewedDateTime = offer.admin_reviewed_at ? formatDateTime(offer.admin_reviewed_at) : null;
+            
+            return (
+              <div key={offer.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">
+                      Offer #{userOffers.length - index}
+                    </span>
+                    <span className="text-xs font-mono text-gray-500">
+                      {offer.offer_reference}
+                    </span>
+                  </div>
+                  <div className={`flex items-center space-x-1 ${getStatusColor(offer.status)}`}>
+                    {getStatusIcon(offer.status)}
+                    <span className="text-xs font-medium capitalize">{offer.status}</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div className="flex justify-between">
+                    <span>Price:</span>
+                    <span className="font-medium">{formatCurrency(offer.offer_price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Method:</span>
+                    <span className="font-medium capitalize">{offer.payment_method}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Submitted:</span>
+                    <span className="font-medium">{submittedDateTime.date}</span>
+                  </div>
+                  {reviewedDateTime && (
+                    <div className="flex justify-between">
+                      <span>{offer.status === 'rejected' ? 'Rejected:' : 'Reviewed:'}</span>
+                      <span className="font-medium">{reviewedDateTime.date}</span>
+                    </div>
+                  )}
+                  {offer.rejection_reason && (
+                    <div className="pt-1 border-t border-gray-200">
+                      <span className="text-red-600 font-medium">Reason:</span>
+                      <div className="text-red-600 text-xs mt-1">{offer.rejection_reason}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     );
@@ -472,10 +631,6 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Offer Status Components */}
-        <OfferStatusBanner />
-        <OfferSummary />
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -695,6 +850,12 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Offer Status - Show first if user has an offer */}
+            <CompactOfferStatus />
+
+            {/* Offer History - Show if user has multiple offers */}
+            <OfferHistory />
+
             {/* Property Actions */}
             <PropertyActions
               property={property}
@@ -708,6 +869,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               isFavorite={isFavorite}
               hasUserOffer={hasUserOffer()}
               canMakeOffer={canMakeOffer()}
+              userOfferStatus={userOffer?.status}
             />
 
             {/* Property Stats */}

@@ -11,6 +11,9 @@ export interface PropertyOffer {
   estimated_timeline: string;
   additional_notes?: string;
   
+  // Reference number
+  offer_reference: string;
+  
   // Status & workflow
   status: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired';
   admin_reviewed_by?: string;

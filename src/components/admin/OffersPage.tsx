@@ -310,9 +310,14 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                     <div className="flex-1 space-y-3">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {offer.property?.title || 'Property Not Found'}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {offer.property?.title || 'Property Not Found'}
+                            </h3>
+                            <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
+                              {offer.offer_reference}
+                            </span>
+                          </div>
                           <p className="text-sm text-gray-600">
                             {offer.property?.location?.city || 'Unknown City'}, {offer.property?.location?.country || 'Unknown Country'}
                           </p>
