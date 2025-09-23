@@ -53,6 +53,8 @@ interface PaymentData {
   bankDetails?: string;
   paymentReference?: string;
   amount: number;
+  transaction_id?: string;
+  payment_id?: string;
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -122,19 +124,62 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setStep('processing');
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Call custom onSubmit if provided
-      if (onSubmit) {
-        await onSubmit(paymentData);
+      if (paymentData.paymentMethod === 'ecocash') {
+        // Call Ecocash API to initiate payment
+        const response = await fetch('/api/payments/ecocash/initiate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            offer_id: offer.id,
+            phone_number: paymentData.phoneNumber,
+            amount: paymentData.amount,
+            user_id: user.id
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to initiate payment');
+        }
+        
+        // Call custom onSubmit if provided
+        if (onSubmit) {
+          await onSubmit({
+            ...paymentData,
+            transaction_id: result.transaction_id,
+            payment_id: result.payment_id
+          });
+        }
+        
+        // Show sandbox info if available
+        if (result.sandbox_info) {
+          console.log('Sandbox Info:', result.sandbox_info);
+        }
+        
+        setStep('success');
+        setTimeout(() => {
+          onClose();
+          setStep('method');
+        }, 3000);
+      } else {
+        // Handle other payment methods (bank transfer, diaspora)
+        // Simulate processing for now
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Call custom onSubmit if provided
+        if (onSubmit) {
+          await onSubmit(paymentData);
+        }
+        
+        setStep('success');
+        setTimeout(() => {
+          onClose();
+          setStep('method');
+        }, 3000);
       }
-      
-      setStep('success');
-      setTimeout(() => {
-        onClose();
-        setStep('method');
-      }, 3000);
     } catch (error) {
       console.error('Payment failed:', error);
       setStep('details');
@@ -334,7 +379,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <Info className="h-4 w-4" />
                     <AlertDescription>
                       {paymentData.paymentMethod === 'ecocash' && 
-                        'You will receive an Ecocash prompt on your mobile device to complete the payment.'
+                        'You will receive an Ecocash prompt on your mobile device to complete the payment. The amount will be automatically filled in.'
                       }
                       {paymentData.paymentMethod === 'bank_transfer' && 
                         'Please provide your bank details for the transfer confirmation.'
@@ -345,6 +390,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </AlertDescription>
                   </Alert>
 
+                  {/* Sandbox Information */}
+                  {paymentData.paymentMethod === 'ecocash' && (
+                    <Alert className="bg-yellow-50 border-yellow-200">
+                      <Info className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-800">
+                        <strong>Testing Mode:</strong> If you're testing, use PIN codes: 0000, 1234, or 9999 to complete the payment.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Payment Details Form */}
                   {paymentData.paymentMethod === 'ecocash' && (
                     <div className="space-y-3">
@@ -354,7 +409,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         type="tel"
                         value={paymentData.phoneNumber || ''}
                         onChange={(e) => setPaymentData(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="Enter your phone number"
+                        placeholder="e.g., 0771234567 or +263771234567"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
                       {validationErrors.phoneNumber && (
