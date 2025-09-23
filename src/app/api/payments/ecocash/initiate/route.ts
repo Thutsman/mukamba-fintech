@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     // Initialize Supabase client with service role for API operations
     const supabase = createServiceClient();
     
-    // Generate unique transaction ID
-    const transaction_id = `ecocash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate unique transaction ID (UUID v4 format required by Ecocash)
+    const transaction_id = crypto.randomUUID();
     
     // Create payment record
     const { data: payment, error: paymentError } = await supabase
@@ -126,6 +126,8 @@ async function initiateEcocashPayment(params: {
       // Remove leading 0 and add 263 country code
       formattedPhone = formattedPhone.replace(/^0/, '263');
     }
+    // Remove any spaces or special characters
+    formattedPhone = formattedPhone.replace(/[^0-9]/g, '');
     
     // Prepare payment request payload according to Ecocash API spec
     const paymentRequest = {
@@ -141,12 +143,26 @@ async function initiateEcocashPayment(params: {
       customerMsisdn: '[REDACTED]'
     });
     
+    // Log the request for debugging
+    console.log('Ecocash API Request:', {
+      url: `${baseUrl}${endpoint}`,
+      headers: {
+        'X-API-KEY': '[REDACTED]',
+        'Content-Type': 'application/json'
+      },
+      body: {
+        ...paymentRequest,
+        customerMsisdn: '[REDACTED]'
+      }
+    });
+
     // Make API call to Ecocash
     const response = await fetch(`${baseUrl}${endpoint}`, {
       method: 'POST',
       headers: {
         'X-API-KEY': apiKey,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(paymentRequest)
     });
