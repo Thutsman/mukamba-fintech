@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 // These will be replaced with your actual Supabase project details
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,8 +14,16 @@ export const STORAGE_BUCKETS = {
 
 // Create client only if credentials are available
 export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createSupabaseClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// Export createClient function for use in API routes
+export const createClient = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase credentials not configured');
+  }
+  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
+};
 
 // Helper function to get a mock URL for development
 const getMockUrl = (bucket: string, path: string) => {
