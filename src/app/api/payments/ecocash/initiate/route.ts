@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createServiceClient } from '@/lib/supabase';
 
 /**
  * Ecocash Payment Initiation Handler
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Initialize Supabase client
-    const supabase = createClient();
+    // Initialize Supabase client with service role for API operations
+    const supabase = createServiceClient();
     
     // Generate unique transaction ID
     const transaction_id = `ecocash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

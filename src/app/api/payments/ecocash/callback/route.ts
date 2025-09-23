@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createServiceClient } from '@/lib/supabase';
 
 /**
  * Ecocash Payment Callback Handler
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     // }
     
-    // Initialize Supabase client
-    const supabase = createClient();
+    // Initialize Supabase client with service role for API operations
+    const supabase = createServiceClient();
     
     // Update payment status in database
     const { data: payment, error: updateError } = await supabase

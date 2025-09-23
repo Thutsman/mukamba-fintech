@@ -25,6 +25,20 @@ export const createClient = () => {
   return createSupabaseClient(supabaseUrl, supabaseAnonKey);
 };
 
+// Export createServiceClient function for use in API routes (bypasses RLS)
+export const createServiceClient = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Supabase service role credentials not configured');
+  }
+  return createSupabaseClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+};
+
 // Helper function to get a mock URL for development
 const getMockUrl = (bucket: string, path: string) => {
   // Return placeholder images for development
