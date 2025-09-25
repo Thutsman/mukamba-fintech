@@ -23,6 +23,11 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ property }) =>
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [isImageLoading, setIsImageLoading] = React.useState(true);
+  
+  // Touch/swipe state
+  const [touchStart, setTouchStart] = React.useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
 
   // Get all images for carousel
   const images = React.useMemo(() => {
@@ -41,6 +46,72 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ property }) =>
 
   const goToImage = (index: number) => {
     setCurrentImageIndex(index);
+  };
+
+  // Touch/swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setIsDragging(false);
+      return;
+    }
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && images.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && images.length > 1) {
+      prevImage();
+    }
+    
+    setIsDragging(false);
+  };
+
+  // Mouse drag handlers for desktop
+  const [mouseStart, setMouseStart] = React.useState<number | null>(null);
+  const [mouseEnd, setMouseEnd] = React.useState<number | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setMouseEnd(null);
+    setMouseStart(e.clientX);
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setMouseEnd(e.clientX);
+  };
+
+  const handleMouseUp = () => {
+    if (!mouseStart || !mouseEnd) {
+      setIsDragging(false);
+      return;
+    }
+    
+    const distance = mouseStart - mouseEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && images.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && images.length > 1) {
+      prevImage();
+    }
+    
+    setIsDragging(false);
   };
 
   // Handle keyboard navigation
@@ -75,7 +146,17 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ property }) =>
       {/* Main Gallery */}
       <div className="relative group">
         {/* Main Image */}
-        <div className="relative h-96 md:h-[500px] overflow-hidden rounded-lg">
+        <div 
+          className="relative h-96 md:h-[500px] overflow-hidden rounded-lg cursor-grab active:cursor-grabbing select-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          style={{ touchAction: 'pan-y pinch-zoom' }}
+        >
           {isImageLoading && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
               <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
@@ -123,15 +204,25 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ property }) =>
             <>
               <button
                 onClick={prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 touch-manipulation"
+                style={{ 
+                  minHeight: '44px', 
+                  minWidth: '44px',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               <button
                 onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 touch-manipulation"
+                style={{ 
+                  minHeight: '44px', 
+                  minWidth: '44px',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </>
           )}
@@ -140,6 +231,17 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ property }) =>
           <div className="absolute bottom-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
             {currentImageIndex + 1} / {images.length}
           </div>
+
+          {/* Swipe indicator for mobile */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-xs md:hidden">
+              <span className="flex items-center">
+                <ChevronLeft className="w-3 h-3 mr-1" />
+                Swipe
+                <ChevronRight className="w-3 h-3 ml-1" />
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Thumbnails */}
@@ -177,7 +279,17 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ property }) =>
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
             onClick={() => setIsLightboxOpen(false)}
           >
-            <div className="relative max-w-7xl max-h-full p-4">
+            <div 
+              className="relative max-w-7xl max-h-full p-4"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{ touchAction: 'pan-y pinch-zoom' }}
+            >
               {/* Close button */}
               <button
                 onClick={() => setIsLightboxOpen(false)}
