@@ -1174,7 +1174,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                       </span>
               </div>
                     <div className="flex gap-2">
-                      <Button size="sm" className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => handleViewPropertyDetails(p)}>
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-red-600 hover:bg-red-700" 
+                        onClick={() => router.push(`/property/${p.id}`)}
+                      >
                         View Details
                       </Button>
                       <Button 
