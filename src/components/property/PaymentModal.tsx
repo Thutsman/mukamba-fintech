@@ -27,7 +27,11 @@ import {
   User,
   Home,
   Shield,
-  Info
+  Info,
+  Upload,
+  FileText,
+  Copy,
+  Check
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +40,9 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { PropertyOffer } from '@/types/offers';
 import { User as UserType } from '@/types/auth';
 
@@ -55,6 +62,12 @@ interface PaymentData {
   amount: number;
   transaction_id?: string;
   payment_id?: string;
+  // Bank transfer specific fields
+  proofOfPayment?: File;
+  proofUrl?: string;
+  transferReference?: string;
+  transferNotes?: string;
+  confirmationChecked?: boolean;
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -71,6 +84,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   });
   const [isLoading, setIsLoading] = React.useState(false);
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
+  const [uploadingFile, setUploadingFile] = React.useState(false);
+  const [copiedField, setCopiedField] = React.useState<string | null>(null);
 
   // Reset form when modal opens/closes
   React.useEffect(() => {
@@ -92,6 +107,56 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }).format(amount);
   };
 
+  // Bank details for Mukamba FinTech
+  const bankDetails = {
+    bankName: 'Standard Bank Zimbabwe',
+    accountName: 'Mukamba FinTech (Pvt) Ltd',
+    accountNumber: '1234567890',
+    swiftCode: 'SBICZWHX',
+    branchCode: '001',
+    reference: `OFFER-${offer.id.slice(-8).toUpperCase()}`
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    
+    setUploadingFile(true);
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('offer_id', offer.id);
+      formData.append('user_id', user.id);
+      
+      const response = await fetch('/api/upload/proof-of-payment', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+      
+      const result = await response.json();
+      setPaymentData(prev => ({ ...prev, proofUrl: result.url }));
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setValidationErrors(prev => ({ ...prev, proofOfPayment: 'Failed to upload file. Please try again.' }));
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
   const validatePaymentDetails = (): boolean => {
     const errors: Record<string, string> = {};
 
@@ -99,8 +164,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       errors.phoneNumber = 'Phone number is required for Ecocash payment';
     }
 
-    if (paymentData.paymentMethod === 'bank_transfer' && !paymentData.bankDetails) {
-      errors.bankDetails = 'Bank details are required for bank transfer';
+    if (paymentData.paymentMethod === 'bank_transfer') {
+      if (!paymentData.proofUrl) {
+        errors.proofOfPayment = 'Proof of payment is required for bank transfer';
+      }
+      if (!paymentData.confirmationChecked) {
+        errors.confirmation = 'Please confirm that you have made the transfer';
+      }
     }
 
     setValidationErrors(errors);
@@ -164,8 +234,44 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           onClose();
           setStep('method');
         }, 3000);
+      } else if (paymentData.paymentMethod === 'bank_transfer') {
+        // Handle bank transfer submission
+        const response = await fetch('/api/payments/bank-transfer/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            offer_id: offer.id,
+            user_id: user.id,
+            amount: paymentData.amount,
+            proof_url: paymentData.proofUrl,
+            transfer_reference: paymentData.transferReference,
+            transfer_notes: paymentData.transferNotes
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to submit bank transfer');
+        }
+        
+        // Call custom onSubmit if provided
+        if (onSubmit) {
+          await onSubmit({
+            ...paymentData,
+            payment_id: result.payment_id
+          });
+        }
+        
+        setStep('success');
+        setTimeout(() => {
+          onClose();
+          setStep('method');
+        }, 3000);
       } else {
-        // Handle other payment methods (bank transfer, diaspora)
+        // Handle other payment methods (diaspora)
         // Simulate processing for now
         await new Promise(resolve => setTimeout(resolve, 3000));
         
@@ -382,7 +488,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         'You will receive an Ecocash prompt on your mobile device to complete the payment. The amount will be automatically filled in.'
                       }
                       {paymentData.paymentMethod === 'bank_transfer' && 
-                        'Please provide your bank details for the transfer confirmation.'
+                        'Transfer the exact amount to our bank account and upload proof of payment. Your payment will be verified manually within 1-2 business days.'
                       }
                       {paymentData.paymentMethod === 'diaspora' && 
                         'You will be redirected to a secure payment gateway for international payment.'
@@ -419,18 +525,196 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   )}
 
                   {paymentData.paymentMethod === 'bank_transfer' && (
-                    <div className="space-y-3">
-                      <Label htmlFor="bankDetails" className="text-base font-medium">Bank Details</Label>
-                      <textarea
-                        id="bankDetails"
-                        value={paymentData.bankDetails || ''}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, bankDetails: e.target.value }))}
-                        placeholder="Enter your bank account details"
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      />
-                      {validationErrors.bankDetails && (
-                        <p className="text-sm text-red-600">{validationErrors.bankDetails}</p>
+                    <div className="space-y-6">
+                      {/* Bank Details Card */}
+                      <Card className="bg-blue-50 border-blue-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg text-blue-800 flex items-center">
+                            <Building2 className="w-5 h-5 mr-2" />
+                            Mukamba FinTech Bank Details
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-blue-700">Bank Name</Label>
+                              <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                                <span className="text-sm font-mono">{bankDetails.bankName}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => copyToClipboard(bankDetails.bankName, 'bankName')}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  {copiedField === 'bankName' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-blue-700">Account Name</Label>
+                              <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                                <span className="text-sm font-mono">{bankDetails.accountName}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => copyToClipboard(bankDetails.accountName, 'accountName')}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  {copiedField === 'accountName' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-blue-700">Account Number</Label>
+                              <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                                <span className="text-sm font-mono">{bankDetails.accountNumber}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  {copiedField === 'accountNumber' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-blue-700">SWIFT Code</Label>
+                              <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                                <span className="text-sm font-mono">{bankDetails.swiftCode}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => copyToClipboard(bankDetails.swiftCode, 'swiftCode')}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  {copiedField === 'swiftCode' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium text-blue-700">Reference (Important!)</Label>
+                            <div className="flex items-center justify-between bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                              <span className="text-sm font-mono font-bold text-yellow-800">{bankDetails.reference}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => copyToClipboard(bankDetails.reference, 'reference')}
+                                className="h-8 w-8 p-0"
+                              >
+                                {copiedField === 'reference' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-yellow-700">Use this exact reference when making your transfer</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Transfer Amount */}
+                      <Card className="bg-green-50 border-green-200">
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <Label className="text-sm font-medium text-green-700">Transfer Amount</Label>
+                            <div className="text-2xl font-bold text-green-800 mt-2">
+                              {formatCurrency(paymentData.amount)}
+                            </div>
+                            <p className="text-xs text-green-600 mt-1">Deposit for approved offer</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Optional Transfer Reference */}
+                      <div className="space-y-2">
+                        <Label htmlFor="transferReference" className="text-base font-medium">Your Transfer Reference (Optional)</Label>
+                        <Input
+                          id="transferReference"
+                          value={paymentData.transferReference || ''}
+                          onChange={(e) => setPaymentData(prev => ({ ...prev, transferReference: e.target.value }))}
+                          placeholder="Enter your bank's transaction reference"
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* File Upload */}
+                      <div className="space-y-2">
+                        <Label className="text-base font-medium">Upload Proof of Payment</Label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                          <input
+                            type="file"
+                            id="proofOfPayment"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setPaymentData(prev => ({ ...prev, proofOfPayment: file }));
+                                handleFileUpload(file);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <label htmlFor="proofOfPayment" className="cursor-pointer">
+                            {uploadingFile ? (
+                              <div className="flex flex-col items-center">
+                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
+                                <p className="text-sm text-gray-600">Uploading...</p>
+                              </div>
+                            ) : paymentData.proofUrl ? (
+                              <div className="flex flex-col items-center">
+                                <CheckCircle className="w-8 h-8 text-green-600 mb-2" />
+                                <p className="text-sm text-green-600 font-medium">Proof of payment uploaded</p>
+                                <p className="text-xs text-gray-500 mt-1">Click to change file</p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center">
+                                <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                                <p className="text-sm text-gray-600">Click to upload proof of payment</p>
+                                <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (Max 10MB)</p>
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                        {validationErrors.proofOfPayment && (
+                          <p className="text-sm text-red-600">{validationErrors.proofOfPayment}</p>
+                        )}
+                      </div>
+
+                      {/* Additional Notes */}
+                      <div className="space-y-2">
+                        <Label htmlFor="transferNotes" className="text-base font-medium">Additional Notes (Optional)</Label>
+                        <Textarea
+                          id="transferNotes"
+                          value={paymentData.transferNotes || ''}
+                          onChange={(e) => setPaymentData(prev => ({ ...prev, transferNotes: e.target.value }))}
+                          placeholder="Any additional information about your transfer..."
+                          rows={3}
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Confirmation Checkbox */}
+                      <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border">
+                        <Checkbox
+                          id="confirmation"
+                          checked={paymentData.confirmationChecked || false}
+                          onCheckedChange={(checked) => setPaymentData(prev => ({ ...prev, confirmationChecked: !!checked }))}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor="confirmation" className="text-sm font-medium cursor-pointer">
+                            I confirm I have made the bank transfer
+                          </Label>
+                          <p className="text-xs text-gray-600 mt-1">
+                            By checking this box, you confirm that you have completed the bank transfer using the details provided above.
+                          </p>
+                        </div>
+                      </div>
+                      {validationErrors.confirmation && (
+                        <p className="text-sm text-red-600">{validationErrors.confirmation}</p>
                       )}
                     </div>
                   )}
@@ -498,12 +782,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">Payment Successful!</h3>
+                    <h3 className="font-semibold text-gray-800">
+                      {paymentData.paymentMethod === 'bank_transfer' ? 'Payment Submitted!' : 'Payment Successful!'}
+                    </h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Your payment of {formatCurrency(offer.deposit_amount)} has been processed successfully.
+                      {paymentData.paymentMethod === 'bank_transfer' 
+                        ? `Your bank transfer of ${formatCurrency(offer.deposit_amount)} has been submitted for verification.`
+                        : `Your payment of ${formatCurrency(offer.deposit_amount)} has been processed successfully.`
+                      }
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      You will receive a confirmation email shortly.
+                      {paymentData.paymentMethod === 'bank_transfer'
+                        ? 'Your payment will be verified within 1-2 business days. You will receive an email confirmation once verified.'
+                        : 'You will receive a confirmation email shortly.'
+                      }
                     </p>
                   </div>
                 </div>
