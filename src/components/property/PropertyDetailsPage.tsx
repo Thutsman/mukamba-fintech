@@ -584,8 +584,46 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.back()}
-                className="flex items-center space-x-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  // More robust back navigation for mobile
+                  try {
+                    // Check if we can go back in history
+                    if (typeof window !== 'undefined') {
+                      // Try native browser back first (works better on mobile)
+                      if (window.history.length > 1) {
+                        window.history.back();
+                      } else {
+                        // Fallback to Next.js router
+                        router.back();
+                      }
+                    } else {
+                      // Server-side fallback
+                      router.push('/listings');
+                    }
+                  } catch (error) {
+                    console.error('Navigation error:', error);
+                    // Ultimate fallback to home page
+                    router.push('/');
+                  }
+                }}
+                className="flex items-center space-x-2 touch-manipulation"
+                style={{ 
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation',
+                  minHeight: '44px', // iOS recommended touch target size
+                  minWidth: '44px'
+                }}
+                onTouchStart={(e) => {
+                  // Add visual feedback for touch
+                  e.currentTarget.style.opacity = '0.7';
+                }}
+                onTouchEnd={(e) => {
+                  // Remove visual feedback
+                  e.currentTarget.style.opacity = '1';
+                }}
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
