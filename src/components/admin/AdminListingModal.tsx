@@ -532,20 +532,38 @@ export const AdminListingModal: React.FC<AdminListingModalProps> = ({
                             <Label className="text-base font-medium text-slate-700 mb-2 block">
                               Listing Type
                             </Label>
-                                                         <RadioGroup
-                               value={form.watch('listingType')}
-                               onValueChange={(value: ListingType) => form.setValue('listingType', value)}
-                               className="grid grid-cols-2 gap-4 mt-2"
-                             >
-                               <div className="flex items-center space-x-2">
-                                 <RadioGroupItem value="installment" id="installment" />
-                                 <Label htmlFor="installment" className="text-sm">Installments</Label>
-                               </div>
-                               <div className="flex items-center space-x-2">
-                                 <RadioGroupItem value="sale" id="sale" />
-                                 <Label htmlFor="sale" className="text-sm">Cash Sale</Label>
-                               </div>
-                             </RadioGroup>
+                            <RadioGroup
+                              value={form.watch('listingType')}
+                              onValueChange={(value: ListingType) => form.setValue('listingType', value)}
+                              className="flex flex-col sm:grid sm:grid-cols-2 gap-3 mt-2"
+                            >
+                              <div className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                                <RadioGroupItem 
+                                  value="installment" 
+                                  id="installment" 
+                                  className="w-5 h-5 text-blue-600 border-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                />
+                                <Label 
+                                  htmlFor="installment" 
+                                  className="text-sm font-medium text-slate-700 cursor-pointer flex-1"
+                                >
+                                  Installments
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                                <RadioGroupItem 
+                                  value="sale" 
+                                  id="sale" 
+                                  className="w-5 h-5 text-blue-600 border-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                />
+                                <Label 
+                                  htmlFor="sale" 
+                                  className="text-sm font-medium text-slate-700 cursor-pointer flex-1"
+                                >
+                                  Cash Sale
+                                </Label>
+                              </div>
+                            </RadioGroup>
                           </div>
                         </div>
                       </div>
