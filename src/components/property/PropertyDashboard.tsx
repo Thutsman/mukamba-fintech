@@ -691,14 +691,55 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     <div className="text-white/90 text-sm font-medium mb-3 tracking-wide">
                       In Partnership with:
                     </div>
-                    <Image
-                      src="/partner-logo.svg"
-                      alt="Partner Logo"
-                      width={320}
-                      height={90}
-                      className="h-20 w-auto mx-auto"
-                      priority
-                    />
+                    <div className="relative min-h-[80px] flex items-center justify-center">
+                      {/* Try Next.js Image first */}
+                      <Image
+                        src="/partner-logo.svg"
+                        alt="Partner Logo"
+                        width={320}
+                        height={90}
+                        className="h-20 w-auto mx-auto"
+                        priority
+                        onError={(e) => {
+                          console.error('Next.js Image failed to load partner logo:', e);
+                          // Hide Next.js image and show fallback img
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
+                          if (fallbackImg) fallbackImg.style.display = 'block';
+                        }}
+                        onLoad={() => {
+                          console.log('Partner logo loaded successfully with Next.js Image');
+                          // Hide fallback when image loads
+                          const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
+                          if (fallbackImg) fallbackImg.style.display = 'none';
+                        }}
+                      />
+                      {/* Fallback regular img tag */}
+                      <img
+                        src="/partner-logo.svg"
+                        alt="Partner Logo"
+                        className="partner-logo-fallback-img h-20 w-auto mx-auto hidden"
+                        onError={(e) => {
+                          console.error('Regular img tag also failed to load partner logo:', e);
+                          // Hide img and show text fallback
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
+                          if (textFallback) textFallback.style.display = 'flex';
+                        }}
+                        onLoad={() => {
+                          console.log('Partner logo loaded successfully with regular img tag');
+                          // Hide text fallback when image loads
+                          const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
+                          if (textFallback) textFallback.style.display = 'none';
+                        }}
+                      />
+                      {/* Text fallback content */}
+                      <div className="partner-logo-text-fallback absolute inset-0 items-center justify-center text-white/80 text-sm font-medium bg-white/10 rounded-lg hidden">
+                        Partner Logo
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
