@@ -684,18 +684,23 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           <div className="text-center space-y-8">
             {/* Logo and Main Headline */}
             <div className="flex flex-col items-center space-y-8">
-              {/* Enhanced Logo with glass effect */}
+              {/* Enhanced Partnership Logo with glass effect */}
               <div className="relative mb-8">
                 <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/30">
-          <Image
-                    src="/logo.svg"
-                    alt="Mukamba Logo"
-                    width={320}
-                    height={90}
-                    className="h-20 w-auto"
-            priority
-          />
-        </div>
+                  <div className="text-center">
+                    <div className="text-white/90 text-sm font-medium mb-3 tracking-wide">
+                      In Partnership with:
+                    </div>
+                    <Image
+                      src="/partner-logo.svg"
+                      alt="Partner Logo"
+                      width={320}
+                      height={90}
+                      className="h-20 w-auto mx-auto"
+                      priority
+                    />
+                  </div>
+                </div>
               </div>
               
               <h1 
@@ -2195,13 +2200,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
                   {/* Quick Filters */}
                   <div className="flex flex-wrap gap-3">
-                                         <CountryToggle
-                       value={selectedCountry}
-                       onChange={setSelectedCountry}
-                     />
-                    
-
-                </div>
+                    <CountryToggle
+                      value={selectedCountry}
+                      onChange={setSelectedCountry}
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>
