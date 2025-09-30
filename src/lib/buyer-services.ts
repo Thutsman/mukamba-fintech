@@ -76,28 +76,30 @@ export const buyerServices = {
         return { success: false, error: error.message };
       }
 
-      // Send SMS via Supabase Edge Function
-      const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
-        body: {
-          phoneNumber,
-          otpCode,
-          userId,
-          verificationSource
+      // Prefer internal API route for provider-agnostic sending
+      try {
+        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/sms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber, otpCode, userId, verificationSource })
+        });
+        const apiData = await apiRes.json();
+        if (!apiRes.ok || !apiData?.success) {
+          throw new Error(apiData?.error || `SMS API error: ${apiRes.status}`);
         }
-      });
-
-      if (smsError) {
-        console.error('Error calling SMS function:', smsError);
-        const errorMessage = (smsError as any)?.message || JSON.stringify(smsError) || 'Unknown error during SMS function call';
-        return { success: false, error: `Failed to send SMS: ${errorMessage}` };
+        console.log(`SMS sent via API to ${phoneNumber}. Message ID: ${apiData.messageId}`);
+      } catch (apiErr: any) {
+        // Fallback to Supabase Edge Function if configured
+        console.warn('Primary SMS API failed, attempting edge function fallback:', apiErr?.message);
+        const { data: smsResult, error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: { phoneNumber, otpCode, userId, verificationSource }
+        });
+        if (smsError || !smsResult?.success) {
+          const msg = smsError ? (smsError as any)?.message || 'Unknown error' : smsResult?.error || 'Failed to send SMS';
+          return { success: false, error: `Failed to send SMS: ${msg}` };
+        }
+        console.log(`SMS sent via Edge Function to ${phoneNumber}. Message ID: ${smsResult.messageId}`);
       }
-
-      if (!smsResult?.success) {
-        console.error('SMS function returned error:', smsResult?.error);
-        return { success: false, error: smsResult?.error || 'Failed to send SMS' };
-      }
-
-      console.log(`SMS sent successfully to ${phoneNumber}. Message ID: ${smsResult.messageId}`);
       return { success: true };
     } catch (error: any) {
       console.error('Error in sendPhoneOTP:', error);

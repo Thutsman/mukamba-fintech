@@ -109,8 +109,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
+  const [isClient, setIsClient] = React.useState(false);
   
 
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   React.useEffect(() => {
     const loadFeaturedProperties = async () => {
@@ -358,7 +363,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                             className="object-cover"
                             sizes="48px"
                             onError={() => {
-                              setImageLoadErrors(prev => new Set(prev).add(mainImage));
+                              if (isClient) {
+                                setImageLoadErrors(prev => new Set(prev).add(mainImage));
+                              }
                             }}
                           />
                         );
@@ -436,7 +443,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 onError={() => {
-                  setImageLoadErrors(prev => new Set(prev).add(currentImage));
+                  if (isClient) {
+                    setImageLoadErrors(prev => new Set(prev).add(currentImage));
+                  }
                 }}
                 priority={index < 2} // Prioritize first 2 images
               />
@@ -680,15 +689,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent"></div>
                       </div>
                       
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
-          <div className="text-center space-y-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+          <div className="text-center space-y-4">
             {/* Logo and Main Headline */}
-            <div className="flex flex-col items-center space-y-8">
+            <div className="flex flex-col items-center space-y-4">
               {/* Enhanced Partnership Logo with glass effect */}
-              <div className="relative mb-8">
-                <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/30">
+              <div className="relative mb-2">
+                <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-3 shadow-2xl border border-white/30">
                   <div className="text-center">
-                    <div className="text-white/90 text-sm font-medium mb-3 tracking-wide">
+                    <div className="text-white/90 text-sm font-medium mb-1 tracking-wide">
                       In Partnership with:
                     </div>
                     <div className="relative min-h-[80px] flex items-center justify-center">
@@ -698,41 +707,49 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                         alt="Partner Logo"
                         width={320}
                         height={90}
-                        className="h-20 w-auto mx-auto"
+                        className="h-14 w-auto mx-auto"
                         priority
                         onError={(e) => {
-                          console.error('Next.js Image failed to load partner logo:', e);
-                          // Hide Next.js image and show fallback img
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
-                          if (fallbackImg) fallbackImg.style.display = 'block';
+                          if (isClient) {
+                            console.error('Next.js Image failed to load partner logo:', e);
+                            // Hide Next.js image and show fallback img
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
+                            if (fallbackImg) fallbackImg.style.display = 'block';
+                          }
                         }}
                         onLoad={() => {
-                          console.log('Partner logo loaded successfully with Next.js Image');
-                          // Hide fallback when image loads
-                          const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
-                          if (fallbackImg) fallbackImg.style.display = 'none';
+                          if (isClient) {
+                            console.log('Partner logo loaded successfully with Next.js Image');
+                            // Hide fallback when image loads
+                            const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
+                            if (fallbackImg) fallbackImg.style.display = 'none';
+                          }
                         }}
                       />
                       {/* Fallback regular img tag */}
                       <img
                         src="/partner-logo.svg"
                         alt="Partner Logo"
-                        className="partner-logo-fallback-img h-20 w-auto mx-auto hidden"
+                        className="partner-logo-fallback-img h-14 w-auto mx-auto hidden"
                         onError={(e) => {
-                          console.error('Regular img tag also failed to load partner logo:', e);
-                          // Hide img and show text fallback
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
-                          if (textFallback) textFallback.style.display = 'flex';
+                          if (isClient) {
+                            console.error('Regular img tag also failed to load partner logo:', e);
+                            // Hide img and show text fallback
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
+                            if (textFallback) textFallback.style.display = 'flex';
+                          }
                         }}
                         onLoad={() => {
-                          console.log('Partner logo loaded successfully with regular img tag');
-                          // Hide text fallback when image loads
-                          const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
-                          if (textFallback) textFallback.style.display = 'none';
+                          if (isClient) {
+                            console.log('Partner logo loaded successfully with regular img tag');
+                            // Hide text fallback when image loads
+                            const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
+                            if (textFallback) textFallback.style.display = 'none';
+                          }
                         }}
                       />
                       {/* Text fallback content */}
@@ -755,22 +772,22 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             
             
             {/* Subheadline */}
-            <div className="text-center px-4 mb-8 max-w-5xl mx-auto">
+            <div className="text-center px-4 mb-4 max-w-5xl mx-auto">
               <p className="text-2xl sm:text-3xl lg:text-4xl text-white font-light leading-relaxed tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
                 Own Your Home with <span className="font-semibold text-orange-300">Flexible Installment Plans</span>
               </p>
             </div>
             
             {/* Enhanced Statistics Ticker */}
-            <div className="grid grid-cols-1 gap-6 px-4 sm:grid-cols-2 sm:gap-8 md:flex md:justify-center md:gap-12">
-              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
+            <div className="grid grid-cols-1 gap-3 px-4 sm:grid-cols-2 sm:gap-4 md:flex md:justify-center md:gap-6">
+              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-3 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
                 <div className="flex items-center justify-center mb-3">
                   <Home className="w-8 h-8 text-orange-400 mr-3" />
                   <div className="text-4xl font-bold text-white mb-1">500+</div>
               </div>
                 <div className="text-white/90 text-sm font-medium">Pre-Approved Properties</div>
               </div>
-              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
+              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-3 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
                 <div className="flex items-center justify-center mb-3">
                   <Users className="w-8 h-8 text-orange-400 mr-3" />
                   <div className="text-4xl font-bold text-white mb-1">2,000+</div>
@@ -781,7 +798,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             
             {/* Enhanced CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-6 justify-center px-4"
+              className="flex flex-col sm:flex-row gap-3 justify-center px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
@@ -811,7 +828,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       setShowSignupModal(true);
                     }
                   }}
-                suppressHydrationWarning
               >
                 <PlusCircle className="w-5 h-5 mr-2" />
                 Sell Your Property
@@ -833,7 +849,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     event_category: 'conversion'
                   });
                 }}
-                suppressHydrationWarning
               >
                 <LogIn className="w-5 h-5 mr-2" />
                 Sign In
@@ -966,7 +981,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                         event_category: 'navigation'
                       });
                     }}
-                    suppressHydrationWarning
                   >
                     View All {totalPropertiesCount} Properties
                     <ArrowRight className="w-5 h-5 ml-2" />
@@ -1485,7 +1499,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               event_category: 'navigation'
             });
           }} 
-                suppressHydrationWarning
               >
                 View All {totalPropertiesCount} Properties
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -2185,7 +2198,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold w-full sm:w-auto"
                 onClick={() => setActiveTab('listings')}
-                suppressHydrationWarning
               >
                 <Search className="w-5 h-5 mr-2" />
                 Find Zero-Down Properties
@@ -2194,7 +2206,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 size="lg"
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-blue-900 px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-sm w-full sm:w-auto"
-                suppressHydrationWarning
               >
                 <PlusCircle className="w-5 h-5 mr-2" />
                 Sell Your Property
@@ -2211,7 +2222,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     event_category: 'conversion'
                   });
                 }}
-                suppressHydrationWarning
               >
                 <LogIn className="w-5 h-5 mr-2" />
                 Sign In

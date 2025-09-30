@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import type { BasicSignupData } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
+import { signUpWithGoogle } from '@/lib/auth-utils';
 
 interface BasicSignupModalProps {
   isOpen: boolean;
@@ -179,54 +180,22 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
     try {
       setIsGoogleLoading(true);
       setError(null);
-      
-      // Mock Google OAuth - replace with actual Supabase implementation
-      console.log('Initiating Google OAuth signup');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate successful Google signup
-      const googleUser = {
-        id: `google_${Date.now()}`,
-        firstName: 'Google',
-        lastName: 'User',
-        email: 'googleuser@example.com',
-        phone: undefined,
-        level: 'basic' as const,
-        roles: ['buyer' as const],
-        isPhoneVerified: false,
-        isIdentityVerified: false,
-        isFinanciallyVerified: false,
-        isPropertyVerified: false,
-        isAddressVerified: false,
-        permissions: {
-          canBrowseProperties: true,
-          canSaveProperties: true,
-          canContactSellers: false,
-          canScheduleViewings: false,
-          canApplyForFinancing: false,
-          canListProperties: false,
-          canReceiveApplications: false,
-          canProcessTransactions: false,
-          canAccessAdminPanel: false,
-          canManageUsers: false,
-          canManageProperties: false,
-          canViewAnalytics: false,
-          canManageSystemSettings: false
-        },
-        kycStatus: 'none' as const,
-        createdAt: new Date()
-      };
 
-      // Update auth store
-      useAuthStore.getState().updateUser(googleUser);
-      useAuthStore.getState().setLoading(false);
-      useAuthStore.getState().setError(null);
-      
-      onClose();
+      // Persist redirect and seller intent across OAuth redirect
+      try {
+        sessionStorage.setItem('postAuthRedirect', window.location.pathname);
+        if (sellerIntent) sessionStorage.setItem('sellerIntent', 'true');
+      } catch (_) {}
+
+      const { error } = await signUpWithGoogle();
+      if (error) {
+        setError(error);
+      }
     } catch (error) {
       console.error('Google signup error:', error);
       setError('Google signup failed. Please try again.');
     } finally {
+      // On success the browser redirects before this executes
       setIsGoogleLoading(false);
     }
   };

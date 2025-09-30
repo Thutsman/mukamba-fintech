@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { LoginCredentials } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
+import { signInWithGoogle } from '@/lib/auth-utils';
 
 interface BasicSigninModalProps {
   isOpen: boolean;
@@ -98,54 +99,21 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
     try {
       setIsGoogleLoading(true);
       setError(null);
-      
-      // Mock Google OAuth - replace with actual Supabase implementation
-      console.log('Initiating Google OAuth signin');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate successful Google signin
-      const googleUser = {
-        id: `google_${Date.now()}`,
-        firstName: 'Google',
-        lastName: 'User',
-        email: 'googleuser@example.com',
-        phone: undefined,
-        level: 'basic' as const,
-        roles: ['buyer' as const],
-        isPhoneVerified: false,
-        isIdentityVerified: false,
-        isFinanciallyVerified: false,
-        isPropertyVerified: false,
-        isAddressVerified: false,
-        permissions: {
-          canBrowseProperties: true,
-          canSaveProperties: true,
-          canContactSellers: false,
-          canScheduleViewings: false,
-          canApplyForFinancing: false,
-          canListProperties: false,
-          canReceiveApplications: false,
-          canProcessTransactions: false,
-          canAccessAdminPanel: false,
-          canManageUsers: false,
-          canManageProperties: false,
-          canViewAnalytics: false,
-          canManageSystemSettings: false
-        },
-        kycStatus: 'none' as const,
-        createdAt: new Date()
-      };
 
-      // Update auth store
-      useAuthStore.getState().updateUser(googleUser);
-      useAuthStore.getState().setLoading(false);
-      useAuthStore.getState().setError(null);
-      
-      onClose();
+      // Persist current path for redirect after OAuth completes
+      try {
+        sessionStorage.setItem('postAuthRedirect', window.location.pathname);
+      } catch (_) {}
+
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setError(error);
+      }
     } catch (error) {
       console.error('Google signin error:', error);
       setError('Google signin failed. Please try again.');
     } finally {
+      // On success, browser will redirect before this runs. This only runs on error.
       setIsGoogleLoading(false);
     }
   };
