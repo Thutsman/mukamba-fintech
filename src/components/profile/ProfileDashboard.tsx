@@ -79,6 +79,9 @@ import {
   type VerificationStep
 } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
+import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
+import { useRouter } from 'next/navigation';
+import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 
 // Verification Modals
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
@@ -848,41 +851,86 @@ const RecentActivityFeed: React.FC<{
 const PersonalizedPropertyRecommendations: React.FC<{
   user: UserType;
 }> = ({ user }) => {
-  const [recommendedProperties, setRecommendedProperties] = React.useState([
-    {
-      id: 1,
-      title: 'Modern Apartment in Avondale',
-      price: '$1,200/month',
-      location: 'Avondale, Harare',
-      image: '/propertyimage.jpg',
-      type: 'Apartment',
-      beds: 2,
-      baths: 1,
-      reason: 'Similar to properties you\'ve viewed'
-    },
-    {
-      id: 2,
-      title: 'Family Home in Mount Pleasant',
-      price: '$2,800/month',
-      location: 'Mount Pleasant, Harare',
-      image: '/propertyimage.jpg',
-      type: 'House',
-      beds: 3,
-      baths: 2,
-      reason: 'Matches your price range'
-    },
-    {
-      id: 3,
-      title: 'Luxury Villa in Chisipite',
-      price: '$3,500/month',
-      location: 'Chisipite, Harare',
-      image: '/propertyimage.jpg',
-      type: 'Villa',
-      beds: 4,
-      baths: 3,
-      reason: 'Based on your preferences'
-    }
-  ]);
+  const [recommendedProperties, setRecommendedProperties] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [showBuyerSignupModal, setShowBuyerSignupModal] = React.useState(false);
+  const [selectedPropertyForSignup, setSelectedPropertyForSignup] = React.useState<any>(null);
+  const router = useRouter();
+
+  // Load real property data
+  React.useEffect(() => {
+    const loadProperties = async () => {
+      try {
+        setIsLoading(true);
+        const properties = await getPropertiesFromSupabase();
+        
+        // Get first 3 properties as recommendations
+        const recommendations = properties.slice(0, 3).map((property, index) => ({
+          id: property.id,
+          title: property.title,
+          price: property.financials.monthlyInstallment 
+            ? `$${property.financials.monthlyInstallment.toLocaleString()}/month`
+            : `$${property.financials.price.toLocaleString()}`,
+          location: `${property.location.suburb}, ${property.location.city}`,
+          image: property.media?.mainImage || '/placeholder-property.jpg',
+          type: property.details.type || 'Property',
+          beds: property.details.bedrooms || 0,
+          baths: property.details.bathrooms || 0,
+          reason: index === 0 ? 'Similar to properties you\'ve viewed' :
+                  index === 1 ? 'Matches your price range' : 
+                  'Based on your preferences'
+        }));
+        
+        setRecommendedProperties(recommendations);
+      } catch (error) {
+        console.error('Error loading recommended properties:', error);
+        // Fallback to empty array on error
+        setRecommendedProperties([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProperties();
+  }, []);
+
+  const handleBuyerSignup = (property: any) => {
+    setSelectedPropertyForSignup(property);
+    setShowBuyerSignupModal(true);
+  };
+
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <CardHeader>
+            <CardTitle className="flex items-center text-slate-700">
+              <Star className="w-5 h-5 mr-2" />
+              Properties You Might Like
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((index) => (
+                <div key={index} className="bg-white border border-slate-200 rounded-lg overflow-hidden animate-pulse">
+                  <div className="h-32 bg-slate-200"></div>
+                  <div className="p-3 space-y-2">
+                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-slate-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -910,15 +958,42 @@ const PersonalizedPropertyRecommendations: React.FC<{
                 transition={{ delay: 0.1 * index }}
                 whileHover={{ scale: 1.02, y: -2 }}
                 className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
+                onClick={() => {
+                  // Navigate to property details or handle property selection
+                  console.log('Property selected:', property.id);
+                }}
               >
                 <div className="h-32 bg-slate-200 relative">
-                  <img 
-                    src={property.image} 
-                    alt={property.title}
-                    className="w-full h-full object-cover"
-                  />
+                  {property.image && property.image !== '/placeholder-property.jpg' ? (
+                    <img 
+                      src={property.image} 
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-property.jpg';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                      <div className="text-center text-slate-500">
+                        <div className="w-12 h-12 mx-auto mb-2">
+                          <Home className="w-full h-full text-slate-400" />
+                        </div>
+                        <p className="text-xs">Image unavailable</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="absolute top-2 right-2">
-                    <Button size="icon" variant="ghost" className="w-8 h-8 bg-white/80 hover:bg-white">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="w-8 h-8 bg-white/80 hover:bg-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle save property
+                        console.log('Save property:', property.id);
+                      }}
+                    >
                       <Heart className="w-4 h-4" />
                     </Button>
                   </div>
@@ -937,10 +1012,31 @@ const PersonalizedPropertyRecommendations: React.FC<{
                   </div>
                   <p className="text-xs text-green-600 mb-2">{property.reason}</p>
                   <div className="flex space-x-2">
-                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
-                      View Details
+                    <Button 
+                      size="sm" 
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (user) {
+                          // User is authenticated - navigate to property details
+                          router.push(`/property/${property.id}`);
+                        } else {
+                          // User not authenticated - show buyer signup modal
+                          handleBuyerSignup(property);
+                        }
+                      }}
+                    >
+                      {user ? 'View Details' : 'Sign Up to View Details'}
                     </Button>
-                    <Button size="sm" variant="outline" className="px-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="px-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Save property:', property.id);
+                      }}
+                    >
                       <Heart className="w-3 h-3" />
                     </Button>
                   </div>
@@ -950,6 +1046,33 @@ const PersonalizedPropertyRecommendations: React.FC<{
           </div>
         </CardContent>
       </Card>
+
+      {/* Buyer Signup Modal */}
+      <BuyerSignupModal
+        isOpen={showBuyerSignupModal}
+        onClose={() => {
+          setShowBuyerSignupModal(false);
+          setSelectedPropertyForSignup(null);
+        }}
+        onSignupComplete={async (email, buyerType) => {
+          setShowBuyerSignupModal(false);
+          
+          // Track successful buyer signup
+          console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
+          
+          // Show success message
+          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
+          
+          // Navigate to property details after signup
+          if (selectedPropertyForSignup) {
+            router.push(`/property/${selectedPropertyForSignup.id}`);
+          }
+          
+          // Reset state
+          setSelectedPropertyForSignup(null);
+        }}
+        propertyTitle={selectedPropertyForSignup?.title}
+      />
     </motion.div>
   );
 };
