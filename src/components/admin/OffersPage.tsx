@@ -53,7 +53,8 @@ export const OffersPage: React.FC<OffersPageProps> = ({
     approved: 0,
     rejected: 0,
     withdrawn: 0,
-    expired: 0
+    expired: 0,
+    deleted: 0
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

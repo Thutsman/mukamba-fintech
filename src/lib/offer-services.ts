@@ -361,7 +361,8 @@ export const getOfferStats = async (): Promise<OfferStats> => {
         approved: 4,
         rejected: 2,
         withdrawn: 1,
-        expired: 0
+        expired: 0,
+        deleted: 0
       };
     }
 
@@ -377,7 +378,8 @@ export const getOfferStats = async (): Promise<OfferStats> => {
         approved: 0,
         rejected: 0,
         withdrawn: 0,
-        expired: 0
+        expired: 0,
+        deleted: 0
       };
     }
 
@@ -387,7 +389,8 @@ export const getOfferStats = async (): Promise<OfferStats> => {
       approved: data.filter(o => o.status === 'approved').length,
       rejected: data.filter(o => o.status === 'rejected').length,
       withdrawn: data.filter(o => o.status === 'withdrawn').length,
-      expired: data.filter(o => o.status === 'expired').length
+      expired: data.filter(o => o.status === 'expired').length,
+      deleted: data.filter(o => o.status === 'deleted').length
     };
 
     return stats;
@@ -399,7 +402,8 @@ export const getOfferStats = async (): Promise<OfferStats> => {
       approved: 0,
       rejected: 0,
       withdrawn: 0,
-      expired: 0
+      expired: 0,
+      deleted: 0
     };
   }
 };
