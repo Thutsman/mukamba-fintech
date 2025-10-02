@@ -15,7 +15,7 @@ export interface PropertyOffer {
   offer_reference: string;
   
   // Status & workflow
-  status: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired';
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired' | 'deleted';
   admin_reviewed_by?: string;
   admin_reviewed_at?: string;
   admin_notes?: string;
@@ -64,6 +64,7 @@ export interface OfferStats {
   rejected: number;
   withdrawn: number;
   expired: number;
+  deleted: number;
 }
 
 export interface CreateOfferData {
@@ -78,7 +79,7 @@ export interface CreateOfferData {
 }
 
 export interface UpdateOfferData {
-  status?: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired';
+  status?: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired' | 'deleted';
   admin_notes?: string;
   rejection_reason?: string;
 }
