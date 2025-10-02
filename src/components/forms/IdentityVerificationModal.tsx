@@ -19,6 +19,8 @@ import {
   type VerificationCertificate,
   type User as UserType 
 } from '@/types/auth';
+import { createKYCVerification, uploadKYCDocument } from '@/lib/kyc-services';
+import { useAuthStore } from '@/lib/store';
 
 interface IdentityVerificationModalProps {
   isOpen: boolean;
@@ -39,6 +41,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   documents = [],
   certificates = []
 }) => {
+  const { user: storeUser } = useAuthStore();
   const [step, setStep] = React.useState<'document-type' | 'upload' | 'processing' | 'success'>('document-type');
   const [documentType, setDocumentType] = React.useState<string>('');
   const [uploadedFiles, setUploadedFiles] = React.useState<{front?: File, back?: File}>({});
@@ -129,10 +132,34 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   const handleSubmitDocuments = async () => {
     setIsLoading(true);
     setStep('processing');
-    
     try {
-      // Simulate document processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Create a KYC verification record (buyer identity)
+      const authUserId = storeUser?.id || user?.id;
+      if (!authUserId) throw new Error('User not authenticated');
+      const { data: verification, error } = await createKYCVerification(authUserId, {
+        verification_type: 'buyer',
+        id_number: documentType ? 'submitted' : undefined,
+        credit_consent: false
+      });
+      if (error || !verification) throw new Error(error || 'Failed to create verification');
+
+      // Upload files to Storage and record metadata
+      if (uploadedFiles.front) {
+        await uploadKYCDocument({
+          kyc_verification_id: verification.id,
+          document_type: 'id_document',
+          file: uploadedFiles.front
+        });
+      }
+      if (uploadedFiles.back) {
+        await uploadKYCDocument({
+          kyc_verification_id: verification.id,
+          document_type: 'id_document',
+          file: uploadedFiles.back
+        });
+      }
+
+      // Move to success, but we do NOT auto-approve; admin will review
       setStep('success');
       setTimeout(() => {
         onComplete();

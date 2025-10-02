@@ -59,6 +59,7 @@ interface OfferData {
   depositOffered: number;
   paymentMethod: 'cash' | 'installments';
   estimatedTimeline: string;
+  monthlyInstallment: number;
   additionalNotes: string;
 }
 
@@ -75,10 +76,134 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
     depositOffered: 0, // Start with 0, let user input their own amount
     paymentMethod: 'cash',
     estimatedTimeline: '', // Start empty, let user input their own timeline
+    monthlyInstallment: 0, // Start with 0, let user input their own amount
     additionalNotes: ''
   });
   const [isLoading, setIsLoading] = React.useState(false);
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
+
+  // Keep cross-field validations in sync as user types
+  React.useEffect(() => {
+    const errors: Record<string, string> = {};
+
+    // Offer price validations
+    if (formData.offerPrice <= 0) {
+      errors.offerPrice = 'Please enter an offer price';
+    } else {
+      const minOffer = property.financials.price * 0.7;
+      const maxOffer = property.financials.price;
+      if (formData.offerPrice < minOffer) {
+        errors.offerPrice = `Offer must be at least ${formatCurrency(minOffer)} (70% of listed price)`;
+      } else if (formData.offerPrice > maxOffer) {
+        errors.offerPrice = `Offer cannot exceed ${formatCurrency(maxOffer)} (listed price)`;
+      }
+    }
+
+    if (formData.paymentMethod === 'installments') {
+      // Deposit
+      if (formData.depositOffered <= 0) {
+        errors.depositOffered = 'Please enter a deposit amount';
+      } else {
+        const minDeposit = property.financials.price * 0.4;
+        if (formData.depositOffered < minDeposit) {
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(minDeposit)} (40% of listed price)`;
+        }
+        if (property.financials.rentToBuyDeposit && formData.depositOffered < property.financials.rentToBuyDeposit) {
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(property.financials.rentToBuyDeposit)}`;
+        }
+      }
+
+      // Timeline
+      const months = getTimelineMonths(formData.estimatedTimeline);
+      if (!formData.estimatedTimeline) {
+        errors.estimatedTimeline = 'Please enter an estimated completion timeline';
+      } else if (months === 0) {
+        errors.estimatedTimeline = 'Timeline must be greater than 0 months for installments';
+      } else if (property.financials.paymentDuration && months > property.financials.paymentDuration) {
+        errors.estimatedTimeline = `Timeline cannot exceed ${property.financials.paymentDuration} months`;
+      }
+
+      // Monthly installment vs requirement
+      if (formData.monthlyInstallment <= 0) {
+        errors.monthlyInstallment = 'Please enter a monthly installment amount';
+      } else if (months > 0) {
+        const remaining = formData.offerPrice - formData.depositOffered;
+        const required = remaining / months;
+        if (formData.monthlyInstallment < required) {
+          errors.monthlyInstallment = `Monthly payment must be at least ${formatCurrency(required)} to complete payment in ${months} months`;
+        }
+      }
+    }
+
+    setValidationErrors(errors);
+  }, [formData.offerPrice, formData.depositOffered, formData.paymentMethod, formData.estimatedTimeline, formData.monthlyInstallment, property.financials.price, property.financials.paymentDuration, property.financials.rentToBuyDeposit]);
+
+  // Real-time validation function
+  const validateField = (field: string, value: any) => {
+    const errors: Record<string, string> = { ...validationErrors };
+
+    if (field === 'offerPrice') {
+      const offerPrice = Number(value);
+      
+      if (offerPrice <= 0) {
+        errors.offerPrice = 'Please enter an offer price';
+      } else {
+        const minimumOffer = property.financials.price * 0.7;
+        const maximumOffer = property.financials.price;
+        
+        if (offerPrice < minimumOffer) {
+          errors.offerPrice = `Offer must be at least ${formatCurrency(minimumOffer)} (70% of listed price)`;
+        } else if (offerPrice > maximumOffer) {
+          errors.offerPrice = `Offer cannot exceed ${formatCurrency(maximumOffer)} (listed price)`;
+        } else {
+          delete errors.offerPrice; // Clear error if valid
+        }
+      }
+    }
+
+    if (field === 'depositOffered') {
+      const depositOffered = Number(value);
+      
+      if (depositOffered <= 0) {
+        errors.depositOffered = 'Please enter a deposit amount';
+      } else {
+        const minimumDeposit = property.financials.price * 0.1; // 10% of listed price
+        
+        if (depositOffered < minimumDeposit) {
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(minimumDeposit)} (10% of listed price)`;
+        } else {
+          delete errors.depositOffered; // Clear error if valid
+        }
+      }
+    }
+
+    if (field === 'monthlyInstallment') {
+      const monthlyInstallment = Number(value);
+      
+      if (monthlyInstallment <= 0) {
+        errors.monthlyInstallment = 'Please enter a monthly installment amount';
+      } else {
+        // Validate against timeline if both are provided
+        if (formData.estimatedTimeline && formData.estimatedTimeline !== 'ready_to_pay_in_full') {
+          const timelineMonths = getTimelineMonths(formData.estimatedTimeline);
+          const remainingAmount = formData.offerPrice - formData.depositOffered;
+          const requiredMonthlyPayment = timelineMonths > 0 ? (remainingAmount / timelineMonths) : Infinity;
+          
+          if (timelineMonths === 0) {
+            errors.monthlyInstallment = 'Please provide a valid timeline in months (> 0)';
+          } else if (monthlyInstallment < requiredMonthlyPayment) {
+            errors.monthlyInstallment = `Monthly payment must be at least ${formatCurrency(requiredMonthlyPayment)} to complete payment in ${timelineMonths} months`;
+          } else {
+            delete errors.monthlyInstallment;
+          }
+        } else {
+          delete errors.monthlyInstallment; // Clear error if valid
+        }
+      }
+    }
+
+    setValidationErrors(errors);
+  };
 
   // Validation function
   const validateForm = (): boolean => {
@@ -89,21 +214,57 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
       errors.offerPrice = 'Please enter an offer price';
     }
 
+    // Validate offer price range (70% to 100% of listed price)
+    const minimumOffer = property.financials.price * 0.7;
+    const maximumOffer = property.financials.price;
+    
+    if (formData.offerPrice > 0 && formData.offerPrice < minimumOffer) {
+      errors.offerPrice = `Offer must be at least ${formatCurrency(minimumOffer)} (70% of listed price)`;
+    }
+    
+    if (formData.offerPrice > maximumOffer) {
+      errors.offerPrice = `Offer cannot exceed ${formatCurrency(maximumOffer)} (listed price)`;
+    }
+
     // Only validate deposit and timeline for installments
     if (formData.paymentMethod === 'installments') {
-      // Validate deposit against required deposit
-      if (property.financials.rentToBuyDeposit && formData.depositOffered < property.financials.rentToBuyDeposit) {
-        errors.depositOffered = `Deposit must be at least ${formatCurrency(property.financials.rentToBuyDeposit)}`;
-      }
-
       // Validate that deposit is provided
       if (formData.depositOffered <= 0) {
         errors.depositOffered = 'Please enter a deposit amount';
+      } else {
+        // Validate minimum deposit (10% of listed price)
+        const minimumDeposit = property.financials.price * 0.1;
+        if (formData.depositOffered < minimumDeposit) {
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(minimumDeposit)} (10% of listed price)`;
+        }
+        
+        // Also validate against property-specific required deposit if higher
+        if (property.financials.rentToBuyDeposit && formData.depositOffered < property.financials.rentToBuyDeposit) {
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(property.financials.rentToBuyDeposit)}`;
+        }
       }
 
       // Validate that timeline is provided
       if (!formData.estimatedTimeline) {
         errors.estimatedTimeline = 'Please enter an estimated completion timeline';
+      }
+
+      // Validate that monthly installment is provided
+      if (formData.monthlyInstallment <= 0) {
+        errors.monthlyInstallment = 'Please enter a monthly installment amount';
+      } else {
+        // Validate monthly installment against timeline
+        if (formData.estimatedTimeline && formData.estimatedTimeline !== 'ready_to_pay_in_full') {
+          const timelineMonths = getTimelineMonths(formData.estimatedTimeline);
+          const remainingAmount = formData.offerPrice - formData.depositOffered;
+          const requiredMonthlyPayment = timelineMonths > 0 ? (remainingAmount / timelineMonths) : Infinity;
+          
+          if (timelineMonths === 0) {
+            errors.estimatedTimeline = 'Timeline must be greater than 0 months for installments';
+          } else if (formData.monthlyInstallment < requiredMonthlyPayment) {
+            errors.monthlyInstallment = `Monthly payment must be at least ${formatCurrency(requiredMonthlyPayment)} to complete payment in ${timelineMonths} months`;
+          }
+        }
       }
 
       // Validate timeline against payment duration
@@ -121,15 +282,22 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
 
   // Helper function to get timeline in months
   const getTimelineMonths = (timeline: string): number => {
-    switch (timeline) {
-      case '1_month': return 1;
-      case '3_months': return 3;
-      case '6_months': return 6;
-      case '9_months': return 9;
-      case '12_months': return 12;
-      case 'ready_to_pay_in_full': return 0;
-      default: return 0;
+    if (!timeline) return 0;
+    if (timeline === 'ready_to_pay_in_full') return 0;
+    if (timeline.endsWith('_months')) {
+      const num = Number(timeline.replace('_months', ''));
+      return Number.isFinite(num) && num > 0 ? num : 0;
     }
+    // Fallback for unexpected raw numeric strings
+    const parsed = Number(timeline);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  // Helper to suggest months based on user's preferred monthly payment
+  const getSuggestedMonths = (remainingAmount: number, monthlyInstallment: number): number => {
+    if (!Number.isFinite(remainingAmount) || remainingAmount <= 0) return 0;
+    if (!Number.isFinite(monthlyInstallment) || monthlyInstallment <= 0) return 0;
+    return Math.ceil(remainingAmount / monthlyInstallment);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -190,6 +358,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
       depositOffered: 0,
       paymentMethod: 'cash',
       estimatedTimeline: '',
+      monthlyInstallment: 0,
       additionalNotes: ''
     });
     setValidationErrors({});
@@ -274,6 +443,53 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     </div>
                   </div>
 
+                  {/* Payment Method */}
+                  <div className="space-y-3">
+                      <Label className="text-base font-medium">How will you pay?</Label>
+                    <RadioGroup
+                        value={formData.paymentMethod}
+                        onValueChange={(value: OfferData['paymentMethod']) => 
+                          setFormData(prev => ({ ...prev, paymentMethod: value }))
+                      }
+                      className="grid grid-cols-1 gap-3"
+                    >
+                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        formData.paymentMethod === 'cash' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      }`}>
+                        <RadioGroupItem 
+                          value="cash" 
+                          id="cash" 
+                          className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
+                        />
+                        <Label htmlFor="cash" className="cursor-pointer flex-1">
+                          <div className="flex items-center">
+                            <Banknote className="w-5 h-5 mr-3 text-gray-600" />
+                            <span className="text-base font-medium">Cash</span>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        formData.paymentMethod === 'installments' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      }`}>
+                          <RadioGroupItem 
+                            value="installments" 
+                            id="installments" 
+                            className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
+                          />
+                          <Label htmlFor="installments" className="cursor-pointer flex-1">
+                          <div className="flex items-center">
+                              <CreditCard className="w-5 h-5 mr-3 text-gray-600" />
+                              <span className="text-base font-medium">Installments</span>
+                          </div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
                   {/* Offer Price */}
                   <div className="space-y-3">
                     <Label htmlFor="offerPrice" className="text-base font-medium">Your Offer Price</Label>
@@ -281,14 +497,17 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       <Input
                         id="offerPrice"
                         type="number"
-                          value={formData.offerPrice || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              offerPrice: value === '' ? 0 : Number(value) 
-                            }));
-                          }}
+                        value={formData.offerPrice || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const numericValue = value === '' ? 0 : Number(value);
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            offerPrice: numericValue 
+                          }));
+                          // Real-time validation
+                          validateField('offerPrice', numericValue);
+                        }}
                           className="text-lg font-semibold pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                         required
                         min={1}
@@ -346,10 +565,13 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                             value={formData.depositOffered || ''}
                             onChange={(e) => {
                               const value = e.target.value;
+                              const numericValue = value === '' ? 0 : Number(value);
                               setFormData(prev => ({ 
                                 ...prev, 
-                                depositOffered: value === '' ? 0 : Number(value) 
+                                depositOffered: numericValue 
                               }));
+                              // Real-time validation
+                              validateField('depositOffered', numericValue);
                             }}
                             className="pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                             required
@@ -361,9 +583,12 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                             {property.financials.currency}
                           </div>
                         </div>
-                        {property.financials.rentToBuyDeposit && (
+                        <p className="text-xs text-gray-500">
+                          Minimum deposit: {formatCurrency(property.financials.price * 0.1)} (10% of listed price)
+                        </p>
+                        {property.financials.rentToBuyDeposit && property.financials.rentToBuyDeposit > (property.financials.price * 0.4) && (
                           <p className="text-xs text-gray-500">
-                            Required deposit: {formatCurrency(property.financials.rentToBuyDeposit)}
+                            Property-specific required deposit: {formatCurrency(property.financials.rentToBuyDeposit)}
                           </p>
                         )}
                         {validationErrors.depositOffered && (
@@ -375,52 +600,52 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       </div>
                     )}
 
-                    {/* Payment Method */}
-                  <div className="space-y-3">
-                      <Label className="text-base font-medium">How will you pay?</Label>
-                    <RadioGroup
-                        value={formData.paymentMethod}
-                        onValueChange={(value: OfferData['paymentMethod']) => 
-                          setFormData(prev => ({ ...prev, paymentMethod: value }))
-                      }
-                      className="grid grid-cols-1 gap-3"
-                    >
-                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        formData.paymentMethod === 'cash' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                      }`}>
-                        <RadioGroupItem 
-                          value="cash" 
-                          id="cash" 
-                          className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
-                        />
-                        <Label htmlFor="cash" className="cursor-pointer flex-1">
-                          <div className="flex items-center">
-                            <Banknote className="w-5 h-5 mr-3 text-gray-600" />
-                            <span className="text-base font-medium">Cash</span>
-                          </div>
-                        </Label>
-                      </div>
-                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        formData.paymentMethod === 'installments' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                      }`}>
-                          <RadioGroupItem 
-                            value="installments" 
-                            id="installments" 
-                            className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
+                    {/* Monthly Installment Amount - Only show for installments */}
+                    {formData.paymentMethod === 'installments' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="monthlyInstallment" className="text-base font-medium">Monthly Installment Amount</Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="w-4 h-4 text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Enter your preferred monthly payment amount for the remaining balance after deposit.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="monthlyInstallment"
+                            type="number"
+                            value={formData.monthlyInstallment || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const numericValue = value === '' ? 0 : Number(value);
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                monthlyInstallment: numericValue 
+                              }));
+                              // Real-time validation
+                              validateField('monthlyInstallment', numericValue);
+                            }}
+                            className="pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            placeholder="Enter monthly installment amount"
+                            min={0}
+                            aria-describedby="monthly-installment-help"
                           />
-                          <Label htmlFor="installments" className="cursor-pointer flex-1">
-                          <div className="flex items-center">
-                              <CreditCard className="w-5 h-5 mr-3 text-gray-600" />
-                              <span className="text-base font-medium">Installments</span>
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            {property.financials.currency}
                           </div>
-                        </Label>
+                        </div>
+                        {validationErrors.monthlyInstallment && (
+                          <p className="text-xs text-red-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {validationErrors.monthlyInstallment}
+                          </p>
+                        )}
                       </div>
-                    </RadioGroup>
-                  </div>
+                    )}
 
                     {/* Estimated Completion Timeline - Only show for installments */}
                     {formData.paymentMethod === 'installments' && (
@@ -450,6 +675,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                               } else {
                                 setFormData(prev => ({ ...prev, estimatedTimeline: `${value}_months` }));
                               }
+                              // Re-validate monthly installment when timeline changes
+                              if (formData.monthlyInstallment > 0) {
+                                validateField('monthlyInstallment', formData.monthlyInstallment);
+                              }
                             }}
                             className="pr-16 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                             placeholder="Enter number of months (0 for ready to pay in full)"
@@ -463,6 +692,18 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                         {property.financials.paymentDuration && (
                     <p className="text-xs text-gray-500">
                             Maximum allowed: {property.financials.paymentDuration} months
+                          </p>
+                        )}
+                        {/* Show calculated monthly payment requirement */}
+                        {formData.offerPrice > 0 && formData.depositOffered > 0 && formData.estimatedTimeline && formData.estimatedTimeline !== 'ready_to_pay_in_full' && getTimelineMonths(formData.estimatedTimeline) > 0 && (
+                          <p className="text-xs text-blue-600">
+                            Required monthly payment: {formatCurrency((formData.offerPrice - formData.depositOffered) / getTimelineMonths(formData.estimatedTimeline))} to complete in {formData.estimatedTimeline.replace('_months', '')} months
+                          </p>
+                        )}
+                        {/* Suggested months based on preferred monthly installment */}
+                        {formData.offerPrice > 0 && formData.depositOffered > 0 && formData.monthlyInstallment > 0 && (
+                          <p className="text-xs text-blue-600">
+                            Suggested timeline: {getSuggestedMonths(formData.offerPrice - formData.depositOffered, formData.monthlyInstallment)} months at {formatCurrency(formData.monthlyInstallment)}/month
                           </p>
                         )}
                         {validationErrors.estimatedTimeline && (
@@ -500,7 +741,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     <Button
                       type="submit"
                       className="flex-1 bg-green-600 hover:bg-green-700"
-                      disabled={isLoading}
+                      disabled={isLoading || Object.keys(validationErrors).length > 0}
                     >
                       Review Offer
                     </Button>
@@ -530,14 +771,18 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                             <div className="font-semibold">{formatCurrency(formData.depositOffered)}</div>
                       </div>
                       <div>
-                            <span className="text-gray-600">Timeline:</span>
-                            <div className="font-semibold">
-                              {formData.estimatedTimeline === 'ready_to_pay_in_full' 
-                                ? 'Ready to pay in full' 
-                                : `${formData.estimatedTimeline.replace('_months', '')} months`
-                              }
-                            </div>
-                          </div>
+                        <span className="text-gray-600">Timeline:</span>
+                        <div className="font-semibold">
+                          {formData.estimatedTimeline === 'ready_to_pay_in_full' 
+                            ? 'Ready to pay in full' 
+                            : `${formData.estimatedTimeline.replace('_months', '')} months`
+                          }
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Monthly Installment:</span>
+                        <div className="font-semibold">{formatCurrency(formData.monthlyInstallment)}</div>
+                      </div>
                         </>
                       )}
                       {formData.paymentMethod === 'cash' && (
@@ -562,12 +807,25 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                           <span className="text-gray-600">Remaining Amount:</span>
                           <span className="font-medium">{formatCurrency(formData.offerPrice - formData.depositOffered)}</span>
                         </div>
-                        {formData.estimatedTimeline !== 'ready_to_pay_in_full' && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Your Preferred Monthly Payment:</span>
+                          <span className="font-medium">{formatCurrency(formData.monthlyInstallment)}</span>
+                        </div>
+                        {formData.estimatedTimeline !== 'ready_to_pay_in_full' && getTimelineMonths(formData.estimatedTimeline) > 0 && (
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Monthly Payment:</span>
+                            <span className="text-gray-600">Calculated Monthly Payment:</span>
                             <span className="font-medium">
                               {formatCurrency((formData.offerPrice - formData.depositOffered) / getTimelineMonths(formData.estimatedTimeline))}
                           </span>
+                          </div>
+                        )}
+                        {/* Suggested months in review */}
+                        {formData.monthlyInstallment > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Suggested Timeline (at your monthly):</span>
+                            <span className="font-medium">
+                              {getSuggestedMonths(formData.offerPrice - formData.depositOffered, formData.monthlyInstallment)} months
+                            </span>
                           </div>
                         )}
                       </div>
@@ -618,7 +876,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       type="button"
                       onClick={handleConfirmOffer}
                       className="flex-1 bg-green-600 hover:bg-green-700"
-                      disabled={isLoading}
+                      disabled={isLoading || Object.keys(validationErrors).length > 0}
                     >
                       Submit Offer
                     </Button>
@@ -635,12 +893,6 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                   >
                     <DollarSign className="w-8 h-8 text-green-600" />
                   </motion.div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Submitting Your Offer</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Please wait while we submit your offer to the seller...
-                    </p>
-                  </div>
                 </div>
               )}
 

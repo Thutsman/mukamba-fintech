@@ -178,7 +178,7 @@ export interface AdminSettings {
   };
 }
 
-export type AdminTab = 'overview' | 'listings' | 'offers' | 'kyc' | 'properties' | 'payments' | 'users' | 'reports' | 'settings';
+export type AdminTab = 'overview' | 'listings' | 'offers' | 'kyc' | 'messages' | 'payments' | 'users' | 'reports' | 'settings';
 
 export interface AdminBulkAction {
   type: 'approve' | 'reject' | 'suspend' | 'activate' | 'delete';

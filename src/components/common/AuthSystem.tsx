@@ -227,8 +227,8 @@ export const AuthSystem: React.FC = () => {
       <div className="relative">
         {/* Header matching Mukamba Gateway marketing site */}
         <header className="bg-white shadow-lg border-b border-slate-200 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="flex items-center justify-between h-20 sm:h-24 md:h-28">
+          <div className="w-full px-6 md:px-8">
+            <div className="flex items-center justify-between h-17 sm:h-21 md:h-24">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center">
                 <div className="flex items-center">
@@ -236,7 +236,7 @@ export const AuthSystem: React.FC = () => {
                   <img 
                     src="/logo.svg" 
                     alt="Mukamba Logo" 
-                    className="header-logo w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 object-contain"
+                    className="header-logo w-35 h-30 sm:w-44 sm:h-36 md:w-52 md:h-42 object-contain"
                     onError={(e) => {
                       // Fallback to the original icon if image fails to load
                       const target = e.currentTarget as HTMLImageElement;
@@ -247,8 +247,8 @@ export const AuthSystem: React.FC = () => {
                       }
                     }}
                   />
-                  <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
-                    <User className="w-18 h-18 sm:w-22 sm:h-22 md:w-26 md:h-26 text-white" />
+                  <div className="w-35 h-30 sm:w-44 sm:h-36 md:w-52 md:h-42 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
+                    <User className="w-18 h-15 sm:w-22 sm:h-18 md:w-26 md:h-21 text-white" />
                   </div>
                 </div>
               </div>
@@ -425,7 +425,7 @@ export const AuthSystem: React.FC = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-red-600 hover:bg-red-700 text-white"
+                      className="bg-red-800 hover:bg-red-900 text-white"
                       onClick={handleLogout}
                       suppressHydrationWarning
                     >

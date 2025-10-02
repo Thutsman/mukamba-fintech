@@ -36,6 +36,7 @@ interface PropertyActionsProps {
   hasUserOffer?: boolean;
   canMakeOffer?: boolean;
   userOfferStatus?: string;
+  showScheduleViewing?: boolean;
 }
 
 export const PropertyActions: React.FC<PropertyActionsProps> = ({
@@ -50,7 +51,8 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
   isFavorite,
   hasUserOffer = false,
   canMakeOffer = true,
-  userOfferStatus
+  userOfferStatus,
+  showScheduleViewing = true
 }) => {
   // Determine user's access level based on KYC
   const getAccessLevel = () => {
@@ -98,27 +100,29 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
               } text-white border-0 text-base`}
               disabled={!user}
             >
-              <Phone className="w-5 h-5 mr-3" />
-              {canContactSeller ? 'Contact Seller' : 'Sign Up to Contact'}
+              <MessageCircle className="w-5 h-5 mr-3" />
+              {canContactSeller ? 'Send Message' : 'Sign Up to Message'}
             </Button>
           </motion.div>
         )}
 
-        {/* Schedule Viewing */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Button
-            onClick={user ? onScheduleViewing : onSignUpPrompt}
-            variant="outline"
-            className="w-full h-14 font-semibold border-2 border-purple-600 text-purple-600 hover:bg-purple-50 hover:border-purple-700 hover:text-purple-700 transition-all duration-200 shadow-md hover:shadow-lg text-base"
-            disabled={!user}
+        {/* Schedule Viewing (optional) */}
+        {showScheduleViewing && (
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Calendar className="w-5 h-5 mr-3" />
-            {user ? 'Schedule Viewing' : 'Sign Up to Schedule'}
-          </Button>
-        </motion.div>
+            <Button
+              onClick={user ? onScheduleViewing : onSignUpPrompt}
+              variant="outline"
+              className="w-full h-14 font-semibold border-2 border-purple-600 text-purple-600 hover:bg-purple-50 hover:border-purple-700 hover:text-purple-700 transition-all duration-200 shadow-md hover:shadow-lg text-base"
+              disabled={!user}
+            >
+              <Calendar className="w-5 h-5 mr-3" />
+              {user ? 'Schedule Viewing' : 'Sign Up to Schedule'}
+            </Button>
+          </motion.div>
+        )}
 
         {/* Make Offer - Only show if user can make offers or is not logged in */}
         {(!user || canMakeOffer) && (

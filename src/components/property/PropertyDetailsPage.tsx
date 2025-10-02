@@ -72,6 +72,9 @@ import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerifi
 import { buyerServices } from '@/lib/buyer-services';
 import { useAuthStore } from '@/lib/store';
 import { getPropertyOffers } from '@/lib/offer-services';
+import { IdentityVerificationModal } from '@/components/forms/IdentityVerificationModal';
+import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
+import { useMessageStore } from '@/lib/message-store';
 
 interface PropertyDetailsPageProps {
   property: PropertyListing;
@@ -101,6 +104,9 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   
   // Phone verification modal state
   const [showPhoneVerificationModal, setShowPhoneVerificationModal] = React.useState(false);
+  // Identity & Financial verification modals
+  const [showIdentityModal, setShowIdentityModal] = React.useState(false);
+  const [showFinancialModal, setShowFinancialModal] = React.useState(false);
   
   // Offer status tracking
   const [propertyOffers, setPropertyOffers] = React.useState<any[]>([]);
@@ -189,12 +195,20 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       onSignUpPrompt?.();
       return;
     }
+    if (!user.is_phone_verified) {
+      setShowPhoneVerificationModal(true);
+      return;
+    }
     setShowExpressInterestModal(true);
   };
 
   const handleScheduleViewing = () => {
     if (!user) {
       onSignUpPrompt?.();
+      return;
+    }
+    if (!user.is_phone_verified) {
+      setShowPhoneVerificationModal(true);
       return;
     }
     setShowScheduleViewingModal(true);
@@ -205,6 +219,24 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       onSignUpPrompt?.();
       return;
     }
+    // Require phone verification first for any action
+    if (!user.is_phone_verified) {
+      setShowPhoneVerificationModal(true);
+      return;
+    }
+
+    const price = property.financials.price;
+
+    // Price-gated KYC checks
+    if (price < 30000 && !user.isIdentityVerified) {
+      setShowIdentityModal(true);
+      return;
+    }
+    if (price >= 30000 && !user.isFinanciallyVerified) {
+      setShowFinancialModal(true);
+      return;
+    }
+
     if (hasUserOffer() && userOffer?.status !== 'rejected') {
       // User already has an active offer (not rejected), don't allow another one
       return;
@@ -222,10 +254,23 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
 
   const handleExpressInterest = async (data: any) => {
-    // In real app, this would call an API
-    console.log('Express interest:', data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Route message to admin inbox
+    try {
+      const buyerName = user ? `${user.firstName} ${user.lastName}` : 'Anonymous';
+      useMessageStore.getState().addMessage({
+        propertyId: property.id,
+        propertyTitle: property.title,
+        buyerId: user?.id || 'anonymous',
+        buyerName,
+        buyerEmail: user?.email,
+        buyerPhone: user?.phone,
+        content: typeof data === 'string' ? data : (data?.message || ''),
+      });
+      // Simulate API latency
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (e) {
+      console.error('Failed to send message:', e);
+    }
   };
 
   const handleSubmitOffer = async (data: any) => {
@@ -299,13 +344,13 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const hasAnyOffers = () => propertyOffers.length > 0;
   const isPropertyUnderOffer = () => (property as LocalPropertyWithStatus).status === 'under_offer' || hasAnyOffers();
   const canMakeOffer = () => {
-    if (!user || accessLevel === 'anonymous') return false;
-    
-    // If user has no offer, they can make one
-    if (!hasUserOffer()) return true;
-    
-    // If user has an offer, they can only make a new one if the current offer is rejected
-    return userOffer && userOffer.status === 'rejected';
+    if (!user) return false;
+    if (!user.is_phone_verified) return false;
+    const price = property.financials.price;
+    if (price < 30000 && !user.isIdentityVerified) return false;
+    if (price >= 30000 && !user.isFinanciallyVerified) return false;
+    if (hasUserOffer() && userOffer?.status !== 'rejected') return false;
+    return true;
   };
 
   // Format date and time
@@ -1017,6 +1062,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               hasUserOffer={hasUserOffer()}
               canMakeOffer={canMakeOffer()}
               userOfferStatus={userOffer?.status}
+              showScheduleViewing={false}
             />
 
             {/* Property Stats */}
@@ -1101,6 +1147,26 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         onVerificationComplete={handlePhoneVerificationComplete}
         buyerType={user?.buyer_type}
         userEmail={user?.email}
+      />
+
+      {/* Identity Verification Modal */}
+      <IdentityVerificationModal
+        isOpen={showIdentityModal}
+        onClose={() => setShowIdentityModal(false)}
+        onComplete={() => {
+          // Keep status pending until admin approval
+          setShowIdentityModal(false);
+        }}
+      />
+
+      {/* Financial Assessment Modal */}
+      <FinancialAssessmentModal
+        isOpen={showFinancialModal}
+        onClose={() => setShowFinancialModal(false)}
+        onComplete={() => {
+          // Keep status pending until admin approval
+          setShowFinancialModal(false);
+        }}
       />
 
       {/* Offer Flow Modals */}

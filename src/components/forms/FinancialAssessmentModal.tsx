@@ -26,6 +26,8 @@ import {
   type VerificationCertificate,
   type User as UserType 
 } from '@/types/auth';
+import { createKYCVerification, uploadKYCDocument } from '@/lib/kyc-services';
+import { useAuthStore } from '@/lib/store';
 
 interface FinancialAssessmentModalProps {
   isOpen: boolean;
@@ -108,6 +110,7 @@ export const FinancialAssessmentModal: React.FC<FinancialAssessmentModalProps> =
   certificates = [],
   financialProfile
 }) => {
+  const { user: storeUser } = useAuthStore();
   const [step, setStep] = React.useState<'form' | 'documents' | 'processing' | 'results' | 'success'>('form');
   const [isLoading, setIsLoading] = React.useState(false);
   const [creditScore, setCreditScore] = React.useState(0);
@@ -260,13 +263,41 @@ export const FinancialAssessmentModal: React.FC<FinancialAssessmentModalProps> =
     setStep('processing');
     
     try {
-      // Simulate financial assessment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Generate mock credit score and assessment using form data
+      // Create a KYC verification record (buyer financial)
+      const authUserId = storeUser?.id || user?.id;
+      if (!authUserId) throw new Error('User not authenticated');
+
       const formData = form.getValues();
-      const income = parseInt(formData.monthlyIncome.replace(/\D/g, ''));
-      const expenses = parseInt(formData.monthlyExpenses.replace(/\D/g, ''));
+      const incomeNum = parseInt(formData.monthlyIncome.replace(/\D/g, ''));
+
+      const { data: verification, error } = await createKYCVerification(authUserId, {
+        verification_type: 'buyer',
+        monthly_income: isNaN(incomeNum) ? undefined : incomeNum,
+        employment_status: formData.employmentStatus,
+        credit_consent: true
+      });
+      if (error || !verification) throw new Error(error || 'Failed to create financial verification');
+
+      // Upload provided documents
+      if (uploadedDocuments.proofOfIncome) {
+        await uploadKYCDocument({
+          kyc_verification_id: verification.id,
+          document_type: 'proof_of_income',
+          file: uploadedDocuments.proofOfIncome
+        });
+      }
+      if (uploadedDocuments.proofOfAddress) {
+        await uploadKYCDocument({
+          kyc_verification_id: verification.id,
+          document_type: 'bank_statement',
+          file: uploadedDocuments.proofOfAddress
+        });
+      }
+
+      // Keep status pending until admin review; still show computed mock results
+      const expensesNum = parseInt(formData.monthlyExpenses.replace(/\D/g, ''));
+      const income = isNaN(incomeNum) ? 0 : incomeNum;
+      const expenses = isNaN(expensesNum) ? 0 : expensesNum;
       const baseScore = Math.max(500, Math.min(850, 600 + Math.floor((income - expenses) / 100)));
       const finalScore = baseScore + Math.floor(Math.random() * 100 - 50);
       
@@ -279,7 +310,6 @@ export const FinancialAssessmentModal: React.FC<FinancialAssessmentModalProps> =
         creditUtilization: Math.random() * 0.6,
         riskLevel: finalScore > 700 ? 'Low' : finalScore > 600 ? 'Medium' : 'High'
       });
-      
       setStep('results');
     } catch (error) {
       console.error('Financial assessment failed:', error);

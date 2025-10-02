@@ -47,6 +47,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [cancellingOffer, setCancellingOffer] = useState<string | null>(null);
+  const [deletingOffer, setDeletingOffer] = useState<string | null>(null);
 
   // Load buyer's offers
   useEffect(() => {
@@ -58,6 +59,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       setIsLoading(true);
       // Get offers filtered by buyer_id
       const buyerOffers = await getPropertyOffers({ buyer_id: user.id });
+      console.log('Loaded offers for user:', user.id, buyerOffers);
       setOffers(buyerOffers);
     } catch (error) {
       console.error('Error loading buyer offers:', error);
@@ -75,6 +77,18 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       console.error('Error cancelling offer:', error);
     } finally {
       setCancellingOffer(null);
+    }
+  };
+
+  const handleDeleteOffer = async (offerId: string) => {
+    try {
+      setDeletingOffer(offerId);
+      await updatePropertyOffer(offerId, { status: 'deleted', rejection_reason: 'Deleted by buyer' });
+      await loadOffers(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting offer:', error);
+    } finally {
+      setDeletingOffer(null);
     }
   };
 
@@ -151,6 +165,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
     
     const matchesStatus = statusFilter === 'all' || offer.status === statusFilter;
     
+    console.log('Filtering offer:', offer.id, 'status:', offer.status, 'matchesStatus:', matchesStatus);
     return matchesSearch && matchesStatus;
   });
 
@@ -430,6 +445,21 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                         >
                           <DollarSign className="w-4 h-4 mr-2" />
                           Make Payment
+                        </Button>
+                      )}
+                      {(offer.status === 'rejected' || offer.status === 'expired') && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteOffer(offer.id)}
+                          disabled={deletingOffer === offer.id}
+                        >
+                          {deletingOffer === offer.id ? (
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 mr-2" />
+                          )}
+                          Delete Offer
                         </Button>
                       )}
                     </div>

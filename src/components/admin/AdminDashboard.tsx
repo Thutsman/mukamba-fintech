@@ -42,13 +42,17 @@ import { RecentPropertiesFeed } from './RecentPropertiesFeed';
 import { AdminNavigation } from './AdminNavigation';
 import { ListingsPage } from './ListingsPage';
 import { KYCPage } from './KYCPage';
+import { getAllKYCVerifications, updateKYCVerification } from '@/lib/kyc-services';
+import type { KYCVerificationWithUser } from '@/types/database';
 import { ReportsTab } from './ReportsTab';
+import { MessagesTab } from './MessagesTab';
 import PaymentTrackingTab from './PaymentTrackingTab';
 import { OffersPage } from './OffersPage';
 import type { AdminTab, AdminStats, AdminUser, AdminProperty, AdminListing, KYCVerification } from '@/types/admin';
 import { getPropertyListingsStats } from '@/lib/property-application-services';
 import { theme, getColor } from '@/lib/theme';
 import { toast } from 'sonner';
+import { useMessageStore } from '@/lib/message-store';
 
 interface AdminDashboardProps {
   user: UserType;
@@ -66,6 +70,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [propertyStats, setPropertyStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [kycVerifications, setKycVerifications] = useState<KYCVerificationWithUser[]>([]);
+  const [isLoadingKyc, setIsLoadingKyc] = useState<boolean>(false);
 
   // Load real property stats
   useEffect(() => {
@@ -81,6 +87,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
 
     loadPropertyStats();
+  }, []);
+
+  // Load KYC queue from Supabase
+  useEffect(() => {
+    const loadKyc = async () => {
+      try {
+        setIsLoadingKyc(true);
+        const { data, error } = await getAllKYCVerifications({ status: 'all', type: 'all' });
+        if (!error && data) setKycVerifications(data);
+      } catch (e) {
+        console.error('Error loading KYC verifications:', e);
+      } finally {
+        setIsLoadingKyc(false);
+      }
+    };
+    loadKyc();
   }, []);
 
   // Mock admin data
@@ -383,7 +405,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <Bell className="w-5 h-5" />
                 </button>
               <button 
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl shadow-red-500/10 hover:shadow-red-500/20 text-white font-medium"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-red-800 to-red-900 hover:from-red-900 hover:to-red-950 transition-all duration-300 shadow-lg hover:shadow-xl shadow-red-800/10 hover:shadow-red-900/20 text-white font-medium"
                 onClick={onLogout}
                 suppressHydrationWarning
               >
@@ -402,8 +424,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <AdminNavigation
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          notifications={5}
-          pendingActions={{ listings: 12, kyc: 8, payments: 3, reports: 1, users: 0 }}
+          notifications={useMessageStore.getState().messages.filter((m) => !m.read).length}
+          pendingActions={{ listings: 12, kyc: 8, payments: 3, reports: 1, users: 0, messages: useMessageStore.getState().messages.filter((m) => !m.read).length }}
           isMobileOpen={mobileOpen}
           onMobileToggle={() => setMobileOpen(v => !v)}
         />
@@ -571,7 +593,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <RecentPropertiesFeed 
                         properties={recentProperties}
                         onViewProperty={(propertyId) => console.log('View property:', propertyId)}
-                        onViewAll={() => setActiveTab('properties')}
+                        onViewAll={() => setActiveTab('messages')}
                       />
                     </CardContent>
                   </Card>
@@ -630,11 +652,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 KYC Verifications
               </h2>
               <KYCPage
-                verifications={mockKYCVerifications}
+                verifications={(kycVerifications.length ? kycVerifications.map(v => ({
+                  id: v.id,
+                  userId: v.user_id,
+                  userName: `${v.user.first_name} ${v.user.last_name}`,
+                  userEmail: v.user.email,
+                  type: v.verification_type,
+                  status: v.status,
+                  submittedAt: new Date(v.submitted_at || v.created_at).toLocaleString(),
+                  reviewedAt: v.reviewed_at ? new Date(v.reviewed_at).toLocaleString() : undefined,
+                  reviewedBy: v.reviewed_by,
+                  documents: {
+                    idDocument: v.documents.find(d => d.document_type === 'id_document')?.file_path,
+                    proofOfIncome: v.documents.find(d => d.document_type === 'proof_of_income')?.file_path,
+                    bankStatement: v.documents.find(d => d.document_type === 'bank_statement')?.file_path
+                  }
+                })) : mockKYCVerifications)}
                 onViewVerification={(verificationId) => console.log('View verification:', verificationId)}
-                onApproveVerification={(verificationId) => console.log('Approve verification:', verificationId)}
-                onRejectVerification={(verificationId, reason) => console.log('Reject verification:', verificationId, reason)}
-                onBulkAction={(action, verificationIds) => console.log('Bulk action:', action, verificationIds)}
+                onApproveVerification={async (verificationId) => {
+                  try {
+                    await updateKYCVerification(verificationId, user.id, { status: 'approved' });
+                    setKycVerifications(prev => prev.map(v => v.id === verificationId ? { ...v, status: 'approved', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
+                    toast.success('Verification approved');
+                  } catch (e) {
+                    toast.error('Failed to approve');
+                  }
+                }}
+                onRejectVerification={async (verificationId, reason) => {
+                  try {
+                    await updateKYCVerification(verificationId, user.id, { status: 'rejected', rejection_reason: reason });
+                    setKycVerifications(prev => prev.map(v => v.id === verificationId ? { ...v, status: 'rejected', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
+                    toast.success('Verification rejected');
+                  } catch (e) {
+                    toast.error('Failed to reject');
+                  }
+                }}
+                onBulkAction={async (action, verificationIds) => {
+                  for (const id of verificationIds) {
+                    try {
+                      await updateKYCVerification(id, user.id, { status: action === 'approve' ? 'approved' : 'rejected' });
+                    } catch {}
+                  }
+                  setKycVerifications(prev => prev.map(v => verificationIds.includes(v.id) ? { ...v, status: action === 'approve' ? 'approved' : 'rejected', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
+                  toast.success(`Bulk ${action} done`);
+                }}
               />
             </section>
           )}
@@ -683,32 +744,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </section>
           )}
 
-          {activeTab === 'properties' && (
+          {activeTab === 'messages' && (
             <section>
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                Property Management
-              </h2>
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs sm:text-sm text-slate-600">
-                      Manage property listings and documentation
-                    </p>
-                  </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
-                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Add Property
-                  </Button>
-                </div>
-                
-                <Card>
-                  <CardContent className="p-4 sm:p-6">
-                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
-                      Property management interface coming soon...
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+              <MessagesTab />
             </section>
           )}
 

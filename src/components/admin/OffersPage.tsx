@@ -32,6 +32,7 @@ import {
   updatePropertyOffer, 
   getOfferStats 
 } from '@/lib/offer-services';
+import { createInvoiceForOffer } from '@/lib/invoice-services';
 import { toast } from 'sonner';
 
 interface OffersPageProps {
@@ -92,7 +93,17 @@ export const OffersPage: React.FC<OffersPageProps> = ({
     try {
       const success = await updatePropertyOffer(offerId, { status: 'approved' });
       if (success) {
-        toast.success('Offer approved successfully');
+        // Auto-create invoice for the offer (no seller id included)
+        try {
+          const invoice = await createInvoiceForOffer(offerId);
+          if (invoice) {
+            toast.success(`Offer approved. Invoice ${invoice.invoice_number} created`);
+          } else {
+            toast.info('Offer approved, but invoice could not be generated');
+          }
+        } catch (_) {
+          toast.info('Offer approved, but invoice generation failed');
+        }
         loadOffers();
         loadStats();
         onApproveOffer?.(offerId);

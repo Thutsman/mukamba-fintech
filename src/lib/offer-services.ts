@@ -199,8 +199,10 @@ export const getPropertyOffers = async (filters?: {
 }): Promise<PropertyOffer[]> => {
   try {
     if (!supabase) {
-      console.log('Supabase client not available, returning mock offers');
-      return getMockOffers(filters?.buyer_id);
+      console.log('Supabase client not available, returning mock offers for buyer:', filters?.buyer_id);
+      const mockOffers = getMockOffers(filters?.buyer_id);
+      console.log('Mock offers returned:', mockOffers);
+      return mockOffers;
     }
 
     let query = supabase
@@ -405,18 +407,21 @@ export const getOfferStats = async (): Promise<OfferStats> => {
 /**
  * Helper function to calculate offer expiry date
  */
-const calculateOfferExpiry = (timeline: string): string => {
+// 7 working days from approval (skip weekends)
+const calculateOfferExpiry = (_timeline: string): string => {
+  const addWorkingDays = (start: Date, days: number) => {
+    const d = new Date(start);
+    let added = 0;
+    while (added < days) {
+      d.setDate(d.getDate() + 1);
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) added += 1;
+    }
+    return d;
+  };
+
   const now = new Date();
-  let daysToAdd = 7; // Default 7 days
-
-  if (timeline === 'ready_to_pay_in_full') {
-    daysToAdd = 3; // 3 days for cash offers
-  } else if (timeline.includes('_months')) {
-    const months = parseInt(timeline.replace('_months', ''));
-    daysToAdd = Math.min(months * 7, 30); // Max 30 days
-  }
-
-  const expiryDate = new Date(now.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
+  const expiryDate = addWorkingDays(now, 7);
   return expiryDate.toISOString();
 };
 
@@ -449,11 +454,13 @@ const createNotification = async (
 /**
  * Mock data for development
  */
-const getMockOffers = (buyerId?: string): PropertyOffer[] => [
+const getMockOffers = (buyerId?: string): PropertyOffer[] => {
+  const currentBuyerId = buyerId || 'buyer-1';
+  return [
   {
     id: '1',
     property_id: 'prop-1',
-    buyer_id: buyerId || 'buyer-1',
+    buyer_id: currentBuyerId,
     seller_id: 'seller-1',
     offer_price: 250000,
     deposit_amount: 25000,
@@ -473,7 +480,7 @@ const getMockOffers = (buyerId?: string): PropertyOffer[] => [
       location: { city: 'Harare', country: 'ZW' }
     },
     buyer: {
-      id: buyerId || 'buyer-1',
+      id: currentBuyerId,
       first_name: 'John',
       last_name: 'Doe',
       email: 'john@example.com',
@@ -489,7 +496,7 @@ const getMockOffers = (buyerId?: string): PropertyOffer[] => [
   {
     id: '2',
     property_id: 'prop-2',
-    buyer_id: buyerId || 'buyer-2',
+    buyer_id: currentBuyerId,
     seller_id: 'seller-2',
     offer_price: 180000,
     deposit_amount: 18000,
@@ -512,7 +519,7 @@ const getMockOffers = (buyerId?: string): PropertyOffer[] => [
       location: { city: 'Johannesburg', country: 'SA' }
     },
     buyer: {
-      id: buyerId || 'buyer-2',
+      id: currentBuyerId,
       first_name: 'Sarah',
       last_name: 'Wilson',
       email: 'sarah@example.com',
@@ -529,5 +536,87 @@ const getMockOffers = (buyerId?: string): PropertyOffer[] => [
       first_name: 'Admin',
       last_name: 'User'
     }
+  },
+  {
+    id: '3',
+    property_id: 'prop-3',
+    buyer_id: currentBuyerId,
+    seller_id: 'seller-3',
+    offer_price: 150000,
+    deposit_amount: 15000,
+    payment_method: 'installments',
+    estimated_timeline: '12_months',
+    additional_notes: 'Looking for flexible payment terms',
+    offer_reference: 'OFF-2024-000003',
+    status: 'rejected',
+    rejection_reason: 'Offer too low for market value',
+    admin_reviewed_by: 'admin-1',
+    admin_reviewed_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    admin_notes: 'Offer was below 70% of asking price',
+    submitted_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+    property: {
+      id: 'prop-3',
+      title: 'Test Property',
+      price: 200000,
+      currency: 'USD',
+      location: { city: 'City', country: 'Country' }
+    },
+    buyer: {
+      id: currentBuyerId,
+      first_name: 'Test',
+      last_name: 'Buyer',
+      email: 'test@example.com',
+      phone: '+1234567890'
+    },
+    seller: {
+      id: 'seller-3',
+      first_name: 'Property',
+      last_name: 'Owner',
+      email: 'owner@example.com'
+    },
+    reviewer: {
+      id: 'admin-1',
+      first_name: 'Admin',
+      last_name: 'User'
+    }
+  },
+  {
+    id: '4',
+    property_id: 'prop-4',
+    buyer_id: currentBuyerId,
+    seller_id: 'seller-4',
+    offer_price: 120000,
+    deposit_amount: 12000,
+    payment_method: 'installments',
+    estimated_timeline: '18_months',
+    additional_notes: 'Interested in this property',
+    offer_reference: 'OFF-2024-000004',
+    status: 'expired',
+    submitted_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // Expired 3 days ago
+    updated_at: new Date().toISOString(),
+    property: {
+      id: 'prop-4',
+      title: 'Expired Property',
+      price: 150000,
+      currency: 'USD',
+      location: { city: 'Another City', country: 'Country' }
+    },
+    buyer: {
+      id: currentBuyerId,
+      first_name: 'Expired',
+      last_name: 'Buyer',
+      email: 'expired@example.com',
+      phone: '+9876543210'
+    },
+    seller: {
+      id: 'seller-4',
+      first_name: 'Property',
+      last_name: 'Owner',
+      email: 'owner2@example.com'
+    }
   }
-];
+  ];
+};

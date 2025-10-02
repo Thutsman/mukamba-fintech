@@ -7,7 +7,7 @@ import {
   FileText,
   Briefcase,
   Shield,
-  Building,
+  MessageCircle,
   CreditCard,
   TrendingUp,
   Users,
@@ -27,6 +27,7 @@ interface AdminNavigationProps {
     listings?: number;
     offers?: number;
     kyc?: number;
+    messages?: number;
     payments?: number;
     reports?: number;
     users?: number;
@@ -46,7 +47,7 @@ const groups: { id: GroupId; label: string; items: { id: AdminTab; label: string
       { id: 'listings', label: 'Listings', icon: FileText },
       { id: 'offers', label: 'Offers', icon: Briefcase },
       { id: 'kyc', label: 'KYC', icon: Shield },
-      { id: 'properties', label: 'Properties', icon: Building }
+      { id: 'messages', label: 'Messages', icon: MessageCircle }
     ]
   },
   {

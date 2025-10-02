@@ -379,7 +379,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const router = useRouter();
   const isVerified = isFullyVerified(user);
   const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [activeSection, setActiveSection] = React.useState<'overview' | 'searches' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
   const [showPropertySearch, setShowPropertySearch] = React.useState(false);
   const [showPropertyGrid, setShowPropertyGrid] = React.useState(false);
@@ -409,7 +408,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     activeApps: number;
     viewsThisMonth: number;
     viewsGrowthPct: number;
-    budgetApproved: number;
   }
   interface RecentActivityItem { text: string; time: string }
   interface PreviewProperty { id: string; title: string; address: string; price: number; beds: number; baths: number; area: number; imageUrl?: string; status?: string }
@@ -419,7 +417,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     activeApps: 2, // This will show active offers count
     viewsThisMonth: 745,
     viewsGrowthPct: 15,
-    budgetApproved: 2500000,
   };
 
   const recentActivities: RecentActivityItem[] = [
@@ -816,7 +813,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         <div className="p-4 border-b border-slate-200 flex flex-col items-center text-center">
           <Avatar className="h-16 w-16">
                 <AvatarImage src="" alt={user.firstName} />
-            <AvatarFallback className="bg-red-600 text-white text-lg font-semibold">
+            <AvatarFallback className="bg-red-800 text-white text-lg font-semibold">
                   {user.firstName?.[0]}{user.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
@@ -830,18 +827,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           <div className="text-xs font-medium text-slate-500 mb-2">Quick Settings</div>
           <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-2">
             <div className="flex items-center gap-2 text-slate-700"><SunIcon className="w-4 h-4"/>Dark Mode</div>
-            <button onClick={()=>setDarkModeEnabled(v=>!v)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled?'bg-red-600':'bg-slate-300'}`}
+            <button onClick={()=>setDarkModeEnabled(v=>!v)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled?'bg-red-800':'bg-slate-300'}`}
               aria-pressed={darkModeEnabled}>
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${darkModeEnabled?'translate-x-5':'translate-x-1'}`}/>
             </button>
             </div>
-          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-            <div className="flex items-center gap-2 text-slate-700"><Bell className="w-4 h-4"/>Notifications</div>
-            <button onClick={()=>setNotificationsEnabled(v=>!v)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${notificationsEnabled?'bg-red-600':'bg-slate-300'}`}
-              aria-pressed={notificationsEnabled}>
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${notificationsEnabled?'translate-x-5':'translate-x-1'}`}/>
-            </button>
-          </div>
         </div>
 
         {/* Navigation */}
@@ -850,7 +840,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             {key:'overview', label:'Overview', icon:Home},
             {key:'searches', label:'Property Searches', icon:Search},
             {key:'saved', label:'Saved Properties', icon:Bookmark},
-            {key:'offers', label:'Offers', icon:FileText},
+            {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
             {key:'messages', label:'Messages', icon:MessageCircle},
             {key:'documents', label:'Documents', icon:FileText},
             {key:'profile', label:'Profile', icon:UserIcon},
@@ -865,9 +855,14 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   setActiveSection(item.key);
                 }
               }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection===item.key?'bg-red-50 text-red-700 border border-red-200':'text-slate-700 hover:bg-slate-50'}`}> 
-                <Icon className={activeSection===item.key?'w-4 h-4 text-red-600':'w-4 h-4 text-slate-500'}/>
-                <span className="font-medium">{item.label}</span>
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection===item.key?'bg-red-100 text-red-800 border border-red-300':'text-slate-700 hover:bg-slate-50'}`}> 
+                <Icon className={activeSection===item.key?'w-4 h-4 text-red-800':'w-4 h-4 text-slate-500'}/>
+                <span className="font-medium flex-1">{item.label}</span>
+                {item.badge && item.badge > 0 && (
+                  <span className="bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -913,7 +908,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 <div className="flex items-center gap-3 mb-6 p-3 bg-slate-50 rounded-lg">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src="" alt={user.firstName} />
-                    <AvatarFallback className="bg-red-600 text-white text-sm font-semibold">
+                    <AvatarFallback className="bg-red-800 text-white text-sm font-semibold">
                       {user.firstName?.[0]}{user.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
@@ -936,22 +931,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             </div>
             <button
                         onClick={() => setDarkModeEnabled(v => !v)} 
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled ? 'bg-red-600' : 'bg-slate-300'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled ? 'bg-red-800' : 'bg-slate-300'}`}
               aria-pressed={darkModeEnabled}
             >
                         <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${darkModeEnabled ? 'translate-x-5' : 'translate-x-1'}`}/>
-            </button>
-          </div>
-          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2 text-slate-700 text-sm">
-                        <Bell className="w-4 h-4"/>Notifications
-            </div>
-            <button
-                        onClick={() => setNotificationsEnabled(v => !v)} 
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${notificationsEnabled ? 'bg-red-600' : 'bg-slate-300'}`}
-              aria-pressed={notificationsEnabled}
-            >
-                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${notificationsEnabled ? 'translate-x-5' : 'translate-x-1'}`}/>
             </button>
           </div>
           </div>
@@ -963,7 +946,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     {key: 'overview', label: 'Overview', icon: Home},
                     {key: 'searches', label: 'Property Searches', icon: Search},
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark},
-                    {key: 'offers', label: 'Offers', icon: FileText},
+                    {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
                     {key: 'messages', label: 'Messages', icon: MessageCircle},
                     {key: 'documents', label: 'Documents', icon: FileText},
                     {key: 'profile', label: 'Profile', icon: UserIcon},
@@ -981,10 +964,15 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                           }
                           setShowMobileNav(false);
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection === item.key ? 'bg-red-50 text-red-700 border border-red-200' : 'text-slate-700 hover:bg-slate-50'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection === item.key ? 'bg-red-100 text-red-800 border border-red-300' : 'text-slate-700 hover:bg-slate-50'}`}
                       > 
-                        <Icon className={activeSection === item.key ? 'w-4 h-4 text-red-600' : 'w-4 h-4 text-slate-500'}/>
-                        <span className="font-medium">{item.label}</span>
+                        <Icon className={activeSection === item.key ? 'w-4 h-4 text-red-800' : 'w-4 h-4 text-slate-500'}/>
+                        <span className="font-medium flex-1">{item.label}</span>
+                        {item.badge && item.badge > 0 && (
+                          <span className="bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            {item.badge}
+                          </span>
+                        )}
               </button>
                     );
                   })}
@@ -1018,7 +1006,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
         <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/>Verified</Badge>
-            <Button className="bg-red-600 hover:bg-red-700" size="sm" onClick={() => setShowPropertyListings(true)}>Start New Search</Button>
+            <Button className="bg-red-800 hover:bg-red-900 text-white" size="sm" onClick={() => setShowPropertyListings(true)}>Start New Search</Button>
           </div>
         </div>
 
@@ -1026,7 +1014,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         {activeSection === 'overview' && (
           <>
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 px-1 md:px-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 px-1 md:px-0">
           <Card className="border-slate-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -1057,16 +1045,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <div className="text-xs text-slate-500">This Month • +{stats.viewsGrowthPct}% from last month</div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs uppercase tracking-wide text-slate-600">Budget Approved</div>
-                <DollarSign className="w-4 h-4 text-green-700"/>
-                    </div>
-              <div className="text-2xl font-bold">R{stats.budgetApproved.toLocaleString()}</div>
-              <div className="text-xs text-slate-500">Financing Pre-approved • Verified by Bank</div>
-            </CardContent>
-          </Card>
       </div>
 
         {/* Quick Actions */}
@@ -1075,7 +1053,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors duration-200" 
+                className="flex items-center gap-2 bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400 transition-colors duration-200" 
                 onClick={() => setShowPropertyListings(true)}
               >
                 <Home className="w-4 h-4"/>
@@ -1096,7 +1074,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 size="sm" 
                 variant="outline" 
                 onClick={() => setShowPropertyListings(true)}
-                className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors duration-200"
+                className="bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400 transition-colors duration-200"
               >
                 <Eye className="w-4 h-4 mr-1" />
                 View All Properties
@@ -1176,7 +1154,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
-                        className="flex-1 bg-red-600 hover:bg-red-700" 
+                        className="flex-1 bg-red-800 hover:bg-red-900 text-white" 
                         onClick={() => router.push(`/property/${p.id}`)}
                       >
                         View Details
@@ -1381,23 +1359,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
       </div>
             <div className="mt-4">
-              <h4 className="text-lg font-semibold text-slate-900 mb-2">Notifications</h4>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <Bell className="w-4 h-4" />
-                <span>Enable Notifications</span>
-                <input
-                  type="checkbox"
-                  checked={notificationsEnabled}
-                  onChange={(e) => setNotificationsEnabled(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-      </div>
-            </div>
-            <div className="mt-4">
               <h4 className="text-lg font-semibold text-slate-900 mb-2">Account</h4>
               <Button 
-                variant="outline" 
-                className="w-full text-red-600 hover:text-red-700 border-red-200" 
+                className="w-full bg-red-800 hover:bg-red-900 text-white" 
                 onClick={() => console.log('Logout clicked')}
               >
                 <LogOutIcon className="w-4 h-4 mr-2" />
@@ -1515,7 +1479,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
                 {/* Rejection Reason */}
                 {selectedOffer.status === 'rejected' && selectedOffer.rejection_reason && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="bg-red-100 border border-red-300 rounded-lg p-4">
                     <h4 className="font-medium text-red-900 mb-2">Rejection Reason</h4>
                     <p className="text-red-800">{selectedOffer.rejection_reason}</p>
                   </div>

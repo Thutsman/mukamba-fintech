@@ -4,14 +4,9 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
-  Phone, 
   MessageCircle, 
-  Mail, 
-  Calendar,
-  Clock,
   User,
   CheckCircle,
-  AlertCircle,
   Send,
   Loader2
 } from 'lucide-react';
@@ -21,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+// Simplified modal: radio groups removed
 import { PropertyListing } from '@/types/property';
 import { User as UserType } from '@/types/auth';
 
@@ -34,11 +29,7 @@ interface ExpressInterestModalProps {
 }
 
 interface ExpressInterestData {
-  interestType: 'viewing' | 'question' | 'callback' | 'general';
   message: string;
-  preferredContact: 'phone' | 'email' | 'both';
-  preferredTime?: string;
-  urgency: 'low' | 'medium' | 'high';
 }
 
 export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
@@ -50,10 +41,7 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
 }) => {
   const [step, setStep] = React.useState<'form' | 'submitting' | 'success'>('form');
   const [formData, setFormData] = React.useState<ExpressInterestData>({
-    interestType: 'viewing',
-    message: '',
-    preferredContact: 'both',
-    urgency: 'medium'
+    message: ''
   });
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -68,12 +56,7 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
       setTimeout(() => {
         onClose();
         setStep('form');
-        setFormData({
-          interestType: 'viewing',
-          message: '',
-          preferredContact: 'both',
-          urgency: 'medium'
-        });
+        setFormData({ message: '' });
       }, 2000);
     } catch (error) {
       console.error('Failed to submit interest:', error);
@@ -87,12 +70,7 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
     if (!isLoading) {
       onClose();
       setStep('form');
-      setFormData({
-        interestType: 'viewing',
-        message: '',
-        preferredContact: 'both',
-        urgency: 'medium'
-      });
+      setFormData({ message: '' });
     }
   };
 
@@ -125,12 +103,12 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
                 </Button>
               </div>
               <CardTitle className="text-xl">
-                {step === 'form' && 'Express Interest'}
+                {step === 'form' && 'Send Message'}
                 {step === 'submitting' && 'Sending Message'}
                 {step === 'success' && 'Message Sent!'}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-2">
-                {step === 'form' && `Contact the seller about ${property.title}`}
+                {step === 'form' && `Message the seller about ${property.title}`}
                 {step === 'submitting' && 'Please wait while we send your message...'}
                 {step === 'success' && 'The seller will contact you soon!'}
               </p>
@@ -155,71 +133,12 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Interest Type */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">What would you like to do?</Label>
-                    <RadioGroup
-                      value={formData.interestType}
-                      onValueChange={(value: ExpressInterestData['interestType']) => 
-                        setFormData(prev => ({ ...prev, interestType: value }))
-                      }
-                      className="grid grid-cols-2 gap-3"
-                    >
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="viewing" id="viewing" />
-                        <Label htmlFor="viewing" className="cursor-pointer">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Schedule Viewing
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="question" id="question" />
-                        <Label htmlFor="question" className="cursor-pointer">
-                          <div className="flex items-center">
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                            Ask Question
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="callback" id="callback" />
-                        <Label htmlFor="callback" className="cursor-pointer">
-                          <div className="flex items-center">
-                            <Phone className="w-4 h-4 mr-2" />
-                            Request Callback
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <RadioGroupItem value="general" id="general" />
-                        <Label htmlFor="general" className="cursor-pointer">
-                          <div className="flex items-center">
-                            <Mail className="w-4 h-4 mr-2" />
-                            General Inquiry
-                          </div>
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
                   {/* Message */}
                   <div className="space-y-3">
-                    <Label htmlFor="message" className="text-base font-medium">
-                      {formData.interestType === 'viewing' && 'Additional details for viewing request'}
-                      {formData.interestType === 'question' && 'Your question'}
-                      {formData.interestType === 'callback' && 'Best time to call and reason'}
-                      {formData.interestType === 'general' && 'Your message'}
-                    </Label>
+                    <Label htmlFor="message" className="text-base font-medium">Your message</Label>
                     <Textarea
                       id="message"
-                      placeholder={
-                        formData.interestType === 'viewing' ? 'Any specific requirements or questions about the property...' :
-                        formData.interestType === 'question' ? 'What would you like to know about this property?' :
-                        formData.interestType === 'callback' ? 'When is the best time to call you and what would you like to discuss?' :
-                        'Tell the seller what you\'re interested in...'
-                      }
+                      placeholder={'Type your message to the Admin...'}
                       value={formData.message}
                       onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                       rows={4}
@@ -228,55 +147,6 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
                     />
                   </div>
 
-                  {/* Preferred Contact */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">Preferred contact method</Label>
-                    <RadioGroup
-                      value={formData.preferredContact}
-                      onValueChange={(value: ExpressInterestData['preferredContact']) => 
-                        setFormData(prev => ({ ...prev, preferredContact: value }))
-                      }
-                      className="flex space-x-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="phone" id="phone" />
-                        <Label htmlFor="phone" className="cursor-pointer">Phone</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="email" id="email" />
-                        <Label htmlFor="email" className="cursor-pointer">Email</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="both" id="both" />
-                        <Label htmlFor="both" className="cursor-pointer">Both</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  {/* Urgency */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">How urgent is your inquiry?</Label>
-                    <RadioGroup
-                      value={formData.urgency}
-                      onValueChange={(value: ExpressInterestData['urgency']) => 
-                        setFormData(prev => ({ ...prev, urgency: value }))
-                      }
-                      className="flex space-x-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="low" id="low" />
-                        <Label htmlFor="low" className="cursor-pointer">Low - No rush</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="medium" id="medium" />
-                        <Label htmlFor="medium" className="cursor-pointer">Medium - Within a week</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="high" id="high" />
-                        <Label htmlFor="high" className="cursor-pointer">High - ASAP</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
 
                   {/* Submit Button */}
                   <div className="flex space-x-3 pt-4">
@@ -322,7 +192,7 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
                   <div>
                     <h3 className="font-semibold text-gray-800">Sending Your Message</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Please wait while we send your message to the seller...
+                      Please wait while we send your message to the Admin...
                     </p>
                   </div>
                 </div>
@@ -340,7 +210,7 @@ export const ExpressInterestModal: React.FC<ExpressInterestModalProps> = ({
                   <div>
                     <h3 className="font-semibold text-gray-800">Message Sent Successfully!</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      The seller will contact you soon using your preferred method.
+                      The Admin will contact you soon.
                     </p>
                   </div>
                 </div>
