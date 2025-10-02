@@ -14,7 +14,7 @@ import { buyerServices } from '@/lib/buyer-services';
 interface BuyerSignupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSignupComplete: (email: string, buyerType: 'cash' | 'installment') => void;
+  onSignupComplete: (email: string, buyerType?: 'cash' | 'installment') => void;
   propertyTitle?: string;
 }
 
@@ -63,9 +63,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
       newErrors.confirmPassword = 'Passwords do not match';
     }
     
-    if (!buyerType) {
-      newErrors.buyerType = 'Please select your buyer type';
-    }
+    // Buyer type is now optional; no validation needed
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -98,32 +96,32 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
           console.log('BuyerSignupModal: User from store:', user);
           
           if (user?.id) {
-            console.log('BuyerSignupModal: Calling handleBuyerSignup with:', {
-              userId: user.id,
-              buyerType: buyerType,
-              signupSource: 'property_details_gate'
-            });
-            
-            // Call the handle_buyer_signup function to properly populate buyer_onboarding_progress
-            const result = await buyerServices.handleBuyerSignup(
-              user.id,
-              buyerType!,
-              'property_details_gate' as any,
-              undefined // propertyId will be set later if needed
-            );
-            
-            if (result.success) {
-              console.log('Buyer signup completed successfully');
-              // Only call onSignupComplete after buyer type is saved
-              onSignupComplete(email, buyerType!);
-            } else {
-              console.error('Error completing buyer signup:', result.error);
+            // If a buyer type was selected, persist it; otherwise skip
+            if (buyerType) {
+              console.log('BuyerSignupModal: Calling handleBuyerSignup with:', {
+                userId: user.id,
+                buyerType: buyerType,
+                signupSource: 'property_details_gate'
+              });
+              const result = await buyerServices.handleBuyerSignup(
+                user.id,
+                buyerType,
+                'property_details_gate' as any,
+                undefined
+              );
+              if (!result.success) {
+                console.error('Error completing buyer signup:', result.error);
+              }
             }
+            // Proceed regardless, passing buyerType if available
+            onSignupComplete(email, buyerType ?? undefined);
           } else {
             console.error('BuyerSignupModal: No user found in store after signup');
+            onSignupComplete(email, undefined);
           }
         } catch (error) {
           console.error('Error updating buyer type:', error);
+          onSignupComplete(email, buyerType ?? undefined);
         }
       }, 2000); // Increased timeout to 2 seconds
       
@@ -312,100 +310,7 @@ export const BuyerSignupModal: React.FC<BuyerSignupModalProps> = ({
                  </div>
                </div>
 
-                             {/* Buyer Type Selection */}
-               <div>
-                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                   How do you plan to purchase?
-                 </label>
-                 
-                 <div className="space-y-2">
-                  {/* Cash Buyer Option */}
-                  <Card 
-                    className={`cursor-pointer transition-all duration-200 ${
-                      buyerType === 'cash' 
-                        ? 'ring-2 ring-green-500 bg-green-50' 
-                        : 'hover:bg-slate-50'
-                    }`}
-                    onClick={() => setBuyerType('cash')}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            buyerType === 'cash' 
-                              ? 'border-green-500 bg-green-500' 
-                              : 'border-slate-300'
-                          }`}>
-                            {buyerType === 'cash' && (
-                              <CheckCircle className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <DollarSign className="w-5 h-5 text-green-600" />
-                            <h3 className="font-semibold text-slate-800">Cash Buyer</h3>
-                            <Badge variant="secondary" className="bg-green-100 text-green-700">
-                              Fast Track
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-slate-600">
-                            I plan to purchase with cash or existing funds
-                          </p>
-                          <div className="mt-1 text-xs text-green-600">
-                            ✓ Simplified verification • ✓ Priority with sellers
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Installment Buyer Option */}
-                  <Card 
-                    className={`cursor-pointer transition-all duration-200 ${
-                      buyerType === 'installment' 
-                        ? 'ring-2 ring-blue-500 bg-blue-50' 
-                        : 'hover:bg-slate-50'
-                    }`}
-                    onClick={() => setBuyerType('installment')}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            buyerType === 'installment' 
-                              ? 'border-blue-500 bg-blue-500' 
-                              : 'border-slate-300'
-                          }`}>
-                            {buyerType === 'installment' && (
-                              <CheckCircle className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <CreditCard className="w-5 h-5 text-blue-600" />
-                            <h3 className="font-semibold text-slate-800">Installment Buyer</h3>
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                              Popular
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-slate-600">
-                            I would like installment options
-                          </p>
-                          <div className="mt-1 text-xs text-blue-600">
-                            ✓ Flexible payment plan
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                {errors.buyerType && (
-                  <p className="text-red-500 text-sm mt-2">{errors.buyerType}</p>
-                )}
-              </div>
+              {/* Buyer Type Selection removed: buyer type is now optional and can be set later */}
 
               {/* General Error */}
               {errors.general && (
