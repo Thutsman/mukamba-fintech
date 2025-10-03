@@ -821,7 +821,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             
             {/* Enhanced CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-3 justify-center px-4 mb-12"
+              className="flex flex-col sm:flex-row gap-3 justify-center px-4 mb-16"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
@@ -1267,81 +1267,81 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
       {/* Property Search Bar - Overlapping Section */}
       <motion.div
-        className="relative z-20 max-w-4xl mx-auto px-4 -mt-8"
+        className="relative z-20 max-w-4xl mx-auto px-4 -mt-1"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
       >
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 border border-white/30 shadow-2xl">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            {/* Location Filter */}
-            <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-slate-700 flex items-center">
-                <MapPin className="w-4 h-4 mr-1" />
-                Location
-              </label>
-              <Select value={searchFilters.location || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, location: value === 'all' ? undefined : value }))}>
-                <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200">
-                  <SelectValue placeholder="All Locations" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-slate-200 shadow-lg">
-                  <SelectItem value="all">All Locations</SelectItem>
-                  <SelectItem value="harare">Harare</SelectItem>
-                  <SelectItem value="bulawayo">Bulawayo</SelectItem>
-                  <SelectItem value="victoria-falls">Victoria Falls</SelectItem>
-                  <SelectItem value="mutare">Mutare</SelectItem>
-                  <SelectItem value="gweru">Gweru</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-4 border border-white/30 shadow-2xl max-w-screen-sm mx-auto">
+          <div className="space-y-4">
+            {/* Top Row - Dropdown Filters */}
+            <div className="flex flex-row items-center justify-between gap-x-3">
+              {/* Location Filter */}
+              <div className="flex-1 min-w-0">
+                <Select value={searchFilters.location || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, location: value === 'all' ? undefined : value }))}>
+                  <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 h-10 w-full">
+                    <div className="flex items-center min-w-0">
+                      <MapPin className="w-4 h-4 mr-2 text-slate-500 flex-shrink-0" />
+                      <SelectValue placeholder="All Locations" className="truncate" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                    <SelectItem value="all">All Locations</SelectItem>
+                    <SelectItem value="harare">Harare</SelectItem>
+                    <SelectItem value="bulawayo">Bulawayo</SelectItem>
+                    <SelectItem value="victoria-falls">Victoria Falls</SelectItem>
+                    <SelectItem value="mutare">Mutare</SelectItem>
+                    <SelectItem value="gweru">Gweru</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Property Type Filter */}
+              <div className="flex-1 min-w-0">
+                <Select value={searchFilters.propertyType || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, propertyType: value === 'all' ? undefined : value }))}>
+                  <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 h-10 w-full">
+                    <div className="flex items-center min-w-0">
+                      <Home className="w-4 h-4 mr-2 text-slate-500 flex-shrink-0" />
+                      <SelectValue placeholder="All Types" className="truncate" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="house">House</SelectItem>
+                    <SelectItem value="apartment">Apartment</SelectItem>
+                    <SelectItem value="townhouse">Townhouse</SelectItem>
+                    <SelectItem value="land">Land</SelectItem>
+                    <SelectItem value="commercial">Commercial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Price Range Filter */}
+              <div className="flex-1 min-w-0">
+                <Select value={searchFilters.priceRange || 'any'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, priceRange: value === 'any' ? undefined : value }))}>
+                  <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 h-10 w-full">
+                    <div className="flex items-center min-w-0">
+                      <DollarSign className="w-4 h-4 mr-2 text-slate-500 flex-shrink-0" />
+                      <SelectValue placeholder="Any Price" className="truncate" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                    <SelectItem value="any">Any Price</SelectItem>
+                    <SelectItem value="0-50000">Under $50,000</SelectItem>
+                    <SelectItem value="50000-100000">$50,000 - $100,000</SelectItem>
+                    <SelectItem value="100000-200000">$100,000 - $200,000</SelectItem>
+                    <SelectItem value="200000-500000">$200,000 - $500,000</SelectItem>
+                    <SelectItem value="500000+">$500,000+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Property Type Filter */}
-            <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-slate-700 flex items-center">
-                <Home className="w-4 h-4 mr-1" />
-                Property Type
-              </label>
-              <Select value={searchFilters.propertyType || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, propertyType: value === 'all' ? undefined : value }))}>
-                <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-slate-200 shadow-lg">
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="house">House</SelectItem>
-                  <SelectItem value="apartment">Apartment</SelectItem>
-                  <SelectItem value="townhouse">Townhouse</SelectItem>
-                  <SelectItem value="land">Land</SelectItem>
-                  <SelectItem value="commercial">Commercial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Price Range Filter */}
-            <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-slate-700 flex items-center">
-                <DollarSign className="w-4 h-4 mr-1" />
-                Price Range
-              </label>
-              <Select value={searchFilters.priceRange || 'any'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, priceRange: value === 'any' ? undefined : value }))}>
-                <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200">
-                  <SelectValue placeholder="Any Price" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-slate-200 shadow-lg">
-                  <SelectItem value="any">Any Price</SelectItem>
-                  <SelectItem value="0-50000">Under $50,000</SelectItem>
-                  <SelectItem value="50000-100000">$50,000 - $100,000</SelectItem>
-                  <SelectItem value="100000-200000">$100,000 - $200,000</SelectItem>
-                  <SelectItem value="200000-500000">$200,000 - $500,000</SelectItem>
-                  <SelectItem value="500000+">$500,000+</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Search Button */}
-            <div className="flex-1 sm:flex-none">
+            {/* Bottom Row - Search Button */}
+            <div className="flex justify-center">
               <Button
                 size="lg"
-                className="w-full sm:w-auto bg-[#7f1518] hover:bg-[#6a1215] text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="bg-[#7f1518] hover:bg-[#6a1215] text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 h-12 px-8"
                 onClick={handleSearch}
               >
                 <Search className="w-5 h-5 mr-2" />
