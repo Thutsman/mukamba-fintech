@@ -48,6 +48,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { PropertyListings } from './PropertyListings';
 import { EnhancedPropertyCard } from './EnhancedPropertyCard';
@@ -57,7 +58,6 @@ import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } f
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { User as UserType } from '@/types/auth';
-import { CountryToggle } from '@/components/ui/country-toggle';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
@@ -88,7 +88,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState('explore');
-  const [quickSearchQuery, setQuickSearchQuery] = React.useState('');
   const [selectedProperty, setSelectedProperty] = React.useState<Property | null>(null);
   const [selectedCountry, setSelectedCountry] = React.useState<PropertyCountry>('ZW');
   const [stats, setStats] = React.useState(getPropertyStats(selectedCountry));
@@ -111,6 +110,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [error, setError] = React.useState<string | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
   const [isClient, setIsClient] = React.useState(false);
+  
+  // Search filters state
+  const [searchFilters, setSearchFilters] = React.useState({
+    location: undefined as string | undefined,
+    propertyType: undefined as string | undefined,
+    priceRange: undefined as string | undefined,
+  });
   
 
 
@@ -193,6 +199,39 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  // Handle search functionality
+  const handleSearch = React.useCallback(() => {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    if (searchFilters.location && searchFilters.location !== 'all') {
+      queryParams.set('city', searchFilters.location);
+    }
+    
+    if (searchFilters.propertyType && searchFilters.propertyType !== 'all') {
+      queryParams.set('propertyType', searchFilters.propertyType);
+    }
+    
+    if (searchFilters.priceRange && searchFilters.priceRange !== 'any') {
+      const [min, max] = searchFilters.priceRange.split('-');
+      if (min) queryParams.set('priceRange.min', min);
+      if (max && max !== '+') queryParams.set('priceRange.max', max);
+    }
+    
+    // Navigate to listings page with filters
+    const queryString = queryParams.toString();
+    const url = queryString ? `/listings?${queryString}` : '/listings';
+    router.push(url);
+    
+    // Track analytics
+    trackEvent('hero_search_clicked', {
+      location: searchFilters.location,
+      propertyType: searchFilters.propertyType,
+      priceRange: searchFilters.priceRange,
+      event_category: 'search'
+    });
+  }, [searchFilters, router]);
 
   // Skeleton component for property cards
   const PropertyCardSkeleton: React.FC<{ index: number }> = ({ index }) => (
@@ -685,9 +724,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             backgroundPosition: '50% 60%',
           }}
         >
-          {/* Lighter gradient overlay for better background visibility */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/30 via-slate-900/40 to-slate-900/50"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent"></div>
+          {/* Darker gradient overlay for better text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 via-slate-900/65 to-slate-900/70"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent"></div>
                       </div>
                       
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
@@ -779,27 +818,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               </p>
             </div>
             
-            {/* Enhanced Statistics Ticker */}
-            <div className="grid grid-cols-1 gap-3 px-4 sm:grid-cols-2 sm:gap-4 md:flex md:justify-center md:gap-6">
-              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-3 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
-                <div className="flex items-center justify-center mb-3">
-                  <Home className="w-8 h-8 text-orange-400 mr-3" />
-                  <div className="text-4xl font-bold text-white mb-1">500+</div>
-              </div>
-                <div className="text-white/90 text-sm font-medium">Pre-Approved Properties</div>
-              </div>
-              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-3 text-center inline-block shadow-2xl border border-white/30 hover:bg-white/30 transition-all duration-300">
-                <div className="flex items-center justify-center mb-3">
-                  <Users className="w-8 h-8 text-orange-400 mr-3" />
-                  <div className="text-4xl font-bold text-white mb-1">2,000+</div>
-              </div>
-                <div className="text-white/90 text-sm font-medium">Families Who Owned Their Home</div>
-              </div>
-            </div>
             
             {/* Enhanced CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-3 justify-center px-4"
+              className="flex flex-col sm:flex-row gap-3 justify-center px-4 mb-12"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
@@ -857,138 +879,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               </motion.div>
             </motion.div>
             
-            {/* Enhanced Search Bar */}
-            <motion.div 
-              className="max-w-5xl mx-auto px-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-8 border border-white/30 shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
-                <div className="space-y-6">
-                  {/* Main Search Input */}
-              <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-6 h-6" />
-                <Input
-                  type="text"
-                  placeholder="Search properties by location, type, or features..."
-                  value={quickSearchQuery}
-                  onChange={(e) => setQuickSearchQuery(e.target.value)}
-                      className="pl-14 pr-4 h-16 text-lg bg-white/90 border-slate-300 text-slate-800 placeholder-slate-500 focus:bg-white focus:border-orange-400 focus:ring-orange-400"
-                    />
-                    
 
-            </div>
-            
-                  {/* Enhanced Quick Filters */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <CountryToggle
-                  value={selectedCountry}
-                  onChange={setSelectedCountry}
-                />
-                    
-
-                    
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Main Content Area - Redesigned Featured Properties */}
-            <div className="space-y-8">
-              {/* Enhanced Featured Properties Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                {/* Header with Filter Bar */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 px-4 sm:px-0">
-                  <div className="mb-4 lg:mb-0">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Featured Properties</h2>
-                    <p className="text-slate-600 text-sm sm:text-base">Discover premium properties with flexible payment options</p>
-                  </div>
-                  
-                  {/* Filter Bar */}
-                  <div className="flex flex-wrap gap-2 items-center">
-              <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs px-3 py-1.5 border-slate-200 hover:border-blue-300 hover:bg-blue-50"
-                    >
-                      Featured
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs px-3 py-1.5 border-slate-200 hover:border-blue-300 hover:bg-blue-50"
-                    >
-                      Latest
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs px-3 py-1.5 border-slate-200 hover:border-blue-300 hover:bg-blue-50"
-                    >
-                      Price: Low-High
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs px-3 py-1.5 border-slate-200 hover:border-blue-300 hover:bg-blue-50"
-                    >
-                      Price: High-Low
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Enhanced Property Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 sm:px-0">
-                  {isDataLoading ? (
-                    // Enhanced skeleton loading
-                    Array.from({ length: 6 }).map((_, index) => (
-                      <EnhancedPropertyCardSkeleton key={`skeleton-${index}`} index={index} />
-                    ))
-                  ) : (
-                    featuredProperties.slice(0, 6).map((property, index) => (
-                      <EnhancedPropertyCard
-                        key={`property-${property.id}`}
-                        property={property}
-                        index={index}
-                        onPropertySelect={handlePropertySelect}
-                        user={user}
-                      />
-                    ))
-                  )}
-                </div>
-                
-                {/* View All Button */}
-                <div className="text-center mt-8">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
-                    onClick={() => {
-                      // Navigate to listings page
-                      router.push('/listings');
-                      // Track analytics
-                      trackEvent('view_all_properties_clicked', {
-                        source: 'featured_properties',
-                        event_category: 'navigation'
-                      });
-                    }}
-                  >
-                    View All {totalPropertiesCount} Properties
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-              </div>
-                  </motion.div>
-            </div>
 
             {/* Want to Sell Your House? CTA - Show to all users with smart routing */}
             <motion.div 
@@ -1374,8 +1265,95 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         </div>
       </div>
 
+      {/* Property Search Bar - Overlapping Section */}
+      <motion.div
+        className="relative z-20 max-w-4xl mx-auto px-4 -mt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.5 }}
+      >
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 border border-white/30 shadow-2xl">
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            {/* Location Filter */}
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium text-slate-700 flex items-center">
+                <MapPin className="w-4 h-4 mr-1" />
+                Location
+              </label>
+              <Select value={searchFilters.location || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, location: value === 'all' ? undefined : value }))}>
+                <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200">
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="harare">Harare</SelectItem>
+                  <SelectItem value="bulawayo">Bulawayo</SelectItem>
+                  <SelectItem value="victoria-falls">Victoria Falls</SelectItem>
+                  <SelectItem value="mutare">Mutare</SelectItem>
+                  <SelectItem value="gweru">Gweru</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Property Type Filter */}
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium text-slate-700 flex items-center">
+                <Home className="w-4 h-4 mr-1" />
+                Property Type
+              </label>
+              <Select value={searchFilters.propertyType || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, propertyType: value === 'all' ? undefined : value }))}>
+                <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="house">House</SelectItem>
+                  <SelectItem value="apartment">Apartment</SelectItem>
+                  <SelectItem value="townhouse">Townhouse</SelectItem>
+                  <SelectItem value="land">Land</SelectItem>
+                  <SelectItem value="commercial">Commercial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price Range Filter */}
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium text-slate-700 flex items-center">
+                <DollarSign className="w-4 h-4 mr-1" />
+                Price Range
+              </label>
+              <Select value={searchFilters.priceRange || 'any'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, priceRange: value === 'any' ? undefined : value }))}>
+                <SelectTrigger className="bg-white border-slate-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200">
+                  <SelectValue placeholder="Any Price" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 shadow-lg">
+                  <SelectItem value="any">Any Price</SelectItem>
+                  <SelectItem value="0-50000">Under $50,000</SelectItem>
+                  <SelectItem value="50000-100000">$50,000 - $100,000</SelectItem>
+                  <SelectItem value="100000-200000">$100,000 - $200,000</SelectItem>
+                  <SelectItem value="200000-500000">$200,000 - $500,000</SelectItem>
+                  <SelectItem value="500000+">$500,000+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search Button */}
+            <div className="flex-1 sm:flex-none">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-[#7f1518] hover:bg-[#6a1215] text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                onClick={handleSearch}
+              >
+                <Search className="w-5 h-5 mr-2" />
+                Search Properties
+              </Button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 bg-gradient-to-br from-slate-100 to-slate-50">
+      <div className="max-w-7xl mx-auto px-6 pt-20 pb-8 bg-gradient-to-br from-slate-100 to-slate-50">
         {/* Error State */}
         {error && (
           <motion.div
