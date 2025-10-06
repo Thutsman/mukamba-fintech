@@ -65,13 +65,37 @@ export const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
   const handlePhoneSubmit = async (data: PhoneFormData) => {
     setIsLoading(true);
     try {
-      // Simulate API call to send OTP
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Generate a 6-digit OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Send SMS via our API
+      const response = await fetch('/api/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: data.phone,
+          otpCode: otpCode,
+          message: `Mukamba: Your verification code is ${otpCode}. It expires in 10 minutes.`
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to send verification code');
+      }
+      
+      console.log('OTP sent successfully:', result);
       setPhoneNumber(data.phone);
       setStep('otp');
       setTimeLeft(60); // 60 seconds countdown
-    } catch (error) {
+      
+      // Store OTP in sessionStorage for verification
+      sessionStorage.setItem('verification_otp', otpCode);
+      sessionStorage.setItem('verification_phone', data.phone);
+    } catch (error: any) {
       console.error('Failed to send OTP:', error);
+      phoneForm.setError('phone', { message: error.message || 'Failed to send verification code. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -80,16 +104,33 @@ export const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
   const handleOTPSubmit = async (data: OTPFormData) => {
     setIsLoading(true);
     try {
-      // Simulate API call to verify OTP
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get stored OTP from sessionStorage
+      const storedOTP = sessionStorage.getItem('verification_otp');
+      const storedPhone = sessionStorage.getItem('verification_phone');
+      
+      if (!storedOTP || !storedPhone) {
+        throw new Error('Verification session expired. Please request a new code.');
+      }
+      
+      // Verify OTP
+      if (data.otp !== storedOTP) {
+        throw new Error('Invalid verification code');
+      }
+      
+      console.log('OTP verified successfully');
       setStep('success');
+      
+      // Clear stored data
+      sessionStorage.removeItem('verification_otp');
+      sessionStorage.removeItem('verification_phone');
+      
       setTimeout(() => {
         onComplete();
         handleClose();
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to verify OTP:', error);
-      otpForm.setError('otp', { message: 'Invalid OTP. Please try again.' });
+      otpForm.setError('otp', { message: error.message || 'Invalid OTP. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -100,10 +141,34 @@ export const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
     
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Generate a new 6-digit OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Send SMS via our API
+      const response = await fetch('/api/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber,
+          otpCode: otpCode,
+          message: `Mukamba: Your verification code is ${otpCode}. It expires in 10 minutes.`
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to resend verification code');
+      }
+      
+      console.log('OTP resent successfully:', result);
+      
+      // Update stored OTP
+      sessionStorage.setItem('verification_otp', otpCode);
       setTimeLeft(60);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to resend OTP:', error);
+      // You could show an error message to the user here
     } finally {
       setIsLoading(false);
     }
