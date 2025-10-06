@@ -27,12 +27,20 @@ const env = {
 
 async function sendViaTextbelt(to: string, body: string): Promise<SendResult> {
   try {
+    console.log('Textbelt: Sending SMS to', to, 'with key:', env.textbeltKey || 'textbelt');
+    const payload = { phone: to, message: body, key: env.textbeltKey || 'textbelt' };
+    console.log('Textbelt payload:', payload);
+    
     const res = await fetch('https://textbelt.com/text', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: to, message: body, key: env.textbeltKey || 'textbelt' })
+      body: JSON.stringify(payload)
     });
+    
+    console.log('Textbelt response status:', res.status);
     const data = await res.json();
+    console.log('Textbelt response data:', data);
+    
     return {
       success: !!data.success,
       messageId: data?.quotaRemaining ? `textbelt-${Date.now()}` : undefined,
@@ -40,6 +48,7 @@ async function sendViaTextbelt(to: string, body: string): Promise<SendResult> {
       provider: 'textbelt'
     };
   } catch (error: any) {
+    console.error('Textbelt error:', error);
     return { success: false, error: error.message, provider: 'textbelt' };
   }
 }
