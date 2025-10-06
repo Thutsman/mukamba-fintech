@@ -806,7 +806,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               >
                 Your Path to Home Ownership
               <br />
-                <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Begins Here</span>
+                <span className="text-white font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Begins Here</span>
               </h1>
             </div>
             
@@ -814,7 +814,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             {/* Subheadline */}
             <div className="text-center px-4 mb-4 max-w-5xl mx-auto">
               <p className="text-2xl sm:text-3xl lg:text-4xl text-white font-light leading-relaxed tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                Bringing the Zimbabwe Real Estate to your fingertips. <span className="font-semibold text-orange-300">Redefining Property ownership for Zimbabweans at home and in the Diaspora</span>
+                Bringing the Zimbabwe Real Estate to your fingertips
               </p>
             </div>
             
@@ -881,125 +881,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             
 
 
-            {/* Want to Sell Your House? CTA - Show to all users with smart routing */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Card className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200 hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-8 text-center">
-                  <div className="max-w-2xl mx-auto">
-                    <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Home className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-800 mb-4">
-                      Want to Sell Your House?
-                </h3>
-                    <p className="text-slate-600 mb-6 text-lg">
-                      List your property on Mukamba and reach thousands of qualified buyers. 
-                      Get competitive offers and close deals faster with our installment platform.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <Button 
-                        className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-3 text-lg"
-                        size="lg"
-                                                     onClick={() => {
-                             // Track analytics
-                             trackEvent('sell_house_cta_clicked', {
-                               source: 'property_dashboard',
-                               event_category: 'conversion',
-                               user_status: user ? 'authenticated' : 'guest'
-                             });
-                             
-                             // Smart routing based on authentication
-                             if (user) {
-                               // Authenticated user: Open seller onboarding
-                               setShowSellerModal(true);
-                             } else {
-                               // Guest user: Open signup modal with seller intent
-                               setSellerIntent(true);
-                               setShowSignupModal(true);
-                             }
-                           }}
-                        >
-                          <Home className="w-5 h-5 mr-2" />
-                          List Your Property
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      <Button 
-                        variant="outline"
-                        className="border-red-300 text-red-700 hover:bg-red-50 px-8 py-3 text-lg"
-                        size="lg"
-                        onClick={() => {
-                          trackEvent('learn_more_selling_clicked', {
-                            source: 'property_dashboard',
-                            event_category: 'engagement'
-                          });
-                          // TODO: Show selling benefits modal or navigate to info page
-                          console.log('Learn More About Selling clicked');
-                        }}
-                      >
-                        Learn More
-                      </Button>
-              </div>
-                    <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-slate-500">
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                        No listing fees
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                        Pre-qualified buyers
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                        Fast closing process
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
 
-            {/* Popular Cities */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MapPin className="w-5 h-5 mr-2" />
-                    Popular Cities
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {popularCities.map((city, index) => (
-                      <motion.div
-                        key={city.city}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ scale: 1.05 }}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          setActiveTab('listings');
-                          // Pass city filter to listings
-                        }}
-                      >
-                        <div className="p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                          <h3 className="font-semibold text-slate-800">{city.city}</h3>
-                          <p className="text-sm text-slate-600">{city.listingCount} properties</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
 
             {/* Trust & Social Proof Section */}
             <motion.div
@@ -1008,149 +890,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               transition={{ delay: 0.5 }}
               className="space-y-8"
             >
-              {/* Customer Testimonials */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-slate-900">What Our Customers Say</h2>
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          TD
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-slate-800">Thulani Dube</h4>
-                            <Badge className="bg-green-100 text-green-700 text-xs">
-                              <Star className="w-3 h-3 mr-1 fill-current" />
-                              Verified
-                          </Badge>
-                          </div>
-                          <p className="text-slate-600 text-sm mb-2">
-                            "Mukamba made my installment journey seamless. The verification process was quick and the support team was incredibly helpful."
-                          </p>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          SM
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-slate-800">Sarah Moyo</h4>
-                            <Badge className="bg-green-100 text-green-700 text-xs">
-                              <Star className="w-3 h-3 mr-1 fill-current" />
-                              Verified
-                            </Badge>
-                          </div>
-                          <p className="text-slate-600 text-sm mb-2">
-                            "Found my dream home through Mukamba's installment program. The process was transparent and the financial calculations were spot on."
-                          </p>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Why Choose Mukamba */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-slate-900">Why Choose Mukamba</h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Shield className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800 mb-1">Bank-Level Security</h4>
-                        <p className="text-sm text-slate-600">Your data is protected with enterprise-grade encryption and secure protocols.</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800 mb-1">Document Verification</h4>
-                        <p className="text-sm text-slate-600">All properties and sellers are thoroughly verified to ensure authenticity.</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Scale className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-slate-800 mb-1">Legal Compliance</h4>
-                        <p className="text-sm text-slate-600">Full compliance with Zimbabwe and South Africa real estate regulations.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Process Timeline & Success Metrics */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Process Timeline */}
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6">How It Works</h3>
-                  <div className="space-y-4">
-                    {[
-                      { step: 1, title: "Sign Up", description: "Create your account in minutes" },
-                      { step: 2, title: "Verify", description: "Complete KYC verification" },
-                      { step: 3, title: "Browse", description: "Explore verified properties" },
-                      { step: 4, title: "Apply", description: "Submit your application" },
-                      { step: 5, title: "Move In", description: "Start your installment journey" }
-                    ].map((item, index) => (
-                      <div key={item.step} className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                          {item.step}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-slate-800">{item.title}</h4>
-                          <p className="text-sm text-slate-600">{item.description}</p>
-                        </div>
-                        {index < 4 && (
-                          <div className="w-px h-8 bg-slate-200 mx-4"></div>
-                        )}
-                      </div>
-                    ))}
-                        </div>
-                      </div>
-                      
-                {/* Success Metrics */}
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6">Success Metrics</h3>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-600 mb-2">95%</div>
-                      <div className="text-sm text-slate-600">Approval Rate</div>
-                           </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-600 mb-2">30 Days</div>
-                      <div className="text-sm text-slate-600">Average Process Time</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-600 mb-2">2,000+</div>
-                      <div className="text-sm text-slate-600">Happy Families</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
+            </motion.div>
 
             {/* Quick Actions */}
             <motion.div
@@ -1267,7 +1008,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
       {/* Property Search Bar - Overlapping Section */}
       <motion.div
-        className="relative z-20 max-w-4xl mx-auto px-4 -mt-1"
+        className="relative z-20 max-w-4xl mx-auto px-4 -mt-24"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
@@ -1353,7 +1094,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       </motion.div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 pt-20 pb-8 bg-gradient-to-br from-slate-100 to-slate-50">
+      <div className="max-w-7xl mx-auto px-6 pt-2 pb-8 bg-gradient-to-br from-slate-100 to-slate-50">
         {/* Error State */}
         {error && (
           <motion.div
@@ -1722,102 +1463,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 </div>
               </motion.div>
 
-              {/* What Our Users Say Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="bg-white py-16 px-4 sm:px-6 lg:px-8"
-              >
-                <div className="max-w-7xl mx-auto">
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    viewport={{ once: true }}
-                    className="text-center mb-16"
-                  >
-                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-                      What Our Users Say
-                    </h2>
-                    <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto">
-                      Hear from people who have successfully found their path to homeownership with Mukamba FinTech.
-                    </p>
-                  </motion.div>
-
-                  <motion.div
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      visible: {
-                        opacity: 1,
-                        transition: {
-                          staggerChildren: 0.2
-                        }
-                      }
-                    }}
-                  >
-                    {[
-                      {
-                        quote: "After years of renting, I never thought I'd be able to own a home. Mukamba's flexible installment plans made it possible, and now I'm building equity with every payment.",
-                        author: "Tendai Moyo",
-                        location: "Harare",
-                        initials: "TM",
-                        avatarColor: "from-blue-500 to-blue-600"
-                      },
-                      {
-                        quote: "As a property owner, Mukamba has simplified the entire process. The payment tracking is seamless, and I love having tenants who are invested in taking care of the property.",
-                        author: "Bongani Dube",
-                        location: "Bulawayo",
-                        initials: "BD",
-                        avatarColor: "from-green-500 to-green-600"
-                      },
-                      {
-                        quote: "Living abroad, I was worried about investing in property back home. Mukamba's platform gives me complete transparency and security. I can track my investment in real-time.",
-                        author: "Munyaradzi Obert",
-                        location: "Diaspora - London",
-                        initials: "MO",
-                        avatarColor: "from-purple-500 to-purple-600"
-                      }
-                    ].map((testimonial, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: index * 0.2 }}
-                        viewport={{ once: true }}
-                        className="bg-white rounded-xl p-8 shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
-                      >
-                        <div className="flex flex-col items-center text-center">
-                          {/* Avatar */}
-                          <div className={`w-16 h-16 bg-gradient-to-br ${testimonial.avatarColor} rounded-full flex items-center justify-center text-white font-bold text-lg mb-6 shadow-lg`}>
-                            {testimonial.initials}
-                          </div>
-                          
-                          {/* Quote */}
-                          <div className="mb-6">
-                            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                              <span className="text-xl text-slate-400">"</span>
-                            </div>
-                            <p className="text-slate-700 text-base leading-relaxed font-medium">
-                              {testimonial.quote}
-                            </p>
-                          </div>
-                          
-                          {/* Author Info */}
-                          <div className="border-t border-slate-200 pt-6 w-full">
-                            <h4 className="font-bold text-slate-800 text-lg mb-1">{testimonial.author}</h4>
-                            <p className="text-slate-500 text-sm">{testimonial.location}</p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-              </motion.div>
 
       </div>
 

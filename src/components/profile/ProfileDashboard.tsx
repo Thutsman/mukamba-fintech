@@ -492,12 +492,6 @@ const GuidedTour: React.FC<{
       title: 'Available Features',
       content: 'See what you can do right now and what requires additional verification.',
       position: 'top' as const
-    },
-    {
-      target: 'role-selection',
-      title: 'Choose Your Path',
-      content: 'Select whether you want to buy/rent or sell/rent out properties to see relevant verification steps.',
-      position: 'top' as const
     }
   ];
 
@@ -602,7 +596,7 @@ const SmartRecommendations: React.FC<{
 
   const getBadgeColor = (badge: string) => {
     switch (badge) {
-      case 'Recommended for you': return 'bg-blue-500 text-white';
+      case 'Recommended for you': return 'bg-[#7F1518] text-white';
       case 'Unlocked': return 'bg-green-500 text-white';
       case 'Coming Soon': return 'bg-slate-500 text-white';
       default: return 'bg-blue-100 text-blue-700';
@@ -615,13 +609,13 @@ const SmartRecommendations: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center text-blue-700">
-            <Target className="w-5 h-5 mr-2" />
+      <Card className="bg-[#231F20] border-slate-600 text-white">
+        <CardHeader className="border-b border-slate-600">
+          <CardTitle className="flex items-center text-white">
+            <Target className="w-5 h-5 mr-2 text-white" />
             Smart Recommendations
             <Tooltip content="AI-powered suggestions based on your profile and goals">
-              <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+              <Info className="w-4 h-4 ml-2 text-slate-400 cursor-help" />
             </Tooltip>
           </CardTitle>
         </CardHeader>
@@ -634,7 +628,7 @@ const SmartRecommendations: React.FC<{
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.02, y: -2 }}
-                className="p-6 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg cursor-pointer transition-all duration-300"
+                className="p-6 rounded-xl border-2 border-slate-600 bg-[#231F20] shadow-lg cursor-pointer transition-all duration-300 text-white"
                 onClick={() => onActionClick(primaryRecommendation.id)}
               >
                 <div className="flex items-start justify-between">
@@ -644,19 +638,19 @@ const SmartRecommendations: React.FC<{
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-bold text-lg text-blue-900">{primaryRecommendation.title}</h4>
+                        <h4 className="font-bold text-lg text-white">{primaryRecommendation.title}</h4>
                         {primaryRecommendation.badge && (
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getBadgeColor(primaryRecommendation.badge)}`}>
                             {primaryRecommendation.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-blue-700 mb-3">{primaryRecommendation.description}</p>
+                      <p className="text-white mb-3">{primaryRecommendation.description}</p>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                         <div className="flex items-center space-x-2">
                           <Clock className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm text-blue-700">{primaryRecommendation.timeRequired}</span>
+                          <span className="text-sm text-white">{primaryRecommendation.timeRequired}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(primaryRecommendation.difficulty)}`}>
@@ -665,15 +659,15 @@ const SmartRecommendations: React.FC<{
                         </div>
                         <div className="flex items-center space-x-2">
                           <Unlock className="w-4 h-4 text-green-600" />
-                          <span className="text-sm text-green-700">{primaryRecommendation.whatYoullUnlock}</span>
+                          <span className="text-sm text-white">{primaryRecommendation.whatYoullUnlock}</span>
                         </div>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-blue-600 font-medium">
+                        <p className="text-sm text-white font-medium">
                           ✨ {primaryRecommendation.benefit}
                         </p>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Button className="bg-[#7F1518] hover:bg-[#8B1A1D] text-white">
                           {primaryRecommendation.action}
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
@@ -1014,7 +1008,7 @@ const PersonalizedPropertyRecommendations: React.FC<{
                   <div className="flex space-x-2">
                     <Button 
                       size="sm" 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      className="flex-1 bg-[#7F1518] hover:bg-[#8B1A1D] text-white"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (user) {
@@ -1077,95 +1071,6 @@ const PersonalizedPropertyRecommendations: React.FC<{
   );
 };
 
-// Market Insights Dashboard Component
-const MarketInsightsDashboard: React.FC<{
-  user: UserType;
-}> = ({ user }) => {
-  const [marketData, setMarketData] = React.useState({
-    area: 'Harare',
-    priceRange: '$1,200 - $2,800/month',
-    avgDaysOnMarket: 45,
-    marketGrowth: 18,
-    newListings: 12,
-    priceChange: 5
-  });
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.6 }}
-    >
-      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <CardHeader>
-          <CardTitle className="flex items-center text-slate-700">
-            <BarChart3 className="w-5 h-5 mr-2" />
-            Your Area Market Update
-            <Tooltip content="Real-time market insights for your area">
-              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm text-blue-900">Price Range</h4>
-                    <p className="text-lg font-bold text-blue-600">{marketData.priceRange}</p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-blue-500" />
-                </div>
-              </div>
-              
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm text-green-900">Market Growth</h4>
-                    <p className="text-lg font-bold text-green-600">+{marketData.marketGrowth}%</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-green-500" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm text-purple-900">Days on Market</h4>
-                    <p className="text-lg font-bold text-purple-600">{marketData.avgDaysOnMarket} days</p>
-                  </div>
-                  <Calendar className="w-8 h-8 text-purple-500" />
-                </div>
-              </div>
-              
-              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm text-orange-900">New Listings</h4>
-                    <p className="text-lg font-bold text-orange-600">{marketData.newListings} today</p>
-                  </div>
-                  <PlusCircle className="w-8 h-8 text-orange-500" />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-            <div className="flex items-center space-x-2">
-              <Lightbulb className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">
-                Investment Tip: Best time to buy - Market showing {marketData.marketGrowth}% growth
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
 
 
 
@@ -1938,10 +1843,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     if (buyerType === 'cash') {
       return {
         title: "Cash Buyer Journey",
-        steps: ["Browse Properties", "Save Favorites", "Contact Sellers"],
+        steps: ["Browse Properties", "Save Favorites", "Contact Admin"],
         highlight: "Complete identity verification to access exclusive properties",
         icon: <DollarSign className="w-5 h-5" />,
-        color: "from-green-500 to-green-600"
+        color: "from-[#7F1518] to-[#7F1518]"
       };
     }
     
@@ -2052,7 +1957,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       case 'basic':
         return {
           title: 'Basic Member',
-          color: 'bg-blue-500',
+          color: 'bg-[#7F1518]',
           progress: visualProgress, // Show actual progress for basic members
           description: 'You can browse and save properties'
         };
@@ -2213,19 +2118,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         }
         setShowSuccess(true);
         break;
-      case 'list-properties':
-        setActiveModal('listing');
-        break;
-      case 'process-applications':
-        setSuccessMessage('Application management coming soon!');
-        setShowSuccess(true);
-        break;
       case 'installment-pre-approval':
         setActiveModal('financial');
-        break;
-      case 'market-insights':
-        setSuccessMessage('Market insights coming soon!');
-        setShowSuccess(true);
         break;
       
       // Smart Recommendations actions
@@ -2289,14 +2183,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             unlocked: user.isIdentityVerified && (buyerType === 'cash' || user.isFinanciallyVerified), 
             comingSoon: user.isIdentityVerified && buyerType === 'installment' && !user.isFinanciallyVerified 
           };
-        case 'list-properties':
-          return { unlocked: user.isIdentityVerified, comingSoon: false };
-        case 'process-applications':
-          return { unlocked: user.isPropertyVerified, comingSoon: false };
         case 'installment-pre-approval':
           return { unlocked: user.isFinanciallyVerified, comingSoon: false };
-        case 'market-insights':
-          return { unlocked: user.isIdentityVerified, comingSoon: false };
         default:
           return { unlocked: false, comingSoon: false };
       }
@@ -2308,14 +2196,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           return 'Phone verification';
         case 'apply-financing':
           return buyerType === 'cash' ? 'Identity verification' : 'Identity & financial verification';
-        case 'list-properties':
-          return 'Identity verification';
-        case 'process-applications':
-          return 'Property verification';
         case 'installment-pre-approval':
           return 'Financial verification';
-        case 'market-insights':
-          return 'Identity verification';
         default:
           return '';
       }
@@ -2342,7 +2224,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       },
       {
         id: 'contact-sellers',
-        title: 'Contact Sellers',
+        title: 'Contact Admin',
         description: 'Message property owners directly',
         icon: <MessageCircle className="w-5 h-5" />,
         action: 'Start Messaging',
@@ -2361,24 +2243,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         color: 'purple'
       },
       {
-        id: 'list-properties',
-        title: 'List Properties',
-        description: 'Sell or rent out your properties',
-        icon: <Building className="w-5 h-5" />,
-        action: 'List Property',
-        stats: 'Reach qualified buyers',
-        color: 'orange'
-      },
-      {
-        id: 'process-applications',
-        title: 'Review Applications',
-        description: 'Review and approve purchase applications',
-        icon: <CheckSquare className="w-5 h-5" />,
-        action: 'View Applications',
-        stats: 'Manage buyer inquiries',
-        color: 'indigo'
-      },
-      {
         id: 'installment-pre-approval',
         title: 'Installment Pre-Approval',
         description: 'Get pre-approved for installment purchase plans',
@@ -2387,15 +2251,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         stats: 'Know your buying power',
         color: 'emerald'
       },
-      {
-        id: 'market-insights',
-        title: 'Market Insights',
-        description: 'Access detailed market analysis and trends',
-        icon: <BarChart3 className="w-5 h-5" />,
-        action: 'View Insights',
-        stats: 'Make informed decisions',
-        color: 'cyan'
-      }
     ];
 
     const getColorClasses = (color: string, state: 'unlocked' | 'locked' | 'coming-soon') => {
@@ -2914,21 +2769,116 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         {/* Progress Gamification */}
         <ProgressGamification user={user} />
 
+        {/* Essential KYC Section */}
+        <motion.div
+          id="essential-kyc"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="w-5 h-5 mr-2" />
+                Complete Your Profile
+                <Tooltip content="These verifications unlock more features and build trust">
+                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
+                </Tooltip>
+              </CardTitle>
+              <p className="text-sm text-slate-600">
+                Complete these essential verifications to unlock more features
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Phone Verification */}
+                <div className={`p-4 rounded-lg border ${
+                  user.is_phone_verified 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-full ${
+                        user.is_phone_verified 
+                          ? 'bg-green-100 text-green-600' 
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <Phone className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Phone Verification</h4>
+                        <p className="text-xs text-slate-600">
+                          {user.is_phone_verified ? 'Verified' : 'Required for messaging and notifications'}
+                        </p>
+                      </div>
+                    </div>
+                    {user.is_phone_verified ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => setActiveModal('phone')}
+                        className="bg-[#7F1518] hover:bg-[#8B1A1D] text-white"
+                      >
+                        Verify Now
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
-
-        {/* Recent Activity Feed */}
-        <RecentActivityFeed user={user} />
+                {/* Identity Verification */}
+                <div className={`p-4 rounded-lg border ${
+                  user.isIdentityVerified 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-full ${
+                        user.isIdentityVerified 
+                          ? 'bg-green-100 text-green-600' 
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <Shield className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Identity Verification</h4>
+                        <p className="text-xs text-slate-600">
+                          {user.isIdentityVerified ? 'Verified' : 'Required for installment purchases and property applications'}
+                        </p>
+                      </div>
+                    </div>
+                    {user.isIdentityVerified ? (
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => setActiveModal('identity')}
+                        className="bg-[#7F1518] hover:bg-[#8B1A1D] text-white"
+                        disabled={!user.is_phone_verified}
+                      >
+                        Verify Now
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Personalized Property Recommendations */}
         <PersonalizedPropertyRecommendations user={user} />
 
-        {/* Market Insights Dashboard */}
-        <MarketInsightsDashboard user={user} />
 
 
 
         {/* Notifications & Alerts Center */}
         <NotificationsCenter user={user} />
+
+        {/* Recent Activity Feed */}
+        <RecentActivityFeed user={user} />
 
       {/* Account Level */}
         <motion.div
@@ -2976,104 +2926,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       {/* Enhanced Capabilities Grid */}
       <CapabilitiesGrid user={user} onFeatureClick={handleRecommendationAction} />
 
-      {/* Essential KYC Section */}
-          <motion.div
-        id="essential-kyc"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardHeader>
-                <CardTitle className="flex items-center">
-              <Shield className="w-5 h-5 mr-2" />
-              Complete Your Profile
-              <Tooltip content="These verifications unlock more features and build trust">
-                    <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                  </Tooltip>
-                </CardTitle>
-            <p className="text-sm text-slate-600">
-              Complete these essential verifications to unlock more features
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Phone Verification */}
-              <div className={`p-4 rounded-lg border ${
-                user.is_phone_verified 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-full ${
-                      user.is_phone_verified 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      <Phone className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">Phone Verification</h4>
-                      <p className="text-xs text-slate-600">
-                        {user.is_phone_verified ? 'Verified' : 'Required for messaging and notifications'}
-                      </p>
-                    </div>
-                  </div>
-                  {user.is_phone_verified ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-              <Button
-                      size="sm"
-                      onClick={() => setActiveModal('phone')}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Verify Now
-              </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Identity Verification */}
-              <div className={`p-4 rounded-lg border ${
-                user.isIdentityVerified 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-full ${
-                      user.isIdentityVerified 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">Identity Verification</h4>
-                      <p className="text-xs text-slate-600">
-                        {user.isIdentityVerified ? 'Verified' : 'Required for installment purchases and property applications'}
-                      </p>
-                    </div>
-                  </div>
-                  {user.isIdentityVerified ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-              <Button
-                      size="sm"
-                      onClick={() => setActiveModal('identity')}
-                      className="bg-red-600 hover:bg-red-700"
-                      disabled={!user.is_phone_verified}
-                    >
-                      Verify Now
-              </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-          </motion.div>
 
       {/* Additional Features Section */}
       {user.is_phone_verified && user.isIdentityVerified && (
