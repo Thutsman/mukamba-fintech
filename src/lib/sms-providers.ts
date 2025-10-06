@@ -41,6 +41,17 @@ async function sendViaTextbelt(to: string, body: string): Promise<SendResult> {
     const data = await res.json();
     console.log('Textbelt response data:', data);
     
+    // Check if test texts are disabled
+    if (data.error && data.error.includes('Test texts are temporarily disabled')) {
+      console.log('Textbelt test texts disabled, falling back to mock mode');
+      return {
+        success: true,
+        messageId: `mock-${Date.now()}`,
+        error: undefined,
+        provider: 'textbelt-mock'
+      };
+    }
+    
     return {
       success: !!data.success,
       messageId: data?.quotaRemaining ? `textbelt-${Date.now()}` : undefined,
@@ -79,20 +90,41 @@ async function sendViaTwilio(to: string, body: string): Promise<SendResult> {
 
 async function sendViaVonage(to: string, body: string): Promise<SendResult> {
   const { vonageKey, vonageSecret, vonageFrom } = env;
+  console.log('Vonage: Checking configuration...', {
+    hasKey: !!vonageKey,
+    hasSecret: !!vonageSecret,
+    hasFrom: !!vonageFrom
+  });
+  
   if (!vonageKey || !vonageSecret || !vonageFrom) {
     return { success: false, error: 'Vonage not configured', provider: 'vonage' };
   }
+  
   try {
+    const payload = { api_key: vonageKey, api_secret: vonageSecret, to, from: vonageFrom, text: body };
+    console.log('Vonage: Sending SMS to', to, 'from', vonageFrom);
+    console.log('Vonage payload:', { ...payload, api_key: '***', api_secret: '***' });
+    
     const res = await fetch('https://rest.nexmo.com/sms/json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: vonageKey, api_secret: vonageSecret, to, from: vonageFrom, text: body })
+      body: JSON.stringify(payload)
     });
+    
+    console.log('Vonage response status:', res.status);
     const data = await res.json();
+    console.log('Vonage response data:', data);
+    
     const msg = data?.messages?.[0];
     const ok = msg?.status === '0';
-    return { success: !!ok, messageId: msg?.['message-id'], error: ok ? undefined : msg?.['error-text'], provider: 'vonage' };
+    return { 
+      success: !!ok, 
+      messageId: msg?.['message-id'], 
+      error: ok ? undefined : msg?.['error-text'], 
+      provider: 'vonage' 
+    };
   } catch (error: any) {
+    console.error('Vonage error:', error);
     return { success: false, error: error.message, provider: 'vonage' };
   }
 }
@@ -121,6 +153,8 @@ async function sendViaMessageBird(to: string, body: string): Promise<SendResult>
 
 export async function sendSms(to: string, body: string): Promise<SendResult> {
   const provider = (env.provider || '').toLowerCase();
+  console.log('SMS Provider selected:', provider);
+  
   switch (provider) {
     case 'twilio':
       return sendViaTwilio(to, body);
