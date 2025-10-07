@@ -114,18 +114,42 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const [userOffer, setUserOffer] = React.useState<any>(null);
   const [isLoadingOffers, setIsLoadingOffers] = React.useState(false);
 
-  // Load offers for this property
+  // Load offers for this property (pending + approved for public summary)
   React.useEffect(() => {
     const loadOffers = async () => {
       if (!user) return;
       
       setIsLoadingOffers(true);
       try {
-        const offers = await getPropertyOffers({ property_id: property.id });
-        setPropertyOffers(offers);
+        // Prefer server API that hides identities
+        try {
+          const res = await fetch(`/api/properties/${property.id}/offers/summary`, { cache: 'no-store' });
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.success) {
+              // Map to expected lightweight shape when using API
+              const minimal = (json.offers || []).map((o: any) => ({
+                id: `${property.id}-${o.submitted_at}-${o.offer_price}`,
+                property_id: property.id,
+                buyer_id: 'anonymous',
+                offer_price: o.offer_price,
+                payment_method: o.payment_method,
+                status: o.status,
+                submitted_at: o.submitted_at
+              }));
+              setPropertyOffers(minimal);
+            }
+          }
+        } catch (_) {
+          // Fallback to client supabase fetch with identities, filtered by property
+          const offers = await getPropertyOffers({ property_id: property.id });
+          setPropertyOffers(offers);
+        }
         
         // Get ALL user's offers for this property
-        const allUserOffers = offers.filter(offer => offer.buyer_id === user.id);
+        const source = (prev => prev)([] as any); // noop to satisfy type narrow
+        const list = (Array.isArray(source) && source.length) ? source : (await getPropertyOffers({ property_id: property.id }));
+        const allUserOffers = (list || []).filter((offer: any) => offer.buyer_id === user.id);
         setUserOffers(allUserOffers);
         
         // Set the most recent offer as the current user offer
@@ -1269,10 +1293,11 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                     <h4 className="font-medium text-gray-900">Recent Offers</h4>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {propertyOffers
+                        .filter(offer => offer.status === 'pending' || offer.status === 'approved')
                         .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
                         .slice(0, 5)
                         .map((offer, index) => {
-                          const isUserOffer = user && offer.buyer_id === user.id;
+                          const isUserOffer = user && offer.buyer_id && offer.buyer_id === user.id;
                           const submittedDate = new Date(offer.submitted_at);
                           const timeAgo = getTimeAgo(submittedDate);
                           
