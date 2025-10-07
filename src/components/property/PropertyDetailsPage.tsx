@@ -725,9 +725,18 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(property.financials.price)}
+                    {(property as LocalPropertyWithStatus).status === 'sold' 
+                      ? (property.financials.finalSalePrice ? formatCurrency(property.financials.finalSalePrice) : formatCurrency(property.financials.price))
+                      : formatCurrency(property.financials.price)
+                    }
                   </CardTitle>
                   <div className="flex items-center space-x-2">
+                    {(property as LocalPropertyWithStatus).status === 'sold' && (
+                      <Badge className="bg-green-500 text-white">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Sold
+                      </Badge>
+                    )}
                     {property.seller.isVerified && (
                       <Badge className="bg-blue-500 text-white">
                         <Shield className="w-3 h-3 mr-1" />
@@ -1048,22 +1057,45 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
             {/* Offer History - Show if user has multiple offers */}
             <OfferHistory />
 
-            {/* Property Actions */}
-            <PropertyActions
-              property={property}
-              user={user}
-              onContactSeller={handleContactSeller}
-              onScheduleViewing={handleScheduleViewing}
-              onMakeOffer={handleMakeOffer}
-              onAddToFavorites={handleAddToFavorites}
-              onSignUpPrompt={onSignUpPrompt || (() => {})}
-              onPhoneVerification={handlePhoneVerification}
-              isFavorite={isFavorite}
-              hasUserOffer={hasUserOffer()}
-              canMakeOffer={canMakeOffer()}
-              userOfferStatus={userOffer?.status}
-              showScheduleViewing={false}
-            />
+            {/* Property Actions - Hide if sold */}
+            {(property as LocalPropertyWithStatus).status !== 'sold' && (
+              <PropertyActions
+                property={property}
+                user={user}
+                onContactSeller={handleContactSeller}
+                onScheduleViewing={handleScheduleViewing}
+                onMakeOffer={handleMakeOffer}
+                onAddToFavorites={handleAddToFavorites}
+                onSignUpPrompt={onSignUpPrompt || (() => {})}
+                onPhoneVerification={handlePhoneVerification}
+                isFavorite={isFavorite}
+                hasUserOffer={hasUserOffer()}
+                canMakeOffer={canMakeOffer()}
+                userOfferStatus={userOffer?.status}
+                showScheduleViewing={false}
+              />
+            )}
+
+            {/* Sold Property Message */}
+            {(property as LocalPropertyWithStatus).status === 'sold' && (
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="p-6 text-center">
+                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">Property Sold</h3>
+                  <p className="text-green-700 mb-4">
+                    This property has been successfully sold. Thank you for your interest!
+                  </p>
+                  <div className="bg-white rounded-lg p-4 border border-green-200">
+                    <div className="text-sm text-green-800">
+                      <div className="font-semibold mb-1">Final Sale Price</div>
+                      <div className="text-xl font-bold text-green-900">
+                        {property.financials.finalSalePrice ? formatCurrency(property.financials.finalSalePrice) : formatCurrency(property.financials.price)}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Property Stats */}
             <Card>
@@ -1071,7 +1103,51 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                 <CardTitle className="text-lg">Property Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {property.listingType === 'installment' ? (
+                {/* Show sold status and sale price if property is sold */}
+                {(property as LocalPropertyWithStatus).status === 'sold' ? (
+                  <>
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
+                      <div className="flex items-center mb-2">
+                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                        <span className="font-semibold text-green-900">Property Sold</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-green-700">Final Sale Price</span>
+                          <span className="font-bold text-green-900 text-lg">
+                            {property.financials.finalSalePrice ? formatCurrency(property.financials.finalSalePrice) : formatCurrency(property.financials.price)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-green-700">Currency</span>
+                          <span className="font-semibold text-green-900">{property.financials.currency}</span>
+                        </div>
+                        {property.financials.saleDate && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-green-700">Sale Date</span>
+                            <span className="font-semibold text-green-900">
+                              {new Date(property.financials.saleDate).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Original listing price for comparison */}
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Original Listing Price</span>
+                        <span className="font-medium text-gray-800 line-through">
+                          {formatCurrency(property.financials.price)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : property.listingType === 'installment' ? (
                   <>
                     {/* Installment Listing Stats */}
                     <div className="flex items-center justify-between">
