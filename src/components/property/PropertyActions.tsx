@@ -6,7 +6,6 @@ import {
   Phone, 
   Calendar, 
   DollarSign, 
-  Heart, 
   MessageCircle,
   Clock,
   Shield,
@@ -14,7 +13,6 @@ import {
   AlertCircle,
   Star,
   Bookmark,
-  Eye,
   Sparkles
 } from 'lucide-react';
 
@@ -29,10 +27,8 @@ interface PropertyActionsProps {
   onContactSeller: () => void;
   onScheduleViewing: () => void;
   onMakeOffer: () => void;
-  onAddToFavorites: () => void;
   onSignUpPrompt: () => void;
   onPhoneVerification: () => void;
-  isFavorite: boolean;
   hasUserOffer?: boolean;
   canMakeOffer?: boolean;
   userOfferStatus?: string;
@@ -45,10 +41,8 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
   onContactSeller,
   onScheduleViewing,
   onMakeOffer,
-  onAddToFavorites,
   onSignUpPrompt,
   onPhoneVerification,
-  isFavorite,
   hasUserOffer = false,
   canMakeOffer = true,
   userOfferStatus,
@@ -170,54 +164,6 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
         </motion.div>
       )}
 
-      {/* Secondary Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Add to Favorites */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Button
-            onClick={user ? onAddToFavorites : onSignUpPrompt}
-            variant="outline"
-            className={`h-12 px-4 font-medium transition-all duration-200 ${
-              isFavorite 
-                ? 'border-2 border-red-500 text-red-500 hover:bg-red-50 hover:border-red-600 hover:text-red-600 shadow-md' 
-                : 'border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-700 shadow-sm'
-            }`}
-          >
-            <Heart className={`w-4 h-4 mr-2 ${isFavorite ? 'fill-red-500' : ''}`} />
-            <span className="text-sm">{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
-          </Button>
-        </motion.div>
-
-
-        {/* Share */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Button
-            variant="outline"
-            className="h-12 px-4 font-medium border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-700 transition-all duration-200 shadow-sm"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: property.title,
-                  text: `Check out this property: ${property.title}`,
-                  url: window.location.href
-                });
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-                // You could add a toast notification here
-              }
-            }}
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            <span className="text-sm">Share</span>
-          </Button>
-        </motion.div>
-      </div>
 
       {/* Access Level Indicator */}
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">

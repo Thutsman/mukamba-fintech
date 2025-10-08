@@ -32,6 +32,8 @@ export interface PropertyFinancials {
   monthlyInstallment?: number;
   paymentDuration?: number;
   rentCreditPercentage?: number;
+  finalSalePrice?: number;
+  saleDate?: string;
 }
 
 export interface PropertyMedia {

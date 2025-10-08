@@ -62,7 +62,6 @@ import { useRouter } from 'next/navigation';
 import { PropertyGallery } from './PropertyGallery';
 import LocationMap from './LocationMap';
 import PropertyDocuments from './PropertyDocuments';
-import { SimilarProperties } from './SimilarProperties';
 import { PropertyActions } from './PropertyActions';
 import { ExpressInterestModal } from './ExpressInterestModal';
 import { MakeOfferModal } from './MakeOfferModal';
@@ -115,53 +114,80 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const [isLoadingOffers, setIsLoadingOffers] = React.useState(false);
 
   // Load offers for this property (pending + approved for public summary)
-  React.useEffect(() => {
-    const loadOffers = async () => {
-      if (!user) return;
-      
-      setIsLoadingOffers(true);
+  const loadOffers = async () => {
+    console.log('PropertyDetailsPage: Loading offers for property:', property.id);
+    setIsLoadingOffers(true);
+    try {
+      // Always fetch public offers summary for bidding activity display
       try {
-        // Prefer server API that hides identities
-        try {
-          const res = await fetch(`/api/properties/${property.id}/offers/summary`, { cache: 'no-store' });
-          if (res.ok) {
-            const json = await res.json();
-            if (json?.success) {
-              // Map to expected lightweight shape when using API
-              const minimal = (json.offers || []).map((o: any) => ({
-                id: `${property.id}-${o.submitted_at}-${o.offer_price}`,
-                property_id: property.id,
-                buyer_id: 'anonymous',
-                offer_price: o.offer_price,
-                payment_method: o.payment_method,
-                status: o.status,
-                submitted_at: o.submitted_at
-              }));
-              setPropertyOffers(minimal);
-            }
+        const apiUrl = `/api/properties/${property.id}/offers/summary`;
+        console.log('PropertyDetailsPage: Fetching from API:', apiUrl);
+        
+        const res = await fetch(apiUrl, { cache: 'no-store' });
+        console.log('PropertyDetailsPage: API response status:', res.status);
+        
+        if (res.ok) {
+          const json = await res.json();
+          console.log('PropertyDetailsPage: API response data:', json);
+          
+          if (json?.success) {
+            // Map to expected lightweight shape when using API
+            const minimal = (json.offers || []).map((o: any) => ({
+              id: `${property.id}-${o.submitted_at}-${o.offer_price}`,
+              property_id: property.id,
+              buyer_id: 'anonymous',
+              offer_price: o.offer_price,
+              payment_method: o.payment_method,
+              status: o.status,
+              submitted_at: o.submitted_at
+            }));
+            console.log('PropertyDetailsPage: Mapped offers:', minimal);
+            setPropertyOffers(minimal);
+          } else {
+            console.log('PropertyDetailsPage: API returned success: false');
+            setPropertyOffers([]);
           }
-        } catch (_) {
-          // Fallback to client supabase fetch with identities, filtered by property
-          const offers = await getPropertyOffers({ property_id: property.id });
-          setPropertyOffers(offers);
+        } else {
+          console.log('PropertyDetailsPage: API request failed with status:', res.status);
+          setPropertyOffers([]);
         }
-        
-        // Get ALL user's offers for this property
-        const source = (prev => prev)([] as any); // noop to satisfy type narrow
-        const list = (Array.isArray(source) && source.length) ? source : (await getPropertyOffers({ property_id: property.id }));
-        const allUserOffers = (list || []).filter((offer: any) => offer.buyer_id === user.id);
-        setUserOffers(allUserOffers);
-        
-        // Set the most recent offer as the current user offer
-        const currentUserOffer = allUserOffers.length > 0 ? allUserOffers[0] : null;
-        setUserOffer(currentUserOffer);
       } catch (error) {
-        console.error('Error loading offers:', error);
-      } finally {
-        setIsLoadingOffers(false);
+        console.error('PropertyDetailsPage: Error fetching offers from API:', error);
+        // Fallback to client supabase fetch with identities, filtered by property
+        try {
+          const offers = await getPropertyOffers({ property_id: property.id });
+          console.log('PropertyDetailsPage: Fallback offers:', offers);
+          setPropertyOffers(offers);
+        } catch (fallbackError) {
+          console.error('PropertyDetailsPage: Error fetching offers from client:', fallbackError);
+          setPropertyOffers([]);
+        }
       }
-    };
+      
+      // Get user's offers for this property (only if user is logged in)
+      if (user) {
+        try {
+          const userOffersList = await getPropertyOffers({ property_id: property.id });
+          const allUserOffers = (userOffersList || []).filter((offer: any) => offer.buyer_id === user.id);
+          setUserOffers(allUserOffers);
+          
+          // Set the most recent offer as the current user offer
+          const currentUserOffer = allUserOffers.length > 0 ? allUserOffers[0] : null;
+          setUserOffer(currentUserOffer);
+        } catch (error) {
+          console.error('Error loading user offers:', error);
+          setUserOffers([]);
+          setUserOffer(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading offers:', error);
+    } finally {
+      setIsLoadingOffers(false);
+    }
+  };
 
+  React.useEffect(() => {
     loadOffers();
   }, [property.id, user]);
 
@@ -1101,10 +1127,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                 onContactSeller={handleContactSeller}
                 onScheduleViewing={handleScheduleViewing}
                 onMakeOffer={handleMakeOffer}
-                onAddToFavorites={handleAddToFavorites}
                 onSignUpPrompt={onSignUpPrompt || (() => {})}
                 onPhoneVerification={handlePhoneVerification}
-                isFavorite={isFavorite}
                 hasUserOffer={hasUserOffer()}
                 canMakeOffer={canMakeOffer()}
                 userOfferStatus={userOffer?.status}
@@ -1239,138 +1263,186 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               </CardContent>
             </Card>
 
-            {/* Bidding Activity - Show if property has offers */}
-            {propertyOffers.length > 0 && (
+            {/* Bidding Activity - Show if property has offers or is under offer */}
+            {(propertyOffers.length > 0 || isPropertyUnderOffer() || isLoadingOffers) && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Bidding Activity
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2" />
+                      Bidding Activity
+                      {isLoadingOffers && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={loadOffers}
+                      disabled={isLoadingOffers}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <Clock className="w-4 h-4 mr-1" />
+                      Refresh
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Offer Statistics */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                      <div className="text-sm text-blue-600 font-medium">Total Offers</div>
-                      <div className="text-2xl font-bold text-blue-900">{propertyOffers.length}</div>
+                  {isLoadingOffers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                      <span className="ml-2 text-gray-500">Loading offers...</span>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                      <div className="text-sm text-green-600 font-medium">Highest Offer</div>
-                      <div className="text-xl font-bold text-green-900">
-                        {formatCurrency(Math.max(...propertyOffers.map(offer => offer.offer_price)))}
+                  ) : (
+                    <>
+                      {/* Offer Statistics */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                          <div className="text-sm text-blue-600 font-medium">Total Offers</div>
+                          <div className="text-2xl font-bold text-blue-900">{propertyOffers.length}</div>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                          <div className="text-sm text-green-600 font-medium">Highest Offer</div>
+                          <div className="text-xl font-bold text-green-900">
+                            {propertyOffers.length > 0 ? formatCurrency(Math.max(...propertyOffers.map(offer => offer.offer_price))) : 'No offers yet'}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Price Range */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <h4 className="font-medium text-gray-900 mb-2">Offer Range</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Lowest:</span>
-                        <span className="font-semibold text-red-600">
-                          {formatCurrency(Math.min(...propertyOffers.map(offer => offer.offer_price)))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Highest:</span>
-                        <span className="font-semibold text-green-600">
-                          {formatCurrency(Math.max(...propertyOffers.map(offer => offer.offer_price)))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Average:</span>
-                        <span className="font-semibold text-blue-600">
-                          {formatCurrency(Math.round(propertyOffers.reduce((sum, offer) => sum + offer.offer_price, 0) / propertyOffers.length))}
-                        </span>
+                  {/* Price Range - Only show if there are offers */}
+                  {propertyOffers.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h4 className="font-medium text-gray-900 mb-2">Offer Range</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Lowest:</span>
+                          <span className="font-semibold text-red-600">
+                            {formatCurrency(Math.min(...propertyOffers.map(offer => offer.offer_price)))}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Highest:</span>
+                          <span className="font-semibold text-green-600">
+                            {formatCurrency(Math.max(...propertyOffers.map(offer => offer.offer_price)))}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Average:</span>
+                          <span className="font-semibold text-blue-600">
+                            {formatCurrency(Math.round(propertyOffers.reduce((sum, offer) => sum + offer.offer_price, 0) / propertyOffers.length))}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Recent Activity */}
                   <div className="space-y-3">
                     <h4 className="font-medium text-gray-900">Recent Offers</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {propertyOffers
-                        .filter(offer => offer.status === 'pending' || offer.status === 'approved')
-                        .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
-                        .slice(0, 5)
-                        .map((offer, index) => {
-                          const isUserOffer = user && offer.buyer_id && offer.buyer_id === user.id;
-                          const submittedDate = new Date(offer.submitted_at);
-                          const timeAgo = getTimeAgo(submittedDate);
-                          
-                          return (
-                            <div key={offer.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                              isUserOffer 
-                                ? 'bg-blue-50 border-blue-200' 
-                                : 'bg-gray-50 border-gray-200'
-                            }`}>
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                                  isUserOffer 
-                                    ? 'bg-blue-500 text-white' 
-                                    : 'bg-gray-400 text-white'
-                                }`}>
-                                  {isUserOffer ? 'You' : 'B'}
+                    {propertyOffers.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {propertyOffers
+                          .filter(offer => offer.status === 'pending' || offer.status === 'approved')
+                          .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
+                          .slice(0, 5)
+                          .map((offer, index) => {
+                            const isUserOffer = user && offer.buyer_id && offer.buyer_id === user.id;
+                            const submittedDate = new Date(offer.submitted_at);
+                            const timeAgo = getTimeAgo(submittedDate);
+                            
+                            return (
+                              <div key={offer.id} className={`flex items-center justify-between p-3 rounded-lg border ${
+                                isUserOffer 
+                                  ? 'bg-blue-50 border-blue-200' 
+                                  : 'bg-gray-50 border-gray-200'
+                              }`}>
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                                    isUserOffer 
+                                      ? 'bg-blue-500 text-white' 
+                                      : 'bg-gray-400 text-white'
+                                  }`}>
+                                    {isUserOffer ? 'You' : 'B'}
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-gray-900">
+                                      {formatCurrency(offer.offer_price)}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {isUserOffer ? 'Your offer' : 'Anonymous bidder'} • {timeAgo}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div className="font-semibold text-gray-900">
-                                    {formatCurrency(offer.offer_price)}
+                                <div className="text-right">
+                                  <div className={`text-xs px-2 py-1 rounded-full ${
+                                    offer.status === 'pending' 
+                                      ? 'bg-yellow-100 text-yellow-800' 
+                                      : offer.status === 'approved'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {offer.status.toUpperCase()}
                                   </div>
-                                  <div className="text-xs text-gray-500">
-                                    {isUserOffer ? 'Your offer' : 'Anonymous bidder'} • {timeAgo}
-                                  </div>
+                                  {offer.payment_method && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {offer.payment_method}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className={`text-xs px-2 py-1 rounded-full ${
-                                  offer.status === 'pending' 
-                                    ? 'bg-yellow-100 text-yellow-800' 
-                                    : offer.status === 'approved'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {offer.status.toUpperCase()}
-                                </div>
-                                {offer.payment_method && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {offer.payment_method}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-sm">No offers yet</p>
+                        <p className="text-xs text-gray-400 mt-1">Be the first to make an offer</p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Competitive Bidding Message */}
-                  <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
-                      <div>
-                        <h5 className="font-medium text-orange-900 mb-1">Competitive Bidding</h5>
-                        <p className="text-sm text-orange-800">
-                          This property has multiple offers. Consider making a competitive offer to increase your chances.
-                        </p>
+                  {/* Competitive Bidding Message - Only show if there are multiple offers */}
+                  {propertyOffers.length > 1 && (
+                    <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+                        <div>
+                          <h5 className="font-medium text-orange-900 mb-1">Competitive Bidding</h5>
+                          <p className="text-sm text-orange-800">
+                            This property has multiple offers. Consider making a competitive offer to increase your chances.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                      {/* Call to Action for Making Offers */}
+                      {!hasUserOffer() && canMakeOffer() && (
+                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                          <div className="flex items-start space-x-2">
+                            <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
+                            <div>
+                              <h5 className="font-medium text-blue-900 mb-1">Make Your Offer</h5>
+                              <p className="text-sm text-blue-800 mb-3">
+                                Submit your offer to be considered for this property.
+                              </p>
+                              <Button 
+                                onClick={handleMakeOffer}
+                                className="w-full"
+                                size="sm"
+                              >
+                                <DollarSign className="w-4 h-4 mr-2" />
+                                Make an Offer
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            {/* Similar Properties */}
-            <SimilarProperties 
-              currentProperty={property} 
-              user={user}
-              onPropertySelect={(property) => {
-                // Navigate to property details
-                router.push(`/property/${property.id}`);
-              }}
-            />
           </div>
         </div>
       </div>
