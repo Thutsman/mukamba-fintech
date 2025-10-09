@@ -170,8 +170,8 @@ export const BuyerMessages: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <CardTitle className="text-lg">{message.propertyTitle}</CardTitle>
-                      <Badge className={getMessageTypeColor(message.messageType)}>
-                        {getMessageTypeLabel(message.messageType)}
+                      <Badge className={getMessageTypeColor(message.messageType || 'inquiry')}>
+                        {getMessageTypeLabel(message.messageType || 'inquiry')}
                       </Badge>
                       {!message.readByBuyer && (
                         <Badge variant="destructive">Unread</Badge>
