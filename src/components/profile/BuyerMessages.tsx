@@ -164,23 +164,23 @@ export const BuyerMessages: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {messages.map((message) => (
-            <Card key={message.id} className={`${!message.read_by_buyer ? 'border-blue-200 bg-blue-50' : ''}`}>
+            <Card key={message.id} className={`${!message.readByBuyer ? 'border-blue-200 bg-blue-50' : ''}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <CardTitle className="text-lg">{message.property_title}</CardTitle>
-                      <Badge className={getMessageTypeColor(message.message_type)}>
-                        {getMessageTypeLabel(message.message_type)}
+                      <CardTitle className="text-lg">{message.propertyTitle}</CardTitle>
+                      <Badge className={getMessageTypeColor(message.messageType)}>
+                        {getMessageTypeLabel(message.messageType)}
                       </Badge>
-                      {!message.read_by_buyer && (
+                      {!message.readByBuyer && (
                         <Badge variant="destructive">Unread</Badge>
                       )}
                     </div>
                     <div className="flex items-center text-sm text-gray-500 space-x-4">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {formatDate(message.created_at)}
+                        {formatDate(message.createdAt)}
                       </div>
                       {message.property && (
                         <div className="flex items-center">
@@ -190,7 +190,7 @@ export const BuyerMessages: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  {!message.read_by_buyer && (
+                  {!message.readByBuyer && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -213,7 +213,7 @@ export const BuyerMessages: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="font-medium text-gray-900">Your Message</span>
-                        <span className="text-sm text-gray-500">{formatDate(message.created_at)}</span>
+                        <span className="text-sm text-gray-500">{formatDate(message.createdAt)}</span>
                       </div>
                       <p className="text-gray-700">{message.content}</p>
                     </div>
@@ -221,7 +221,7 @@ export const BuyerMessages: React.FC = () => {
                 </div>
 
                 {/* Admin Response */}
-                {message.admin_response && (
+                {message.adminResponse && (
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
@@ -232,10 +232,10 @@ export const BuyerMessages: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <span className="font-medium text-green-900">Admin Response</span>
                             <span className="text-sm text-green-600">
-                              {message.admin_response_at && formatDate(message.admin_response_at)}
+                              {message.adminResponseAt && formatDate(message.adminResponseAt)}
                             </span>
                           </div>
-                          {!message.admin_response_read_by_buyer && (
+                          {!message.adminResponseReadByBuyer && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -247,8 +247,8 @@ export const BuyerMessages: React.FC = () => {
                             </Button>
                           )}
                         </div>
-                        <p className="text-green-800">{message.admin_response}</p>
-                        {!message.admin_response_read_by_buyer && (
+                        <p className="text-green-800">{message.adminResponse}</p>
+                        {!message.adminResponseReadByBuyer && (
                           <div className="mt-2">
                             <Badge variant="destructive" className="text-xs">
                               New Response
@@ -266,11 +266,11 @@ export const BuyerMessages: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{message.buyer_email || 'Not provided'}</span>
+                      <span className="text-gray-600">{message.buyerEmail || 'Not provided'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{message.buyer_phone || 'Not provided'}</span>
+                      <span className="text-gray-600">{message.buyerPhone || 'Not provided'}</span>
                     </div>
                   </div>
                 </div>
