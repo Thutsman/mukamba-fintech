@@ -130,10 +130,10 @@ export const BuyerMessages: React.FC = () => {
           <p className="text-gray-600">Communicate with our team about properties</p>
         </div>
         <div className="flex items-center space-x-2">
-          {unreadAdminResponsesCount > 0 && (
+          {unreadAdminResponsesCount() > 0 && (
             <Badge variant="destructive" className="flex items-center">
               <AlertCircle className="w-3 h-3 mr-1" />
-              {unreadAdminResponsesCount} unread
+              {unreadAdminResponsesCount()} unread
             </Badge>
           )}
           <Button
