@@ -33,8 +33,8 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
     messages,
     isLoading,
     error,
-    loadMessages,
-    markRead,
+    loadBuyerMessages,
+    markReadByBuyer,
     markAdminResponseAsRead,
     unreadAdminResponsesCount
   } = useMessageStore();
@@ -42,13 +42,18 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadMessages();
-  }, [loadMessages]);
+    // Load only this buyer's messages (RLS enforced)
+    if (user?.id) {
+      loadBuyerMessages(user.id);
+    }
+  }, [user?.id, loadBuyerMessages]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadMessages();
+      if (user?.id) {
+        await loadBuyerMessages(user.id);
+      }
     } finally {
       setRefreshing(false);
     }
@@ -56,7 +61,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
 
   const handleMarkAsRead = async (messageId: string) => {
     try {
-      await markRead(messageId);
+      await markReadByBuyer(messageId);
     } catch (error) {
       console.error('Error marking message as read:', error);
     }

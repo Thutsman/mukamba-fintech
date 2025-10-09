@@ -42,7 +42,12 @@ interface MessageStoreState {
   // Actions
   addMessage: (msg: Omit<BuyerMessage, 'id' | 'createdAt' | 'readByBuyer' | 'readByAdmin' | 'adminResponseReadByBuyer'>) => Promise<BuyerMessage>;
   loadMessages: (filters?: MessageFilters) => Promise<void>;
+  // Buyer-specific loader that respects RLS
+  loadBuyerMessages: (buyerId: string) => Promise<void>;
+  // Admin view marking (kept for admin components)
   markRead: (id: string) => Promise<void>;
+  // Buyer view marking
+  markReadByBuyer: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   markAdminResponseAsRead: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
@@ -139,6 +144,22 @@ export const useMessageStore = create<MessageStoreState>()(
         }
       },
 
+      // Strictly loads messages for a specific buyer using the client SDK (RLS enforced)
+      loadBuyerMessages: async (buyerId: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const buyerMessages = await getBuyerMessages(buyerId);
+          const messages = buyerMessages.map(convertDatabaseMessage);
+          set({ messages, isLoading: false });
+        } catch (error) {
+          console.error('Failed to load buyer messages:', error);
+          set({ 
+            error: error instanceof Error ? error.message : 'Failed to load messages',
+            isLoading: false 
+          });
+        }
+      },
+
       markRead: async (id) => {
         try {
           await updateMessage(id, { read_by_admin: true });
@@ -147,6 +168,19 @@ export const useMessageStore = create<MessageStoreState>()(
           }));
         } catch (error) {
           console.error('Failed to mark message as read:', error);
+          set({ error: error instanceof Error ? error.message : 'Failed to mark message as read' });
+        }
+      },
+
+      // Buyer flow: mark as read by buyer
+      markReadByBuyer: async (id) => {
+        try {
+          await markMessageAsReadByBuyer(id);
+          set((state) => ({
+            messages: state.messages.map((m) => (m.id === id ? { ...m, readByBuyer: true } : m)),
+          }));
+        } catch (error) {
+          console.error('Failed to mark message as read by buyer:', error);
           set({ error: error instanceof Error ? error.message : 'Failed to mark message as read' });
         }
       },
