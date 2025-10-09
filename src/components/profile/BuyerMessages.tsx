@@ -22,7 +22,13 @@ import {
 import { useMessageStore } from '@/lib/message-store';
 import { BuyerMessage } from '@/lib/message-services';
 
-export const BuyerMessages: React.FC = () => {
+interface BuyerMessagesProps {
+  user: any;
+  onBack: () => void;
+  onViewProperty: (propertyId: string) => void;
+}
+
+export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onViewProperty }) => {
   const {
     messages,
     isLoading,
