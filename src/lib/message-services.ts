@@ -49,6 +49,14 @@ export interface CreateMessageData {
   message_type?: 'inquiry' | 'offer_related' | 'general';
 }
 
+export interface MessageFilters {
+  page?: number;
+  limit?: number;
+  read?: boolean;
+  property_id?: string;
+  buyer_id?: string;
+}
+
 export interface UpdateMessageData {
   read_by_buyer?: boolean;
   read_by_admin?: boolean;
