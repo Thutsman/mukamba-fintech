@@ -52,7 +52,7 @@ interface MessageStoreState {
   unreadCount: () => number;
   unreadAdminResponsesCount: () => number;
   getUnreadCount: () => Promise<number>;
-  getUnreadAdminResponsesCount: () => Promise<number>;
+  getUnreadAdminResponsesCount: (buyerId: string) => Promise<number>;
 }
 
 // Helper function to convert database message to store message
@@ -213,9 +213,9 @@ export const useMessageStore = create<MessageStoreState>()(
         }
       },
 
-      getUnreadAdminResponsesCount: async () => {
+      getUnreadAdminResponsesCount: async (buyerId: string) => {
         try {
-          return await getUnreadAdminResponsesCount();
+          return await getUnreadAdminResponsesCount(buyerId);
         } catch (error) {
           console.error('Failed to get unread admin responses count:', error);
           return 0;
