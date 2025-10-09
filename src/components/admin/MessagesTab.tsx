@@ -150,7 +150,7 @@ export const MessagesTab: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-medium text-slate-900 truncate">{m.buyerName}</span>
-                    {!m.read && <Badge className="text-[10px] bg-red-100 text-red-700">NEW</Badge>}
+                    {!m.readByAdmin && <Badge className="text-[10px] bg-red-100 text-red-700">NEW</Badge>}
                     {m.messageType && (
                       <Badge variant="outline" className="text-[10px]">
                         {m.messageType.replace('_', ' ')}
@@ -174,11 +174,11 @@ export const MessagesTab: React.FC = () => {
                   )}
                   <Button 
                     size="sm" 
-                    variant={m.read ? 'secondary' : 'default'} 
+                    variant={m.readByAdmin ? 'secondary' : 'default'} 
                     onClick={() => handleMarkRead(m.id)}
                     disabled={isLoading}
                   >
-                    <CheckCircle className="w-4 h-4 mr-1" /> {m.read ? 'Read' : 'Mark read'}
+                    <CheckCircle className="w-4 h-4 mr-1" /> {m.readByAdmin ? 'Read' : 'Mark read'}
                   </Button>
                   <Button 
                     size="sm" 
