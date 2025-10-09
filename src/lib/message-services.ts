@@ -82,7 +82,7 @@ export async function getMessages(filters?: {
     .from('buyer_messages')
     .select(`
       *,
-      property:properties(id, title, location),
+      property:properties(id, title, city, suburb),
       buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -120,7 +120,7 @@ export async function getBuyerMessages(buyerId: string): Promise<BuyerMessage[]>
     .from('buyer_messages')
     .select(`
       *,
-      property:properties(id, title, location),
+      property:properties(id, title, city, suburb),
       buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
     `)
     .eq('buyer_id', buyerId)
@@ -146,7 +146,7 @@ export async function createMessage(messageData: CreateMessageData): Promise<Buy
     })
     .select(`
       *,
-      property:properties(id, title, location),
+      property:properties(id, title, city, suburb),
       buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
     `)
     .single();
@@ -188,7 +188,7 @@ export async function updateMessage(messageId: string, updateData: UpdateMessage
     .eq('id', messageId)
     .select(`
       *,
-      property:properties(id, title, location),
+      property:properties(id, title, city, suburb),
       buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
     `)
     .single();
