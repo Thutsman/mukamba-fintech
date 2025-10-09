@@ -28,7 +28,7 @@ export const BuyerMessages: React.FC = () => {
     isLoading,
     error,
     loadMessages,
-    markMessageAsRead,
+    markRead,
     markAdminResponseAsRead,
     unreadAdminResponsesCount
   } = useMessageStore();
@@ -50,7 +50,7 @@ export const BuyerMessages: React.FC = () => {
 
   const handleMarkAsRead = async (messageId: string) => {
     try {
-      await markMessageAsRead(messageId);
+      await markRead(messageId);
     } catch (error) {
       console.error('Error marking message as read:', error);
     }
