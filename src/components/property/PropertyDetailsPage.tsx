@@ -307,7 +307,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
     // Route message to admin inbox
     try {
       const buyerName = user ? `${user.firstName} ${user.lastName}` : 'Anonymous';
-      useMessageStore.getState().addMessage({
+      await useMessageStore.getState().addMessage({
         propertyId: property.id,
         propertyTitle: property.title,
         buyerId: user?.id || 'anonymous',
@@ -315,11 +315,11 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         buyerEmail: user?.email,
         buyerPhone: user?.phone,
         content: typeof data === 'string' ? data : (data?.message || ''),
+        messageType: 'inquiry',
       });
-      // Simulate API latency
-      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (e) {
       console.error('Failed to send message:', e);
+      throw e; // Re-throw to let the modal handle the error
     }
   };
 

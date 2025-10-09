@@ -58,6 +58,7 @@ import { ApplicationForm, ApplicationStatus, ApplicationHistory } from '@/compon
 import { ApplicationStatus as AppStatus } from '@/components/applications/ApplicationForm';
 import { BuyerMessaging } from '@/components/messaging';
 import { BuyerOffers } from './BuyerOffers';
+import { BuyerMessages } from './BuyerMessages';
 import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
 import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { PaymentModal } from '@/components/property/PaymentModal';
@@ -401,6 +402,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   // Messaging state
   const [showMessaging, setShowMessaging] = React.useState(false);
+  const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
 
   // Mock data for metrics and lists
   interface BuyerStats {
@@ -806,6 +808,17 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     );
   }
 
+  // Show buyer messages as full page
+  if (showBuyerMessages) {
+    return (
+      <BuyerMessages
+        user={user}
+        onBack={() => setShowBuyerMessages(false)}
+        onViewProperty={onViewProperty}
+      />
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Sidebar */}
@@ -850,7 +863,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             return (
               <button key={item.key} onClick={() => {
                 if (item.key === 'messages') {
-                  setShowMessaging(true);
+                  setShowBuyerMessages(true);
                 } else {
                   setActiveSection(item.key);
                 }
@@ -958,7 +971,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                         key={item.key} 
                         onClick={() => {
                           if (item.key === 'messages') {
-                            setShowMessaging(true);
+                            setShowBuyerMessages(true);
                           } else {
                             setActiveSection(item.key);
                           }

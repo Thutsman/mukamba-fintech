@@ -79,26 +79,55 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
     <div className="space-y-6">
       {/* Primary Actions */}
       <div className="grid grid-cols-1 gap-3">
-        {/* Contact Seller - Only show if user can contact or is not logged in */}
-        {(!user || canContactSeller) && (
+        {/* Contact Seller and Make Offer - Side by side */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Send Message Button */}
+          {(!user || canContactSeller) && (
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button
+                onClick={canContactSeller ? onContactSeller : onSignUpPrompt}
+                className={`w-full h-14 font-semibold transition-all duration-200 ${
+                  canContactSeller 
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl' 
+                    : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
+                } text-white border-0 text-base`}
+                disabled={!user}
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                {canContactSeller ? 'Send Message' : 'Sign Up to Message'}
+              </Button>
+            </motion.div>
+          )}
+
+          {/* Make Offer Button */}
           <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') ? 1 : 1.02 }}
+            whileTap={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') ? 1 : 0.98 }}
           >
             <Button
-              onClick={canContactSeller ? onContactSeller : onSignUpPrompt}
+              onClick={(hasUserOffer && userOfferStatus !== 'rejected') ? undefined : (canMakeOffer ? onMakeOffer : onSignUpPrompt)}
               className={`w-full h-14 font-semibold transition-all duration-200 ${
-                canContactSeller 
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl' 
-                  : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
+                (hasUserOffer && userOfferStatus !== 'rejected')
+                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed shadow-md'
+                  : canMakeOffer 
+                    ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
+                    : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
               } text-white border-0 text-base`}
-              disabled={!user}
+              disabled={!user || (hasUserOffer && userOfferStatus !== 'rejected')}
             >
-              <MessageCircle className="w-5 h-5 mr-3" />
-              {canContactSeller ? 'Send Message' : 'Sign Up to Message'}
+              <DollarSign className="w-5 h-5 mr-2" />
+              {(hasUserOffer && userOfferStatus !== 'rejected') 
+                ? 'Offer Submitted' 
+                : (hasUserOffer && userOfferStatus === 'rejected')
+                  ? 'Make New Offer'
+                  : (canMakeOffer ? 'Make Offer' : 'Sign Up to Offer')
+              }
             </Button>
           </motion.div>
-        )}
+        </div>
 
         {/* Schedule Viewing (optional) */}
         {showScheduleViewing && (
@@ -118,33 +147,6 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
           </motion.div>
         )}
 
-        {/* Make Offer - Only show if user can make offers or is not logged in */}
-        {(!user || canMakeOffer) && (
-          <motion.div
-            whileHover={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') ? 1 : 1.02 }}
-            whileTap={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') ? 1 : 0.98 }}
-          >
-            <Button
-              onClick={(hasUserOffer && userOfferStatus !== 'rejected') ? undefined : (canMakeOffer ? onMakeOffer : onSignUpPrompt)}
-              className={`w-full h-14 font-semibold transition-all duration-200 ${
-                (hasUserOffer && userOfferStatus !== 'rejected')
-                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed shadow-md'
-                  : canMakeOffer 
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
-                    : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
-              } text-white border-0 text-base`}
-              disabled={!user || (hasUserOffer && userOfferStatus !== 'rejected')}
-            >
-              <DollarSign className="w-5 h-5 mr-3" />
-              {(hasUserOffer && userOfferStatus !== 'rejected') 
-                ? 'Offer Submitted' 
-                : (hasUserOffer && userOfferStatus === 'rejected')
-                  ? 'Make New Offer'
-                  : (canMakeOffer ? 'Make Offer' : 'Sign Up to Offer')
-              }
-            </Button>
-          </motion.div>
-        )}
       </div>
 
       {/* Single Phone Verification Button (when needed) */}
