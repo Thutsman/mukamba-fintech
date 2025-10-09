@@ -9,6 +9,7 @@ import {
   markAdminResponseAsRead,
   addAdminResponse,
   getUnreadMessagesCount,
+  getUnreadAdminResponsesCount,
   type BuyerMessage as DatabaseBuyerMessage,
   type CreateMessageData,
   type MessageFilters
@@ -176,7 +177,7 @@ export const useMessageStore = create<MessageStoreState>()(
       deleteMessage: async (id) => {
         try {
           await deleteMessage(id);
-          set((state) => ({
+        set((state) => ({
             messages: state.messages.filter((m) => m.id !== id),
           }));
         } catch (error) {
@@ -190,7 +191,7 @@ export const useMessageStore = create<MessageStoreState>()(
           const updatedMessage = await addAdminResponse(id, response);
           const convertedMessage = convertDatabaseMessage(updatedMessage);
           
-          set((state) => ({
+        set((state) => ({
             messages: state.messages.map((m) => (m.id === id ? convertedMessage : m)),
           }));
         } catch (error) {
