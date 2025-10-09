@@ -7,7 +7,7 @@ import {
   deleteMessage,
   markMessageAsRead,
   addAdminResponse,
-  getUnreadMessageCount,
+  getUnreadMessagesCount,
   type BuyerMessage as DatabaseBuyerMessage,
   type CreateMessageData,
   type MessageFilters

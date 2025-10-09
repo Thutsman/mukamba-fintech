@@ -12,7 +12,7 @@ const updateMessageSchema = z.object({
 // GET /api/messages/[id] - Get a specific message
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -37,6 +37,7 @@ export async function GET(
     const isAdmin = userProfile.roles?.includes('admin') || false;
 
     // Get the message
+    const { id } = await params;
     const { data: message, error } = await supabase
       .from('buyer_messages')
       .select(`
@@ -44,7 +45,7 @@ export async function GET(
         property:properties(id, title, location),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) {
@@ -71,7 +72,7 @@ export async function GET(
 // PATCH /api/messages/[id] - Update a message (mark as read, add admin response)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -99,10 +100,11 @@ export async function PATCH(
     const validatedData = updateMessageSchema.parse(body);
 
     // Check if message exists
+    const { id } = await params;
     const { data: existingMessage, error: fetchError } = await supabase
       .from('buyer_messages')
       .select('buyer_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (fetchError || !existingMessage) {
@@ -144,7 +146,7 @@ export async function PATCH(
     const { data: message, error } = await supabase
       .from('buyer_messages')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', id)
       .select(`
         *,
         property:properties(id, title, location),
@@ -178,7 +180,7 @@ export async function PATCH(
 // DELETE /api/messages/[id] - Delete a message (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -207,10 +209,11 @@ export async function DELETE(
     }
 
     // Delete the message
+    const { id } = await params;
     const { error } = await supabase
       .from('buyer_messages')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) {
       console.error('Error deleting message:', error);
