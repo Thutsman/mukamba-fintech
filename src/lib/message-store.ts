@@ -6,6 +6,7 @@ import {
   updateMessage, 
   deleteMessage,
   markMessageAsReadByBuyer,
+  markAdminResponseAsRead,
   addAdminResponse,
   getUnreadMessagesCount,
   type BuyerMessage as DatabaseBuyerMessage,
