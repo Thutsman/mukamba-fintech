@@ -424,8 +424,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <AdminNavigation
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          notifications={useMessageStore.getState().messages.filter((m) => !m.read).length}
-          pendingActions={{ listings: 12, kyc: 8, payments: 3, reports: 1, users: 0, messages: useMessageStore.getState().messages.filter((m) => !m.read).length }}
+          notifications={useMessageStore.getState().messages.filter((m) => !m.readByAdmin).length}
+          pendingActions={{ listings: 12, kyc: 8, payments: 3, reports: 1, users: 0, messages: useMessageStore.getState().messages.filter((m) => !m.readByAdmin).length }}
           isMobileOpen={mobileOpen}
           onMobileToggle={() => setMobileOpen(v => !v)}
         />
