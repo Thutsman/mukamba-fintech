@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { 
   createMessage, 
   getMessages, 
+  getBuyerMessages,
   updateMessage, 
   deleteMessage,
   markMessageAsReadByBuyer,
