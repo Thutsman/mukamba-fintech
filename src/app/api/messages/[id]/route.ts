@@ -136,30 +136,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get user profile to check roles
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('roles')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !userProfile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-    }
-
-    const isAdmin = userProfile.roles?.includes('admin') || false;
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized to delete messages' }, { status: 403 });
-    }
+    const supabase = createAdminClient();
 
     // Delete the message
     const { id } = await params;
