@@ -182,12 +182,10 @@ export const BuyerMessages: React.FC = () => {
                         <Calendar className="w-4 h-4 mr-1" />
                         {formatDate(message.createdAt)}
                       </div>
-                      {message.property && (
-                        <div className="flex items-center">
-                          <Home className="w-4 h-4 mr-1" />
-                          {message.property.location.suburb}, {message.property.location.city}
-                        </div>
-                      )}
+                      <div className="flex items-center">
+                        <Home className="w-4 h-4 mr-1" />
+                        {message.propertyTitle}
+                      </div>
                     </div>
                   </div>
                   {!message.readByBuyer && (
