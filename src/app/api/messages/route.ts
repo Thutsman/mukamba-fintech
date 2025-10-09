@@ -45,6 +45,10 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = userProfile.roles?.includes('admin') || false;
     
+    console.log('API: User ID:', user.id);
+    console.log('API: User roles:', userProfile.roles);
+    console.log('API: Is admin:', isAdmin);
+    
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -60,7 +64,7 @@ export async function GET(request: NextRequest) {
       .from('buyer_messages')
       .select(`
         *,
-        property:properties(id, title, city, suburb, street_address),
+        property:properties(id, title, city, suburb),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
       `)
       .order('created_at', { ascending: false });
@@ -85,7 +89,12 @@ export async function GET(request: NextRequest) {
     // Apply pagination
     query = query.range(offset, offset + limit - 1);
 
+    console.log('API: Executing query for messages...');
     const { data: messages, error, count } = await query;
+    
+    console.log('API: Query result - messages:', messages?.length || 0);
+    console.log('API: Query result - error:', error);
+    console.log('API: Query result - count:', count);
 
     if (error) {
       console.error('Error fetching messages:', error);
