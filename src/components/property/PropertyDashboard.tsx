@@ -946,7 +946,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
       {/* Property Search Bar - Overlapping Section */}
       <motion.div
-        className="relative z-20 max-w-4xl mx-auto px-4 -mt-24 sm:-mt-24 -mt-16"
+        className="relative z-20 max-w-4xl mx-auto px-4 -mt-8 sm:-mt-24"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
