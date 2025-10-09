@@ -72,43 +72,27 @@ export async function getMessages(filters?: {
   property_id?: string;
   buyer_id?: string;
 }): Promise<{ messages: BuyerMessage[]; total: number }> {
-  const supabase = createClient();
-  
-  const page = filters?.page || 1;
-  const limit = filters?.limit || 20;
-  const offset = (page - 1) * limit;
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.read !== undefined) params.set('read', String(filters.read));
+  if (filters?.property_id) params.set('property_id', filters.property_id);
+  if (filters?.buyer_id) params.set('buyer_id', filters.buyer_id);
 
-  let query = supabase
-    .from('buyer_messages')
-    .select(`
-      *,
-      property:properties(id, title, city, suburb),
-      buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
-    `, { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+  const res = await fetch(`/api/messages?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
 
-  // Apply filters
-  if (filters?.read !== undefined) {
-    query = query.eq('read_by_admin', filters.read);
-  }
-  if (filters?.property_id) {
-    query = query.eq('property_id', filters.property_id);
-  }
-  if (filters?.buyer_id) {
-    query = query.eq('buyer_id', filters.buyer_id);
-  }
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    console.error('Error fetching messages:', error);
+  if (!res.ok) {
     throw new Error('Failed to fetch messages');
   }
 
+  const json = await res.json();
   return {
-    messages: data || [],
-    total: count || 0
+    messages: (json.messages || []) as BuyerMessage[],
+    total: json.pagination?.total || (json.messages?.length || 0)
   };
 }
 
@@ -161,59 +145,27 @@ export async function createMessage(messageData: CreateMessageData): Promise<Buy
 
 // Update a message
 export async function updateMessage(messageId: string, updateData: UpdateMessageData): Promise<BuyerMessage> {
-  const supabase = createClient();
-  
-  // Prepare update data with timestamps
-  const updatePayload: any = { ...updateData };
-  
-  if (updateData.read_by_buyer === true) {
-    updatePayload.read_at = new Date().toISOString();
-  }
-  
-  if (updateData.read_by_admin === true) {
-    updatePayload.read_at = new Date().toISOString();
-  }
-  
-  if (updateData.admin_response) {
-    updatePayload.admin_response_at = new Date().toISOString();
-  }
-  
-  if (updateData.admin_response_read_by_buyer === true) {
-    updatePayload.admin_response_read_at = new Date().toISOString();
-  }
+  const res = await fetch(`/api/messages/${messageId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(updateData)
+  });
 
-  const { data, error } = await supabase
-    .from('buyer_messages')
-    .update(updatePayload)
-    .eq('id', messageId)
-    .select(`
-      *,
-      property:properties(id, title, city, suburb),
-      buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
-    `)
-    .single();
-
-  if (error) {
-    console.error('Error updating message:', error);
+  if (!res.ok) {
     throw new Error('Failed to update message');
   }
-
-  return data;
+  const json = await res.json();
+  return json.message as BuyerMessage;
 }
 
 // Delete a message
 export async function deleteMessage(messageId: string): Promise<void> {
-  const supabase = createClient();
-  
-  const { error } = await supabase
-    .from('buyer_messages')
-    .delete()
-    .eq('id', messageId);
-
-  if (error) {
-    console.error('Error deleting message:', error);
-    throw new Error('Failed to delete message');
-  }
+  const res = await fetch(`/api/messages/${messageId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Failed to delete message');
 }
 
 // Mark message as read by buyer

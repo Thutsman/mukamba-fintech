@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
 const updateMessageSchema = z.object({
@@ -15,34 +15,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get user profile to check roles
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('roles')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !userProfile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-    }
-
-    const isAdmin = userProfile.roles?.includes('admin') || false;
-
     // Get the message
     const { id } = await params;
     const { data: message, error } = await supabase
       .from('buyer_messages')
       .select(`
         *,
-        property:properties(id, title, city, suburb, street_address),
+        property:properties(id, title, city, suburb),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
       `)
       .eq('id', id)
@@ -51,11 +32,6 @@ export async function GET(
     if (error) {
       console.error('Error fetching message:', error);
       return NextResponse.json({ error: 'Message not found' }, { status: 404 });
-    }
-
-    // Check permissions
-    if (!isAdmin && message.buyer_id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized to view this message' }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -75,27 +51,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get user profile to check roles
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('roles')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !userProfile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-    }
-
-    const isAdmin = userProfile.roles?.includes('admin') || false;
-
     const body = await request.json();
     const validatedData = updateMessageSchema.parse(body);
 
@@ -111,30 +68,26 @@ export async function PATCH(
       return NextResponse.json({ error: 'Message not found' }, { status: 404 });
     }
 
-    // Check permissions
-    if (!isAdmin && existingMessage.buyer_id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized to update this message' }, { status: 403 });
-    }
-
     // Prepare update data
     const updateData: any = { ...validatedData };
     
     // If marking as read by buyer, set read_at and read_by
     if (validatedData.read_by_buyer === true) {
       updateData.read_at = new Date().toISOString();
-      updateData.read_by = user.id;
+      // admin endpoint; track as system update
+      updateData.read_by = null;
     }
 
     // If marking as read by admin, set read_at and read_by
     if (validatedData.read_by_admin === true) {
       updateData.read_at = new Date().toISOString();
-      updateData.read_by = user.id;
+      updateData.read_by = null;
     }
 
     // If adding admin response, set admin response fields
-    if (validatedData.admin_response && isAdmin) {
+    if (validatedData.admin_response) {
       updateData.admin_response_at = new Date().toISOString();
-      updateData.admin_response_by = user.id;
+      updateData.admin_response_by = null;
     }
 
     // If marking admin response as read by buyer

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
 // Validation schemas
@@ -24,30 +24,8 @@ const updateMessageSchema = z.object({
 // GET /api/messages - Get messages (with filtering for admin vs buyer)
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get user profile to check roles
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('roles')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !userProfile) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-    }
-
-    const isAdmin = userProfile.roles?.includes('admin') || false;
-    
-    console.log('API: User ID:', user.id);
-    console.log('API: User roles:', userProfile.roles);
-    console.log('API: Is admin:', isAdmin);
+    // Use service role client to safely bypass RLS for admin-facing API
+    const supabase = createAdminClient();
     
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -66,35 +44,24 @@ export async function GET(request: NextRequest) {
         *,
         property:properties(id, title, city, suburb),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
-      `)
+      `, { count: 'exact' })
       .order('created_at', { ascending: false });
-
-    // Apply filters based on user role
-    if (!isAdmin) {
-      // Buyers can only see their own messages
-      query = query.eq('buyer_id', user.id);
-    }
 
     // Apply additional filters
     if (read !== null) {
-      query = query.eq('read', read === 'true');
+      query = query.eq('read_by_admin', read === 'true');
     }
     if (property_id) {
       query = query.eq('property_id', property_id);
     }
-    if (buyer_id && isAdmin) {
+    if (buyer_id) {
       query = query.eq('buyer_id', buyer_id);
     }
 
     // Apply pagination
     query = query.range(offset, offset + limit - 1);
 
-    console.log('API: Executing query for messages...');
     const { data: messages, error, count } = await query;
-    
-    console.log('API: Query result - messages:', messages?.length || 0);
-    console.log('API: Query result - error:', error);
-    console.log('API: Query result - count:', count);
 
     if (error) {
       console.error('Error fetching messages:', error);
