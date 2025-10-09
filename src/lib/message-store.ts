@@ -5,7 +5,7 @@ import {
   getMessages, 
   updateMessage, 
   deleteMessage,
-  markMessageAsRead,
+  markMessageAsReadByBuyer,
   addAdminResponse,
   getUnreadMessagesCount,
   type BuyerMessage as DatabaseBuyerMessage,
@@ -204,7 +204,7 @@ export const useMessageStore = create<MessageStoreState>()(
 
       getUnreadCount: async () => {
         try {
-          return await getUnreadMessageCount();
+          return await getUnreadMessagesCount();
         } catch (error) {
           console.error('Failed to get unread count:', error);
           return 0;
