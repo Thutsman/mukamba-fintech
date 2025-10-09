@@ -41,6 +41,7 @@ import {
   Calculator,
   Bookmark,
   Search,
+  Folder,
   Menu,
   Square
 } from 'lucide-react';
@@ -380,7 +381,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const router = useRouter();
   const isVerified = isFullyVerified(user);
   const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'searches' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
   const [showPropertySearch, setShowPropertySearch] = React.useState(false);
   const [showPropertyGrid, setShowPropertyGrid] = React.useState(false);
   const [showPropertyListings, setShowPropertyListings] = React.useState(false);
@@ -851,7 +852,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         <nav className="p-2 space-y-1">
           {[
             {key:'overview', label:'Overview', icon:Home},
-            {key:'searches', label:'Property Searches', icon:Search},
+            {key:'portfolio', label:'Portfolio', icon:Folder},
             {key:'saved', label:'Saved Properties', icon:Bookmark},
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
             {key:'messages', label:'Messages', icon:MessageCircle},
@@ -957,7 +958,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 <nav className="space-y-1">
                   {[
                     {key: 'overview', label: 'Overview', icon: Home},
-                    {key: 'searches', label: 'Property Searches', icon: Search},
+                    {key: 'portfolio', label: 'Portfolio', icon: Folder},
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark},
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
                     {key: 'messages', label: 'Messages', icon: MessageCircle},
@@ -1206,6 +1207,17 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         </CardContent>
       </Card>
           </>
+        )}
+
+        {/* Portfolio Section - Coming Soon */}
+        {activeSection === 'portfolio' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Building className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Portfolio Coming Soon</h3>
+            <p className="text-gray-600">Your investment portfolio tracking feature is under development.</p>
+          </div>
         )}
 
       {/* Offers Section */}
