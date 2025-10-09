@@ -120,8 +120,11 @@ export const useMessageStore = create<MessageStoreState>()(
         set({ isLoading: true, error: null });
         
         try {
+          console.log('Loading messages with filters:', filters);
           const response = await getMessages(filters);
+          console.log('Messages response:', response);
           const messages = response.messages.map(convertDatabaseMessage);
+          console.log('Converted messages:', messages);
           
           set({ 
             messages,
@@ -138,9 +141,9 @@ export const useMessageStore = create<MessageStoreState>()(
 
       markRead: async (id) => {
         try {
-          await updateMessage(id, { read_by_buyer: true });
+          await updateMessage(id, { read_by_admin: true });
           set((state) => ({
-            messages: state.messages.map((m) => (m.id === id ? { ...m, readByBuyer: true } : m)),
+            messages: state.messages.map((m) => (m.id === id ? { ...m, readByAdmin: true } : m)),
           }));
         } catch (error) {
           console.error('Failed to mark message as read:', error);
@@ -162,11 +165,11 @@ export const useMessageStore = create<MessageStoreState>()(
 
       markAllRead: async () => {
         try {
-          const unreadMessages = get().messages.filter(m => !m.readByBuyer);
-          await Promise.all(unreadMessages.map(msg => updateMessage(msg.id, { read_by_buyer: true })));
+          const unreadMessages = get().messages.filter(m => !m.readByAdmin);
+          await Promise.all(unreadMessages.map(msg => updateMessage(msg.id, { read_by_admin: true })));
           
           set((state) => ({
-            messages: state.messages.map((m) => ({ ...m, readByBuyer: true })),
+            messages: state.messages.map((m) => ({ ...m, readByAdmin: true })),
           }));
         } catch (error) {
           console.error('Failed to mark all messages as read:', error);

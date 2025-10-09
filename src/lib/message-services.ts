@@ -90,7 +90,7 @@ export async function getMessages(filters?: {
 
   // Apply filters
   if (filters?.read !== undefined) {
-    query = query.eq('read', filters.read);
+    query = query.eq('read_by_admin', filters.read);
   }
   if (filters?.property_id) {
     query = query.eq('property_id', filters.property_id);
