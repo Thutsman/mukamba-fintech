@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   MessageCircle, 
   Clock, 
@@ -17,7 +19,9 @@ import {
   Phone,
   Calendar,
   RefreshCw,
-  Loader2
+  Loader2,
+  Send,
+  Reply
 } from 'lucide-react';
 import { useMessageStore } from '@/lib/message-store';
 import { BuyerMessage } from '@/lib/message-services';
@@ -36,10 +40,14 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
     loadBuyerMessages,
     markReadByBuyer,
     markAdminResponseAsRead,
+    addMessage,
     unreadAdminResponsesCount
   } = useMessageStore();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
 
   useEffect(() => {
     // Load only this buyer's messages (RLS enforced)
@@ -72,6 +80,46 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
       await markAdminResponseAsRead(messageId);
     } catch (error) {
       console.error('Error marking admin response as read:', error);
+    }
+  };
+
+  const handleStartReply = (messageId: string) => {
+    setReplyingTo(messageId);
+    setReplyContent('');
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+    setReplyContent('');
+  };
+
+  const handleSendReply = async () => {
+    if (!replyingTo || !replyContent.trim() || !user?.id) return;
+
+    setSendingReply(true);
+    try {
+      const originalMessage = messages.find(m => m.id === replyingTo);
+      if (!originalMessage) return;
+
+      await addMessage({
+        propertyId: originalMessage.propertyId,
+        propertyTitle: originalMessage.propertyTitle,
+        buyerId: user.id,
+        buyerName: `${user.firstName} ${user.lastName}`,
+        buyerEmail: user.email,
+        buyerPhone: user.phone,
+        content: replyContent.trim(),
+        messageType: 'inquiry'
+      });
+
+      // Clear reply form and refresh messages
+      setReplyingTo(null);
+      setReplyContent('');
+      await loadBuyerMessages(user.id);
+    } catch (error) {
+      console.error('Error sending reply:', error);
+    } finally {
+      setSendingReply(false);
     }
   };
 
@@ -268,6 +316,58 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                     </div>
                   </div>
                 )}
+
+                {/* Reply Section */}
+                <div className="border-t pt-4">
+                  {replyingTo === message.id ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Reply className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium text-gray-900">Reply to this conversation</span>
+                      </div>
+                      <Textarea
+                        placeholder="Type your follow-up message here..."
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        className="min-h-[80px] resize-none"
+                        disabled={sendingReply}
+                      />
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={handleSendReply}
+                          disabled={!replyContent.trim() || sendingReply}
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          {sendingReply ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4 mr-2" />
+                          )}
+                          {sendingReply ? 'Sending...' : 'Send Reply'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelReply}
+                          disabled={sendingReply}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStartReply(message.id)}
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                    >
+                      <Reply className="w-4 h-4 mr-2" />
+                      Reply
+                    </Button>
+                  )}
+                </div>
 
                 {/* Contact Information */}
                 <div className="bg-gray-50 rounded-lg p-4">
