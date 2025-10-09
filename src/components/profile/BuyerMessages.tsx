@@ -181,7 +181,8 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
+      <div className="mx-auto px-3 sm:px-4 space-y-6 max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -209,7 +210,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
 
       {/* Messages List */}
       {messages.length === 0 ? (
-        <Card>
+        <Card className="shadow-sm">
           <CardContent className="p-6">
             <div className="text-center py-8">
               <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -223,7 +224,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
       ) : (
         <div className="space-y-4">
           {messages.map((message) => (
-            <Card key={message.id} className={`${!message.readByBuyer ? 'border-blue-200 bg-blue-50' : ''}`}>
+            <Card key={message.id} className={`${!message.readByBuyer ? 'border-blue-200 bg-blue-50' : ''} shadow-sm` }>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -388,6 +389,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };
