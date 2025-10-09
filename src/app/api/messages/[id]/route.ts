@@ -168,7 +168,7 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ 
         error: 'Validation error', 
-        details: error.errors 
+        details: error.issues 
       }, { status: 400 });
     }
     
