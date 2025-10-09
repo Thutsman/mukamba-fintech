@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       .from('buyer_messages')
       .select(`
         *,
-        property:properties(id, title, location),
+        property:properties(id, title, city, suburb, street_address),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
       `)
       .order('created_at', { ascending: false });

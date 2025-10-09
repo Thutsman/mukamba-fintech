@@ -42,7 +42,7 @@ export async function GET(
       .from('buyer_messages')
       .select(`
         *,
-        property:properties(id, title, location),
+        property:properties(id, title, city, suburb, street_address),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
       `)
       .eq('id', id)
@@ -149,7 +149,7 @@ export async function PATCH(
       .eq('id', id)
       .select(`
         *,
-        property:properties(id, title, location),
+        property:properties(id, title, city, suburb, street_address),
         buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
       `)
       .single();
