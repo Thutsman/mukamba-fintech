@@ -390,7 +390,7 @@ export const AuthSystem: React.FC = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-red-700 hover:bg-red-800 text-white"
+                      className="bg-[#7f1518] hover:bg-[#6a1215] text-white"
                       onClick={() => {
                         setShowSigninModal(true);
                         console.log('Sign-in modal opened from AuthSystem header');

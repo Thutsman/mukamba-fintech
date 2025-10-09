@@ -733,72 +733,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           <div className="text-center space-y-4">
             {/* Logo and Main Headline */}
             <div className="flex flex-col items-center space-y-4">
-              {/* Enhanced Partnership Logo with glass effect */}
+              {/* Reserved space for partnership logo - maintaining hero section height */}
               <div className="relative mb-2">
-                <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-3 shadow-2xl border border-white/30">
-                  <div className="text-center">
-                    <div className="text-white/90 text-sm font-medium mb-1 tracking-wide">
-                      In Partnership with:
-                    </div>
-                    <div className="relative min-h-[80px] flex items-center justify-center">
-                      {/* Try Next.js Image first */}
-                      <Image
-                        src="/partner-logo.svg"
-                        alt="Partner Logo"
-                        width={320}
-                        height={90}
-                        className="h-14 w-auto mx-auto"
-                        priority
-                        onError={(e) => {
-                          if (isClient) {
-                            console.error('Next.js Image failed to load partner logo:', e);
-                            // Hide Next.js image and show fallback img
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
-                            if (fallbackImg) fallbackImg.style.display = 'block';
-                          }
-                        }}
-                        onLoad={() => {
-                          if (isClient) {
-                            console.log('Partner logo loaded successfully with Next.js Image');
-                            // Hide fallback when image loads
-                            const fallbackImg = document.querySelector('.partner-logo-fallback-img') as HTMLImageElement;
-                            if (fallbackImg) fallbackImg.style.display = 'none';
-                          }
-                        }}
-                      />
-                      {/* Fallback regular img tag */}
-                      <img
-                        src="/partner-logo.svg"
-                        alt="Partner Logo"
-                        className="partner-logo-fallback-img h-14 w-auto mx-auto hidden"
-                        onError={(e) => {
-                          if (isClient) {
-                            console.error('Regular img tag also failed to load partner logo:', e);
-                            // Hide img and show text fallback
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
-                            if (textFallback) textFallback.style.display = 'flex';
-                          }
-                        }}
-                        onLoad={() => {
-                          if (isClient) {
-                            console.log('Partner logo loaded successfully with regular img tag');
-                            // Hide text fallback when image loads
-                            const textFallback = document.querySelector('.partner-logo-text-fallback') as HTMLElement;
-                            if (textFallback) textFallback.style.display = 'none';
-                          }
-                        }}
-                      />
-                      {/* Text fallback content */}
-                      <div className="partner-logo-text-fallback absolute inset-0 items-center justify-center text-white/80 text-sm font-medium bg-white/10 rounded-lg hidden">
-                        Partner Logo
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <div className="h-[120px] w-full"></div>
               </div>
               
               <h1 
@@ -814,7 +751,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             {/* Subheadline */}
             <div className="text-center px-4 mb-4 max-w-5xl mx-auto">
               <p className="text-2xl sm:text-3xl lg:text-4xl text-white font-light leading-relaxed tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                Bringing the Zimbabwe Real Estate to your fingertips
+                Buy homes in Zimbabwe using this portal,<br />
+                through installment payments, from anywhere in the world
               </p>
             </div>
             
@@ -832,7 +770,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               >
               <Button 
                 size="lg"
-                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold shadow-2xl hover:shadow-orange-500/25 transition-all duration-300 w-full sm:w-auto border-0"
+                  className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold shadow-2xl hover:shadow-red-500/25 transition-all duration-300 w-full sm:w-auto border-0"
                   onClick={() => {
                     // Track analytics
                     trackEvent('hero_sell_property_clicked', {
@@ -863,7 +801,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <Button 
                 size="lg"
                 variant="outline"
-                  className="border-white/40 text-white hover:bg-white/20 hover:text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-xl w-full sm:w-auto shadow-xl hover:shadow-white/25 transition-all duration-300"
+                className="border-white/40 text-white hover:bg-white/20 hover:text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-xl w-full sm:w-auto shadow-xl hover:shadow-white/25 transition-all duration-300"
                 onClick={() => {
                   setShowSigninModal(true);
                   // Analytics tracking for signin modal
@@ -1015,8 +953,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       >
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-4 border border-white/30 shadow-2xl max-w-screen-sm mx-auto">
           <div className="space-y-4">
-            {/* Top Row - Dropdown Filters */}
-            <div className="flex flex-row items-center justify-between gap-x-3">
+            {/* Mobile: Vertical Layout, Desktop: Horizontal Layout */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-x-3">
               {/* Location Filter */}
               <div className="flex-1 min-w-0">
                 <Select value={searchFilters.location || 'all'} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, location: value === 'all' ? undefined : value }))}>
@@ -1078,11 +1016,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               </div>
             </div>
 
-            {/* Bottom Row - Search Button */}
+            {/* Search Button - Full width on mobile, centered on desktop */}
             <div className="flex justify-center">
               <Button
                 size="lg"
-                className="bg-[#7f1518] hover:bg-[#6a1215] text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 h-12 px-8"
+                className="bg-[#7f1518] hover:bg-[#6a1215] text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 h-12 px-8 w-full sm:w-auto"
                 onClick={handleSearch}
               >
                 <Search className="w-5 h-5 mr-2" />
@@ -1209,7 +1147,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             <div className="text-center mt-8">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
                   // Navigate to listings page
                   router.push('/listings');
@@ -1256,15 +1194,23 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     >
                       Why Mukamba Gateway
                     </motion.h2>
-                    <motion.p 
-                      className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0"
+                    <motion.div 
+                      className="text-lg sm:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0 space-y-4"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 0.4 }}
                       viewport={{ once: true }}
                     >
-                      Mukamba Gateway is a property purchasing platform designed to serve Zimbabweans locally and in the diaspora. We make it easier to buy and manage the process completely online.
-                    </motion.p>
+                      <p>
+                        Mukamba Gateway is a buyer-focused, fintech-enabled real estate platform for Zimbabwe (with South Africa to follow) that makes verified, installment-based and cash property purchases transparent, secure, and practical for local and diaspora buyers.
+                      </p>
+                      <p>
+                        Unlike traditional advertising portals, Mukamba Gateway is an integrated transaction ecosystem: properties are verified before listing, deposits and monthly installments are paid into a regulated trust account, and buyers track progress through a clear, auditable process until title transfer is concluded by appointed conveyancers.
+                      </p>
+                      <p>
+                        We even have integrated dashboards for buyers to see their progress!
+                      </p>
+                    </motion.div>
                   </motion.div>
 
                   <motion.div
@@ -1466,6 +1412,90 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
       </div>
 
+      {/* What Our Users Say */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white py-16 px-4 sm:px-6 lg:px-8"
+      >
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-gray-900">
+              What Our Users Say
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+              Hear from people who have successfully found their path to homeownership with Mukamba Gateway.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2
+                }
+              }
+            }}
+          >
+            {[
+              {
+                quote: "After years of renting, I never thought I'd be able to own a home. Mukamba's installment program made it possible, and now I'm building equity with every payment.",
+                author: "Tendai Moyo",
+                location: "Harare"
+              },
+              {
+                quote: "As a property owner, Mukamba has simplified the entire process. The payment tracking is seamless, and I love having tenants who are invested in taking care of the property.",
+                author: "Rumbidzai Chikwavaire",
+                location: "Bulawayo"
+              },
+              {
+                quote: "Living abroad, I was worried about investing in property back home. Mukamba's platform gives me complete transparency and security. I can track my investment in real-time.",
+                author: "Tatenda Muzenda",
+                location: "Diaspora - London"
+              }
+            ].map((testimonial, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
+              >
+                <div className="flex items-start mb-4">
+                  <div className="text-4xl text-gray-300 font-serif leading-none">"</div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  {testimonial.quote}
+                </p>
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-4">
+                    <User className="w-6 h-6 text-gray-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{testimonial.author}</h4>
+                    <p className="text-sm text-gray-600">{testimonial.location}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.div>
+
       {/* Ready to Start Your Journey to Homeownership */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -1627,15 +1657,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             >
               <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
               <div className="space-y-3">
-                <div className="flex items-center">
-                  <Phone className="w-4 h-4 mr-2 text-white/80" />
-                  <a 
-                    href="tel:+27100000000" 
-                    className="text-white/80 hover:text-white transition-colors text-sm"
-                  >
-                    +27 10 000 0000
-                  </a>
-                </div>
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-2 text-white/80" />
                   <a 
@@ -1813,7 +1834,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         className="fixed bottom-6 right-6 z-50"
       >
         <Button
-          className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"
+          className="bg-[#7f1518] hover:bg-[#6a1215] text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"
           size="lg"
           onClick={() => {
             trackEvent('floating_sell_button_clicked', {
