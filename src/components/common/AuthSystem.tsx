@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, UserPlus, LogOut, User } from 'lucide-react';
+import { LogIn, UserPlus, LogOut, User, Building } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -270,7 +270,7 @@ export const AuthSystem: React.FC = () => {
                   onClick={() => router.push('/listings')}
                   className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
                 >
-                  <User className="w-4 h-4 mr-2" />
+                  <Building className="w-4 h-4 mr-2" />
                   Properties
                 </button>
                 {isAuthenticated && user && user.roles.includes('admin') && (

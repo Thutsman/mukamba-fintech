@@ -1127,11 +1127,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 sm:px-0">
               {isDataLoading ? (
                 // Enhanced skeleton loading
-                Array.from({ length: 6 }).map((_, index) => (
+                Array.from({ length: 4 }).map((_, index) => (
                   <EnhancedPropertyCardSkeleton key={`skeleton-${index}`} index={index} />
                 ))
               ) : (
-                featuredProperties.slice(0, 6).map((property, index) => (
+                featuredProperties.slice(0, 4).map((property, index) => (
                   <EnhancedPropertyCardWrapper
                     key={`property-${property.id}`}
                     property={property}
@@ -1586,15 +1586,27 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               
               {/* Social Media Icons */}
               <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
+                <a 
+                  href="https://www.facebook.com/people/Mukamba-Gateway/61580417286014/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
+                  aria-label="Follow us on Facebook"
+                >
                   <span className="text-xs font-bold">f</span>
-                </div>
+                </a>
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
                   <span className="text-xs font-bold">i</span>
                 </div>
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
+                <a 
+                  href="https://www.linkedin.com/company/mukamba-gateway/about/?viewAsMember=true" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
+                  aria-label="Follow us on LinkedIn"
+                >
                   <span className="text-xs font-bold">in</span>
-                </div>
+                </a>
               </div>
             </motion.div>
 
@@ -1607,13 +1619,17 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             >
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                {['Home', 'About', 'Properties', 'Dashboard', 'FAQs'].map((link, index) => (
+                {[
+                  { name: 'Home', href: '/' },
+                  { name: 'About', href: '/about' },
+                  { name: 'Properties', href: '/listings' }
+                ].map((link, index) => (
                   <li key={index}>
                     <a 
-                      href="#" 
+                      href={link.href} 
                       className="text-white/80 hover:text-white transition-colors text-sm"
                     >
-                      {link}
+                      {link.name}
                     </a>
                   </li>
                 ))}
