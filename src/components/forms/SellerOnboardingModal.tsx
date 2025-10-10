@@ -543,12 +543,12 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       />
       
       {/* Modal Content */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700">
+      <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <div className="flex items-center">
             <Home className="w-5 h-5 mr-2 text-red-600" />
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-slate-900">
               Seller Onboarding
             </h2>
           </div>
@@ -556,7 +556,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            className="h-8 w-8 text-slate-500 hover:text-slate-700"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -620,7 +620,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-6 border-t border-slate-200">
           <Button
             variant="outline"
             onClick={handleBack}
