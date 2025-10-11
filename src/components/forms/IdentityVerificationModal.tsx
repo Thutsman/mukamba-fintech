@@ -209,7 +209,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-lg"
+          className="w-full max-w-lg max-h-[90vh] overflow-hidden"
         >
           <Card className="shadow-2xl">
             <CardHeader className="text-center">
@@ -247,7 +247,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
               </p>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
               {/* Verified State Content */}
               {verificationState === 'verified' && !showUpdateForm && (
                 <div className="space-y-6">

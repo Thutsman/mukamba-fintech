@@ -94,6 +94,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const { updateUser } = useAuthStore();
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('overview');
+  // Local verification state to immediately unlock actions post-upload
+  const [identityVerifiedLocal, setIdentityVerifiedLocal] = React.useState<boolean>(!!user?.isIdentityVerified);
   
   // Offer flow state
   const [showExpressInterestModal, setShowExpressInterestModal] = React.useState(false);
@@ -275,15 +277,9 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       return;
     }
 
-    const price = property.financials.price;
-
-    // Price-gated KYC checks
-    if (price < 30000 && !user.isIdentityVerified) {
+    // Identity verification required for all offers
+    if (!identityVerifiedLocal) {
       setShowIdentityModal(true);
-      return;
-    }
-    if (price >= 30000 && !user.isFinanciallyVerified) {
-      setShowFinancialModal(true);
       return;
     }
 
@@ -396,9 +392,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const canMakeOffer = () => {
     if (!user) return false;
     if (!user.is_phone_verified) return false;
-    const price = property.financials.price;
-    if (price < 30000 && !user.isIdentityVerified) return false;
-    if (price >= 30000 && !user.isFinanciallyVerified) return false;
+    if (!identityVerifiedLocal) return false;
     if (hasUserOffer() && userOffer?.status !== 'rejected') return false;
     return true;
   };
@@ -1461,7 +1455,15 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         isOpen={showIdentityModal}
         onClose={() => setShowIdentityModal(false)}
         onComplete={() => {
-          // Keep status pending until admin approval
+          // Immediately reflect identity verification locally for UX
+          if (user) {
+            updateUser({
+              ...user,
+              isIdentityVerified: true,
+              kyc_level: user.kyc_level === 'financial' || user.kyc_level === 'complete' ? user.kyc_level : 'identity'
+            });
+          }
+          setIdentityVerifiedLocal(true);
           setShowIdentityModal(false);
         }}
       />
