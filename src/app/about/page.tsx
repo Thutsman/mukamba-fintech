@@ -17,7 +17,9 @@ import {
   LogIn,
   ExternalLink,
   Linkedin,
-  Globe
+  Globe,
+  Menu,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,6 +30,7 @@ import { useRouter } from 'next/navigation';
 
 export default function AboutPage() {
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   // Analytics tracking function
   const trackEvent = (eventName: string, parameters: Record<string, any>) => {
@@ -86,38 +89,35 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white shadow-lg border-b border-slate-200 sticky top-0 z-40">
-        <div className="w-full px-6 md:px-8">
-          <div className="flex items-center justify-between h-17 sm:h-21 md:h-24">
+        <div className="w-full px-4 sm:px-6 md:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <div className="flex-shrink-0 flex items-center">
-              <div className="flex items-center">
-                <img 
-                  src="/logo.svg" 
-                  alt="Mukamba Logo" 
-                  className="header-logo w-35 h-30 sm:w-44 sm:h-36 md:w-52 md:h-42 object-contain"
-                  onError={(e) => {
-                    // Fallback to the original icon if image fails to load
-                    const target = e.currentTarget as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) {
-                      fallback.style.display = 'flex';
-                    }
-                  }}
-                />
-                <div className="w-35 h-30 sm:w-44 sm:h-36 md:w-52 md:h-42 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
-                  <User className="w-18 h-15 sm:w-22 sm:h-18 md:w-26 md:h-21 text-white" />
-                </div>
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <img 
+                src="/logo.svg" 
+                alt="Mukamba Logo" 
+                className="h-8 sm:h-10 md:h-12 w-auto object-contain"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
+              />
+              <div className="h-8 sm:h-10 md:h-12 w-auto bg-red-600 rounded-lg flex items-center justify-center px-3" style={{ display: 'none' }}>
+                <Home className="w-6 h-6 text-white" />
               </div>
-            </div>
+            </Link>
 
-            {/* Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
               <Link
                 href="/"
                 className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium"
               >
-                <User className="w-4 h-4 mr-2" />
+                <Home className="w-4 h-4 mr-2" />
                 Home
               </Link>
               <Link
@@ -132,8 +132,8 @@ export default function AboutPage() {
               </span>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-4">
+            {/* Desktop Action Buttons */}
+            <div className="hidden md:flex items-center space-x-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -144,14 +144,65 @@ export default function AboutPage() {
               </Button>
               <Button 
                 size="sm"
-                className="text-white"
-                style={{ backgroundColor: '#7F1518' }}
+                className="text-white bg-[#7F1518] hover:bg-[#6a1215]"
               >
                 <LogIn className="w-4 h-4 mr-2" />
                 Sign In
               </Button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-md text-slate-700 hover:bg-slate-100"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 border-t border-slate-200">
+              <div className="flex flex-col space-y-3">
+                <Link
+                  href="/"
+                  className="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-md font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Home className="w-4 h-4 mr-3" />
+                  Home
+                </Link>
+                <Link
+                  href="/listings"
+                  className="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-md font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Building className="w-4 h-4 mr-3" />
+                  Properties
+                </Link>
+                <span className="flex items-center px-3 py-2 text-red-600 font-medium">
+                  About
+                </span>
+                <div className="pt-3 border-t border-slate-200 space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center border-slate-300 text-slate-700 hover:bg-slate-50"
+                    size="sm"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Create Account
+                  </Button>
+                  <Button 
+                    className="w-full justify-center text-white bg-[#7F1518] hover:bg-[#6a1215]"
+                    size="sm"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
