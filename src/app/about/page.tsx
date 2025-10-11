@@ -46,19 +46,39 @@ export default function AboutPage() {
       initial: "L"
     },
     {
-      name: "Tatenda",
-      role: "CTO",
+      name: "Tadi",
+      role: "Tech and Innovation Lead",
       initial: "T"
     },
     {
-      name: "Tendai",
-      role: "COO",
-      initial: "T"
+      name: "Peter",
+      role: "Strategy Lead",
+      initial: "P"
     },
     {
-      name: "Rumbidzai",
-      role: "CFO",
-      initial: "R"
+      name: "Tjeludo",
+      role: "Head of Finance and Investments",
+      initial: "TJ"
+    },
+    {
+      name: "Darryl",
+      role: "Our Real Estate Guru and Partner",
+      initial: "D"
+    },
+    {
+      name: "Thulani",
+      role: "Full Stack Development",
+      initial: "TH"
+    },
+    {
+      name: "Edson",
+      role: "Head of Business Development",
+      initial: "E"
+    },
+    {
+      name: "Nkosi",
+      role: "UX Design Lead",
+      initial: "N"
     }
   ];
 
@@ -137,85 +157,75 @@ export default function AboutPage() {
 
       {/* Hero Section */}
       <section className="py-16" style={{ backgroundColor: '#7F1518' }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight tracking-tight"
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
             About Mukamba Gateway
           </motion.h1>
+          <motion.p
+            className="text-lg sm:text-xl text-white leading-relaxed max-w-4xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            Mukamba Gateway is a buyer-focused, fintech-powered real estate platform that makes owning a home in Zimbabwe simple, transparent, and secure — with South Africa soon to follow.
+          </motion.p>
         </div>
       </section>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Introduction */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Introduction Paragraph */}
         <motion.section
-          className="mb-12"
+          className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
         >
           <p className="text-lg text-gray-700 leading-relaxed">
-            Mukamba Gateway is a revolutionary property platform that transforms how people buy and sell real estate in Southern Africa. We believe that homeownership should be accessible to everyone, regardless of their financial situation.
+            We're not just another property listing site. Mukamba Gateway is an integrated transaction ecosystem where every property is verified before listing, payments flow through a regulated trust account, and buyers can track their journey from offer to title through clear, auditable dashboards.
           </p>
         </motion.section>
 
         {/* Why It Matters */}
         <motion.section
-          className="mb-12"
+          className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Why It Matters</h2>
           <div className="space-y-6">
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Flexible Payment Options</h3>
-                <p className="text-gray-700">We offer installment-based ownership, making property investment accessible to more people.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <Shield className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Secure Transactions</h3>
-                <p className="text-gray-700">All transactions are protected and verified, ensuring your investment is safe.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <Building className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Verified Properties</h3>
-                <p className="text-gray-700">Every property is thoroughly vetted before listing, ensuring quality and authenticity.</p>
-              </div>
-            </div>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              At every step, Mukamba Gateway delivers trust you can see — verified deeds, escrowed payments, standardized contracts, transparent dashboards, and hands-on concierge support.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              Diaspora buyers can use overseas identity and financial documents to verify and purchase safely. Sellers gain access to a pool of pre-verified buyers, with reduced fraud risk and flexible installment options that meet real market needs.
+            </p>
           </div>
         </motion.section>
 
         {/* Who We Are */}
         <motion.section
-          className="mb-12"
+          className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
         >
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Who We Are</h2>
           <div className="space-y-6">
             <p className="text-lg text-gray-700 leading-relaxed">
-              Mukamba Gateway is a fintech-enabled real estate platform designed specifically for the Southern African market. We combine innovative technology with deep local knowledge to create a seamless property buying and selling experience.
+              Mukamba Gateway coordinates the process — bringing structure, compliance, and technology together. We're not a conveyancer or a marketing agent.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Our platform serves both local buyers and the diaspora community, providing flexible payment options and secure transaction processes that make property investment accessible to everyone.
+              All property verification and escrow services are handled through our licensed estate agents (JPococks), operating registered trust accounts in full compliance with Zimbabwean law.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              Independent conveyancers oversee title transfers, ensuring every transaction ends with a secure handover of ownership.
             </p>
           </div>
         </motion.section>
@@ -225,26 +235,26 @@ export default function AboutPage() {
           className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 1.0 }}
         >
           <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Meet the Team</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-12 max-w-6xl mx-auto">
             {teamMembers.map((member, index) => (
               <motion.div
                 key={member.name}
                 className="text-center"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.9 + index * 0.1 }}
+                transition={{ duration: 0.6, delay: 1.1 + index * 0.1 }}
               >
                 <div
-                  className="w-28 h-28 rounded-full flex items-center justify-center mx-auto mb-4"
+                  className="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ backgroundColor: '#7F1518' }}
                 >
                   <span className="text-white font-bold text-3xl">{member.initial}</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
-                <p className="text-base text-gray-600">{member.role}</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
+                <p className="text-sm text-gray-600">{member.role}</p>
               </motion.div>
             ))}
           </div>
@@ -341,28 +351,12 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Company Info */}
             <div className="lg:col-span-1">
-              <div className="flex items-center mb-4">
-                <div className="flex items-center mr-3">
-                  <img
-                    src="/logo.jpg"
-                    alt="Mukamba Logo"
-                    className="w-8 h-8 object-contain"
-                    onLoad={() => console.log('Footer logo loaded successfully')}
-                    onError={(e) => {
-                      console.log('Footer logo failed to load, using fallback');
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) {
-                        fallback.style.display = 'flex';
-                      }
-                    }}
-                  />
-                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center" style={{ display: 'none' }}>
-                    <Home className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-                <span className="text-xl font-bold">Mukamba Gateway</span>
+              <div className="mb-4">
+                <img
+                  src="/logo-white.svg"
+                  alt="Mukamba Gateway Logo"
+                  className="h-auto w-[200px]"
+                />
               </div>
               <p className="text-white/90 text-sm leading-relaxed mb-6">
                 Transforming property ownership in Southern Africa through innovative flexible installment plans.

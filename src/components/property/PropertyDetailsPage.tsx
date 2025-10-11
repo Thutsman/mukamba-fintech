@@ -116,9 +116,9 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const [isLoadingOffers, setIsLoadingOffers] = React.useState(false);
 
   // Load offers for this property (pending + approved for public summary)
-  const loadOffers = async () => {
+    const loadOffers = async () => {
     console.log('PropertyDetailsPage: Loading offers for property:', property.id);
-    setIsLoadingOffers(true);
+      setIsLoadingOffers(true);
     try {
       // Always fetch public offers summary for bidding activity display
       try {
@@ -156,10 +156,10 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       } catch (error) {
         console.error('PropertyDetailsPage: Error fetching offers from API:', error);
         // Fallback to client supabase fetch with identities, filtered by property
-        try {
-          const offers = await getPropertyOffers({ property_id: property.id });
+      try {
+        const offers = await getPropertyOffers({ property_id: property.id });
           console.log('PropertyDetailsPage: Fallback offers:', offers);
-          setPropertyOffers(offers);
+        setPropertyOffers(offers);
         } catch (fallbackError) {
           console.error('PropertyDetailsPage: Error fetching offers from client:', fallbackError);
           setPropertyOffers([]);
@@ -171,23 +171,23 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         try {
           const userOffersList = await getPropertyOffers({ property_id: property.id });
           const allUserOffers = (userOffersList || []).filter((offer: any) => offer.buyer_id === user.id);
-          setUserOffers(allUserOffers);
-          
-          // Set the most recent offer as the current user offer
-          const currentUserOffer = allUserOffers.length > 0 ? allUserOffers[0] : null;
-          setUserOffer(currentUserOffer);
+        setUserOffers(allUserOffers);
+        
+        // Set the most recent offer as the current user offer
+        const currentUserOffer = allUserOffers.length > 0 ? allUserOffers[0] : null;
+        setUserOffer(currentUserOffer);
         } catch (error) {
           console.error('Error loading user offers:', error);
           setUserOffers([]);
           setUserOffer(null);
         }
       }
-    } catch (error) {
-      console.error('Error loading offers:', error);
-    } finally {
-      setIsLoadingOffers(false);
-    }
-  };
+      } catch (error) {
+        console.error('Error loading offers:', error);
+      } finally {
+        setIsLoadingOffers(false);
+      }
+    };
 
   React.useEffect(() => {
     loadOffers();
@@ -830,6 +830,43 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                   <p className="text-gray-600 leading-relaxed">
                     {property.description}
                   </p>
+                  
+                  {/* Call to Action - Make Offer */}
+                  {(property as LocalPropertyWithStatus).status !== 'sold' && (
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                              Interested in this property?
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {canMakeOffer() 
+                                ? 'Submit your offer now to secure this property' 
+                                : !user 
+                                  ? 'Sign up to make an offer on this property'
+                                  : !user.is_phone_verified
+                                    ? 'Verify your phone to make an offer'
+                                    : 'Complete identity verification to make an offer'
+                              }
+                            </p>
+                          </div>
+                          <Button
+                            onClick={canMakeOffer() ? handleMakeOffer : (!user ? onSignUpPrompt : handleMakeOffer)}
+                            className={`ml-4 h-12 px-6 font-semibold transition-all duration-200 ${
+                              canMakeOffer()
+                                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
+                                : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
+                            } text-white border-0`}
+                            disabled={!user && false}
+                          >
+                            <DollarSign className="w-5 h-5 mr-2" />
+                            {canMakeOffer() ? 'Make Offer' : !user ? 'Sign Up to Offer' : 'Make Offer'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1115,17 +1152,17 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
             {/* Property Actions - Hide if sold */}
             {(property as LocalPropertyWithStatus).status !== 'sold' && (
-              <PropertyActions
-                property={property}
-                user={user}
-                onContactSeller={handleContactSeller}
-                onScheduleViewing={handleScheduleViewing}
-                onMakeOffer={handleMakeOffer}
-                onSignUpPrompt={onSignUpPrompt || (() => {})}
-                onPhoneVerification={handlePhoneVerification}
-                hasUserOffer={hasUserOffer()}
-                canMakeOffer={canMakeOffer()}
-                userOfferStatus={userOffer?.status}
+            <PropertyActions
+              property={property}
+              user={user}
+              onContactSeller={handleContactSeller}
+              onScheduleViewing={handleScheduleViewing}
+              onMakeOffer={handleMakeOffer}
+              onSignUpPrompt={onSignUpPrompt || (() => {})}
+              onPhoneVerification={handlePhoneVerification}
+              hasUserOffer={hasUserOffer()}
+              canMakeOffer={canMakeOffer()}
+              userOfferStatus={userOffer?.status}
                 showScheduleViewing={false}
               />
             )}
@@ -1277,7 +1314,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                       <Clock className="w-4 h-4 mr-1" />
                       Refresh
                     </Button>
-                  </div>
+          </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {isLoadingOffers ? (

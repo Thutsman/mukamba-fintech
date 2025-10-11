@@ -739,7 +739,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               </div>
               
               <h1 
-                className="font-sans text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight px-4 mb-4 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight px-4 mb-4 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
               >
                 Your Path to Home Ownership
               <br />
@@ -801,7 +801,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <Button 
                 size="lg"
                 variant="outline"
-                className="border-white/40 text-white hover:bg-white/20 hover:text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-xl w-full sm:w-auto shadow-xl hover:shadow-white/25 transition-all duration-300"
+                  className="border-white/40 text-white hover:bg-white/20 hover:text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-xl w-full sm:w-auto shadow-xl hover:shadow-white/25 transition-all duration-300"
                 onClick={() => {
                   setShowSigninModal(true);
                   // Analytics tracking for signin modal
@@ -829,7 +829,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               className="space-y-8"
             >
 
-            </motion.div>
+                  </motion.div>
 
             {/* Quick Actions */}
             <motion.div
@@ -1178,7 +1178,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 <div className="absolute inset-0 bg-gradient-to-br from-red-50/30 via-transparent to-blue-50/20"></div>
                 
                 <div className="relative z-10 py-16 px-4 sm:px-6 lg:px-8">
-                  <motion.div
+                      <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -1194,21 +1194,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     >
                       Why Mukamba Gateway
                     </motion.h2>
-                    <motion.div 
-                      className="text-lg sm:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0 space-y-4"
-                      initial={{ opacity: 0, y: 20 }}
+              <motion.div
+                      className="text-lg sm:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0"
+                initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 0.4 }}
                       viewport={{ once: true }}
                     >
                       <p>
                         Mukamba Gateway is a buyer-focused, fintech-enabled real estate platform for Zimbabwe (with South Africa to follow) that makes verified, installment-based and cash property purchases transparent, secure, and practical for local and diaspora buyers.
-                      </p>
-                      <p>
-                        Unlike traditional advertising portals, Mukamba Gateway is an integrated transaction ecosystem: properties are verified before listing, deposits and monthly installments are paid into a regulated trust account, and buyers track progress through a clear, auditable process until title transfer is concluded by appointed conveyancers.
-                      </p>
-                      <p>
-                        We even have integrated dashboards for buyers to see their progress!
                       </p>
                     </motion.div>
                   </motion.div>
@@ -1231,20 +1225,20 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     {[
                       {
                         icon: Home,
-                        title: "What You See is What You Get",
-                        description: "We value transparency and communicate all the charges openly and upfront",
+                        title: "Verified Listings",
+                        description: "Every property is pre-checked and verified before it's listed. No scams. No surprises.",
                         gradient: "from-[#7f1518] to-[#7f1518]"
                       },
                       {
                         icon: DollarSign,
-                        title: "Flexible Payment Terms",
-                        description: "We offer installment-based ownership, allowing you to make payments over time",
+                        title: "Secure Payments",
+                        description: "All deposits and instalments go into a regulated trust account — your money is protected.",
                         gradient: "from-[#7f1518] to-[#7f1518]"
                       },
                       {
                         icon: Building,
-                        title: "Guaranteed Title Deeds",
-                        description: "All our properties are legally verified and the title deeds are checked for authenticity.",
+                        title: "Track Your Progress",
+                        description: "Live dashboards let you see every step until title transfer. Total transparency.",
                         gradient: "from-[#7f1518] to-[#7f1518]"
                       }
                     ].map((feature, index) => (
@@ -1268,7 +1262,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                         
                         {/* Card content */}
                         <div className="relative z-10">
-                          <motion.div 
+              <motion.div
                             className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:shadow-lg transition-all duration-300 ease-out transform group-hover:scale-110`}
                             whileHover={{ 
                               rotate: 5,
@@ -1276,8 +1270,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                             }}
                           >
                             <feature.icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-                          </motion.div>
-                          
+              </motion.div>
+
                           <motion.h3 
                             className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 group-hover:text-red-600 transition-colors duration-300 ease-out"
                             initial={{ opacity: 0 }}
@@ -1297,7 +1291,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                           >
                             {feature.description}
                           </motion.p>
-                        </div>
+                  </div>
 
                         {/* Focus ring for accessibility */}
                         <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-focus-within:ring-red-500/50 transition-all duration-300 ease-out"></div>
@@ -1315,7 +1309,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 className="bg-gray-800 text-white py-16 px-4 sm:px-6 lg:px-8"
               >
                 <div className="max-w-7xl mx-auto">
-                  <motion.div
+                    <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
@@ -1328,9 +1322,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto px-4 sm:px-0">
                       Mukamba Gateway is a property purchasing platform designed to serve Zimbabweans locally and in the diaspora. We make it easier to buy and manage the process completely online.
                     </p>
-                  </motion.div>
+                    </motion.div>
 
-                  <motion.div
+                    <motion.div
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true }}
@@ -1359,7 +1353,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                         title: "Get Verified",
                         description: [
                           "Upload your ID, passport, or driver's license to verify your identity.",
-                          "Allows you to make offers and contact the team directly."
+                          "Allows you to make offers, payments and contact the team directly."
                         ]
                       },
                       {
@@ -1391,7 +1385,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       >
                         <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 rounded-full bg-[#7f1518] flex items-center justify-center group-hover:bg-[#6a1215] transition-all duration-300">
                           <step.icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-                        </div>
+                          </div>
                         <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 leading-tight">
                           {step.title}
                         </h3>
@@ -1400,18 +1394,18 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                             <div key={itemIndex} className="flex items-start mb-2">
                               <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                               <span>{item}</span>
-                            </div>
+                              </div>
                           ))}
-                        </div>
-                      </motion.div>
+                      </div>
+                    </motion.div>
                     ))}
-                  </motion.div>
-                </div>
+              </motion.div>
+      </div>
               </motion.div>
 
 
-      </div>
-
+        </div>
+        
       {/* What Our Users Say */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -1420,25 +1414,25 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         className="bg-white py-16 px-4 sm:px-6 lg:px-8"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
             className="text-center mb-16"
-          >
+            >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-gray-900">
               What Our Users Say
-            </h2>
+              </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
               Hear from people who have successfully found their path to homeownership with Mukamba Gateway.
-            </p>
-          </motion.div>
+              </p>
+            </motion.div>
 
-          <motion.div
+            <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+              viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
             variants={{
               hidden: { opacity: 0 },
@@ -1467,17 +1461,17 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 location: "Diaspora - London"
               }
             ].map((testimonial, index) => (
-              <motion.div
+                <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.2 }}
-                viewport={{ once: true }}
+                  viewport={{ once: true }}
                 className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
-              >
+                >
                 <div className="flex items-start mb-4">
                   <div className="text-4xl text-gray-300 font-serif leading-none">"</div>
-                </div>
+                  </div>
                 <p className="text-gray-700 leading-relaxed mb-6">
                   {testimonial.quote}
                 </p>
@@ -1494,11 +1488,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             ))}
           </motion.div>
         </div>
-      </motion.div>
+                </motion.div>
 
       {/* Ready to Start Your Journey to Homeownership */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
         className="bg-[#7f1518] py-16 px-4 sm:px-6 lg:px-8"
@@ -1506,9 +1500,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+                  viewport={{ once: true }}
             className="mb-12"
           >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
@@ -1516,14 +1510,14 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             </h2>
             <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
               Join thousands of satisfied users who are building their future through Mukamba Gateway's innovative solutions.
-            </p>
-          </motion.div>
+                  </p>
+                </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
+                  viewport={{ once: true }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Button
@@ -1558,9 +1552,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <UserPlus className="w-5 h-5 mr-2" />
               Sign Up Now
             </Button>
-          </motion.div>
-        </div>
-      </motion.div>
+                </motion.div>
+              </div>
+            </motion.div>
 
       {/* Footer Section */}
       <footer className="bg-gray-900 text-white">
@@ -1574,11 +1568,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               viewport={{ once: true }}
               className="lg:col-span-1"
             >
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center mr-3">
-                  <Home className="w-5 h-5 text-[#7f1518]" />
-                </div>
-                <span className="text-xl font-bold">Mukamba Gateway</span>
+              <div className="mb-4">
+                <Image
+                  src="/logo-white.svg"
+                  alt="Mukamba Gateway Logo"
+                  width={200}
+                  height={60}
+                  className="h-auto"
+                  priority
+                />
               </div>
               <p className="text-white/90 text-sm leading-relaxed mb-6">
                 Transforming property ownership in Southern Africa through innovative flexible installment plans.
@@ -1634,14 +1632,14 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   </li>
                 ))}
               </ul>
-            </motion.div>
+                </motion.div>
 
             {/* Our Services */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
+                  viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
@@ -1662,14 +1660,14 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   </li>
                 ))}
               </ul>
-            </motion.div>
+                </motion.div>
 
             {/* Contact Us */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
+                  viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
               <div className="space-y-3">
@@ -1687,7 +1685,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           </div>
 
           {/* Bottom Bar */}
-          <motion.div
+            <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -1709,9 +1707,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               <p className="text-white/60 text-sm">
                 © 2025 Mukamba Gateway. All rights reserved.
               </p>
-            </div>
-          </motion.div>
-        </div>
+              </div>
+            </motion.div>
+          </div>
       </footer>
 
       {/* Basic Signup Modal */}
