@@ -5,7 +5,7 @@
  * 
  * Features:
  * - Display offer summary with all details
- * - Multiple payment options (Ecocash, Bank Transfer, Diaspora)
+ * - Multiple payment options (Bank Transfer, Diaspora)
  * - Payment status tracking and confirmation
  * - Integration with offer_payments table
  * - Admin notifications on payment completion
@@ -16,7 +16,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   CreditCard,
-  Smartphone,
   Building2,
   Globe,
   CheckCircle,
@@ -57,8 +56,7 @@ interface PaymentModalProps {
 }
 
 interface PaymentData {
-  paymentMethod: 'ecocash' | 'bank_transfer' | 'diaspora';
-  phoneNumber?: string;
+  paymentMethod: 'bank_transfer' | 'diaspora';
   bankDetails?: string;
   paymentReference?: string;
   amount: number;
@@ -81,7 +79,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const [step, setStep] = React.useState<'method' | 'details' | 'processing' | 'success'>('method');
   const [paymentData, setPaymentData] = React.useState<PaymentData>({
-    paymentMethod: 'ecocash',
+    paymentMethod: 'bank_transfer',
     amount: offer.deposit_amount
   });
   const [isLoading, setIsLoading] = React.useState(false);
@@ -121,7 +119,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (isOpen) {
       setStep('method');
       setPaymentData({
-        paymentMethod: 'ecocash',
+        paymentMethod: 'bank_transfer',
         amount: offer.deposit_amount
       });
       setValidationErrors({});
@@ -343,10 +341,6 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
   const validatePaymentDetails = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (paymentData.paymentMethod === 'ecocash' && !paymentData.phoneNumber) {
-      errors.phoneNumber = 'Phone number is required for Ecocash payment';
-    }
-
     if (paymentData.paymentMethod === 'bank_transfer') {
       if (!paymentData.proofUrl) {
         errors.proofOfPayment = 'Proof of payment is required for bank transfer';
@@ -364,7 +358,6 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
     setPaymentData(prev => ({ 
       ...prev, 
       paymentMethod: method,
-      phoneNumber: method === 'ecocash' ? prev.phoneNumber : undefined,
       bankDetails: method === 'bank_transfer' ? prev.bankDetails : undefined
     }));
     setValidationErrors({});
@@ -377,47 +370,7 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
     setStep('processing');
     
     try {
-      if (paymentData.paymentMethod === 'ecocash') {
-        // Call Ecocash API to initiate payment
-        const response = await fetch('/api/payments/ecocash/initiate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            offer_id: offer.id,
-            phone_number: paymentData.phoneNumber,
-            amount: paymentData.amount,
-            user_id: user.id
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to initiate payment');
-        }
-        
-        // Call custom onSubmit if provided
-        if (onSubmit) {
-          await onSubmit({
-            ...paymentData,
-            transaction_id: result.transaction_id,
-            payment_id: result.payment_id
-          });
-        }
-        
-        // Show sandbox info if available
-        if (result.sandbox_info) {
-          console.log('Sandbox Info:', result.sandbox_info);
-        }
-        
-        setStep('success');
-        setTimeout(() => {
-          onClose();
-          setStep('method');
-        }, 3000);
-      } else if (paymentData.paymentMethod === 'bank_transfer') {
+      if (paymentData.paymentMethod === 'bank_transfer') {
         // Handle bank transfer submission
         const response = await fetch('/api/payments/bank-transfer/submit', {
           method: 'POST',
@@ -595,27 +548,6 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                       className="space-y-3"
                     >
                       <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        paymentData.paymentMethod === 'ecocash' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                      }`}>
-                        <RadioGroupItem 
-                          value="ecocash" 
-                          id="ecocash" 
-                          className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
-                        />
-                        <Label htmlFor="ecocash" className="cursor-pointer flex-1">
-                          <div className="flex items-center">
-                            <Smartphone className="w-5 h-5 mr-3 text-gray-600" />
-                            <div>
-                              <span className="text-base font-medium">Ecocash</span>
-                              <p className="text-sm text-gray-500">Mobile money payment</p>
-                            </div>
-                          </div>
-                        </Label>
-                      </div>
-
-                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                         paymentData.paymentMethod === 'bank_transfer' 
                           ? 'border-green-500 bg-green-50' 
                           : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
@@ -688,9 +620,6 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      {paymentData.paymentMethod === 'ecocash' && 
-                        'You will receive an Ecocash prompt on your mobile device to complete the payment. The amount will be automatically filled in.'
-                      }
                       {paymentData.paymentMethod === 'bank_transfer' && 
                         'Transfer the exact amount to our bank account and upload proof of payment. Your payment will be verified manually within 1-2 business days.'
                       }
@@ -700,34 +629,7 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                     </AlertDescription>
                   </Alert>
 
-                  {/* Sandbox Information */}
-                  {paymentData.paymentMethod === 'ecocash' && (
-                    <Alert className="bg-yellow-50 border-yellow-200">
-                      <Info className="h-4 w-4 text-yellow-600" />
-                      <AlertDescription className="text-yellow-800">
-                        <strong>Testing Mode:</strong> If you're testing, use PIN codes: 0000, 1234, or 9999 to complete the payment.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
                   {/* Payment Details Form */}
-                  {paymentData.paymentMethod === 'ecocash' && (
-                    <div className="space-y-3">
-                      <Label htmlFor="phoneNumber" className="text-base font-medium">Phone Number</Label>
-                      <input
-                        id="phoneNumber"
-                        type="tel"
-                        value={paymentData.phoneNumber || ''}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="e.g., 0771234567 or +263771234567"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      />
-                      {validationErrors.phoneNumber && (
-                        <p className="text-sm text-red-600">{validationErrors.phoneNumber}</p>
-                      )}
-                    </div>
-                  )}
-
                   {paymentData.paymentMethod === 'bank_transfer' && (
                     <div className="space-y-6">
                       {/* Bank Details Card */}
