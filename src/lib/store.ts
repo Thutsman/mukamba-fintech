@@ -50,11 +50,12 @@ export const useAuthStore = create<AuthStore>()(
             throw new Error('Supabase client not initialized');
           }
 
-          // Real Supabase auth call
+          // Real Supabase auth call with email confirmation disabled
           const { data: authData, error: authError } = await supabase.auth.signUp({
             email: data.email,
             password: data.password,
             options: {
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
               data: {
                 first_name: data.firstName,
                 last_name: data.lastName,
@@ -74,6 +75,25 @@ export const useAuthStore = create<AuthStore>()(
           }
 
           console.log('Supabase user created:', authData.user);
+
+          // Send custom confirmation email
+          if (authData.user) {
+            try {
+              await fetch('/api/send-confirmation-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: data.email,
+                  firstName: data.firstName,
+                  userId: authData.user.id,
+                }),
+              });
+              console.log('Custom confirmation email sent successfully');
+            } catch (emailError) {
+              console.error('Failed to send custom email:', emailError);
+              // Don't fail signup if email sending fails
+            }
+          }
 
           // Check if email confirmation is required
           if (authData.user && !authData.user.email_confirmed_at) {
