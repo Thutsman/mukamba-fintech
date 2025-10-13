@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
+import * as React from 'react';
 import { ConfirmationEmailTemplate } from './email-templates/confirmation-email';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -13,7 +14,7 @@ export async function sendConfirmationEmail(
 
   try {
     const emailHtml = render(
-      ConfirmationEmailTemplate({ firstName, confirmationUrl })
+      React.createElement(ConfirmationEmailTemplate, { firstName, confirmationUrl })
     );
 
     const data = await resend.emails.send({
