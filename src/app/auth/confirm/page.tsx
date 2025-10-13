@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
   const router = useRouter();
@@ -185,6 +185,22 @@ export default function ConfirmEmailPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <Loader2 className="w-16 h-16 text-[#7F1518] animate-spin mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Confirming Your Email</h1>
+          <p className="text-gray-600">Please wait...</p>
+        </div>
+      </div>
+    }>
+      <ConfirmEmailContent />
+    </Suspense>
   );
 }
 

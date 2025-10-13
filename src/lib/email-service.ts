@@ -13,7 +13,7 @@ export async function sendConfirmationEmail(
   const confirmationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm?token=${confirmationToken}`;
 
   try {
-    const emailHtml = render(
+    const emailHtml = await render(
       React.createElement(ConfirmationEmailTemplate, { firstName, confirmationUrl })
     );
 
