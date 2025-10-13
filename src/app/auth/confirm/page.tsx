@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -22,59 +21,28 @@ function ConfirmEmailContent() {
         return;
       }
 
-      if (!supabase) {
-        setStatus('error');
-        setMessage('Database connection error. Please try again later.');
-        return;
-      }
-
       try {
-        // Verify token exists and hasn't expired
-        const { data: confirmationData, error: fetchError } = await supabase
-          .from('email_confirmations')
-          .select('*')
-          .eq('token', token)
-          .single();
+        // Call API route to confirm email (uses admin privileges)
+        const response = await fetch('/api/confirm-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
 
-        if (fetchError || !confirmationData) {
+        const result = await response.json();
+
+        if (!result.success) {
           setStatus('error');
-          setMessage('Invalid or expired confirmation link. Please request a new confirmation email.');
+          setMessage(result.error || 'Confirmation failed. Please try again.');
           return;
         }
 
         // Check if already confirmed
-        if (confirmationData.confirmed_at) {
+        if (result.alreadyConfirmed) {
           setStatus('success');
           setMessage('Your email has already been confirmed! Redirecting to home...');
           setTimeout(() => router.push('/'), 2000);
           return;
-        }
-
-        // Check expiration
-        if (new Date() > new Date(confirmationData.expires_at)) {
-          setStatus('error');
-          setMessage('This confirmation link has expired. Please request a new confirmation email.');
-          return;
-        }
-
-        // Mark as confirmed in our custom table
-        const { error: updateError } = await supabase
-          .from('email_confirmations')
-          .update({ confirmed_at: new Date().toISOString() })
-          .eq('token', token);
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        // Update user metadata to mark email as confirmed
-        const { error: authUpdateError } = await supabase.auth.updateUser({
-          data: { email_confirmed_custom: true }
-        });
-
-        if (authUpdateError) {
-          console.error('Failed to update user metadata:', authUpdateError);
-          // Continue anyway - the important part is the database record
         }
 
         setStatus('success');
