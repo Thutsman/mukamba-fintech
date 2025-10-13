@@ -18,7 +18,7 @@ export async function sendConfirmationEmail(
     );
 
     const data = await resend.emails.send({
-      from: 'Mukamba Gateway <onboarding@resend.dev>', // Use your domain when verified
+      from: 'Mukamba Gateway <noreply@mukambagateway.com>',
       to: [email],
       subject: 'Confirm your Mukamba Gateway account',
       html: emailHtml,
