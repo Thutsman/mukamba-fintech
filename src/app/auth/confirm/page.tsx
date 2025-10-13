@@ -22,6 +22,12 @@ export default function ConfirmEmailPage() {
         return;
       }
 
+      if (!supabase) {
+        setStatus('error');
+        setMessage('Database connection error. Please try again later.');
+        return;
+      }
+
       try {
         // Verify token exists and hasn't expired
         const { data: confirmationData, error: fetchError } = await supabase
