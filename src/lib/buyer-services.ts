@@ -78,7 +78,8 @@ export const buyerServices = {
 
       // Prefer internal API route for provider-agnostic sending
       try {
-        const apiRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/sms`, {
+        // Use relative URL to avoid CORS issues when domain changes
+        const apiRes = await fetch('/api/sms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phoneNumber, otpCode, userId, verificationSource })

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       transaction_id,
       phone_number,
       amount,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://mukamba-fintech.vercel.app'}/api/payments/ecocash/callback`
+      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.mukambagateway.com'}/api/payments/ecocash/callback`
     });
     
     if (!ecocashResponse.success) {
