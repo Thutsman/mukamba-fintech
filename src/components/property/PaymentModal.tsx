@@ -148,11 +148,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Bank details for Mukamba FinTech
   const bankDetails = {
-    bankName: 'Standard Bank Zimbabwe',
-    accountName: 'Mukamba FinTech (Pvt) Ltd',
-    accountNumber: '1234567890',
-    swiftCode: 'SBICZWHX',
-    branchCode: '001',
+    bankName: 'NEDBANK',
+    accountName: 'JOHN POCOCK AND COMPANY TRUST ACCOUNT',
+    accountNumber: '11990130215',
+    swiftCode: 'MBCAZWHX',
+    branchCode: '18301',
     reference: `OFFER-${offer.id.slice(-8).toUpperCase()}`
   };
 
@@ -272,10 +272,10 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
     <div class="section-title">Bank Transfer (if selected)</div>
     <table>
       <tbody>
-        <tr><td>Bank Name</td><td>Standard Bank Zimbabwe</td></tr>
-        <tr><td>Account Name</td><td>Mukamba FinTech (Pvt) Ltd</td></tr>
-        <tr><td>Account Number</td><td>1234567890</td></tr>
-        <tr><td>SWIFT / Branch Code</td><td>SBICZWHX / 001</td></tr>
+        <tr><td>Bank Name</td><td>NEDBANK</td></tr>
+        <tr><td>Account Name</td><td>JOHN POCOCK AND COMPANY TRUST ACCOUNT</td></tr>
+        <tr><td>Account Number</td><td>11990130215</td></tr>
+        <tr><td>SWIFT / Branch Code</td><td>MBCAZWHX / 18301</td></tr>
         <tr><td>Reference</td><td>Use <strong>${inv.invoice_number}</strong> as payment reference</td></tr>
       </tbody>
     </table>
