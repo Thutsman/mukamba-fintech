@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   User, 
   Shield, 
@@ -572,275 +573,6 @@ const GuidedTour: React.FC<{
   );
 };
 
-// Smart Recommendations Panel
-const SmartRecommendations: React.FC<{
-  recommendations: ReturnType<typeof useSmartRecommendations>;
-  onActionClick: (id: string) => void;
-}> = ({ recommendations, onActionClick }) => {
-  const [showAll, setShowAll] = React.useState(false);
-  
-  if (recommendations.length === 0) return null;
-
-  const primaryRecommendation = recommendations.find(rec => rec.type === 'primary');
-  const secondaryRecommendations = recommendations.filter(rec => rec.type === 'secondary');
-  const displayedRecommendations = showAll ? recommendations : recommendations.slice(0, 3);
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Easy': return 'text-green-600 bg-green-100';
-      case 'Moderate': return 'text-orange-600 bg-orange-100';
-      case 'Comprehensive': return 'text-red-600 bg-red-100';
-      default: return 'text-slate-600 bg-slate-100';
-    }
-  };
-
-  const getBadgeColor = (badge: string) => {
-    switch (badge) {
-      case 'Recommended for you': return 'bg-[#7F1518] text-white';
-      case 'Unlocked': return 'bg-green-500 text-white';
-      case 'Coming Soon': return 'bg-slate-500 text-white';
-      default: return 'bg-blue-100 text-blue-700';
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-    >
-      <Card className="bg-[#231F20] border-slate-600 text-white">
-        <CardHeader className="border-b border-slate-600">
-          <CardTitle className="flex items-center text-white">
-            <Target className="w-5 h-5 mr-2 text-white" />
-            Smart Recommendations
-            <Tooltip content="AI-powered suggestions based on your profile and goals">
-              <Info className="w-4 h-4 ml-2 text-slate-400 cursor-help" />
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Primary Recommendation - Prominently Displayed */}
-            {primaryRecommendation && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                className="p-6 rounded-xl border-2 border-slate-600 bg-[#231F20] shadow-lg cursor-pointer transition-all duration-300 text-white"
-                onClick={() => onActionClick(primaryRecommendation.id)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      {primaryRecommendation.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-bold text-lg text-white">{primaryRecommendation.title}</h4>
-                        {primaryRecommendation.badge && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getBadgeColor(primaryRecommendation.badge)}`}>
-                            {primaryRecommendation.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-white mb-3">{primaryRecommendation.description}</p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm text-white">{primaryRecommendation.timeRequired}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(primaryRecommendation.difficulty)}`}>
-                            {primaryRecommendation.difficulty}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Unlock className="w-4 h-4 text-green-600" />
-                          <span className="text-sm text-white">{primaryRecommendation.whatYoullUnlock}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-white font-medium">
-                          ✨ {primaryRecommendation.benefit}
-                        </p>
-                        <Button className="bg-[#7F1518] hover:bg-[#8B1A1D] text-white">
-                          {primaryRecommendation.action}
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Secondary Recommendations */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {secondaryRecommendations.slice(0, showAll ? undefined : 2).map((rec, index) => (
-              <motion.div
-                key={rec.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + index * 0.1 }}
-                  whileHover={{ scale: 1.02, y: -1 }}
-                  className="p-4 rounded-lg border border-slate-200 bg-white hover:shadow-md cursor-pointer transition-all duration-200"
-                onClick={() => onActionClick(rec.id)}
-              >
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-slate-100 rounded-lg">
-                      {rec.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h5 className="font-semibold text-sm text-slate-800">{rec.title}</h5>
-                        {rec.badge && (
-                          <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getBadgeColor(rec.badge)}`}>
-                            {rec.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-600 mb-2">{rec.description}</p>
-                      
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-                        <span>{rec.timeRequired}</span>
-                        <span className={`px-1.5 py-0.5 rounded-full text-xs ${getDifficultyColor(rec.difficulty)}`}>
-                          {rec.difficulty}
-                        </span>
-                      </div>
-                      
-                      <p className="text-xs text-green-600 mb-2">
-                        ✨ {rec.benefit}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-blue-600">{rec.whatYoullUnlock}</span>
-                        <ChevronRight className="w-3 h-3 text-slate-400" />
-                    </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Show More/Less Button */}
-            {recommendations.length > 3 && (
-              <div className="text-center pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAll(!showAll)}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  {showAll ? 'Show Less' : `See all ${recommendations.length} recommendations`}
-                  <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showAll ? 'rotate-180' : ''}`} />
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
-// Recent Activity Feed Component
-const RecentActivityFeed: React.FC<{
-  user: UserType;
-}> = ({ user }) => {
-  const [activities, setActivities] = React.useState([
-    {
-      id: 1,
-      type: 'property_view',
-      title: 'You viewed Luxury Villa in Chisipite',
-      description: 'Yesterday at 2:30 PM',
-      icon: <Eye className="w-4 h-4" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      id: 2,
-      type: 'property_save',
-      title: 'You saved 3 properties this week',
-      description: 'Properties in your price range',
-      icon: <Heart className="w-4 h-4" />,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100'
-    },
-    {
-      id: 3,
-      type: 'application_update',
-      title: 'Your financing application is being processed',
-      description: 'Expected completion: 2-3 business days',
-      icon: <CheckSquare className="w-4 h-4" />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
-    },
-    {
-      id: 4,
-      type: 'market_update',
-      title: '5 new properties in your price range added today',
-      description: 'In Harare and surrounding areas',
-      icon: <TrendingUp className="w-4 h-4" />,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
-    }
-  ]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.4 }}
-    >
-      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <CardHeader>
-          <CardTitle className="flex items-center text-slate-700">
-            <Activity className="w-5 h-5 mr-2" />
-            Recent Activity
-            <Tooltip content="Your recent interactions and updates">
-              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {activities.map((activity, index) => (
-              <motion.div
-                key={activity.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * index }}
-                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors duration-200"
-              >
-                <div className={`p-2 rounded-full ${activity.bgColor}`}>
-                  <div className={activity.color}>
-                    {activity.icon}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm text-slate-800">{activity.title}</h4>
-                  <p className="text-xs text-slate-600">{activity.description}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-              </motion.div>
-            ))}
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-              View All Activity
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
 // Personalized Property Recommendations Component
 const PersonalizedPropertyRecommendations: React.FC<{
   user: UserType;
@@ -1074,365 +806,6 @@ const PersonalizedPropertyRecommendations: React.FC<{
 
 
 
-
-
-
-
-// Notifications & Alerts Center Component
-const NotificationsCenter: React.FC<{
-  user: UserType;
-}> = ({ user }) => {
-  const [notifications, setNotifications] = React.useState([
-    {
-      id: 1,
-      type: 'property_alert',
-      title: '3 new properties match your criteria',
-      description: 'In Harare and surrounding areas',
-      time: '2 hours ago',
-      icon: <Bell className="w-4 h-4" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'application_update',
-      title: 'Your financing application is being processed',
-      description: 'Expected completion: 2-3 business days',
-      time: '1 day ago',
-      icon: <CheckSquare className="w-4 h-4" />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      unread: false
-    },
-    {
-      id: 3,
-      type: 'market_alert',
-      title: 'Prices in Glen Lorne increased 5% this month',
-      description: 'Market trend update',
-      time: '2 days ago',
-      icon: <TrendingUp className="w-4 h-4" />,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      unread: false
-    },
-    {
-      id: 4,
-      type: 'verification_reminder',
-      title: 'Complete identity verification to unlock more features',
-      description: 'Required for installment purchases',
-      time: '3 days ago',
-      icon: <Shield className="w-4 h-4" />,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      unread: true
-    }
-  ]);
-
-  const unreadCount = notifications.filter(n => n.unread).length;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.7 }}
-    >
-      <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <CardHeader>
-          <CardTitle className="flex items-center text-slate-700">
-            <Bell className="w-5 h-5 mr-2" />
-            Notifications & Alerts
-            {unreadCount > 0 && (
-              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                {unreadCount}
-              </span>
-            )}
-            <Tooltip content="Stay updated with important notifications">
-              <Info className="w-4 h-4 ml-2 text-slate-500 cursor-help" />
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {notifications.slice(0, 4).map((notification, index) => (
-              <motion.div
-                key={notification.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * index }}
-                className={`flex items-start space-x-3 p-3 rounded-lg transition-colors duration-200 ${
-                  notification.unread ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50'
-                }`}
-              >
-                <div className={`p-2 rounded-full ${notification.bgColor}`}>
-                  <div className={notification.color}>
-                    {notification.icon}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm text-slate-800">{notification.title}</h4>
-                    {notification.unread && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-600 mb-1">{notification.description}</p>
-                  <p className="text-xs text-slate-500">{notification.time}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-              View All Notifications
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
-// Progress Gamification Component
-const ProgressGamification: React.FC<{
-  user: UserType;
-}> = ({ user }) => {
-  const kycLevel = user.kyc_level || 'none';
-  const buyerType = user.buyer_type;
-  const isSeller = user.roles.includes('seller');
-
-  const getCompletionBadges = () => {
-    const badges = [];
-    
-    if (user.is_phone_verified) {
-      badges.push({
-        id: 'phone-champion',
-        title: 'Phone Champion',
-        description: 'Verified phone number',
-        icon: <Phone className="w-4 h-4" />,
-        color: 'bg-green-500',
-        unlocked: true
-      });
-    }
-    
-    if (user.isIdentityVerified) {
-      badges.push({
-        id: 'identity-verified',
-        title: 'Identity Verified',
-        description: 'ID verification complete',
-        icon: <Shield className="w-4 h-4" />,
-        color: 'bg-blue-500',
-        unlocked: true
-      });
-    }
-    
-    if (user.isFinanciallyVerified) {
-      badges.push({
-        id: 'pre-approved-buyer',
-        title: 'Pre-Approved Buyer',
-        description: 'Financial assessment complete',
-        icon: <TrendingUp className="w-4 h-4" />,
-        color: 'bg-purple-500',
-        unlocked: true
-      });
-    }
-    
-    if (user.isPropertyVerified) {
-      badges.push({
-        id: 'verified-seller',
-        title: 'Verified Seller',
-        description: 'Property verification complete',
-        icon: <Home className="w-4 h-4" />,
-        color: 'bg-red-500',
-        unlocked: true
-      });
-    }
-    
-    // Add locked badges for motivation
-    if (!user.is_phone_verified) {
-      badges.push({
-        id: 'phone-champion-locked',
-        title: 'Phone Champion',
-        description: 'Verify your phone number',
-        icon: <Phone className="w-4 h-4" />,
-        color: 'bg-slate-300',
-        unlocked: false
-      });
-    }
-    
-    if (!user.isIdentityVerified && user.is_phone_verified) {
-      badges.push({
-        id: 'identity-verified-locked',
-        title: 'Identity Verified',
-        description: 'Complete ID verification',
-        icon: <Shield className="w-4 h-4" />,
-        color: 'bg-slate-300',
-        unlocked: false
-      });
-    }
-    
-    if (!user.isFinanciallyVerified && user.isIdentityVerified && buyerType === 'installment') {
-      badges.push({
-        id: 'pre-approved-buyer-locked',
-        title: 'Pre-Approved Buyer',
-        description: 'Complete financial assessment',
-        icon: <TrendingUp className="w-4 h-4" />,
-        color: 'bg-slate-300',
-        unlocked: false
-      });
-    }
-    
-    return badges;
-  };
-
-  const getNextAchievement = () => {
-    if (!user.is_phone_verified) {
-      return {
-        title: 'Phone Champion',
-        description: 'Verify your phone number to unlock messaging',
-        progress: 0,
-        icon: <Phone className="w-5 h-5" />
-      };
-    }
-    
-    if (!user.isIdentityVerified) {
-      return {
-        title: 'Identity Verified',
-        description: 'Complete ID verification for premium access',
-        progress: 50,
-        icon: <Shield className="w-5 h-5" />
-      };
-    }
-    
-    if (!user.isFinanciallyVerified && buyerType === 'installment') {
-      return {
-        title: 'Pre-Approved Buyer',
-        description: 'Complete financial assessment for financing',
-        progress: 75,
-        icon: <TrendingUp className="w-5 h-5" />
-      };
-    }
-    
-    if (!user.isPropertyVerified && isSeller) {
-      return {
-        title: 'Verified Seller',
-        description: 'Upload property documents to start listing',
-        progress: 75,
-        icon: <Home className="w-5 h-5" />
-      };
-    }
-    
-    return {
-      title: 'All Achievements Unlocked!',
-      description: 'You have completed all verifications',
-      progress: 100,
-      icon: <Trophy className="w-5 h-5" />
-    };
-  };
-
-  const badges = getCompletionBadges();
-  const nextAchievement = getNextAchievement();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-    >
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center text-purple-700">
-            <Trophy className="w-5 h-5 mr-2" />
-            Your Achievements
-            <Tooltip content="Track your verification progress and unlock badges">
-              <Info className="w-4 h-4 ml-2 text-purple-500 cursor-help" />
-            </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Next Achievement Preview */}
-            <div className="p-4 bg-white rounded-lg border border-purple-200">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="p-2 bg-purple-100 rounded-full">
-                  {nextAchievement.icon}
-                </div>
-                <div>
-                  <h4 className="font-semibold text-purple-900">{nextAchievement.title}</h4>
-                  <p className="text-sm text-purple-700">{nextAchievement.description}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-purple-600">Progress</span>
-                  <span className="text-purple-700 font-medium">{nextAchievement.progress}%</span>
-                </div>
-                <div className="w-full bg-purple-200 rounded-full h-2">
-                  <motion.div
-                    className="bg-purple-500 h-2 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${nextAchievement.progress}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Achievement Badges */}
-            <div>
-              <h5 className="font-semibold text-purple-800 mb-3">Completion Badges</h5>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {badges.map((badge) => (
-                  <motion.div
-                    key={badge.id}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                    className={`p-3 rounded-lg text-center transition-all duration-200 ${
-                      badge.unlocked 
-                        ? 'bg-white border-2 border-purple-200 shadow-md' 
-                        : 'bg-slate-100 border-2 border-slate-200 opacity-60'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-full ${badge.color} flex items-center justify-center mx-auto mb-2`}>
-                      <div className="text-white">
-                        {badge.icon}
-                      </div>
-                    </div>
-                    <h6 className={`font-semibold text-sm mb-1 ${
-                      badge.unlocked ? 'text-purple-900' : 'text-slate-600'
-                    }`}>
-                      {badge.title}
-                    </h6>
-                    <p className={`text-xs ${
-                      badge.unlocked ? 'text-purple-700' : 'text-slate-500'
-                    }`}>
-                      {badge.description}
-                    </p>
-                    {badge.unlocked && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="mt-2"
-                      >
-                        <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
-                      </motion.div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
 // Success Message Component
 const SuccessMessage: React.FC<{
   isVisible: boolean;
@@ -1486,6 +859,22 @@ const NavigationBar: React.FC<{
 }> = ({ user, onBackToHome, onProfileSettings, onLogout }) => {
   const [notificationCount] = React.useState(3);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Close user menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -1523,14 +912,16 @@ const NavigationBar: React.FC<{
               {/* Logo/Brand */}
               <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="flex items-center space-x-2"
+                className="flex items-center"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">M</span>
-                </div>
-                <span className="font-bold text-lg sm:text-xl text-slate-800">
-                  Mukamba
-                </span>
+                <Image
+                  src="/logo.svg"
+                  alt="Mukamba Gateway Logo"
+                  width={150}
+                  height={45}
+                  className="h-auto"
+                  priority
+                />
               </motion.div>
             </div>
 
@@ -1587,25 +978,90 @@ const NavigationBar: React.FC<{
                 </motion.div>
               </Tooltip>
 
-              {/* User Profile Avatar */}
-              <Tooltip content="View and manage your profile">
+              {/* User Profile Avatar with Dropdown */}
+              <div className="relative" ref={userMenuRef}>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     variant="ghost"
-                      className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 p-2 transition-colors duration-200"
-                      aria-label="User profile menu"
+                    className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 p-2 transition-colors duration-200"
+                    aria-label="User profile menu"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   >
                     <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
+                      <AvatarFallback className="bg-red-100 text-red-700 text-sm font-semibold">
                         {user.firstName[0]}{user.lastName[0]}
                       </AvatarFallback>
                     </Avatar>
-                      <span className="hidden lg:block font-medium">
+                    <span className="hidden lg:block font-medium">
                       {user.firstName}
                     </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 hidden lg:block ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </Button>
                 </motion.div>
-              </Tooltip>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50"
+                    >
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-slate-200">
+                        <p className="text-sm font-semibold text-slate-900">{user.firstName} {user.lastName}</p>
+                        <p className="text-xs text-slate-600">{user.email}</p>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            onProfileSettings?.();
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-150 flex items-center"
+                        >
+                          <Settings className="w-4 h-4 mr-3 text-slate-500" />
+                          Profile Settings
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            // Handle notifications
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-150 flex items-center"
+                        >
+                          <Bell className="w-4 h-4 mr-3 text-slate-500" />
+                          Notifications
+                          {notificationCount > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                              {notificationCount}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Logout */}
+                      <div className="border-t border-slate-200 pt-2">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            onLogout?.();
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
@@ -1683,6 +1139,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   onLogout,
   isNewUser = false
 }) => {
+  const router = useRouter();
   const { user: storeUser, updateUser } = useAuthStore();
   const user = storeUser || propUser; // Use store user if available, fallback to prop
   
@@ -1840,23 +1297,13 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       };
     }
     
-    if (buyerType === 'cash') {
+    if (buyerType === 'cash' || buyerType === 'installment') {
       return {
-        title: "Cash Buyer Journey",
-        steps: ["Browse Properties", "Save Favorites", "Contact Admin"],
+        title: "Buyer Journey",
+        steps: ["Browse Properties", "Make Offer/Bid", "Make Payment"],
         highlight: "Complete identity verification to access exclusive properties",
-        icon: <DollarSign className="w-5 h-5" />,
+        icon: <ShoppingCart className="w-5 h-5" />,
         color: "from-[#7F1518] to-[#7F1518]"
-      };
-    }
-    
-    if (buyerType === 'installment') {
-      return {
-        title: "Installment Buyer Journey",
-        steps: ["Browse Properties", "Get Pre-Approved", "Apply for Financing"],
-        highlight: "Complete financial verification for installment purchase options",
-        icon: <CreditCard className="w-5 h-5" />,
-        color: "from-blue-500 to-blue-600"
       };
     }
     
@@ -2099,8 +1546,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       
       // Capabilities Grid actions
       case 'browse-properties':
-        setSuccessMessage('Property browsing feature coming soon!');
-        setShowSuccess(true);
+        router.push('/listings');
         break;
       case 'save-favorites':
         setSuccessMessage('Favorites feature coming soon!');
@@ -2207,10 +1653,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       {
         id: 'browse-properties',
         title: 'Browse Properties',
-        description: 'View all installment purchase listings',
+        description: 'View all listings',
         icon: <Home className="w-5 h-5" />,
         action: 'Browse Now',
-        stats: '1,247 properties available',
+        stats: 'View all listings',
         color: 'blue'
       },
       {
@@ -2235,7 +1681,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         id: 'apply-financing',
         title: buyerType === 'cash' ? 'Cash Purchase' : 'Apply for Financing',
         description: buyerType === 'cash' 
-          ? 'Submit cash purchase applications' 
+          ? 'Make offers on Properties listed' 
           : 'Submit installment purchase applications',
         icon: <CreditCard className="w-5 h-5" />,
         action: buyerType === 'cash' ? 'Apply Now' : 'Get Pre-Approved',
@@ -2758,17 +2204,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </Card>
         </motion.div>
 
-
-
-        {/* Smart Recommendations */}
-        <SmartRecommendations
-          recommendations={recommendations}
-          onActionClick={handleRecommendationAction}
-        />
-
-        {/* Progress Gamification */}
-        <ProgressGamification user={user} />
-
         {/* Essential KYC Section */}
         <motion.div
           id="essential-kyc"
@@ -2870,15 +2305,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
         {/* Personalized Property Recommendations */}
         <PersonalizedPropertyRecommendations user={user} />
-
-
-
-
-        {/* Notifications & Alerts Center */}
-        <NotificationsCenter user={user} />
-
-        {/* Recent Activity Feed */}
-        <RecentActivityFeed user={user} />
 
       {/* Account Level */}
         <motion.div

@@ -264,7 +264,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-800">
-              {sellerIntent ? 'Start Selling on Mukamba' : 'Join Mukamba'}
+              {sellerIntent ? 'Start Selling on Mukamba Gateway' : 'Join Mukamba Gateway'}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-600 mt-1">
               {sellerIntent 
@@ -651,9 +651,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
                 </>
               ) : (
                 <>
-                  <li>• Browse 1,200+ rent-to-buy properties</li>
                   <li>• Save your favorite listings</li>
-                  <li>• Get property price alerts</li>
                   <li>• Access market insights</li>
                 </>
               )}
