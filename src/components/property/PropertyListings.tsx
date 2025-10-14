@@ -45,7 +45,8 @@ import {
   ArrowRight,
   RefreshCw,
   Bookmark,
-  BookmarkCheck
+  BookmarkCheck,
+  UserPlus
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -324,8 +325,8 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
-      className="group cursor-pointer"
+      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+      className="group cursor-pointer h-full"
       onClick={() => {
         if (user) {
           // User is authenticated - allow property selection
@@ -336,7 +337,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         }
       }}
     >
-      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300">
+      <Card className="overflow-hidden border border-slate-200 shadow-md hover:shadow-xl transition-all duration-300 bg-white rounded-xl h-full flex flex-col">
         {/* Property Image */}
         <div className="relative h-48 sm:h-64 overflow-hidden">
           {property.media?.mainImage && property.media.mainImage !== '/placeholder-property.jpg' ? (
@@ -364,69 +365,104 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            {property.listingType === 'installment' && (
-              <Badge className="bg-green-500 text-white">
-                Installments
-              </Badge>
-            )}
-            {property.listingType === 'sale' && (
-              <Badge className="bg-blue-500 text-white">
-                Cash Sale
-              </Badge>
-            )}
-            {property.seller.isVerified && (
-              <Badge className="bg-blue-500 text-white">
-                <Star className="w-3 h-3 mr-1" />
-                Verified
-              </Badge>
-            )}
-            {property.status === 'active' && (
-              <Badge className="bg-emerald-500 text-white">
+            {/* Available Status Badge - Show for all properties unless they have a specific non-available status */}
+            {(!property.status || property.status === 'active' || (property.status !== 'under_offer' && property.status !== 'sold' && property.status !== 'rented')) && (
+              <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                <CheckCircle className="w-3 h-3 mr-1" />
                 Available
               </Badge>
             )}
             {(property as LocalPropertyWithStatus).status === 'under_offer' && (
-              <Badge className="bg-orange-500 text-white">
+              <Badge className="bg-orange-100 text-orange-800 border border-orange-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                <Clock className="w-3 h-3 mr-1" />
                 Under Offer
+              </Badge>
+            )}
+            {(property as LocalPropertyWithStatus).status === 'sold' && (
+              <Badge className="bg-red-100 text-red-800 border border-red-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                <X className="w-3 h-3 mr-1" />
+                Sold
+              </Badge>
+            )}
+            {(property as LocalPropertyWithStatus).status === 'rented' && (
+              <Badge className="bg-purple-100 text-purple-800 border border-purple-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                <Users className="w-3 h-3 mr-1" />
+                Rented
+              </Badge>
+            )}
+            
+            {/* Property Type Badge */}
+            <Badge className="bg-blue-100 text-blue-800 border border-blue-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+              {property.details.type === 'house' ? (
+                <>
+                  <Home className="w-3 h-3 mr-1" />
+                  house
+                </>
+              ) : property.details.type === 'land' ? (
+                <>
+                  <TreePine className="w-3 h-3 mr-1" />
+                  land
+                </>
+              ) : (
+                <>
+                  <Building className="w-3 h-3 mr-1" />
+                  {property.details.type}
+                </>
+              )}
+            </Badge>
+            
+            {/* Payment Type Badge */}
+            {property.listingType === 'installment' && (
+              <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg border-0 px-3 py-1 text-xs font-semibold">
+                Installments
+              </Badge>
+            )}
+            {property.listingType === 'sale' && (
+              <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg border-0 px-3 py-1 text-xs font-semibold">
+                Cash Sale
               </Badge>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <Button
-              size="icon"
-              variant="secondary"
-              className="bg-white/90 hover:bg-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleSaveProperty(property.id);
-              }}
-            >
-              <Heart className={`w-4 h-4 ${savedProperties.has(property.id) ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              className="bg-white/90 hover:bg-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Share functionality
-              }}
-            >
-              <Share2 className="w-4 h-4 text-slate-600" />
-            </Button>
+          <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="bg-white/95 hover:bg-white shadow-md backdrop-blur-sm border border-slate-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSaveProperty(property.id);
+                }}
+              >
+                <Heart className={`w-4 h-4 ${savedProperties.has(property.id) ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="bg-white/95 hover:bg-white shadow-md backdrop-blur-sm border border-slate-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Share functionality
+                }}
+              >
+                <Share2 className="w-4 h-4 text-slate-600" />
+              </Button>
+            </motion.div>
           </div>
 
           {/* Price Badge */}
           <div className="absolute bottom-4 left-4">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2">
-              <div className="text-lg font-bold text-slate-800">
+            <div className="bg-gradient-to-br from-white via-white to-slate-50 backdrop-blur-md rounded-xl px-4 py-3 shadow-xl border border-slate-200">
+              <div className="text-xl font-bold text-slate-900">
                 {formatCurrency(property.financials.price)}
               </div>
               {property.financials.monthlyInstallment && (
-                <div className="text-sm text-slate-600">
-                  {formatCurrency(property.financials.monthlyInstallment)}/month
+                <div className="text-sm text-slate-600 font-medium">
+                  {formatCurrency(property.financials.monthlyInstallment)}<span className="text-xs">/month</span>
                 </div>
               )}
             </div>
@@ -434,96 +470,121 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         </div>
 
         {/* Property Details */}
-        <CardContent className="p-4 sm:p-6">
-          <div className="space-y-4">
+        <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
+          <div className="space-y-4 flex-1">
             {/* Title and Location */}
-            <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-800 mb-1 group-hover:text-red-600 transition-colors">
+            <div className="space-y-2">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-800 group-hover:text-[#7F1518] transition-colors line-clamp-2 leading-tight">
                 {property.title}
               </h3>
               <div className="flex items-center text-slate-600">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span className="text-sm">{property.location.suburb}, {property.location.city}</span>
+                <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0 text-slate-500" />
+                <span className="text-sm font-medium">{property.location.suburb}, {property.location.city}</span>
               </div>
             </div>
 
+            {/* Divider */}
+            <div className="border-t border-slate-100"></div>
+
             {/* Property Stats */}
-            <div className="flex items-center space-x-4 text-sm text-slate-600">
-              <div className="flex items-center">
-                <Bed className="w-4 h-4 mr-1" />
-                {property.details.bedrooms || 0} bed{(property.details.bedrooms || 0) !== 1 ? 's' : ''}
+            <div className="flex items-center justify-between text-sm bg-slate-50 rounded-lg p-3">
+              <div className="flex items-center gap-1">
+                <Bed className="w-4 h-4 text-slate-600" />
+                <span className="font-semibold text-slate-800">{property.details.bedrooms || 0}</span>
+                <span className="text-slate-600 text-xs">bed{(property.details.bedrooms || 0) !== 1 ? 's' : ''}</span>
               </div>
-              <div className="flex items-center">
-                <Bath className="w-4 h-4 mr-1" />
-                {property.details.bathrooms || 0} bath{(property.details.bathrooms || 0) !== 1 ? 's' : ''}
+              <div className="w-px h-4 bg-slate-300"></div>
+              <div className="flex items-center gap-1">
+                <Bath className="w-4 h-4 text-slate-600" />
+                <span className="font-semibold text-slate-800">{property.details.bathrooms || 0}</span>
+                <span className="text-slate-600 text-xs">bath{(property.details.bathrooms || 0) !== 1 ? 's' : ''}</span>
               </div>
-              <div className="flex items-center">
-                <Square className="w-4 h-4 mr-1" />
-                {property.details.size.toLocaleString()} m²
+              <div className="w-px h-4 bg-slate-300"></div>
+              <div className="flex items-center gap-1">
+                <Square className="w-4 h-4 text-slate-600" />
+                <span className="font-semibold text-slate-800">{property.details.size.toLocaleString()}</span>
+                <span className="text-slate-600 text-xs">m²</span>
               </div>
             </div>
 
             {/* Features */}
-            <div className="flex flex-wrap gap-2">
-              {property.details.features?.slice(0, 3).map((feature: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {feature}
-                </Badge>
-              ))}
-              {property.details.features && property.details.features.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{property.details.features.length - 3} more
-                </Badge>
-              )}
-            </div>
+            {property.details.features && property.details.features.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {property.details.features?.slice(0, 3).map((feature: string, index: number) => (
+                  <Badge key={index} variant="outline" className="text-xs border-slate-300 text-slate-700 bg-white hover:bg-slate-50">
+                    {feature}
+                  </Badge>
+                ))}
+                {property.details.features && property.details.features.length > 3 && (
+                  <Badge variant="outline" className="text-xs border-slate-300 text-slate-700 bg-white">
+                    +{property.details.features.length - 3} more
+                  </Badge>
+                )}
+              </div>
+            )}
 
             {/* Owner Info */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center text-slate-600">
-                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
-                  <span className="text-xs font-medium text-red-600">
+            <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2 text-slate-600">
+                <div className="w-8 h-8 bg-gradient-to-br from-[#7F1518] to-[#6A1214] rounded-full flex items-center justify-center shadow-sm">
+                  <span className="text-xs font-bold text-white">
                     {property.seller.name[0]}
                   </span>
                 </div>
-                <span>{property.seller.name}</span>
-                {property.seller.isVerified && (
-                  <Star className="w-3 h-3 ml-1 fill-yellow-400 text-yellow-400" />
-                )}
+                <div className="flex flex-col">
+                  <span className="font-medium text-slate-800">{property.seller.name}</span>
+                  {property.seller.isVerified && (
+                    <span className="flex items-center text-xs text-green-600">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Verified Seller
+                    </span>
+                  )}
+                </div>
               </div>
               
-              <div className="flex items-center text-slate-500">
-                <Eye className="w-3 h-3 mr-1" />
-                <span className="text-xs">{property.views}</span>
+              <div className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                <Eye className="w-3 h-3" />
+                <span className="text-xs font-medium">{property.views}</span>
               </div>
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="pt-2">
-              {/* View Details Button */}
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (user) {
-                    // User is authenticated - navigate to property details
-                    router.push(`/property/${property.id}`);
-                  } else {
-                    // User not authenticated - show buyer signup modal
-                    handleBuyerSignup(property);
-                  }
-                }}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white"
-                size="sm"
-              >
-                {user ? 'View Details' : 'Sign Up to View Details'}
-              </Button>
-            </div>
+          {/* Action Buttons */}
+          <div className="pt-4 mt-auto">
+            {/* View Details Button */}
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (user) {
+                  // User is authenticated - navigate to property details
+                  router.push(`/property/${property.id}`);
+                } else {
+                  // User not authenticated - show buyer signup modal
+                  handleBuyerSignup(property);
+                }
+              }}
+              className="w-full bg-gradient-to-r from-[#7F1518] to-[#6A1214] hover:from-[#6A1214] hover:to-[#5A0F11] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+              size="sm"
+            >
+              {user ? (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Details
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Sign Up to View
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
-             </Card>
-     </motion.div>
-   ));
+      </Card>
+    </motion.div>
+  ));
    
-   PropertyCard.displayName = 'PropertyCard';
+  PropertyCard.displayName = 'PropertyCard';
 
   const FilterPanel: React.FC = () => {
     // Local state for input fields to prevent focus loss
@@ -585,19 +646,24 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     );
 
     return (
-      <Card className="sticky top-4">
-        <CardHeader>
+      <Card className="sticky top-4 border-slate-200 shadow-md bg-white">
+        <CardHeader className="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <SlidersHorizontal className="w-5 h-5 mr-2" />
+            <CardTitle className="flex items-center text-slate-800">
+              <SlidersHorizontal className="w-5 h-5 mr-2 text-[#7F1518]" />
               Filters
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearFilters}
+              className="text-slate-600 hover:text-[#7F1518] hover:bg-red-50"
+            >
               Clear All
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-6">
           {/* Property Type */}
           <div className="space-y-2">
             <Label>Property Type</Label>
@@ -690,42 +756,41 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center gap-4">
-              {/* Back to Home Button */}
+              {/* Back to Home Button - Mukamba Brand Color */}
               <Button
-                variant="outline"
                 size="sm"
                 onClick={() => router.push('/')}
-                className="flex items-center gap-2 text-slate-600 hover:text-slate-800"
+                className="bg-[#7F1518] hover:bg-[#6A1214] text-white font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Back to Home</span>
                 <span className="sm:hidden">Back</span>
               </Button>
               
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800">
+              <div className="border-l border-slate-300 pl-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
                   Property Listings
                 </h2>
-                <p className="text-slate-600">
-                  {filteredProperties.length} properties found
+                <p className="text-slate-600 text-sm sm:text-base">
+                  {filteredProperties.length} {filteredProperties.length === 1 ? 'property' : 'properties'} found
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* View Mode Toggle */}
-              <div className="hidden sm:flex items-center border rounded-lg">
+              <div className="hidden sm:flex items-center bg-slate-100 rounded-lg p-1">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
-                  className="rounded-r-none"
+                  className={`rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-slate-200'}`}
                 >
                   <Grid className="w-4 h-4" />
                 </Button>
@@ -733,7 +798,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className="rounded-l-none"
+                  className={`rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-slate-200'}`}
                 >
                   <List className="w-4 h-4" />
                 </Button>
@@ -744,10 +809,12 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-slate-300 hover:border-[#7F1518] hover:bg-red-50 hover:text-[#7F1518] transition-all duration-200"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
+                {showFilters && <ChevronDown className="w-3 h-3 rotate-180 transition-transform" />}
+                {!showFilters && <ChevronDown className="w-3 h-3 transition-transform" />}
               </Button>
             </div>
           </div>
@@ -795,15 +862,23 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             <div className="lg:col-span-3">
               <AnimatePresence>
                 {isLoading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="bg-slate-200 h-48 sm:h-64 rounded-lg mb-4"></div>
-                        <div className="space-y-2 px-1">
-                          <div className="bg-slate-200 h-4 rounded w-3/4"></div>
-                          <div className="bg-slate-200 h-4 rounded w-1/2"></div>
-                        </div>
-                      </div>
+                      <Card key={i} className="animate-pulse border-slate-200 shadow-md bg-white rounded-xl overflow-hidden">
+                        <div className="bg-gradient-to-br from-slate-200 to-slate-300 h-48 sm:h-64"></div>
+                        <CardContent className="p-6 space-y-4">
+                          <div className="space-y-2">
+                            <div className="bg-slate-200 h-5 rounded w-3/4"></div>
+                            <div className="bg-slate-200 h-4 rounded w-1/2"></div>
+                          </div>
+                          <div className="bg-slate-100 h-12 rounded-lg"></div>
+                          <div className="flex gap-2">
+                            <div className="bg-slate-200 h-6 rounded flex-1"></div>
+                            <div className="bg-slate-200 h-6 rounded flex-1"></div>
+                          </div>
+                          <div className="bg-slate-200 h-10 rounded"></div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 ) : filteredProperties.length > 0 ? (
@@ -821,17 +896,23 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <Card>
+                  <Card className="border-slate-200 shadow-md bg-white">
                     <CardContent className="p-12 text-center">
-                      <Home className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-slate-600 mb-2">
+                      <div className="bg-slate-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Home className="w-12 h-12 text-slate-400" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-slate-800 mb-3">
                         No Properties Found
                       </h3>
-                      <p className="text-slate-500 mb-4">
-                        Try adjusting your search filters to find more properties.
+                      <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                        We couldn't find any properties matching your criteria. Try adjusting your filters or search again.
                       </p>
-                      <Button onClick={clearFilters}>
-                        Clear Filters
+                      <Button 
+                        onClick={clearFilters}
+                        className="bg-[#7F1518] hover:bg-[#6A1214] text-white font-semibold px-6 py-3 shadow-md hover:shadow-lg"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Clear All Filters
                       </Button>
                     </CardContent>
                   </Card>
