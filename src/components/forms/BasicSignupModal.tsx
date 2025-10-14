@@ -136,19 +136,34 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
   const phone = form.watch('phone');
   const email = form.watch('email');
 
-  // Check email availability
+  // Check email availability - real API call
   React.useEffect(() => {
-    if (email && email.includes('@')) {
-      setEmailAvailability('checking');
-      const timer = setTimeout(() => {
-        // Mock email availability check - replace with actual API
-        const isAvailable = !['admin@mukamba.com', 'agent@mukamba.com', 'test@example.com'].includes(email);
-        setEmailAvailability(isAvailable ? 'available' : 'taken');
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setEmailAvailability(null);
-    }
+    const checkEmail = async () => {
+      if (email && email.includes('@')) {
+        setEmailAvailability('checking');
+        
+        try {
+          const response = await fetch('/api/check-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          
+          const result = await response.json();
+          setEmailAvailability(result.available ? 'available' : 'taken');
+        } catch (error) {
+          console.error('Error checking email availability:', error);
+          // On error, don't block signup - just clear the indicator
+          setEmailAvailability(null);
+        }
+      } else {
+        setEmailAvailability(null);
+      }
+    };
+
+    // Debounce the email check
+    const timer = setTimeout(checkEmail, 800);
+    return () => clearTimeout(timer);
   }, [email]);
 
   // Phone validation removed - now optional without country-specific validation
@@ -158,6 +173,25 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       setError(null);
       setHasStartedSignup(true);
       console.log('Submitting signup form:', data.email);
+      
+      // Double-check email availability before signup
+      try {
+        const response = await fetch('/api/check-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email })
+        });
+        
+        const result = await response.json();
+        if (!result.available) {
+          setError('This email is already registered. Please sign in instead or use a different email.');
+          setHasStartedSignup(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking email availability:', error);
+        // Continue with signup if check fails - better UX
+      }
       
       // Convert to BasicSignupData format
       const signupData: BasicSignupData = {

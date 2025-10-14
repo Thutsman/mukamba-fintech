@@ -67,6 +67,14 @@ export const useAuthStore = create<AuthStore>()(
 
           if (authError) {
             console.error('Supabase auth error:', authError);
+            
+            // Handle specific error cases
+            if (authError.message.includes('User already registered') || 
+                authError.message.includes('already exists') ||
+                authError.message.includes('duplicate')) {
+              throw new Error('This email is already registered. Please sign in instead or use a different email.');
+            }
+            
             throw new Error(authError.message);
           }
 

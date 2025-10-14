@@ -192,14 +192,23 @@ export const formatPhoneNumber = (phone: string, country: 'SA' | 'ZW'): string =
 // =====================================================
 
 /**
- * Check email availability (mock implementation)
+ * Check email availability via API
  */
 export const checkEmailAvailability = async (email: string): Promise<boolean> => {
-  // Mock implementation - replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const takenEmails = ['admin@mukamba.com', 'agent@mukamba.com', 'test@example.com'];
-  return !takenEmails.includes(email);
+  try {
+    const response = await fetch('/api/check-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    
+    const result = await response.json();
+    return result.available === true;
+  } catch (error) {
+    console.error('Error checking email availability:', error);
+    // Return true on error to not block signup
+    return true;
+  }
 };
 
 /**
