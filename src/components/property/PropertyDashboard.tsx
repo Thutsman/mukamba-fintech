@@ -713,7 +713,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" style={{ height: '77vh', minHeight: '550px' }}>
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" style={{ height: '85vh', minHeight: '600px' }}>
         {/* Premium property background with parallax effect */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -766,7 +766,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             
             {/* Enhanced CTAs */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-3 justify-center px-4 mb-16"
+              className="flex flex-col sm:flex-row gap-3 justify-center px-4 mb-8 sm:mb-12 md:mb-16"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
@@ -844,7 +844,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
       {/* Property Search Bar - Overlapping Section */}
       <motion.div
-        className="relative z-20 max-w-4xl mx-auto px-4 -mt-8 sm:-mt-16"
+        className="relative z-20 max-w-4xl mx-auto px-4 -mt-4 sm:-mt-8 md:-mt-12 lg:-mt-16"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
@@ -1733,7 +1733,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 2, duration: 0.5 }}
-        className="fixed bottom-32 right-6 z-50"
+        className="fixed bottom-32 right-6 z-40"
       >
         <Button
           className="bg-[#7f1518] hover:bg-[#6a1215] text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"

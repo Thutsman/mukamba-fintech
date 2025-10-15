@@ -2500,7 +2500,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="fixed bottom-24 right-6 z-50"
+          className="fixed bottom-24 right-6 z-40"
         >
           <Button
             onClick={() => setActiveModal('listing')}

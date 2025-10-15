@@ -528,9 +528,9 @@ export const AuthSystem: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ delay: 2, type: 'spring', stiffness: 200 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40"
           >
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 max-w-sm relative">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 sm:p-4 max-w-xs sm:max-w-sm relative">
               {/* Close Button */}
               <button
                 onClick={handleCloseSignupWidget}

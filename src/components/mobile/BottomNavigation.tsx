@@ -88,7 +88,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         exit={{ scale: 0 }}
-        className="fixed bottom-20 right-4 z-50"
+        className="fixed bottom-20 right-4 z-40"
       >
         <Button
           className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
