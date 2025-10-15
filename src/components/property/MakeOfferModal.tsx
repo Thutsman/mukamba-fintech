@@ -138,6 +138,28 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
     setValidationErrors(errors);
   }, [formData.offerPrice, formData.depositOffered, formData.paymentMethod, formData.estimatedTimeline, formData.monthlyInstallment, property.financials.price, property.financials.paymentDuration, property.financials.rentToBuyDeposit]);
 
+  // Auto-calculate monthly installment when offer price, deposit, or timeline changes
+  React.useEffect(() => {
+    if (formData.paymentMethod === 'installments' && 
+        formData.offerPrice > 0 && 
+        formData.depositOffered > 0 && 
+        formData.estimatedTimeline && 
+        formData.estimatedTimeline !== 'ready_to_pay_in_full') {
+      
+      const months = getTimelineMonths(formData.estimatedTimeline);
+      if (months > 0) {
+        const remainingAmount = formData.offerPrice - formData.depositOffered;
+        const calculatedMonthly = remainingAmount / months;
+        
+        // Only auto-calculate if the current monthly installment is 0 or very close to the calculated value
+        // This prevents overriding user's manual input
+        if (formData.monthlyInstallment === 0 || Math.abs(formData.monthlyInstallment - calculatedMonthly) < 1) {
+          setFormData(prev => ({ ...prev, monthlyInstallment: calculatedMonthly }));
+        }
+      }
+    }
+  }, [formData.offerPrice, formData.depositOffered, formData.estimatedTimeline, formData.paymentMethod]);
+
   // Real-time validation function
   const validateField = (field: string, value: any) => {
     const errors: Record<string, string> = { ...validationErrors };
@@ -167,10 +189,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
       if (depositOffered <= 0) {
         errors.depositOffered = 'Please enter a deposit amount';
       } else {
-        const minimumDeposit = property.financials.price * 0.1; // 10% of listed price
+        const minimumDeposit = property.financials.price * 0.4; // 40% of listed price
         
         if (depositOffered < minimumDeposit) {
-          errors.depositOffered = `Deposit must be at least ${formatCurrency(minimumDeposit)} (10% of listed price)`;
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(minimumDeposit)} (40% of listed price)`;
         } else {
           delete errors.depositOffered; // Clear error if valid
         }
@@ -232,10 +254,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
       if (formData.depositOffered <= 0) {
         errors.depositOffered = 'Please enter a deposit amount';
       } else {
-        // Validate minimum deposit (10% of listed price)
-        const minimumDeposit = property.financials.price * 0.1;
+        // Validate minimum deposit (40% of listed price)
+        const minimumDeposit = property.financials.price * 0.4;
         if (formData.depositOffered < minimumDeposit) {
-          errors.depositOffered = `Deposit must be at least ${formatCurrency(minimumDeposit)} (10% of listed price)`;
+          errors.depositOffered = `Deposit must be at least ${formatCurrency(minimumDeposit)} (40% of listed price)`;
         }
         
         // Also validate against property-specific required deposit if higher
@@ -584,7 +606,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                           </div>
                         </div>
                         <p className="text-xs text-gray-500">
-                          Minimum deposit: {formatCurrency(property.financials.price * 0.1)} (10% of listed price)
+                          Minimum deposit: {formatCurrency(property.financials.price * 0.4)} (40% of listed price)
                         </p>
                         {property.financials.rentToBuyDeposit && property.financials.rentToBuyDeposit > (property.financials.price * 0.4) && (
                           <p className="text-xs text-gray-500">
@@ -595,53 +617,6 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                           <p className="text-xs text-red-600 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
                             {validationErrors.depositOffered}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Monthly Installment Amount - Only show for installments */}
-                    {formData.paymentMethod === 'installments' && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="monthlyInstallment" className="text-base font-medium">Monthly Installment Amount</Label>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Info className="w-4 h-4 text-gray-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Enter your preferred monthly payment amount for the remaining balance after deposit.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="monthlyInstallment"
-                            type="number"
-                            value={formData.monthlyInstallment || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              const numericValue = value === '' ? 0 : Number(value);
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                monthlyInstallment: numericValue 
-                              }));
-                              // Real-time validation
-                              validateField('monthlyInstallment', numericValue);
-                            }}
-                            className="pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                            placeholder="Enter monthly installment amount"
-                            min={0}
-                            aria-describedby="monthly-installment-help"
-                          />
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                            {property.financials.currency}
-                          </div>
-                        </div>
-                        {validationErrors.monthlyInstallment && (
-                          <p className="text-xs text-red-600 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            {validationErrors.monthlyInstallment}
                           </p>
                         )}
                       </div>
@@ -673,7 +648,18 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                               } else if (value === '0') {
                                 setFormData(prev => ({ ...prev, estimatedTimeline: 'ready_to_pay_in_full' }));
                               } else {
-                                setFormData(prev => ({ ...prev, estimatedTimeline: `${value}_months` }));
+                                const timelineValue = `${value}_months`;
+                                setFormData(prev => ({ ...prev, estimatedTimeline: timelineValue }));
+                                
+                                // Auto-calculate monthly installment when timeline is entered
+                                if (formData.offerPrice > 0 && formData.depositOffered > 0) {
+                                  const months = Number(value);
+                                  if (months > 0) {
+                                    const remainingAmount = formData.offerPrice - formData.depositOffered;
+                                    const calculatedMonthly = remainingAmount / months;
+                                    setFormData(prev => ({ ...prev, monthlyInstallment: calculatedMonthly }));
+                                  }
+                                }
                               }
                               // Re-validate monthly installment when timeline changes
                               if (formData.monthlyInstallment > 0) {
@@ -700,16 +686,57 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                             Required monthly payment: {formatCurrency((formData.offerPrice - formData.depositOffered) / getTimelineMonths(formData.estimatedTimeline))} to complete in {formData.estimatedTimeline.replace('_months', '')} months
                           </p>
                         )}
-                        {/* Suggested months based on preferred monthly installment */}
-                        {formData.offerPrice > 0 && formData.depositOffered > 0 && formData.monthlyInstallment > 0 && (
-                          <p className="text-xs text-blue-600">
-                            Suggested timeline: {getSuggestedMonths(formData.offerPrice - formData.depositOffered, formData.monthlyInstallment)} months at {formatCurrency(formData.monthlyInstallment)}/month
-                          </p>
-                        )}
                         {validationErrors.estimatedTimeline && (
                           <p className="text-xs text-red-600 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
                             {validationErrors.estimatedTimeline}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Monthly Installment Amount - Only show for installments */}
+                    {formData.paymentMethod === 'installments' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="monthlyInstallment" className="text-base font-medium">Monthly Installment Amount</Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="w-4 h-4 text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Enter your preferred monthly payment amount for the remaining balance after deposit. This will be auto-calculated when you enter the timeline.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="monthlyInstallment"
+                            type="number"
+                            value={formData.monthlyInstallment || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const numericValue = value === '' ? 0 : Number(value);
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                monthlyInstallment: numericValue 
+                              }));
+                              // Real-time validation
+                              validateField('monthlyInstallment', numericValue);
+                            }}
+                            className="pr-20 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            placeholder="Enter monthly installment amount"
+                            min={0}
+                            aria-describedby="monthly-installment-help"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            {property.financials.currency}
+                          </div>
+                        </div>
+                        {validationErrors.monthlyInstallment && (
+                          <p className="text-xs text-red-600 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {validationErrors.monthlyInstallment}
                           </p>
                         )}
                       </div>
