@@ -91,8 +91,13 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#ffffff" />
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/logo.svg" />
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.svg?v=2" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
+        <link rel="shortcut icon" href="/favicon.svg?v=2" />
+        <link rel="icon" href="/favicon.svg?v=2" sizes="32x32" />
+        <link rel="icon" href="/favicon.svg?v=2" sizes="16x16" />
+        <link rel="manifest" href="/manifest.json" />
         
         {/* Structured Data for SEO */}
         <script

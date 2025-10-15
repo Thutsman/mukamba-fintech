@@ -1593,9 +1593,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 >
                   <span className="text-xs font-bold">f</span>
                 </a>
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
-                  <span className="text-xs font-bold">i</span>
-                </div>
                 <a 
                   href="https://www.linkedin.com/company/mukamba-gateway/about/?viewAsMember=true" 
                   target="_blank" 
@@ -1674,10 +1671,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-2 text-white/80" />
                   <a 
-                    href="mailto:contact@mukambagateway.com" 
+                    href="mailto:hello@mukambagateway.com" 
                     className="text-white/80 hover:text-white transition-colors text-sm"
                   >
-                    contact@mukambagateway.com
+                    hello@mukambagateway.com
                   </a>
                 </div>
               </div>
