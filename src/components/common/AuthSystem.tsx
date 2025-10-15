@@ -482,7 +482,7 @@ export const AuthSystem: React.FC = () => {
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 2, type: 'spring', stiffness: 200 }}
-          className="fixed bottom-6 right-6 z-[9999]"
+          className="fixed bottom-20 right-6 z-[9999]"
         >
           <div className="flex flex-col items-end space-y-2">
             {/* Profile Button with Tooltip */}
