@@ -468,7 +468,7 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
-                className="flex-1 bg-slate-800 hover:bg-slate-900 text-white"
+                className="flex-1 bg-[#7F1518] hover:bg-[#6a1215] text-white"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (user) {

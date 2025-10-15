@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader2, Mail, Lock, Eye, EyeOff, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Loader2, Mail, Lock, Eye, EyeOff, Shield, CheckCircle, AlertCircle, UserPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -196,6 +196,22 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
 
         {/* Content */}
         <div className="p-6">
+          {/* Signup Link - Prominently placed at the top */}
+          <div className="text-center mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <span className="text-sm text-slate-600">
+              Don't have an account?{' '}
+            </span>
+            <button
+              onClick={onSwitchToSignup}
+              disabled={isLoading || isGoogleLoading}
+              className="text-sm font-semibold text-red-600 hover:text-red-700 disabled:opacity-50 inline-flex items-center"
+              suppressHydrationWarning
+            >
+              <UserPlus className="w-4 h-4 mr-1" />
+              Create Account
+            </button>
+          </div>
+
           {/* Google OAuth Button */}
           <Button
             type="button"
@@ -399,20 +415,6 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
             </ul>
           </div>
 
-          {/* Signup Link */}
-          <div className="mt-6 text-center">
-            <span className="text-sm text-slate-600 dark:text-slate-600">
-                Don&apos;t have an account?{' '}
-            </span>
-            <button
-              onClick={onSwitchToSignup}
-              disabled={isLoading || isGoogleLoading}
-              className="text-sm font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
-              suppressHydrationWarning
-            >
-              Create Account
-            </button>
-          </div>
         </div>
 
         {/* Forgot Password Modal */}

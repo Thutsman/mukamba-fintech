@@ -58,11 +58,10 @@ import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } f
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { User as UserType } from '@/types/auth';
-import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
+import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
 import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal';
-import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -95,7 +94,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [featuredProperties, setFeaturedProperties] = React.useState<Property[]>([]);
   const [totalPropertiesCount, setTotalPropertiesCount] = React.useState(0);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
-  const [showBuyerSignupModal, setShowBuyerSignupModal] = React.useState(false);
   const [showBuyerPhoneVerificationModal, setShowBuyerPhoneVerificationModal] = React.useState(false);
   const [selectedPropertyForSignup, setSelectedPropertyForSignup] = React.useState<Property | null>(null);
   const [selectedPropertyForContact, setSelectedPropertyForContact] = React.useState<Property | null>(null);
@@ -628,16 +626,16 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 
                 <Button
                   size="sm"
-                  className="bg-slate-800 hover:bg-slate-900 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
+                  className="bg-[#7F1518] hover:bg-[#6a1215] text-white text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (user) {
                       // User is authenticated - show property details
                     handlePropertySelect(property);
                     } else {
-                      // User not authenticated - show buyer signup modal
+                      // User not authenticated - show unified signup modal
                       setSelectedPropertyForSignup(property);
-                      setShowBuyerSignupModal(true);
+                      setShowSignupModal(true);
                       
                       // Track analytics
                       trackEvent('property_details_gated', {
@@ -703,7 +701,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           console.log('Contact seller for:', property.title);
         }}
         onSignUpPrompt={() => {
-          setShowBuyerSignupModal(true);
+          setShowSignupModal(true);
         }}
         showComparisonButton={true}
       />
@@ -1709,12 +1707,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           </div>
       </footer>
 
-      {/* Basic Signup Modal */}
-      <BasicSignupModal
+      {/* Unified Signup Modal */}
+      <UnifiedSignupModal
         isOpen={showSignupModal}
         onClose={() => {
           setShowSignupModal(false);
           setSellerIntent(false); // Reset seller intent when modal closes
+          setSelectedPropertyForSignup(null);
         }}
         onSwitchToLogin={() => {
           setShowSignupModal(false);
@@ -1728,6 +1727,36 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           setTimeout(() => {
             setShowSellerModal(true); // Open seller onboarding modal
           }, 1000); // Small delay to let signup modal close gracefully
+        }}
+        propertyTitle={selectedPropertyForSignup?.title}
+        onSignupComplete={async (email, buyerType) => {
+          setShowSignupModal(false);
+          
+          // Store buyer type for future use
+          setUserBuyerType(buyerType);
+          
+          // Track successful buyer signup
+          trackEvent('buyer_signup_completed', {
+            email: email,
+            buyer_type: buyerType,
+            property_id: selectedPropertyForSignup?.id,
+            property_title: selectedPropertyForSignup?.title,
+            source: 'property_details_gate',
+            event_category: 'conversion'
+          });
+          
+          console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
+          
+          // Show success message
+          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
+          
+          // Show property details after signup (user now has email-level access)
+          if (selectedPropertyForSignup) {
+            handlePropertySelect(selectedPropertyForSignup);
+          }
+          
+          // Reset state
+          setSelectedPropertyForSignup(null);
         }}
       />
 
@@ -1764,44 +1793,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         }}
       />
 
-      {/* Buyer Signup Modal */}
-      <BuyerSignupModal
-        isOpen={showBuyerSignupModal}
-        onClose={() => {
-          setShowBuyerSignupModal(false);
-          setSelectedPropertyForSignup(null);
-        }}
-        onSignupComplete={async (email, buyerType) => {
-          setShowBuyerSignupModal(false);
-          
-          // Store buyer type for future use
-          setUserBuyerType(buyerType);
-          
-          // Track successful buyer signup
-          trackEvent('buyer_signup_completed', {
-            email: email,
-            buyer_type: buyerType,
-            property_id: selectedPropertyForSignup?.id,
-            property_title: selectedPropertyForSignup?.title,
-            source: 'property_details_gate',
-            event_category: 'conversion'
-          });
-          
-          console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
-          
-          // Show success message
-          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
-          
-          // Show property details after signup (user now has email-level access)
-          if (selectedPropertyForSignup) {
-            handlePropertySelect(selectedPropertyForSignup);
-          }
-          
-          // Reset state
-          setSelectedPropertyForSignup(null);
-        }}
-        propertyTitle={selectedPropertyForSignup?.title}
-      />
 
       {/* Buyer Phone Verification Modal */}
       <BuyerPhoneVerificationModal

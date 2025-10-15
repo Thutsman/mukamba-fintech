@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader2, Mail, User, Phone, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield, LogIn } from 'lucide-react';
+import { X, Loader2, Mail, User, Phone, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield, LogIn, DollarSign, CreditCard } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,16 +17,18 @@ import type { BasicSignupData } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { signUpWithGoogle } from '@/lib/auth-utils';
 
-interface BasicSignupModalProps {
+interface UnifiedSignupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToLogin: () => void;
-  sellerIntent?: boolean; // New prop to indicate user came from "Want to Sell?" button
-  onSellerSignupComplete?: () => void; // Callback when user with seller intent completes signup
+  sellerIntent?: boolean;
+  onSellerSignupComplete?: () => void;
+  propertyTitle?: string; // For property-specific signups
+  onSignupComplete?: (email: string, buyerType?: 'cash' | 'installment') => void; // For buyer signups
 }
 
 // Enhanced validation schema
-const basicSignupSchema = z.object({
+const unifiedSignupSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters").max(50, "First name too long"),
   lastName: z.string().min(2, "Last name must be at least 2 characters").max(50, "Last name too long"),
   email: z.string().email("Please enter a valid email address"),
@@ -42,7 +44,7 @@ const basicSignupSchema = z.object({
   path: ["confirmPassword"]
 });
 
-type SignupFormData = z.infer<typeof basicSignupSchema>;
+type SignupFormData = z.infer<typeof unifiedSignupSchema>;
 
 // Password strength indicator
 const getPasswordStrength = (password: string) => {
@@ -65,23 +67,14 @@ const getPasswordStrength = (password: string) => {
   };
 };
 
-// Phone format validation
-const validatePhoneFormat = (phone: string, country: 'SA' | 'ZW') => {
-  if (!phone) return true;
-  
-  const saPattern = /^(\+27|0)[6-8][0-9]{8}$/;
-  const zwPattern = /^(\+263|0)[7][1-8][0-9]{7}$/;
-  
-  const pattern = country === 'SA' ? saPattern : zwPattern;
-  return pattern.test(phone);
-};
-
-export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
+export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
   isOpen,
   onClose,
   onSwitchToLogin,
   sellerIntent = false,
-  onSellerSignupComplete
+  onSellerSignupComplete,
+  propertyTitle,
+  onSignupComplete
 }) => {
   const { basicSignup, isLoading, error, setError, isAuthenticated } = useAuthStore();
   const [hasStartedSignup, setHasStartedSignup] = React.useState(false);
@@ -89,6 +82,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [emailAvailability, setEmailAvailability] = React.useState<'checking' | 'available' | 'taken' | null>(null);
+  const [buyerType, setBuyerType] = React.useState<'cash' | 'installment' | null>(null);
 
   // Only close modal when authentication succeeds AFTER user started signup
   React.useEffect(() => {
@@ -98,13 +92,17 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
         onClose();
         setHasStartedSignup(false); // Reset for next time
         
-        // If user signed up with seller intent, trigger seller onboarding
+        // Handle different completion scenarios
         if (sellerIntent && onSellerSignupComplete) {
           onSellerSignupComplete();
+        } else if (onSignupComplete) {
+          // For property-specific signups, we need to get the email from the form
+          const formData = form.getValues();
+          onSignupComplete(formData.email, buyerType ?? undefined);
         }
       }, 500);
     }
-  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, onClose, sellerIntent, onSellerSignupComplete]);
+  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete, buyerType]);
 
   // Reset signup state when modal closes
   React.useEffect(() => {
@@ -114,11 +112,12 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       setShowConfirmPassword(false);
       setIsGoogleLoading(false);
       setEmailAvailability(null);
+      setBuyerType(null);
     }
   }, [isOpen]);
 
   const form = useForm<SignupFormData>({
-    resolver: zodResolver(basicSignupSchema),
+    resolver: zodResolver(unifiedSignupSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -133,7 +132,6 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
 
   // Watch password for strength indicator
   const password = form.watch('password');
-  const phone = form.watch('phone');
   const email = form.watch('email');
 
   // Check email availability - real API call
@@ -165,8 +163,6 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
     const timer = setTimeout(checkEmail, 800);
     return () => clearTimeout(timer);
   }, [email]);
-
-  // Phone validation removed - now optional without country-specific validation
 
   const onSubmit = async (data: SignupFormData) => {
     try {
@@ -219,6 +215,8 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       try {
         sessionStorage.setItem('postAuthRedirect', window.location.pathname);
         if (sellerIntent) sessionStorage.setItem('sellerIntent', 'true');
+        if (propertyTitle) sessionStorage.setItem('propertyTitle', propertyTitle);
+        if (buyerType) sessionStorage.setItem('buyerType', buyerType);
       } catch (_) {}
 
       const { error } = await signUpWithGoogle();
@@ -243,6 +241,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       setShowConfirmPassword(false);
       setIsGoogleLoading(false);
       setEmailAvailability(null);
+      setBuyerType(null);
       onClose();
     }
   };
@@ -264,13 +263,14 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-200">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-800">
-              {sellerIntent ? 'Start Selling on Mukamba Gateway' : 'Join Mukamba Gateway'}
+              {propertyTitle ? 'Unlock Property Details' : 
+               sellerIntent ? 'Start Selling on Mukamba Gateway' : 
+               'Join Mukamba Gateway'}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-600 mt-1">
-              {sellerIntent 
-                ? 'Create your account to list your property and reach qualified buyers!' 
-                : 'Get started in 30 seconds - explore properties right away!'
-              }
+              {propertyTitle ? `Sign up to view details for ${propertyTitle}` :
+               sellerIntent ? 'Create your account to list your property and reach qualified buyers!' : 
+               'Get started in 30 seconds - explore properties right away!'}
             </p>
           </div>
           <Button
@@ -373,8 +373,6 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
               </div>
             </div>
 
-
-
             {/* Email */}
             <div>
               <Label htmlFor="email" className="flex items-center">
@@ -406,9 +404,18 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
                 </p>
               )}
               {emailAvailability === 'taken' && (
-                <p className="text-sm text-red-600 mt-1">
-                  This email is already registered. Please sign in instead.
-                </p>
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    This email is already registered. 
+                    <button
+                      type="button"
+                      onClick={onSwitchToLogin}
+                      className="ml-1 font-semibold text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Sign in instead
+                    </button>
+                  </p>
+                </div>
               )}
             </div>
 
@@ -435,6 +442,39 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
                 Add now or verify later to contact property owners
               </p>
             </div>
+
+            {/* Buyer Type Selection (only for property-specific signups) */}
+            {propertyTitle && (
+              <div>
+                <Label className="flex items-center">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  How do you plan to purchase?
+                </Label>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <Button
+                    type="button"
+                    variant={buyerType === 'cash' ? 'default' : 'outline'}
+                    onClick={() => setBuyerType('cash')}
+                    className="h-12"
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Cash Purchase
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={buyerType === 'installment' ? 'default' : 'outline'}
+                    onClick={() => setBuyerType('installment')}
+                    className="h-12"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Installments
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  You can change this preference later
+                </p>
+              </div>
+            )}
 
             {/* Password */}
             <div>
@@ -647,7 +687,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
                   Creating account...
                 </>
               ) : (
-                'Create Account & Start Exploring'
+                propertyTitle ? 'Continue to Property Details' : 'Create Account & Start Exploring'
               )}
             </Button>
           </form>
@@ -655,10 +695,19 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
           {/* Benefits */}
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-50 dark:to-red-50 rounded-lg border border-blue-200 dark:border-blue-200">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-800 mb-2">
-              {sellerIntent ? '🏠 What you get as a seller:' : '🎉 What you get immediately:'}
+              {propertyTitle ? '🎉 What you get immediately:' :
+               sellerIntent ? '🏠 What you get as a seller:' : 
+               '🎉 What you get immediately:'}
             </h4>
             <ul className="text-xs text-slate-600 dark:text-slate-600 space-y-1">
-              {sellerIntent ? (
+              {propertyTitle ? (
+                <>
+                  <li>• View full property details and photos</li>
+                  <li>• Access contact information for sellers</li>
+                  <li>• Save properties to your favorites</li>
+                  <li>• Get notified about price changes</li>
+                </>
+              ) : sellerIntent ? (
                 <>
                   <li>• List your property for free</li>
                   <li>• Reach thousands of qualified buyers</li>
@@ -673,9 +722,8 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
               )}
             </ul>
           </div>
-
         </div>
       </motion.div>
     </div>
   );
-}; 
+};
