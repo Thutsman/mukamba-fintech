@@ -713,7 +713,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" style={{ height: '90vh', minHeight: '700px' }}>
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" style={{ height: '77vh', minHeight: '550px' }}>
         {/* Premium property background with parallax effect */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -727,14 +727,23 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent"></div>
                       </div>
                       
+        {/* Partner Logo - Top Right Corner of Hero Section */}
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
+          <Image
+            src="/partner-logo.svg"
+            alt="Licensed Real Estate Partner"
+            width={120}
+            height={60}
+            className="h-auto max-w-[80px] sm:max-w-[120px] drop-shadow-lg"
+            priority
+          />
+        </div>
+        
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+          
           <div className="text-center space-y-4">
             {/* Logo and Main Headline */}
             <div className="flex flex-col items-center space-y-4">
-              {/* Reserved space for partnership logo - maintaining hero section height */}
-              <div className="relative mb-2">
-                <div className="h-[120px] w-full"></div>
-              </div>
               
               <h1 
                 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight px-4 mb-4 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
@@ -829,122 +838,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
 
                   </motion.div>
 
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <div className="space-y-6">
-                <div className="text-center px-4 sm:px-0">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Quick Actions</h2>
-                  <p className="text-slate-600">Get started with these popular tools</p>
-              </div>
-              
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-0">
-                  {/* Advanced Search */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
-                    className="group cursor-pointer"
-                    onClick={() => {
-                      setActiveTab('listings');
-                      // Scroll to the top of the listings section
-                      setTimeout(() => {
-                        scrollToSection('listings-section');
-                      }, 100); // Small delay to ensure tab switch completes
-                      // Track analytics
-                      trackEvent('quick_action_find_home_clicked', {
-                        source: 'quick_actions',
-                        event_category: 'navigation'
-                      });
-                    }}
-                  >
-                    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-green-300">
-                      <div className="text-center space-y-4">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
-                          <Filter className="w-6 h-6 text-green-600" />
-                        </div>
-                        
-                        <div>
-                          <h3 className="font-semibold text-slate-800 mb-2">Find Your Perfect Home</h3>
-                          <p className="text-slate-600 text-sm mb-3">
-                            Search by location, budget, and preferences
-                          </p>
-                          
-                          {/* Preview */}
-                          <div className="bg-slate-50 rounded-lg p-3 text-left">
-                            <div className="text-xs text-slate-500 mb-1">Preview:</div>
-                            <div className="text-xs space-y-1 text-slate-600">
-                              <div>• Location: Harare, Zimbabwe</div>
-                              <div>• Price: $50K - $200K</div>
-                              <div>• Type: 3+ bedrooms</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-            </div>
-            </motion.div>
-
-                  {/* Saved Properties */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
-                    className="group cursor-pointer"
-                    onClick={() => {
-                      setActiveTab('saved');
-                      // Scroll to the top of the saved section
-                      setTimeout(() => {
-                        scrollToSection('saved-section');
-                      }, 100); // Small delay to ensure tab switch completes
-                      // Track analytics
-                      trackEvent('quick_action_track_favorites_clicked', {
-                        source: 'quick_actions',
-                        event_category: 'navigation'
-                      });
-                    }}
-                  >
-                    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:border-purple-300">
-                      <div className="text-center space-y-4">
-                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
-                          <Bookmark className="w-6 h-6 text-purple-600" />
-          </div>
-                        
-                        <div>
-                          <h3 className="font-semibold text-slate-800 mb-2">Track Your Favorites</h3>
-                          <p className="text-slate-600 text-sm mb-3">
-                            Save and compare your top choices
-                          </p>
-                          
-                          {/* Preview */}
-                          <div className="bg-slate-50 rounded-lg p-3 text-left">
-                            <div className="text-xs text-slate-500 mb-1">Preview:</div>
-                            <div className="text-xs space-y-1 text-slate-600">
-                              <div>• 3 properties saved</div>
-                              <div>• Last viewed: 2 hours ago</div>
-                              <div>• Price alerts: 2 active</div>
-              </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
           </div>
         </div>
       </div>
 
       {/* Property Search Bar - Overlapping Section */}
       <motion.div
-        className="relative z-20 max-w-4xl mx-auto px-4 -mt-8 sm:-mt-24"
+        className="relative z-20 max-w-4xl mx-auto px-4 -mt-8 sm:-mt-16"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
