@@ -33,7 +33,13 @@ function ConfirmEmailContent() {
 
         if (!result.success) {
           setStatus('error');
-          setMessage(result.error || 'Confirmation failed. Please try again.');
+          if (response.status === 410) {
+            setMessage('This confirmation link has expired (links are valid for 1 hour). Please request a new one.');
+          } else if (response.status === 404) {
+            setMessage('Invalid confirmation link. Please check your email and try again.');
+          } else {
+            setMessage(result.error || 'Confirmation failed. Please try again.');
+          }
           return;
         }
 

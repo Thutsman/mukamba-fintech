@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
+import { ResendConfirmationModal } from '@/components/forms/ResendConfirmationModal';
 import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
 import { PropertyDashboard } from '@/components/property/PropertyDashboard';
 import { VerifiedUserDashboard } from '@/components/profile/VerifiedUserDashboard';
@@ -18,6 +19,7 @@ import { isFullyVerified } from '@/types/auth';
 export const AuthSystem: React.FC = () => {
   const [showRegister, setShowRegister] = React.useState(false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
+  const [showResendModal, setShowResendModal] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile' | 'home'>('properties');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
   const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
@@ -31,6 +33,19 @@ export const AuthSystem: React.FC = () => {
   React.useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Handle URL parameters for resend confirmation
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'resend-confirmation') {
+      setShowResendModal(true);
+      // Clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
 
   // Check localStorage for widget closed state on component mount
   React.useEffect(() => {
@@ -152,12 +167,14 @@ export const AuthSystem: React.FC = () => {
   const handleCloseModals = () => {
     setShowRegister(false);
     setShowSigninModal(false);
+    setShowResendModal(false);
   };
 
   const handleLogout = () => {
     // Close any open modals first
     setShowRegister(false);
     setShowSigninModal(false);
+    setShowResendModal(false);
     // Clear timestamps and redirect flags
     localStorage.removeItem('userSignupTime');
     localStorage.removeItem('userEmailConfirmTime');
@@ -598,6 +615,12 @@ export const AuthSystem: React.FC = () => {
               setShowSigninModal(false);
               setShowRegister(true);
             }}
+          />
+        )}
+        {showResendModal && (
+          <ResendConfirmationModal
+            isOpen={showResendModal}
+            onClose={handleCloseModals}
           />
         )}
       </AnimatePresence>

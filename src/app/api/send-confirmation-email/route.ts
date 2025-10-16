@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         user_id: userId,
         token: confirmationToken,
         email: email,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour
       });
 
     // Send email

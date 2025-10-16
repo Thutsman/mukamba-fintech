@@ -16,6 +16,9 @@ export const ConfirmationEmailTemplate: React.FC<EmailTemplateProps> = ({
     <div style={{ padding: '40px 20px', backgroundColor: '#f9f9f9' }}>
       <h2>Welcome to Mukamba Gateway, {firstName}!</h2>
       <p>Thank you for signing up. Please confirm your email address to get started.</p>
+      <p style={{ color: '#7F1518', fontWeight: 'bold', fontSize: '14px' }}>
+        ⏰ This confirmation link expires in 1 hour for security reasons.
+      </p>
       <div style={{ textAlign: 'center', margin: '30px 0' }}>
         <a href={confirmationUrl} style={{
           backgroundColor: '#7F1518',
