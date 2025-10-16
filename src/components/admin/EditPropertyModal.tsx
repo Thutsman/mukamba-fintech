@@ -363,7 +363,7 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
   const modalContent = (
     <AnimatePresence mode="wait">
       <div 
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm" 
         onClick={step === 'success' ? undefined : handleClose}
       >
         <motion.div
@@ -372,7 +372,7 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white rounded-lg relative"
+          className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-white rounded-lg relative"
         >
           <Card className="shadow-2xl border-0 isolate">
             <CardHeader className="text-center">
@@ -407,7 +407,7 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
               </p>
             </CardHeader>
 
-            <CardContent className="space-y-8 max-h-[calc(90vh-16rem)] overflow-y-auto px-6 pb-6">
+            <CardContent className="space-y-6 sm:space-y-8 max-h-[calc(95vh-12rem)] sm:max-h-[calc(90vh-16rem)] overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6">
               {isLoading && step === 'details' ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -482,20 +482,54 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
                             <Label className="text-base font-medium text-slate-700 mb-2 block">
                               Listing Type
                             </Label>
-                            <RadioGroup
-                              value={form.watch('listingType')}
-                              onValueChange={(value: ListingType) => form.setValue('listingType', value)}
-                              className="grid grid-cols-2 gap-4 mt-2"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="rent-to-buy" id="rent-to-buy" />
-                                <Label htmlFor="rent-to-buy" className="text-sm">Installments</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                              <div 
+                                className={`relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                  form.watch('listingType') === 'rent-to-buy' 
+                                    ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                    : 'border-slate-300 bg-white hover:border-slate-400'
+                                }`}
+                                onClick={() => form.setValue('listingType', 'rent-to-buy')}
+                              >
+                                <div className="flex items-center space-x-3 w-full">
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                    form.watch('listingType') === 'rent-to-buy'
+                                      ? 'border-blue-500 bg-blue-500'
+                                      : 'border-slate-400'
+                                  }`}>
+                                    {form.watch('listingType') === 'rent-to-buy' && (
+                                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                                    )}
+                                  </div>
+                                  <Label htmlFor="rent-to-buy" className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
+                                    Installments
+                                  </Label>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="sale" id="sale" />
-                                <Label htmlFor="sale" className="text-sm">Cash</Label>
+                              <div 
+                                className={`relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                  form.watch('listingType') === 'sale' 
+                                    ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                    : 'border-slate-300 bg-white hover:border-slate-400'
+                                }`}
+                                onClick={() => form.setValue('listingType', 'sale')}
+                              >
+                                <div className="flex items-center space-x-3 w-full">
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                    form.watch('listingType') === 'sale'
+                                      ? 'border-blue-500 bg-blue-500'
+                                      : 'border-slate-400'
+                                  }`}>
+                                    {form.watch('listingType') === 'sale' && (
+                                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                                    )}
+                                  </div>
+                                  <Label htmlFor="sale" className="text-sm font-medium text-slate-700 cursor-pointer flex-1">
+                                    Cash
+                                  </Label>
+                                </div>
                               </div>
-                            </RadioGroup>
+                            </div>
                           </div>
 
                           <div>
