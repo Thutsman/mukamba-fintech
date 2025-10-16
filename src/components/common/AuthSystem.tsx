@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, UserPlus, LogOut, User, Building } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
@@ -24,7 +24,6 @@ export const AuthSystem: React.FC = () => {
   const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
   
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth } = useAuthStore();
   // Theme is app-controlled (light-only). No toggle here.
 
@@ -32,15 +31,6 @@ export const AuthSystem: React.FC = () => {
   React.useEffect(() => {
     checkAuth();
   }, [checkAuth]);
-
-  // Handle URL parameters for view routing
-  React.useEffect(() => {
-    const view = searchParams.get('view');
-    if (view === 'profile' && isAuthenticated && user) {
-      setCurrentView('profile');
-      setHasRedirectedToProfile(true);
-    }
-  }, [searchParams, isAuthenticated, user]);
 
   // Check localStorage for widget closed state on component mount
   React.useEffect(() => {
