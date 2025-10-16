@@ -293,6 +293,19 @@ export const PropertyManagementTable: React.FC<PropertyManagementTableProps> = (
     return mainImage?.image_url || property.property_images?.[0]?.image_url;
   };
 
+  const formatListingType = (listingType: string) => {
+    switch (listingType) {
+      case 'rent-to-buy':
+        return 'installments';
+      case 'sale':
+        return 'cash';
+      case 'installment':
+        return 'installments';
+      default:
+        return listingType;
+    }
+  };
+
   // Pagination
   const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -516,7 +529,7 @@ export const PropertyManagementTable: React.FC<PropertyManagementTableProps> = (
                             {property.title}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {property.property_type} • {property.listing_type}
+                            {property.property_type} • {formatListingType(property.listing_type)}
                           </p>
                           {/* Show address on mobile when address column is hidden */}
                           <div className="md:hidden">
