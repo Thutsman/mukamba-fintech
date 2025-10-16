@@ -35,13 +35,42 @@ export async function POST(request: Request) {
       }, { status: 404 });
     }
 
-    // 2. Check if already confirmed
+    // 2. If already confirmed, still try to generate a magic link to create a session
     if (confirmationData.confirmed_at) {
-      return NextResponse.json({ 
-        success: true, 
-        alreadyConfirmed: true,
-        message: 'Email already confirmed' 
-      });
+      try {
+        const { data: userData, error: fetchUserError } = await supabaseAdmin.auth.admin.getUserById(confirmationData.user_id);
+        if (fetchUserError) {
+          console.error('Failed to fetch user for magic link (already confirmed):', fetchUserError);
+        }
+        let magicLink: string | null = null;
+        if (userData?.user?.email) {
+          const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email: userData.user.email,
+            options: {
+              redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+            }
+          });
+          if (linkError) {
+            console.error('Failed to generate magic link (already confirmed):', linkError);
+          } else {
+            magicLink = linkData?.properties?.action_link || null;
+          }
+        }
+        return NextResponse.json({ 
+          success: true, 
+          alreadyConfirmed: true,
+          message: 'Email already confirmed',
+          magicLink
+        });
+      } catch (e) {
+        console.error('Error generating magic link for already-confirmed user:', e);
+        return NextResponse.json({ 
+          success: true, 
+          alreadyConfirmed: true,
+          message: 'Email already confirmed'
+        });
+      }
     }
 
     // 3. Check expiration
@@ -76,10 +105,43 @@ export async function POST(request: Request) {
       console.error('Failed to update confirmation record:', markConfirmedError);
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Email confirmed successfully' 
-    });
+    // 6. Generate a Supabase magic link to create a client session immediately
+    //    and redirect back to our app, where AuthSystem can route to ProfileDashboard
+    try {
+      // Fetch the user's email to generate a magic link
+      const { data: userData, error: fetchUserError } = await supabaseAdmin.auth.admin.getUserById(confirmationData.user_id);
+      if (fetchUserError) {
+        console.error('Failed to fetch user for magic link:', fetchUserError);
+      }
+
+      let magicLink: string | null = null;
+      if (userData?.user?.email) {
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: userData.user.email,
+          options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+          }
+        });
+        if (linkError) {
+          console.error('Failed to generate magic link:', linkError);
+        } else {
+          magicLink = linkData?.properties?.action_link || null;
+        }
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Email confirmed successfully',
+        magicLink
+      });
+    } catch (e) {
+      console.error('Error generating magic link after confirmation:', e);
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Email confirmed successfully'
+      });
+    }
 
   } catch (error) {
     console.error('Confirmation error:', error);

@@ -40,18 +40,32 @@ function ConfirmEmailContent() {
         // Check if already confirmed
         if (result.alreadyConfirmed) {
           setStatus('success');
-          setMessage('Your email has already been confirmed! Redirecting to home...');
-          setTimeout(() => router.push('/'), 2000);
+          setMessage('Your email has already been confirmed! Signing you in...');
+          
+          // If API returned a magicLink, navigate to it to establish a session
+          if (result.magicLink) {
+            window.location.href = result.magicLink;
+            return;
+          }
+          
+          // Fallback: go to profile view; AuthSystem will check auth and route accordingly
+          setTimeout(() => router.push('/?view=profile'), 1500);
           return;
         }
 
         setStatus('success');
-        setMessage('Email confirmed successfully! You now have full access to all features.');
+        setMessage('Email confirmed successfully! Finishing sign-in...');
         
-        // Redirect to home page after 3 seconds
+        // If API returned a magicLink, navigate to it to establish a session, then callback routes us back
+        if (result.magicLink) {
+          window.location.href = result.magicLink;
+          return;
+        }
+        
+        // Fallback: go to profile view; AuthSystem will check auth and route accordingly
         setTimeout(() => {
-          router.push('/');
-        }, 3000);
+          router.push('/?view=profile');
+        }, 1500);
 
       } catch (error) {
         console.error('Confirmation error:', error);
