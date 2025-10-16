@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   MapPin, 
@@ -221,8 +222,8 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -617,4 +618,11 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
       </motion.div>
     </div>
   );
+
+  // Use portal to render modal at root level
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 };

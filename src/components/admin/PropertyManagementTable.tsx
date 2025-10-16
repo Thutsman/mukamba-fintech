@@ -72,7 +72,7 @@ interface PropertyManagementTableProps {
   onDeleteProperty?: (propertyId: string) => void;
 }
 
-type SortField = 'title' | 'price' | 'created_at' | 'views' | 'inquiries';
+type SortField = 'title' | 'price' | 'created_at' | 'inquiries';
 type SortDirection = 'asc' | 'desc';
 
 export const PropertyManagementTable: React.FC<PropertyManagementTableProps> = ({
@@ -467,15 +467,6 @@ export const PropertyManagementTable: React.FC<PropertyManagementTableProps> = (
                         <SortIcon field="created_at" />
                       </button>
                     </th>
-                    <th className="hidden xl:table-cell px-6 py-3 text-left">
-                      <button
-                        onClick={() => handleSort('views')}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 uppercase tracking-wider hover:text-slate-700"
-                      >
-                        Views
-                        <SortIcon field="views" />
-                      </button>
-                    </th>
                     <th className="hidden xl:table-cell px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Inquiries
                     </th>
@@ -561,12 +552,6 @@ export const PropertyManagementTable: React.FC<PropertyManagementTableProps> = (
                         <div className="flex items-center gap-1 text-sm text-slate-600">
                           <Calendar className="w-4 h-4" />
                           {new Date(property.created_at).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="hidden xl:table-cell px-6 py-4">
-                        <div className="flex items-center gap-1 text-sm text-slate-600">
-                          <Eye className="w-4 h-4" />
-                          {property.views}
                         </div>
                       </td>
                       <td className="hidden xl:table-cell px-6 py-4">

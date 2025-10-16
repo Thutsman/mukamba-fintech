@@ -114,6 +114,7 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
   const [newAmenity, setNewAmenity] = React.useState('');
   const [newImages, setNewImages] = React.useState<File[]>([]);
   const [newImageUrls, setNewImageUrls] = React.useState<string[]>([]);
+  const [imagesToDelete, setImagesToDelete] = React.useState<Set<string>>(new Set());
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -241,6 +242,18 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
     setNewImageUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  const toggleImageDeletion = (imageId: string) => {
+    setImagesToDelete(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(imageId)) {
+        newSet.delete(imageId);
+      } else {
+        newSet.add(imageId);
+      }
+      return newSet;
+    });
+  };
+
   const handleDetailsSubmit = async (data: EditPropertyFormData) => {
     const isValid = await form.trigger();
     if (!isValid) return;
@@ -297,9 +310,25 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
         return;
       }
 
+      // Delete marked images
+      if (imagesToDelete.size > 0) {
+        const { error: deleteError } = await supabase
+          .from('property_images')
+          .delete()
+          .in('id', Array.from(imagesToDelete));
+
+        if (deleteError) {
+          console.error('Error deleting images:', deleteError);
+          toast.error('Failed to delete some images');
+        } else {
+          toast.success(`${imagesToDelete.size} image(s) deleted successfully`);
+        }
+      }
+
       // Log the activity
       await logPropertyActivity(propertyId, 'admin-user-id', 'updated', {
         updated_fields: Object.keys(updateData),
+        deleted_images: imagesToDelete.size > 0 ? Array.from(imagesToDelete) : undefined,
         updated_at: new Date().toISOString()
       });
 
@@ -323,6 +352,7 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
       form.reset();
       setNewImages([]);
       setNewImageUrls([]);
+      setImagesToDelete(new Set());
       setProperty(null);
       onClose();
     }
@@ -463,7 +493,7 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="sale" id="sale" />
-                                <Label htmlFor="sale" className="text-sm">Direct Sale</Label>
+                                <Label htmlFor="sale" className="text-sm">Cash</Label>
                               </div>
                             </RadioGroup>
                           </div>
@@ -829,16 +859,43 @@ export const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
                             <img
                               src={image.image_url}
                               alt={`Property photo ${index + 1}`}
-                              className="w-full h-40 object-cover rounded-lg"
+                              className={`w-full h-40 object-cover rounded-lg transition-opacity ${
+                                imagesToDelete.has(image.id) ? 'opacity-50' : ''
+                              }`}
                             />
                             {image.is_main_image && (
                               <Badge className="absolute top-2 left-2 bg-blue-600 text-white">
                                 Main
                               </Badge>
                             )}
+                            <button
+                              onClick={() => toggleImageDeletion(image.id)}
+                              className={`absolute top-2 right-2 p-1 rounded-full transition-colors ${
+                                imagesToDelete.has(image.id)
+                                  ? 'bg-red-500 text-white'
+                                  : 'bg-white/80 text-red-600 hover:bg-red-500 hover:text-white'
+                              }`}
+                              title={imagesToDelete.has(image.id) ? 'Undo delete' : 'Delete image'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            {imagesToDelete.has(image.id) && (
+                              <div className="absolute inset-0 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
+                                  Will be deleted
+                                </span>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
+                      {imagesToDelete.size > 0 && (
+                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-sm text-red-700">
+                            {imagesToDelete.size} image(s) will be deleted when you save changes.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
