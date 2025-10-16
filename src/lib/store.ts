@@ -15,6 +15,12 @@ interface AuthStore {
   error: string | null;
   isNewUser: boolean; // Track if user just signed up
   hasHydrated: boolean; // Persist hydration completed
+  showSuccessPopup: boolean; // Show success popup after signup
+  successPopupData: {
+    email?: string;
+    title?: string;
+    message?: string;
+  } | null;
   
   // Actions
   basicSignup: (data: BasicSignupData) => Promise<void>;
@@ -26,6 +32,8 @@ interface AuthStore {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   markUserAsReturning: () => void; // Mark user as no longer new
+  showSuccessMessage: (data: { email?: string; title?: string; message?: string }) => void;
+  hideSuccessMessage: () => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -38,6 +46,8 @@ export const useAuthStore = create<AuthStore>()(
       error: null,
       isNewUser: false,
       hasHydrated: false,
+      showSuccessPopup: false,
+      successPopupData: null,
 
       // Basic signup - creates account immediately
       basicSignup: async (data: BasicSignupData) => {
@@ -117,7 +127,14 @@ export const useAuthStore = create<AuthStore>()(
             });
             
             // Show email confirmation message
-            alert('Account created successfully! Please check your email and click the confirmation link to activate your account.');
+            set({
+              showSuccessPopup: true,
+              successPopupData: {
+                email: data.email,
+                title: "Account Created Successfully! 🎉",
+                message: "Your account has been created! Please check your email and click the confirmation link to activate your account."
+              }
+            });
             return;
           }
 
@@ -449,6 +466,20 @@ export const useAuthStore = create<AuthStore>()(
         localStorage.removeItem('userSignupTime');
         localStorage.removeItem('userEmailConfirmTime');
         set({ isNewUser: false });
+      },
+
+      showSuccessMessage: (data) => {
+        set({
+          showSuccessPopup: true,
+          successPopupData: data
+        });
+      },
+
+      hideSuccessMessage: () => {
+        set({
+          showSuccessPopup: false,
+          successPopupData: null
+        });
       }
     }),
     {
@@ -457,6 +488,7 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         isNewUser: state.isNewUser
+        // Don't persist success popup state
       }),
       onRehydrateStorage: () => (_state, _error) => {
         // Mark store as hydrated after persistence restores state

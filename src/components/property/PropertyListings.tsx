@@ -948,8 +948,13 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           // Store buyer type for future use
           setUserBuyerType(buyerType);
           
-          // Show success message
-          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
+          // Show success message using the auth store
+          const { showSuccessMessage } = useAuthStore.getState();
+          showSuccessMessage({
+            email: email,
+            title: "Account Created Successfully! 🎉",
+            message: "Your account has been created! Please check your email and click the confirmation link to activate your account. You can now view property details."
+          });
           
           // Show property details after signup (user now has email-level access)
           if (selectedPropertyForSignup) {

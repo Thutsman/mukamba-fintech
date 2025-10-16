@@ -58,6 +58,7 @@ import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } f
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { User as UserType } from '@/types/auth';
+import { useAuthStore } from '@/lib/store';
 import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
@@ -1647,8 +1648,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           
           console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
           
-          // Show success message
-          alert(`Account created successfully! Please check your email (${email}) for confirmation. You can now view property details.`);
+          // Show success message using the auth store
+          const { showSuccessMessage } = useAuthStore.getState();
+          showSuccessMessage({
+            email: email,
+            title: "Account Created Successfully! 🎉",
+            message: "Your account has been created! Please check your email and click the confirmation link to activate your account. You can now view property details."
+          });
           
           // Show property details after signup (user now has email-level access)
           if (selectedPropertyForSignup) {
