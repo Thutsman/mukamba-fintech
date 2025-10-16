@@ -1589,10 +1589,10 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           >
             <div className="flex flex-col sm:flex-row justify-between items-center">
               <div className="flex flex-wrap gap-4 mb-4 sm:mb-0">
-                <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
+                <a href="/terms" className="text-white/60 hover:text-white transition-colors text-sm">
                   Terms & Conditions
                 </a>
-                <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
+                <a href="/privacy" className="text-white/60 hover:text-white transition-colors text-sm">
                   Privacy Policy
                 </a>
                 <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
