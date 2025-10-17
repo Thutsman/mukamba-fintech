@@ -8,7 +8,9 @@ export async function POST(req: NextRequest) {
     console.log('SMS API called with:', { phoneNumber, otpCode, message });
     console.log('Environment variables:', {
       SMS_PROVIDER: process.env.SMS_PROVIDER,
-      TEXTBELT_API_KEY: process.env.TEXTBELT_API_KEY,
+      VONAGE_API_KEY: process.env.VONAGE_API_KEY ? '***configured***' : 'NOT SET',
+      VONAGE_API_SECRET: process.env.VONAGE_API_SECRET ? '***configured***' : 'NOT SET',
+      VONAGE_FROM_NUMBER: process.env.VONAGE_FROM_NUMBER,
       NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME
     });
 
@@ -25,12 +27,21 @@ export async function POST(req: NextRequest) {
     const result = await sendSms(phoneNumber, text);
     console.log('SMS result:', result);
     
+    // Return appropriate status based on result
     const status = result.success ? 200 : 502;
 
-    return NextResponse.json({ success: result.success, messageId: result.messageId, provider: result.provider, error: result.error }, { status });
+    return NextResponse.json({ 
+      success: result.success, 
+      messageId: result.messageId, 
+      provider: result.provider, 
+      error: result.error 
+    }, { status });
   } catch (error: any) {
     console.error('SMS API error:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Unexpected error' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Unexpected error' 
+    }, { status: 500 });
   }
 }
 

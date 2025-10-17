@@ -101,10 +101,21 @@ async function sendViaVonage(to: string, body: string): Promise<SendResult> {
   }
   
   try {
-    const payload = { api_key: vonageKey, api_secret: vonageSecret, to, from: vonageFrom, text: body };
-    console.log('Vonage: Sending SMS to', to, 'from', vonageFrom);
+    // Ensure phone number is in E.164 format for international numbers
+    const formattedTo = to.startsWith('+') ? to : `+${to}`;
+    
+    const payload = { 
+      api_key: vonageKey, 
+      api_secret: vonageSecret, 
+      to: formattedTo, 
+      from: vonageFrom, 
+      text: body 
+    };
+    
+    console.log('Vonage: Sending SMS to', formattedTo, 'from', vonageFrom);
     console.log('Vonage payload:', { ...payload, api_key: '***', api_secret: '***' });
     
+    // Use the current Vonage API endpoint
     const res = await fetch('https://rest.nexmo.com/sms/json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -117,6 +128,16 @@ async function sendViaVonage(to: string, body: string): Promise<SendResult> {
     
     const msg = data?.messages?.[0];
     const ok = msg?.status === '0';
+    
+    if (!ok) {
+      console.error('Vonage SMS failed:', {
+        status: msg?.status,
+        error: msg?.['error-text'],
+        to: formattedTo,
+        from: vonageFrom
+      });
+    }
+    
     return { 
       success: !!ok, 
       messageId: msg?.['message-id'], 
