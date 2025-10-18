@@ -58,7 +58,7 @@ export interface KYCVerification {
   userId: string;
   userName: string;
   userEmail: string;
-  type: 'buyer' | 'seller';
+  type: 'identity' | 'financial' | 'address' | 'employment' | 'comprehensive' | 'buyer' | 'seller';
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;
   reviewedAt?: string;

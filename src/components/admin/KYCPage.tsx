@@ -38,7 +38,7 @@ export const KYCPage: React.FC<KYCPageProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [typeFilter, setTypeFilter] = React.useState<'all' | 'buyer' | 'seller'>('all');
+  const [typeFilter, setTypeFilter] = React.useState<'all' | 'identity' | 'financial' | 'address' | 'employment' | 'comprehensive' | 'buyer' | 'seller'>('all');
   const [selectedVerifications, setSelectedVerifications] = React.useState<string[]>([]);
 
   const filteredVerifications = verifications.filter(verification => {
@@ -222,10 +222,15 @@ export const KYCPage: React.FC<KYCPageProps> = ({
               </select>
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as 'all' | 'buyer' | 'seller')}
+                onChange={(e) => setTypeFilter(e.target.value as 'all' | 'identity' | 'financial' | 'address' | 'employment' | 'comprehensive' | 'buyer' | 'seller')}
                 className="px-3 py-2 border border-slate-300 rounded-md text-sm"
               >
                 <option value="all">All Types</option>
+                <option value="identity">Identity</option>
+                <option value="financial">Financial</option>
+                <option value="address">Address</option>
+                <option value="employment">Employment</option>
+                <option value="comprehensive">Comprehensive</option>
                 <option value="buyer">Buyers</option>
                 <option value="seller">Sellers</option>
               </select>
