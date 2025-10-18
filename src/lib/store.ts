@@ -34,6 +34,7 @@ interface AuthStore {
   markUserAsReturning: () => void; // Mark user as no longer new
   showSuccessMessage: (data: { email?: string; title?: string; message?: string }) => void;
   hideSuccessMessage: () => void;
+  autoLoginAfterConfirmation: (userData: any) => void; // Auto-login after email confirmation
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -479,6 +480,50 @@ export const useAuthStore = create<AuthStore>()(
         set({
           showSuccessPopup: false,
           successPopupData: null
+        });
+      },
+
+      autoLoginAfterConfirmation: (userData: any) => {
+        // Convert the user data to our User type
+        const user: User = {
+          id: userData.id,
+          firstName: userData.firstName || 'User',
+          lastName: userData.lastName || '',
+          email: userData.email,
+          phone: userData.phone || '',
+          level: userData.level || 'basic',
+          roles: userData.roles || [],
+          is_phone_verified: userData.is_phone_verified || false,
+          isIdentityVerified: userData.isIdentityVerified || false,
+          isFinanciallyVerified: userData.isFinanciallyVerified || false,
+          isPropertyVerified: userData.isPropertyVerified || false,
+          isAddressVerified: userData.isAddressVerified || false,
+          kyc_level: userData.kyc_level || 'none',
+          buyer_type: userData.buyer_type,
+          permissions: getUserPermissions({
+            is_phone_verified: userData.is_phone_verified || false,
+            isIdentityVerified: userData.isIdentityVerified || false,
+            isFinanciallyVerified: userData.isFinanciallyVerified || false,
+            isPropertyVerified: userData.isPropertyVerified || false,
+            isAddressVerified: userData.isAddressVerified || false,
+            kycStatus: userData.kycStatus || 'none'
+          }),
+          kycStatus: userData.kycStatus || 'none',
+          createdAt: userData.createdAt || new Date()
+        };
+
+        set({
+          user: user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+          isNewUser: true, // Mark as new user since they just confirmed their email
+          showSuccessPopup: true,
+          successPopupData: {
+            email: userData.email,
+            title: "Email Confirmed Successfully! 🎉",
+            message: "Your email has been confirmed and you're now signed in. Welcome to Mukamba Gateway!"
+          }
         });
       }
     }),

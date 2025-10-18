@@ -4,12 +4,14 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuthStore } from '@/lib/store';
 
 function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { autoLoginAfterConfirmation } = useAuthStore();
 
   useEffect(() => {
     const confirmEmail = async () => {
@@ -46,18 +48,23 @@ function ConfirmEmailContent() {
         // Check if already confirmed
         if (result.alreadyConfirmed) {
           setStatus('success');
-          setMessage('Your email has already been confirmed! Redirecting to home...');
-          setTimeout(() => router.push('/'), 2000);
+          setMessage('Your email has already been confirmed! Redirecting to your profile...');
+          setTimeout(() => router.push('/?view=profile'), 2000);
           return;
         }
 
         setStatus('success');
-        setMessage('Email confirmed successfully! You now have full access to all features.');
+        setMessage('Email confirmed successfully! You are now signed in and will be redirected to your profile.');
         
-        // Redirect to home page after 3 seconds
+        // Auto-login the user with the returned user data
+        if (result.user) {
+          autoLoginAfterConfirmation(result.user);
+        }
+        
+        // Redirect to main page with profile view after 2 seconds
         setTimeout(() => {
-          router.push('/');
-        }, 3000);
+          router.push('/?view=profile');
+        }, 2000);
 
       } catch (error) {
         console.error('Confirmation error:', error);
@@ -125,10 +132,10 @@ function ConfirmEmailContent() {
               transition={{ delay: 0.3 }}
             >
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/?view=profile')}
                 className="w-full bg-[#7F1518] text-white py-3 px-6 rounded-lg hover:bg-[#6a1214] transition-colors font-medium"
               >
-                Go to Home
+                Go to Profile
               </button>
             </motion.div>
           )}
