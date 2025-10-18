@@ -95,7 +95,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('overview');
   // Local verification state to immediately unlock actions post-upload
-  const [identityVerifiedLocal, setIdentityVerifiedLocal] = React.useState<boolean>(!!user?.isIdentityVerified);
+  const [identityVerifiedLocal, setIdentityVerifiedLocal] = React.useState<boolean>(false);
   
   // Offer flow state
   const [showExpressInterestModal, setShowExpressInterestModal] = React.useState(false);
@@ -278,7 +278,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
     }
 
     // Identity verification required for all offers
-    if (!identityVerifiedLocal) {
+    if (!user.isIdentityVerified) {
       setShowIdentityModal(true);
       return;
     }
@@ -392,7 +392,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const canMakeOffer = () => {
     if (!user) return false;
     if (!user.is_phone_verified) return false;
-    if (!identityVerifiedLocal) return false;
+    if (!user.isIdentityVerified) return false;
     if (hasUserOffer() && userOffer?.status !== 'rejected') return false;
     return true;
   };
@@ -1491,16 +1491,14 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
       <IdentityVerificationModal
         isOpen={showIdentityModal}
         onClose={() => setShowIdentityModal(false)}
-        onComplete={() => {
-          // Immediately reflect identity verification locally for UX
-          if (user) {
-            updateUser({
-              ...user,
-              isIdentityVerified: true,
-              kyc_level: user.kyc_level === 'financial' || user.kyc_level === 'complete' ? user.kyc_level : 'identity'
-            });
+        onComplete={async () => {
+          // Refresh user data from database to get updated verification status
+          try {
+            const { checkAuth } = useAuthStore.getState();
+            await checkAuth();
+          } catch (error) {
+            console.error('Error refreshing user data:', error);
           }
-          setIdentityVerifiedLocal(true);
           setShowIdentityModal(false);
         }}
       />

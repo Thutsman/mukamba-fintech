@@ -33,23 +33,30 @@ export const createKYCVerification = async (
   data: CreateKYCVerificationRequest
 ): Promise<{ data: KYCVerification | null; error: string | null }> => {
   try {
+    // Build insert object with only the fields that exist in your schema
+    const insertData: any = {
+      user_id: userId,
+      verification_type: data.verification_type,
+      status: 'pending',
+      verification_level: 'basic'
+    };
+
+    // Add optional fields only if they exist in the data
+    if (data.id_number) insertData.verified_id_number = data.id_number;
+    if (data.date_of_birth) insertData.verified_date_of_birth = data.date_of_birth;
+    if (data.first_name) insertData.verified_first_name = data.first_name;
+    if (data.last_name) insertData.verified_last_name = data.last_name;
+    if (data.monthly_income) insertData.monthly_income = data.monthly_income;
+    if (data.employment_status) insertData.employment_status = data.employment_status;
+    if (data.bank_name) insertData.bank_name = data.bank_name;
+    if (data.business_registered !== undefined) insertData.business_registered = data.business_registered;
+    if (data.business_name) insertData.business_name = data.business_name;
+    if (data.business_registration_number) insertData.business_registration_number = data.business_registration_number;
+    if (data.tax_number) insertData.tax_number = data.tax_number;
+
     const { data: verification, error } = await supabase
       .from('kyc_verifications')
-      .insert({
-        user_id: userId,
-        verification_type: data.verification_type,
-        id_number: data.id_number,
-        date_of_birth: data.date_of_birth,
-        monthly_income: data.monthly_income,
-        employment_status: data.employment_status,
-        bank_name: data.bank_name,
-        credit_consent: data.credit_consent || false,
-        business_registered: data.business_registered || false,
-        business_name: data.business_name,
-        business_registration_number: data.business_registration_number,
-        tax_number: data.tax_number,
-        status: 'pending'
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -253,53 +260,107 @@ export const uploadKYCDocument = async (
   request: UploadKYCDocumentRequest
 ): Promise<{ data: KYCDocument | null; error: string | null }> => {
   try {
-    const { kyc_verification_id, document_type, file } = request;
-
+    const { kyc_verification_id, document_type, document_side, file } = request;
+    
+    // Validate file
+    if (!file || file.size === 0) {
+      return { data: null, error: 'Invalid file provided' };
+    }
+    
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {  
+      return { data: null, error: 'File size too large. Maximum 10MB allowed.' };
+    }
+    
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      return { data: null, error: `File type ${file.type} not allowed. Allowed types: ${allowedTypes.join(', ')}` };
+    }
+    
+    // Create a new File object to avoid DataCloneError
+    const cleanFile = new File([file], file.name, { type: file.type });
+    
     // Generate unique file path
     const fileExt = file.name.split('.').pop();
     const fileName = `${document_type}_${Date.now()}.${fileExt}`;
     const filePath = `${kyc_verification_id}/${fileName}`;
-
+    
+    // Storage bucket name
+    const storageBucket = 'kyc-documents';
+    
+    console.log('File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      path: filePath
+    });
+    
     // Upload file to Supabase Storage
+    // Remove the listBuckets check - it requires service role permissions
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('user-documents')
-      .upload(filePath, file, {
+      .from(storageBucket)
+      .upload(filePath, cleanFile, {
         cacheControl: '3600',
         upsert: false
       });
-
+    
     if (uploadError) {
       console.error('Error uploading file:', uploadError);
-      return { data: null, error: uploadError.message };
+      console.error('Storage bucket:', storageBucket);
+      console.error('File path:', filePath);
+      console.error('File size:', file.size);
+      console.error('File type:', file.type);
+      
+      // Check if error is auth-related
+      if (uploadError.message?.includes('401') || uploadError.message?.includes('Unauthorized')) {
+        return { 
+          data: null, 
+          error: 'Authentication failed. Please ensure you are signed in and have upload permissions.' 
+        };
+      }
+      
+      return { data: null, error: uploadError.message || 'Upload failed' };
     }
-
+    
     // Get public URL for the uploaded file
     const { data: urlData } = supabase.storage
-      .from('user-documents')
+      .from(storageBucket)
       .getPublicUrl(filePath);
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      // Clean up uploaded file if user not authenticated
+      await supabase.storage.from(storageBucket).remove([filePath]);
+      return { data: null, error: 'User authentication required' };
+    }
 
     // Save document metadata to database
     const { data: document, error: dbError } = await supabase
       .from('kyc_documents')
       .insert({
-        kyc_verification_id,
+        user_id: user.id,
+        verification_id: kyc_verification_id,
         document_type,
-        file_path: filePath,
+        document_side: document_side || 'front',
+        file_url: urlData.publicUrl,
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        verified: false
+        verification_status: 'pending'
       })
       .select()
       .single();
-
+    
     if (dbError) {
       console.error('Error saving document metadata:', dbError);
       // Clean up uploaded file if database insert fails
-      await supabase.storage.from('user-documents').remove([filePath]);
+      await supabase.storage.from(storageBucket).remove([filePath]);
       return { data: null, error: dbError.message };
     }
-
+    
     return { data: document, error: null };
   } catch (error) {
     console.error('Error uploading KYC document:', error);
@@ -317,8 +378,8 @@ export const getKYCVerificationDocuments = async (
     const { data, error } = await supabase
       .from('kyc_documents')
       .select('*')
-      .eq('kyc_verification_id', verificationId)
-      .order('uploaded_at', { ascending: false });
+      .eq('verification_id', verificationId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching KYC documents:', error);
@@ -336,11 +397,15 @@ export const getKYCVerificationDocuments = async (
  * Get document download URL
  */
 export const getDocumentDownloadUrl = async (
-  filePath: string
+  filePath: string,
+  documentType?: string
 ): Promise<{ data: string | null; error: string | null }> => {
   try {
+    // Use kyc-documents bucket for all KYC documents
+    const storageBucket = 'kyc-documents';
+    
     const { data, error } = await supabase.storage
-      .from('user-documents')
+      .from(storageBucket)
       .createSignedUrl(filePath, 3600); // 1 hour expiry
 
     if (error) {
@@ -365,7 +430,7 @@ export const deleteKYCDocument = async (
     // Get document details first
     const { data: document, error: fetchError } = await supabase
       .from('kyc_documents')
-      .select('file_path')
+      .select('file_url, document_type')
       .eq('id', documentId)
       .single();
 
@@ -374,14 +439,22 @@ export const deleteKYCDocument = async (
       return { error: fetchError.message };
     }
 
-    // Delete from storage
-    const { error: storageError } = await supabase.storage
-      .from('user-documents')
-      .remove([document.file_path]);
+    // Extract file path from URL for storage deletion
+    const filePath = document.file_url?.split('/').slice(-2).join('/'); // Get last two parts of URL
 
-    if (storageError) {
-      console.error('Error deleting file from storage:', storageError);
-      return { error: storageError.message };
+    if (filePath) {
+    // Use kyc-documents bucket for all KYC documents
+    const storageBucket = 'kyc-documents';
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from(storageBucket)
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue with database deletion even if storage deletion fails
+      }
     }
 
     // Delete from database

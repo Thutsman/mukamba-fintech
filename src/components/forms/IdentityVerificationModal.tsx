@@ -4,7 +4,8 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Shield, Upload, Check, FileText, Camera, Loader2, Clock, AlertCircle, 
-  Download, RefreshCw, Calendar, Award, Eye, Edit, CheckCircle, XCircle
+  Download, RefreshCw, Calendar, Award, Eye, Edit, CheckCircle, XCircle,
+  User, Smile
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { 
   type IdentityVerificationState, 
   type VerificationDocument, 
@@ -21,6 +23,12 @@ import {
 } from '@/types/auth';
 import { createKYCVerification, uploadKYCDocument } from '@/lib/kyc-services';
 import { useAuthStore } from '@/lib/store';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface IdentityVerificationModalProps {
   isOpen: boolean;
@@ -42,13 +50,29 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   certificates = []
 }) => {
   const { user: storeUser } = useAuthStore();
-  const [step, setStep] = React.useState<'document-type' | 'upload' | 'processing' | 'success'>('document-type');
+  const [step, setStep] = React.useState<'personal-info' | 'document-type' | 'upload' | 'selfie' | 'processing' | 'success'>('personal-info');
   const [documentType, setDocumentType] = React.useState<string>('');
   const [uploadedFiles, setUploadedFiles] = React.useState<{front?: File, back?: File}>({});
+  const [selfiePhoto, setSelfiePhoto] = React.useState<File | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [showUpdateForm, setShowUpdateForm] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const selfieInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUpload, setCurrentUpload] = React.useState<'front' | 'back'>('front');
+  
+  // Webcam states
+  const [showWebcam, setShowWebcam] = React.useState(false);
+  const [webcamStream, setWebcamStream] = React.useState<MediaStream | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  
+  // Personal information state
+  const [personalInfo, setPersonalInfo] = React.useState({
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    idNumber: ''
+  });
 
   const documentTypes = [
     { value: 'national-id', label: 'National ID Card', sides: 2 },
@@ -109,6 +133,15 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
   const verificationInfo = getVerificationInfo();
 
+  const handlePersonalInfoSubmit = () => {
+    // Validate personal information
+    if (!personalInfo.firstName || !personalInfo.lastName || !personalInfo.dateOfBirth || !personalInfo.idNumber) {
+      alert('Please fill in all personal information fields');
+      return;
+    }
+    setStep('document-type');
+  };
+
   const handleDocumentTypeSelect = (type: string) => {
     setDocumentType(type);
     setStep('upload');
@@ -129,7 +162,79 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
     fileInputRef.current?.click();
   };
 
+  const handleSelfieSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelfiePhoto(file);
+    }
+  };
+
+  const triggerSelfieUpload = () => {
+    selfieInputRef.current?.click();
+  };
+
+  // Webcam functions
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } 
+      });
+      setWebcamStream(stream);
+      setShowWebcam(true);
+      
+      // Wait for the video element to be available
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(console.error);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error accessing webcam:', error);
+      alert('Unable to access webcam. Please check your camera permissions.');
+    }
+  };
+
+  const stopWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(track => track.stop());
+      setWebcamStream(null);
+    }
+    setShowWebcam(false);
+  };
+
+  const captureSelfie = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      if (context) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+            setSelfiePhoto(file);
+            stopWebcam();
+          }
+        }, 'image/jpeg', 0.8);
+      }
+    }
+  };
+
   const handleSubmitDocuments = async () => {
+    // Move to selfie step after document upload
+    setStep('selfie');
+  };
+
+  const handleSubmitSelfie = async () => {
     setIsLoading(true);
     setStep('processing');
     try {
@@ -137,26 +242,82 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
       const authUserId = storeUser?.id || user?.id;
       if (!authUserId) throw new Error('User not authenticated');
       const { data: verification, error } = await createKYCVerification(authUserId, {
-        verification_type: 'buyer',
-        id_number: documentType ? 'submitted' : undefined,
+        verification_type: 'identity',
+        id_number: personalInfo.idNumber,
+        date_of_birth: personalInfo.dateOfBirth,
+        first_name: personalInfo.firstName,
+        last_name: personalInfo.lastName,
         credit_consent: false
       });
       if (error || !verification) throw new Error(error || 'Failed to create verification');
 
-      // Upload files to Storage and record metadata
+      // Upload ID documents to Storage and record metadata
+      let uploadErrors: string[] = [];
+      
+      // Map document type selection to database values
+      const getDocumentType = (selectedType: string): 'id_document' => {
+        switch (selectedType) {
+          case 'national-id': return 'id_document';
+          case 'passport': return 'id_document';
+          case 'drivers-license': return 'id_document';
+          default: return 'id_document';
+        }
+      };
+      
+      const dbDocumentType = getDocumentType(documentType);
+      
       if (uploadedFiles.front) {
-        await uploadKYCDocument({
+        const frontResult = await uploadKYCDocument({
           kyc_verification_id: verification.id,
-          document_type: 'id_document',
+          document_type: dbDocumentType,
+          document_side: 'front',
           file: uploadedFiles.front
         });
+        if (frontResult.error) {
+          uploadErrors.push(`Front document: ${frontResult.error}`);
+        }
       }
+      
       if (uploadedFiles.back) {
-        await uploadKYCDocument({
+        const backResult = await uploadKYCDocument({
           kyc_verification_id: verification.id,
-          document_type: 'id_document',
+          document_type: dbDocumentType,
+          document_side: 'back',
           file: uploadedFiles.back
         });
+        if (backResult.error) {
+          uploadErrors.push(`Back document: ${backResult.error}`);
+        }
+      }
+
+      // Upload selfie photo
+      if (selfiePhoto) {
+        const selfieResult = await uploadKYCDocument({
+          kyc_verification_id: verification.id,
+          document_type: 'selfie_photo',
+          document_side: 'front',
+          file: selfiePhoto
+        });
+        if (selfieResult.error) {
+          uploadErrors.push(`Selfie: ${selfieResult.error}`);
+        }
+      }
+
+      // Only update user's identity verification status if ALL uploads succeeded
+      if (uploadErrors.length === 0) {
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({ is_identity_verified: true })
+          .eq('id', authUserId);
+
+        if (updateError) {
+          console.error('Error updating user identity verification:', updateError);
+          throw new Error(`Failed to update verification status: ${updateError.message}`);
+        }
+      } else {
+        // If any uploads failed, don't mark as verified
+        console.error('Document uploads failed:', uploadErrors);
+        throw new Error(`Document upload failed: ${uploadErrors.join(', ')}`);
       }
 
       // Move to success, but we do NOT auto-approve; admin will review
@@ -167,6 +328,9 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
       }, 2000);
     } catch (error) {
       console.error('Document verification failed:', error);
+      // Show error to user
+      alert(`Identity verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setStep('selfie'); // Go back to selfie step so user can try again
     } finally {
       setIsLoading(false);
     }
@@ -174,9 +338,19 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
   const handleClose = () => {
     if (!isLoading) {
-      setStep('document-type');
+      // Clean up webcam resources
+      stopWebcam();
+      
+      setStep('personal-info');
       setDocumentType('');
       setUploadedFiles({});
+      setSelfiePhoto(null);
+      setPersonalInfo({
+        firstName: '',
+        lastName: '',
+        dateOfBirth: '',
+        idNumber: ''
+      });
       setShowUpdateForm(false);
       onClose();
     }
@@ -193,12 +367,20 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   };
 
   const handleReVerification = () => {
-    setStep('document-type');
+    setStep('personal-info');
     setShowUpdateForm(false);
   };
 
   const selectedDoc = documentTypes.find(doc => doc.value === documentType);
   const canSubmit = uploadedFiles.front && (selectedDoc?.sides === 1 || uploadedFiles.back);
+
+  // Handle video stream when webcam is active
+  React.useEffect(() => {
+    if (showWebcam && webcamStream && videoRef.current) {
+      videoRef.current.srcObject = webcamStream;
+      videoRef.current.play().catch(console.error);
+    }
+  }, [showWebcam, webcamStream]);
 
   if (!isOpen) return null;
 
@@ -419,6 +601,82 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
               {/* Original Upload Flow for Unverified/Update */}
               {(verificationState === 'unverified' || showUpdateForm) && (
                 <>
+                  {step === 'personal-info' && (
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <User className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <h3 className="font-medium text-slate-800 mb-2">
+                          Personal Information
+                        </h3>
+                        <p className="text-sm text-slate-600">
+                          Please provide your personal details for identity verification
+                        </p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="firstName">First Name</Label>
+                            <Input
+                              id="firstName"
+                              value={personalInfo.firstName}
+                              onChange={(e) => setPersonalInfo(prev => ({ ...prev, firstName: e.target.value }))}
+                              placeholder="Enter your first name"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="lastName">Last Name</Label>
+                            <Input
+                              id="lastName"
+                              value={personalInfo.lastName}
+                              onChange={(e) => setPersonalInfo(prev => ({ ...prev, lastName: e.target.value }))}
+                              placeholder="Enter your last name"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                          <Input
+                            id="dateOfBirth"
+                            type="date"
+                            value={personalInfo.dateOfBirth}
+                            onChange={(e) => setPersonalInfo(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="idNumber">ID Number</Label>
+                          <Input
+                            id="idNumber"
+                            value={personalInfo.idNumber}
+                            onChange={(e) => setPersonalInfo(prev => ({ ...prev, idNumber: e.target.value }))}
+                            placeholder="Enter your ID number"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-blue-800 mb-2">
+                          Privacy Notice:
+                        </h4>
+                        <p className="text-xs text-blue-700">
+                          Your personal information is encrypted and stored securely. We only use this information for identity verification purposes.
+                        </p>
+                      </div>
+
+                      <Button
+                        onClick={handlePersonalInfoSubmit}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        disabled={!personalInfo.firstName || !personalInfo.lastName || !personalInfo.dateOfBirth || !personalInfo.idNumber}
+                      >
+                        Continue to Document Upload
+                      </Button>
+                    </div>
+                  )}
+
                   {step === 'document-type' && (
                     <div className="space-y-4">
                       <Label>Select Document Type</Label>
@@ -547,7 +805,159 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                           disabled={!canSubmit}
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
                         >
-                          {showUpdateForm ? 'Update Identity' : 'Verify Identity'}
+                          Continue to Selfie
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 'selfie' && (
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Smile className="w-8 h-8 text-purple-600" />
+                        </div>
+                        <h3 className="font-medium text-slate-800 mb-2">
+                          Take a Selfie
+                        </h3>
+                        <p className="text-sm text-slate-600">
+                          We need to verify that you are the person in the ID document
+                        </p>
+                      </div>
+
+                      {!showWebcam ? (
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="block mb-2">Selfie Photo</Label>
+                            <div
+                              onClick={triggerSelfieUpload}
+                              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+                                ${selfiePhoto 
+                                  ? 'border-green-300 bg-green-50' 
+                                  : 'border-slate-300 hover:border-purple-400 hover:bg-purple-50'
+                                }`}
+                            >
+                              {selfiePhoto ? (
+                                <>
+                                  <Check className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                  <p className="text-sm font-medium text-green-700">
+                                    {selfiePhoto.name}
+                                  </p>
+                                  <p className="text-xs text-green-600 mt-1">Click to replace</p>
+                                </>
+                              ) : (
+                                <>
+                                  <Camera className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                  <p className="text-sm font-medium text-slate-600">
+                                    Click to upload a photo
+                                  </p>
+                                  <p className="text-xs text-slate-500 mt-1">JPG, PNG up to 5MB</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-center">
+                            <p className="text-sm text-slate-500 mb-3">or</p>
+                            <Button
+                              onClick={startWebcam}
+                              variant="outline"
+                              className="w-full"
+                            >
+                              <Camera className="w-4 h-4 mr-2" />
+                              Use Webcam
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="relative bg-slate-100 rounded-lg border-2 border-purple-200 overflow-hidden">
+                            {webcamStream ? (
+                              <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                muted
+                                className="w-full h-64 object-cover"
+                                style={{ transform: 'scaleX(-1)' }} // Mirror the video
+                                onLoadedMetadata={() => {
+                                  if (videoRef.current) {
+                                    videoRef.current.play().catch(console.error);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-64 flex items-center justify-center bg-slate-200">
+                                <div className="text-center">
+                                  <Camera className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                  <p className="text-sm text-slate-600">Starting camera...</p>
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                Look at the camera
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex space-x-3">
+                            <Button
+                              onClick={captureSelfie}
+                              className="flex-1 bg-purple-600 hover:bg-purple-700"
+                              disabled={!webcamStream}
+                            >
+                              <Camera className="w-4 h-4 mr-2" />
+                              Capture Photo
+                            </Button>
+                            <Button
+                              onClick={stopWebcam}
+                              variant="outline"
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                          
+                          {/* Debug info */}
+                          {process.env.NODE_ENV === 'development' && (
+                            <div className="text-xs text-slate-500 p-2 bg-slate-50 rounded">
+                              Debug: Stream active: {webcamStream ? 'Yes' : 'No'}, 
+                              Video element: {videoRef.current ? 'Yes' : 'No'}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <canvas ref={canvasRef} className="hidden" />
+
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-purple-800 mb-2">
+                          Selfie Requirements:
+                        </h4>
+                        <ul className="text-xs text-purple-700 space-y-1">
+                          <li>• Look directly at the camera</li>
+                          <li>• Ensure good lighting on your face</li>
+                          <li>• Remove glasses and hats if possible</li>
+                          <li>• Make sure your face is clearly visible</li>
+                          <li>• No filters or photo editing</li>
+                        </ul>
+                      </div>
+
+                      <div className="flex space-x-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => setStep('upload')}
+                          className="flex-1"
+                        >
+                          Back
+                        </Button>
+                        <Button
+                          onClick={handleSubmitSelfie}
+                          disabled={!selfiePhoto}
+                          className="flex-1 bg-purple-600 hover:bg-purple-700"
+                        >
+                          Complete Verification
                         </Button>
                       </div>
                     </div>
@@ -612,6 +1022,13 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                 type="file"
                 accept="image/*"
                 onChange={handleFileSelect}
+                className="hidden"
+              />
+              <input
+                ref={selfieInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleSelfieSelect}
                 className="hidden"
               />
             </CardContent>

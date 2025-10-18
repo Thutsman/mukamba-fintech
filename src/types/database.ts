@@ -5,7 +5,7 @@
 
 // User roles and verification types
 export type UserRole = 'buyer' | 'seller' | 'admin' | 'agent';
-export type VerificationType = 'buyer' | 'seller';
+export type VerificationType = 'identity' | 'financial' | 'address' | 'employment' | 'comprehensive' | 'buyer' | 'seller';
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 export type KYCStatus = 'none' | 'partial' | 'pending' | 'approved' | 'rejected';
 export type Nationality = 'SA' | 'ZIM';
@@ -13,6 +13,7 @@ export type Nationality = 'SA' | 'ZIM';
 // Document types for KYC
 export type DocumentType = 
   | 'id_document'
+  | 'selfie_photo'
   | 'proof_of_income'
   | 'bank_statement'
   | 'title_deed'
@@ -134,6 +135,8 @@ export interface CreateKYCVerificationRequest {
   verification_type: VerificationType;
   id_number?: string;
   date_of_birth?: string;
+  first_name?: string;
+  last_name?: string;
   monthly_income?: number;
   employment_status?: string;
   bank_name?: string;
@@ -155,6 +158,7 @@ export interface UpdateKYCVerificationRequest {
 export interface UploadKYCDocumentRequest {
   kyc_verification_id: string;
   document_type: DocumentType;
+  document_side?: string;
   file: File;
 }
 
@@ -224,6 +228,7 @@ export function isKYCDocument(obj: any): obj is KYCDocument {
 
 export const KYC_DOCUMENT_TYPES: Record<DocumentType, string> = {
   id_document: 'ID Document',
+  selfie_photo: 'Selfie Photo',
   proof_of_income: 'Proof of Income',
   bank_statement: 'Bank Statement',
   title_deed: 'Title Deed',
@@ -242,6 +247,11 @@ export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
 };
 
 export const VERIFICATION_TYPE_LABELS: Record<VerificationType, string> = {
-  buyer: 'Buyer',
-  seller: 'Seller'
+  identity: 'Identity Verification',
+  financial: 'Financial Assessment',
+  address: 'Address Verification',
+  employment: 'Employment Verification',
+  comprehensive: 'Comprehensive Verification',
+  buyer: 'Buyer Verification',
+  seller: 'Seller Verification'
 }; 
