@@ -34,11 +34,10 @@ export const AuthSystem: React.FC = () => {
     checkAuth();
   }, [checkAuth]);
 
-  // Handle URL parameters for resend confirmation and profile view
+  // Handle URL parameters for resend confirmation
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
-    const view = urlParams.get('view');
     
     if (action === 'resend-confirmation') {
       setShowResendModal(true);
@@ -46,14 +45,7 @@ export const AuthSystem: React.FC = () => {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-    
-    if (view === 'profile' && isAuthenticated && user) {
-      setCurrentView('profile');
-      // Clean up URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [isAuthenticated, user]);
+  }, []);
 
   // Check localStorage for widget closed state on component mount
   React.useEffect(() => {

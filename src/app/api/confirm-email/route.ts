@@ -76,41 +76,9 @@ export async function POST(request: Request) {
       console.error('Failed to update confirmation record:', markConfirmedError);
     }
 
-    // 6. Fetch user profile data for auto-login
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('user_profiles')
-      .select('*')
-      .eq('id', confirmationData.user_id)
-      .single();
-
-    if (profileError) {
-      console.error('Profile fetch error:', profileError);
-    }
-
-    // 7. Return user data for auto-login
     return NextResponse.json({ 
       success: true, 
-      message: 'Email confirmed successfully',
-      user: {
-        id: confirmationData.user_id,
-        email: confirmationData.email,
-        firstName: profileData?.first_name || updateData.user?.user_metadata?.first_name || 'User',
-        lastName: profileData?.last_name || updateData.user?.user_metadata?.last_name || '',
-        phone: profileData?.phone || updateData.user?.user_metadata?.phone || '',
-        level: profileData?.user_level === 'verified_buyer' || profileData?.user_level === 'verified_seller' ? 'verified' : 'basic',
-        roles: profileData?.user_role === 'admin' ? ['admin'] : 
-               profileData?.user_role === 'seller' ? ['seller'] : 
-               profileData?.user_role === 'buyer' ? ['buyer'] : [],
-        is_phone_verified: profileData?.is_phone_verified || false,
-        isIdentityVerified: profileData?.is_identity_verified || false,
-        isFinanciallyVerified: profileData?.is_financially_verified || false,
-        isPropertyVerified: profileData?.is_property_verified || false,
-        isAddressVerified: profileData?.is_address_verified || false,
-        kyc_level: profileData?.kyc_level || 'none',
-        buyer_type: profileData?.buyer_type || undefined,
-        kycStatus: 'none',
-        createdAt: updateData.user?.created_at ? new Date(updateData.user.created_at) : new Date()
-      }
+      message: 'Email confirmed successfully' 
     });
 
   } catch (error) {
