@@ -42,6 +42,7 @@ import { RecentPropertiesFeed } from './RecentPropertiesFeed';
 import { AdminNavigation } from './AdminNavigation';
 import { ListingsPage } from './ListingsPage';
 import { KYCPage } from './KYCPage';
+import { KYCVerificationQueue } from './KYCVerificationQueue';
 import { getAllKYCVerifications, updateKYCVerification } from '@/lib/kyc-services';
 import type { KYCVerificationWithUser } from '@/types/database';
 import { ReportsTab } from './ReportsTab';
@@ -245,39 +246,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
 
 
-  // Update the mock KYC verifications data
-  const mockKYCVerifications: KYCVerification[] = [
-    {
-      id: '1',
-      userId: 'user_1',
-      userName: 'John Doe',
-      userEmail: 'john@example.com',
-      type: 'buyer',
-      status: 'pending',
-      submittedAt: new Date().toISOString(),
-      documents: {
-        idDocument: '/mock/users/1/id.pdf',
-        proofOfIncome: '/mock/users/1/income.pdf',
-        bankStatement: '/mock/users/1/bank.pdf'
-      }
-    },
-    {
-      id: '2',
-      userId: 'user_2',
-      userName: 'Sarah Smith',
-      userEmail: 'sarah@example.com',
-      type: 'seller',
-      status: 'approved',
-      submittedAt: new Date().toISOString(),
-      reviewedAt: new Date().toISOString(),
-      reviewedBy: 'admin',
-      documents: {
-        idDocument: '/mock/users/2/id.pdf',
-        titleDeeds: ['/mock/users/2/deed1.pdf', '/mock/users/2/deed2.pdf'],
-        propertyTaxCertificates: ['/mock/users/2/tax.pdf']
-      }
-    }
-  ];
 
   const StatCard: React.FC<{
     title: string;
@@ -455,7 +423,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <h3 className="text-lg sm:text-xl font-semibold">Document Review Queue</h3>
                           <p className="text-blue-100 text-xs sm:text-sm">
                             {isLoadingStats ? 'Loading...' : `${propertyStats.pending} property listings`} and{' '}
-                            {mockKYCVerifications.filter(v => v.status === 'pending').length} KYC verifications pending review
+                            {kycVerifications.filter(v => v.status === 'pending').length} KYC verifications pending review
                           </p>
                         </div>
                         <Button 
@@ -492,14 +460,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="flex items-center justify-between text-xs sm:text-sm">
                             <span>KYC Verifications</span>
                             <span className="font-medium">
-                              {mockKYCVerifications.filter(v => v.status === 'pending').length} pending
+                              {kycVerifications.filter(v => v.status === 'pending').length} pending
                             </span>
                           </div>
                           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-white rounded-full transition-all duration-500"
                               style={{ 
-                                width: `${(mockKYCVerifications.filter(v => v.status === 'approved').length / mockKYCVerifications.length) * 100}%` 
+                                width: `${kycVerifications.length > 0 ? (kycVerifications.filter(v => v.status === 'approved').length / kycVerifications.length) * 100 : 0}%` 
                               }}
                             />
                           </div>
@@ -651,24 +619,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                 KYC Verifications
               </h2>
-              <KYCPage
-                verifications={(kycVerifications.length ? kycVerifications.map(v => ({
-                  id: v.id,
-                  userId: v.user_id,
-                  userName: `${v.user.first_name} ${v.user.last_name}`,
-                  userEmail: v.user.email,
-                  type: v.verification_type,
-                  status: v.status,
-                  submittedAt: new Date(v.submitted_at || v.created_at).toLocaleString(),
-                  reviewedAt: v.reviewed_at ? new Date(v.reviewed_at).toLocaleString() : undefined,
-                  reviewedBy: v.reviewed_by,
-                  documents: {
-                    idDocument: v.documents.find(d => d.document_type === 'id_document')?.file_path,
-                    proofOfIncome: v.documents.find(d => d.document_type === 'proof_of_income')?.file_path,
-                    bankStatement: v.documents.find(d => d.document_type === 'bank_statement')?.file_path
-                  }
-                })) : mockKYCVerifications)}
-                onViewVerification={(verificationId) => console.log('View verification:', verificationId)}
+              <KYCVerificationQueue
                 onApproveVerification={async (verificationId) => {
                   try {
                     await updateKYCVerification(verificationId, user.id, { status: 'approved' });
@@ -687,15 +638,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     toast.error('Failed to reject');
                   }
                 }}
-                onBulkAction={async (action, verificationIds) => {
-                  for (const id of verificationIds) {
-                    try {
-                      await updateKYCVerification(id, user.id, { status: action === 'approve' ? 'approved' : 'rejected' });
-                    } catch {}
-                  }
-                  setKycVerifications(prev => prev.map(v => verificationIds.includes(v.id) ? { ...v, status: action === 'approve' ? 'approved' : 'rejected', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
-                  toast.success(`Bulk ${action} done`);
-                }}
+                adminUserId={user.id}
               />
             </section>
           )}

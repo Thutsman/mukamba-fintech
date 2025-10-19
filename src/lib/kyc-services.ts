@@ -133,13 +133,10 @@ export const getAllKYCVerifications = async (
   filters?: KYCVerificationFilters
 ): Promise<{ data: KYCVerificationWithUser[] | null; error: string | null }> => {
   try {
+    // First, get the KYC verifications
     let query = supabase
       .from('kyc_verifications')
-      .select(`
-        *,
-        user:user_profiles(first_name, last_name, email, phone),
-        documents:kyc_documents(*)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -151,10 +148,6 @@ export const getAllKYCVerifications = async (
       query = query.eq('verification_type', filters.type);
     }
 
-    if (filters?.search) {
-      query = query.or(`user.first_name.ilike.%${filters.search}%,user.last_name.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`);
-    }
-
     if (filters?.date_from) {
       query = query.gte('submitted_at', filters.date_from);
     }
@@ -163,14 +156,75 @@ export const getAllKYCVerifications = async (
       query = query.lte('submitted_at', filters.date_to);
     }
 
-    const { data, error } = await query;
+    const { data: verifications, error: verificationsError } = await query;
 
-    if (error) {
-      console.error('Error fetching KYC verifications:', error);
-      return { data: null, error: error.message };
+    if (verificationsError) {
+      console.error('Error fetching KYC verifications:', verificationsError);
+      return { data: null, error: verificationsError.message };
     }
 
-    return { data, error: null };
+    if (!verifications || verifications.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Get user details for each verification
+    const userIds = [...new Set(verifications.map(v => v.user_id))];
+    const { data: users, error: usersError } = await supabase
+      .from('user_profiles')
+      .select('id, first_name, last_name, email, phone')
+      .in('id', userIds);
+
+    if (usersError) {
+      console.error('Error fetching user profiles:', usersError);
+      return { data: null, error: usersError.message };
+    }
+
+    // Get documents for each verification
+    const verificationIds = verifications.map(v => v.id);
+    const { data: documents, error: documentsError } = await supabase
+      .from('kyc_documents')
+      .select('*')
+      .in('kyc_verification_id', verificationIds);
+
+    if (documentsError) {
+      console.error('Error fetching KYC documents:', documentsError);
+      return { data: null, error: documentsError.message };
+    }
+
+    // Combine the data
+    const combinedData: KYCVerificationWithUser[] = verifications.map(verification => {
+      const user = users?.find(u => u.id === verification.user_id);
+      const verificationDocuments = documents?.filter(d => d.kyc_verification_id === verification.id) || [];
+
+      return {
+        ...verification,
+        user: user ? {
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone
+        } : {
+          first_name: 'Unknown',
+          last_name: 'User',
+          email: 'unknown@example.com'
+        },
+        documents: verificationDocuments
+      };
+    });
+
+    // Apply search filter if provided
+    let filteredData = combinedData;
+    if (filters?.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filteredData = combinedData.filter(verification => 
+        verification.user.first_name.toLowerCase().includes(searchTerm) ||
+        verification.user.last_name.toLowerCase().includes(searchTerm) ||
+        verification.user.email.toLowerCase().includes(searchTerm) ||
+        (verification.id_number || '').toLowerCase().includes(searchTerm)
+      );
+    }
+
+    return { data: filteredData, error: null };
   } catch (error) {
     console.error('Error fetching KYC verifications:', error);
     return { data: null, error: 'Failed to fetch KYC verifications' };
