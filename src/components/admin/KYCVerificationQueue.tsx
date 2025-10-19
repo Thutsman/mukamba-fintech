@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClient } from '@supabase/supabase-js';
 import { getAllKYCVerifications } from '@/lib/kyc-services';
-import type { KYCVerification } from '@/types/database';
+import type { KYCVerification, KYCVerificationWithUser } from '@/types/database';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,21 +46,6 @@ interface KYCVerificationQueueProps {
   adminUserId: string;
 }
 
-interface VerificationWithDetails extends KYCVerification {
-  user: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone?: string;
-  };
-  documents: Array<{
-    id: string;
-    document_type: string;
-    document_side: string;
-    file_path: string;
-    file_name: string;
-  }>;
-}
 
 interface QueueStats {
   total: number;
@@ -76,8 +61,8 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   onRejectVerification,
   adminUserId
 }) => {
-  const [verifications, setVerifications] = React.useState<VerificationWithDetails[]>([]);
-  const [filteredVerifications, setFilteredVerifications] = React.useState<VerificationWithDetails[]>([]);
+  const [verifications, setVerifications] = React.useState<KYCVerificationWithUser[]>([]);
+  const [filteredVerifications, setFilteredVerifications] = React.useState<KYCVerificationWithUser[]>([]);
   const [stats, setStats] = React.useState<QueueStats>({
     total: 0,
     flagged: 0,
@@ -89,7 +74,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
-  const [selectedVerification, setSelectedVerification] = React.useState<VerificationWithDetails | null>(null);
+  const [selectedVerification, setSelectedVerification] = React.useState<KYCVerificationWithUser | null>(null);
   const [showImageModal, setShowImageModal] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<string>('');
   const [rejectionReasons] = React.useState([
@@ -145,7 +130,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   };
 
   // Calculate queue statistics
-  const calculateStats = (data: VerificationWithDetails[]): QueueStats => {
+  const calculateStats = (data: KYCVerificationWithUser[]): QueueStats => {
     const flagged = data.filter(v => 
       (v.automated_risk_score || 0) > 0.5 || 
       (v.auto_approved === false && (v.selfie_quality_score || 0) < 50)
@@ -222,7 +207,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   }, []);
 
   // Handle approval
-  const handleApprove = async (verification: VerificationWithDetails) => {
+  const handleApprove = async (verification: KYCVerificationWithUser) => {
     try {
       await onApproveVerification(verification.id);
       await fetchVerifications(); // Refresh data
@@ -232,7 +217,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   };
 
   // Handle rejection
-  const handleReject = async (verification: VerificationWithDetails, reason: string) => {
+  const handleReject = async (verification: KYCVerificationWithUser, reason: string) => {
     try {
       await onRejectVerification(verification.id, reason);
       await fetchVerifications(); // Refresh data
@@ -248,7 +233,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   };
 
   // Get verification queue section
-  const getQueueSection = (title: string, verifications: VerificationWithDetails[], bgColor: string, borderColor: string) => {
+  const getQueueSection = (title: string, verifications: KYCVerificationWithUser[], bgColor: string, borderColor: string) => {
     if (verifications.length === 0) return null;
 
     return (
@@ -471,9 +456,9 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
 
 // Individual verification card component
 interface VerificationCardProps {
-  verification: VerificationWithDetails;
-  onApprove: (verification: VerificationWithDetails) => void;
-  onReject: (verification: VerificationWithDetails, reason: string) => void;
+  verification: KYCVerificationWithUser;
+  onApprove: (verification: KYCVerificationWithUser) => void;
+  onReject: (verification: KYCVerificationWithUser, reason: string) => void;
   onViewImage: (imageUrl: string) => void;
 }
 
@@ -507,11 +492,8 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
     });
   };
 
-  const getDocumentThumbnail = (documents: any[], type: string, side?: string) => {
-    const doc = documents.find(d => 
-      d.document_type === type && 
-      (side ? d.document_side === side : true)
-    );
+  const getDocumentThumbnail = (documents: any[], type: string) => {
+    const doc = documents.find(d => d.document_type === type);
     return doc?.file_path;
   };
 
@@ -580,26 +562,15 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
         <div className="mb-3">
           <div className="text-xs font-medium text-slate-700 mb-2">Documents:</div>
           <div className="flex space-x-2">
-            {getDocumentThumbnail(verification.documents, 'id_document', 'front') && (
+            {getDocumentThumbnail(verification.documents, 'id_document') && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onViewImage(getDocumentThumbnail(verification.documents, 'id_document', 'front')!)}
+                onClick={() => onViewImage(getDocumentThumbnail(verification.documents, 'id_document')!)}
                 className="text-xs"
               >
                 <FileText className="w-3 h-3 mr-1" />
-                ID Front
-              </Button>
-            )}
-            {getDocumentThumbnail(verification.documents, 'id_document', 'back') && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onViewImage(getDocumentThumbnail(verification.documents, 'id_document', 'back')!)}
-                className="text-xs"
-              >
-                <FileText className="w-3 h-3 mr-1" />
-                ID Back
+                ID Document
               </Button>
             )}
             {getDocumentThumbnail(verification.documents, 'selfie_photo') && (
