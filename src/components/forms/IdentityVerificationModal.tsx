@@ -24,6 +24,8 @@ import {
 import { createKYCVerification, uploadKYCDocument } from '@/lib/kyc-services';
 import { useAuthStore } from '@/lib/store';
 import { createClient } from '@supabase/supabase-js';
+import { validateDocumentsAutomatically } from '@/lib/automated-validation-service';
+import { VerificationTimeline } from './VerificationTimeline';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,6 +58,11 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   const [selfiePhoto, setSelfiePhoto] = React.useState<File | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [showUpdateForm, setShowUpdateForm] = React.useState(false);
+  const [validationResult, setValidationResult] = React.useState<{
+    autoApproved: boolean;
+    reasons: string[];
+  } | null>(null);
+  const [processingStatus, setProcessingStatus] = React.useState<string>('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const selfieInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUpload, setCurrentUpload] = React.useState<'front' | 'back'>('front');
@@ -303,16 +310,42 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
         }
       }
 
-      // Only update user's identity verification status if ALL uploads succeeded
+      // Only proceed with automated validation if ALL uploads succeeded
       if (uploadErrors.length === 0) {
-        const { error: updateError } = await supabase
-          .from('user_profiles')
-          .update({ is_identity_verified: true })
-          .eq('id', authUserId);
+        // Show initial processing message
+        setProcessingStatus('Your documents are being automatically checked...');
+        
+        // Run automated validation
+        console.log('Running automated document validation...');
+        const validationResult = await validateDocumentsAutomatically(verification.id, {
+          selfieFile: selfiePhoto!,
+          idFrontFile: uploadedFiles.front!,
+          idBackFile: uploadedFiles.back!
+        });
 
-        if (updateError) {
-          console.error('Error updating user identity verification:', updateError);
-          throw new Error(`Failed to update verification status: ${updateError.message}`);
+        if (validationResult.success) {
+          setValidationResult({
+            autoApproved: validationResult.autoApproved,
+            reasons: validationResult.reasons
+          });
+          
+          if (validationResult.autoApproved) {
+            console.log('Documents auto-approved by validation system');
+            setProcessingStatus('✓ Automatically approved! You can access premium features now');
+            // User is now verified - no admin review needed
+          } else {
+            console.log('Documents require admin review:', validationResult.reasons);
+            setProcessingStatus('📋 Pending admin review. You\'ll hear from us within 24-48 hours');
+            // Admin will review - user not yet verified
+          }
+        } else {
+          console.error('Automated validation failed:', validationResult.error);
+          setValidationResult({
+            autoApproved: false,
+            reasons: ['Validation system error']
+          });
+          setProcessingStatus('📋 Pending admin review. You\'ll hear from us within 24-48 hours');
+          // Continue to admin review as fallback
         }
       } else {
         // If any uploads failed, don't mark as verified
@@ -320,7 +353,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
         throw new Error(`Document upload failed: ${uploadErrors.join(', ')}`);
       }
 
-      // Move to success, but we do NOT auto-approve; admin will review
+      // Move to success - validation results determine if user is verified
       setStep('success');
       setTimeout(() => {
         onComplete();
@@ -352,6 +385,8 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
         idNumber: ''
       });
       setShowUpdateForm(false);
+      setValidationResult(null);
+      setProcessingStatus('');
       onClose();
     }
   };
@@ -430,6 +465,11 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
             </CardHeader>
 
             <CardContent className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
+              {/* What to Expect Timeline - Show at the beginning for all states */}
+              {(verificationState === 'unverified' || showUpdateForm) && step === 'personal-info' && (
+                <VerificationTimeline className="mb-6" />
+              )}
+
               {/* Verified State Content */}
               {verificationState === 'verified' && !showUpdateForm && (
                 <div className="space-y-6">
@@ -973,9 +1013,9 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                         <Shield className="w-8 h-8 text-blue-600" />
                       </motion.div>
                       <div>
-                        <h3 className="font-semibold text-slate-800">Processing Documents</h3>
+                        <h3 className="font-semibold text-slate-800">Checking Your Documents</h3>
                         <p className="text-sm text-slate-600 mt-1">
-                          This usually takes 30-60 seconds
+                          {processingStatus || 'Analyzing image quality and face matching...'}
                         </p>
                       </div>
                       <div className="flex justify-center">
@@ -999,19 +1039,46 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
                   {step === 'success' && (
                     <div className="text-center space-y-4">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto"
-                      >
-                        <Check className="w-8 h-8 text-green-600" />
-                      </motion.div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800">Identity Verified!</h3>
-                        <p className="text-sm text-slate-600 mt-1">
-                          You now have access to financing options and exclusive properties
-                        </p>
-                      </div>
+                      {validationResult?.autoApproved ? (
+                        <>
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto"
+                          >
+                            <Check className="w-8 h-8 text-green-600" />
+                          </motion.div>
+                          <div>
+                            <h3 className="font-semibold text-slate-800">✓ Documents Approved!</h3>
+                            <p className="text-sm text-slate-600 mt-1">
+                              You can access premium features and financing options now
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto"
+                          >
+                            <Shield className="w-8 h-8 text-blue-600" />
+                          </motion.div>
+                          <div>
+                            <h3 className="font-semibold text-slate-800">📋 Documents Received</h3>
+                            <p className="text-sm text-slate-600 mt-1">
+                              An admin will review your documents within 24-48 hours
+                            </p>
+                            {validationResult?.reasons && validationResult.reasons.length > 0 && (
+                              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-xs text-amber-700">
+                                  <strong>Review needed for:</strong> {validationResult.reasons.join(', ')}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </>

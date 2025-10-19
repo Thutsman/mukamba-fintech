@@ -76,6 +76,14 @@ export interface KYCVerification {
   business_registration_number?: string;
   tax_number?: string;
   
+  // Automated validation results
+  automated_risk_score?: number;
+  selfie_quality_score?: number;
+  id_front_quality_score?: number;
+  id_back_quality_score?: number;
+  face_match_score?: number;
+  auto_approved?: boolean;
+  
   // Admin review
   reviewed_by?: string;
   reviewed_at?: string;
