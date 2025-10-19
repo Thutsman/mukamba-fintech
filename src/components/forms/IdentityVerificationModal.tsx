@@ -164,6 +164,25 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
     }
   };
 
+  const handleCameraCapture = (side: 'front' | 'back') => {
+    setCurrentUpload(side);
+    // Trigger camera input with capture attribute
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Use back camera for documents
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setUploadedFiles(prev => ({
+          ...prev,
+          [side]: file
+        }));
+      }
+    };
+    input.click();
+  };
+
   const triggerFileUpload = (side: 'front' | 'back') => {
     setCurrentUpload(side);
     fileInputRef.current?.click();
@@ -178,6 +197,21 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
   const triggerSelfieUpload = () => {
     selfieInputRef.current?.click();
+  };
+
+  const handleSelfieCameraCapture = () => {
+    // Trigger camera input with capture attribute for selfie
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'user'; // Use front camera for selfie
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setSelfiePhoto(file);
+      }
+    };
+    input.click();
   };
 
   // Webcam functions
@@ -784,6 +818,28 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                               </>
                             )}
                           </div>
+                          
+                          {/* Mobile Camera Button */}
+                          <div className="mt-3 flex space-x-2">
+                            <Button
+                              onClick={() => handleCameraCapture('front')}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                            >
+                              <Camera className="w-4 h-4 mr-2" />
+                              Take Photo
+                            </Button>
+                            <Button
+                              onClick={() => triggerFileUpload('front')}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload File
+                            </Button>
+                          </div>
                         </div>
 
                         {/* Back Side (if required) */}
@@ -815,6 +871,28 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                                   <p className="text-xs text-slate-500 mt-1">JPG, PNG up to 10MB</p>
                                 </>
                               )}
+                            </div>
+                            
+                            {/* Mobile Camera Button */}
+                            <div className="mt-3 flex space-x-2">
+                              <Button
+                                onClick={() => handleCameraCapture('back')}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                              >
+                                <Camera className="w-4 h-4 mr-2" />
+                                Take Photo
+                              </Button>
+                              <Button
+                                onClick={() => triggerFileUpload('back')}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload File
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -895,18 +973,43 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                                 </>
                               )}
                             </div>
-                          </div>
-
-                          <div className="text-center">
-                            <p className="text-sm text-slate-500 mb-3">or</p>
-                            <Button
-                              onClick={startWebcam}
-                              variant="outline"
-                              className="w-full"
-                            >
-                              <Camera className="w-4 h-4 mr-2" />
-                              Use Webcam
-                            </Button>
+                            
+                            {/* Mobile Camera Options */}
+                            <div className="mt-3 space-y-2">
+                              <div className="flex space-x-2">
+                                <Button
+                                  onClick={handleSelfieCameraCapture}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  <Camera className="w-4 h-4 mr-2" />
+                                  Take Selfie
+                                </Button>
+                                <Button
+                                  onClick={triggerSelfieUpload}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  Upload File
+                                </Button>
+                              </div>
+                              
+                              <div className="text-center">
+                                <p className="text-sm text-slate-500 mb-2">or</p>
+                                <Button
+                                  onClick={startWebcam}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                >
+                                  <Camera className="w-4 h-4 mr-2" />
+                                  Use Webcam
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ) : (
