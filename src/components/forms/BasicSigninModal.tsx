@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader2, Mail, Lock, Eye, EyeOff, Shield, CheckCircle, AlertCircle, UserPlus } from 'lucide-react';
+import { X, Loader2, Mail, Lock, Eye, EyeOff, CheckCircle, AlertCircle, UserPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -357,49 +357,6 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
               )}
             </Button>
 
-            {/* Admin Sign In Options */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-slate-200 dark:border-slate-700" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white dark:bg-white px-2 text-slate-500">Or</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isLoading || isGoogleLoading}
-                onClick={() => {
-                  form.setValue('email', 'admin@mukamba.com');
-                  form.setValue('password', 'admin123');
-                  form.handleSubmit(onSubmit)();
-                }}
-                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                suppressHydrationWarning
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Sign in as Admin
-              </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isLoading || isGoogleLoading}
-                onClick={() => {
-                  form.setValue('email', 'agent@mukamba.com');
-                  form.setValue('password', 'agent123');
-                  form.handleSubmit(onSubmit)();
-                }}
-                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                suppressHydrationWarning
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Sign in as Agent
-              </Button>
-            </div>
           </form>
 
           {/* Benefits */}

@@ -77,6 +77,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   const [selectedVerification, setSelectedVerification] = React.useState<KYCVerificationWithUser | null>(null);
   const [showImageModal, setShowImageModal] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<string>('');
+  const [error, setError] = React.useState<string | null>(null);
   const [rejectionReasons] = React.useState([
     'Document image is too blurry or unclear',
     'ID has expired',
@@ -91,12 +92,14 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   const fetchVerifications = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       
       // Use the getAllKYCVerifications function from kyc-services
       const { data, error } = await getAllKYCVerifications({ status: 'all', type: 'all' });
 
       if (error) {
         console.error('Error fetching verifications:', error);
+        setError(`Failed to fetch verifications: ${error}`);
         return;
       }
 
@@ -116,6 +119,19 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
       }
 
       console.log('Fetched verifications:', data.length, 'records');
+      console.log('Sample verification structure:', data[0] ? {
+        id: data[0].id,
+        hasUser: !!data[0].user,
+        userKeys: data[0].user ? Object.keys(data[0].user) : 'no user',
+        hasDocuments: !!data[0].documents,
+        documentsLength: data[0].documents?.length || 0,
+        hasVerifiedFields: {
+          verified_first_name: !!data[0].verified_first_name,
+          verified_last_name: !!data[0].verified_last_name,
+          verified_id_number: !!data[0].verified_id_number
+        },
+        allKeys: Object.keys(data[0])
+      } : 'no data');
       setVerifications(data);
       setFilteredVerifications(data);
       
@@ -124,6 +140,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
       setStats(queueStats);
     } catch (error) {
       console.error('Error fetching verifications:', error);
+      setError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -168,11 +185,16 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
 
     // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(v => 
-        `${v.user.first_name} ${v.user.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (v.id_number || '').includes(searchQuery)
-      );
+      filtered = filtered.filter(v => {
+        const firstName = v.user?.first_name || v.verified_first_name || '';
+        const lastName = v.user?.last_name || v.verified_last_name || '';
+        const email = v.user?.email || '';
+        const idNumber = v.verified_id_number || '';
+        
+        return `${firstName} ${lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               idNumber.includes(searchQuery);
+      });
     }
 
     // Status filter
@@ -209,20 +231,24 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   // Handle approval
   const handleApprove = async (verification: KYCVerificationWithUser) => {
     try {
+      setError(null);
       await onApproveVerification(verification.id);
       await fetchVerifications(); // Refresh data
     } catch (error) {
       console.error('Error approving verification:', error);
+      setError(`Failed to approve verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   // Handle rejection
   const handleReject = async (verification: KYCVerificationWithUser, reason: string) => {
     try {
+      setError(null);
       await onRejectVerification(verification.id, reason);
       await fetchVerifications(); // Refresh data
     } catch (error) {
       console.error('Error rejecting verification:', error);
+      setError(`Failed to reject verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -278,6 +304,35 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   const rejectedVerifications = filteredVerifications.filter(v => 
     v.status === 'rejected'
   );
+
+  // Error boundary - show error UI if there's an error
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-red-800">Error Loading Verifications</h3>
+                <p className="text-red-600 mt-1">{error}</p>
+                <Button
+                  onClick={() => {
+                    setError(null);
+                    fetchVerifications();
+                  }}
+                  className="mt-3 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -470,6 +525,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
 }) => {
   const [showRejectDialog, setShowRejectDialog] = React.useState(false);
   const [selectedReason, setSelectedReason] = React.useState('');
+  const [cardError, setCardError] = React.useState<string | null>(null);
 
   const getRiskScoreColor = (score: number) => {
     if (score <= 0.2) return 'text-green-600';
@@ -492,9 +548,32 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
     });
   };
 
-  const getDocumentThumbnail = (documents: any[], type: string) => {
+  const getDocumentThumbnail = (documents: any[] | undefined, type: string) => {
+    if (!documents || !Array.isArray(documents)) return null;
     const doc = documents.find(d => d.document_type === type);
-    return doc?.file_path;
+    return doc?.file_url;
+  };
+
+  // Helper function to safely get user name with fallbacks
+  const getUserDisplayName = (verification: KYCVerificationWithUser) => {
+    const firstName = verification.user?.first_name || verification.verified_first_name || 'Unknown';
+    const lastName = verification.user?.last_name || verification.verified_last_name || 'User';
+    return `${firstName} ${lastName}`;
+  };
+
+  // Helper function to safely get user email with fallback
+  const getUserEmail = (verification: KYCVerificationWithUser) => {
+    return verification.user?.email || 'No email';
+  };
+
+  // Helper function to safely get verification type
+  const getVerificationType = (verification: KYCVerificationWithUser) => {
+    return verification.verification_type || 'Unknown';
+  };
+
+  // Helper function to safely get status
+  const getStatus = (verification: KYCVerificationWithUser) => {
+    return verification.status || 'pending';
   };
 
   return (
@@ -504,17 +583,17 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
               <h4 className="font-semibold text-slate-800">
-                {verification.user.first_name} {verification.user.last_name}
+                {getUserDisplayName(verification)}
               </h4>
               <Badge variant="outline" className="text-xs">
-                {verification.verification_type}
+                {getVerificationType(verification)}
               </Badge>
             </div>
             
             <div className="space-y-1 text-sm text-slate-600">
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <span>{verification.user.email}</span>
+                <span>{getUserEmail(verification)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4" />
@@ -562,7 +641,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
         <div className="mb-3">
           <div className="text-xs font-medium text-slate-700 mb-2">Documents:</div>
           <div className="flex space-x-2">
-            {getDocumentThumbnail(verification.documents, 'id_document') && (
+            {verification.documents && getDocumentThumbnail(verification.documents, 'id_document') && (
               <Button
                 variant="outline"
                 size="sm"
@@ -573,7 +652,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                 ID Document
               </Button>
             )}
-            {getDocumentThumbnail(verification.documents, 'selfie_photo') && (
+            {verification.documents && getDocumentThumbnail(verification.documents, 'selfie_photo') && (
               <Button
                 variant="outline"
                 size="sm"
@@ -584,15 +663,26 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                 Selfie
               </Button>
             )}
+            {(!verification.documents || verification.documents.length === 0) && (
+              <span className="text-xs text-slate-500 italic">No documents available</span>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        {verification.status === 'pending' && (
+        {getStatus(verification) === 'pending' && (
           <div className="flex space-x-2">
             <Button
               size="sm"
-              onClick={() => onApprove(verification)}
+              onClick={async () => {
+                try {
+                  setCardError(null);
+                  await onApprove(verification);
+                } catch (error) {
+                  console.error('Error in card approve:', error);
+                  setCardError(`Failed to approve: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+              }}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <CheckCircle className="w-4 h-4 mr-1" />
@@ -609,14 +699,21 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
           </div>
         )}
 
-        {verification.status === 'approved' && (
+        {/* Card Error Display */}
+        {cardError && (
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-xs">
+            {cardError}
+          </div>
+        )}
+
+        {getStatus(verification) === 'approved' && (
           <div className="flex items-center space-x-2 text-green-600 text-sm">
             <CheckCircle className="w-4 h-4" />
             <span>Approved {verification.reviewed_at && formatDate(verification.reviewed_at)}</span>
           </div>
         )}
 
-        {verification.status === 'rejected' && (
+        {getStatus(verification) === 'rejected' && (
           <div className="flex items-center space-x-2 text-red-600 text-sm">
             <XCircle className="w-4 h-4" />
             <span>Rejected {verification.reviewed_at && formatDate(verification.reviewed_at)}</span>
@@ -636,7 +733,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
             >
               <h3 className="text-lg font-semibold mb-4">Reject Verification</h3>
               <p className="text-sm text-slate-600 mb-4">
-                Select a reason for rejecting {verification.user.first_name}'s verification:
+                Select a reason for rejecting {getUserDisplayName(verification)}'s verification:
               </p>
               
               <div className="space-y-2 mb-4">
@@ -672,10 +769,16 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => {
+                  onClick={async () => {
                     if (selectedReason) {
-                      onReject(verification, selectedReason);
-                      setShowRejectDialog(false);
+                      try {
+                        setCardError(null);
+                        await onReject(verification, selectedReason);
+                        setShowRejectDialog(false);
+                      } catch (error) {
+                        console.error('Error in card reject:', error);
+                        setCardError(`Failed to reject: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      }
                     }
                   }}
                   disabled={!selectedReason}

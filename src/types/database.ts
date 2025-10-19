@@ -62,7 +62,11 @@ export interface KYCVerification {
   
   // Identity information
   id_number?: string;
+  verified_id_number?: string;
   date_of_birth?: string;
+  verified_date_of_birth?: string;
+  verified_first_name?: string;
+  verified_last_name?: string;
   
   // Financial information (for buyers)
   monthly_income?: number;
@@ -101,7 +105,7 @@ export interface KYCDocument {
   id: string;
   kyc_verification_id: string;
   document_type: DocumentType;
-  file_path: string;
+  file_url: string;
   file_name: string;
   file_size: number;
   mime_type: string;
@@ -227,7 +231,7 @@ export function isKYCDocument(obj: any): obj is KYCDocument {
     typeof obj.id === 'string' &&
     typeof obj.kyc_verification_id === 'string' &&
     typeof obj.document_type === 'string' &&
-    typeof obj.file_path === 'string';
+    typeof obj.file_url === 'string';
 }
 
 // =====================================================
