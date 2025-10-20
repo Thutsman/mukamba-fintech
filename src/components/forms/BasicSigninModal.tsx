@@ -128,17 +128,26 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
       setIsForgotPasswordLoading(true);
       setError(null);
       
-      // Mock forgot password - replace with actual API
-      console.log('Sending forgot password email to:', forgotPasswordEmail);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the password reset API
+      const response = await fetch('/api/auth/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotPasswordEmail })
+      });
       
-      // Show success message
-      setError(null);
-      setShowForgotPassword(false);
-      setForgotPasswordEmail('');
+      const result = await response.json();
       
-      // You could show a success toast here
-      console.log('Password reset email sent successfully');
+      if (result.success) {
+        // Show success message
+        setError(null);
+        setShowForgotPassword(false);
+        setForgotPasswordEmail('');
+        
+        // Show success message in the main modal
+        setError('Check your email for password reset instructions. If you don\'t see it, check your spam folder.');
+      } else {
+        setError(result.error || 'Failed to send reset email. Please try again.');
+      }
     } catch (error) {
       console.error('Forgot password error:', error);
       setError('Failed to send reset email. Please try again.');
