@@ -20,6 +20,9 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     }
   },
+  "overrides": {
+    "@radix-ui/react-focus-guards": "1.1.1"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-avatar": "^1.1.10",
