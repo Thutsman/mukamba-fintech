@@ -88,6 +88,16 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
     'Custom reason (type your own)'
   ]);
 
+  // Auto-refresh every 5 minutes
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing KYC verifications...');
+      fetchVerifications();
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Fetch verifications from database
   const fetchVerifications = async () => {
     try {
@@ -548,10 +558,102 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
     });
   };
 
-  const getDocumentThumbnail = (documents: any[] | undefined, type: string) => {
+  const getDocumentThumbnail = async (documents: any[] | undefined, type: string) => {
     if (!documents || !Array.isArray(documents)) return null;
     const doc = documents.find(d => d.document_type === type);
-    return doc?.file_url;
+    if (!doc?.file_url) return null;
+    
+    try {
+      // Extract file path from the full URL for signed URL generation
+      const url = new URL(doc.file_url);
+      console.log('Original file_url:', doc.file_url);
+      console.log('URL pathname:', url.pathname);
+      
+      // Remove the bucket prefix and get the actual file path
+      // URL format: /storage/v1/object/public/kyc-documents/verification-id/filename
+      const pathParts = url.pathname.split('/');
+      const bucketIndex = pathParts.indexOf('kyc-documents');
+      
+      if (bucketIndex === -1) {
+        console.error('Could not find kyc-documents in path:', url.pathname);
+        return doc.file_url; // Fallback to original URL
+      }
+      
+      // Get everything after 'kyc-documents/'
+      const filePath = pathParts.slice(bucketIndex + 1).join('/');
+      console.log('Extracted file path:', filePath);
+      
+      const { data, error } = await supabase.storage
+        .from('kyc-documents')
+        .createSignedUrl(filePath, 3600); // Valid for 1 hour
+      
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        console.error('File path that failed:', filePath);
+        return doc.file_url; // Fallback to original URL
+      }
+      
+      console.log('Created signed URL successfully');
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error creating signed URL:', error);
+      return doc.file_url; // Fallback to original URL
+    }
+  };
+
+  const downloadDocument = async (documents: any[] | undefined, type: string, fileName: string) => {
+    if (!documents || !Array.isArray(documents)) return;
+    const doc = documents.find(d => d.document_type === type);
+    if (!doc?.file_url) return;
+    
+    try {
+      // Extract file path from the full URL for signed URL generation
+      const url = new URL(doc.file_url);
+      const pathParts = url.pathname.split('/');
+      const bucketIndex = pathParts.indexOf('kyc-documents');
+      
+      if (bucketIndex === -1) {
+        console.error('Could not find kyc-documents in path:', url.pathname);
+        return;
+      }
+      
+      // Get everything after 'kyc-documents/'
+      const filePath = pathParts.slice(bucketIndex + 1).join('/');
+      
+      const { data, error } = await supabase.storage
+        .from('kyc-documents')
+        .createSignedUrl(filePath, 3600); // Valid for 1 hour
+      
+      if (error) {
+        console.error('Error creating download URL:', error);
+        return;
+      }
+      
+      // Fetch the file as a blob to force download
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) {
+        console.error('Failed to fetch file:', response.statusText);
+        return;
+      }
+      
+      const blob = await response.blob();
+      
+      // Create a blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
+      
+    } catch (error) {
+      console.error('Error downloading document:', error);
+    }
   };
 
   // Helper function to safely get user name with fallbacks
@@ -563,7 +665,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
 
   // Helper function to safely get user email with fallback
   const getUserEmail = (verification: KYCVerificationWithUser) => {
-    return verification.user?.email || 'No email';
+    return verification.email || 'No email';
   };
 
   // Helper function to safely get verification type
@@ -640,28 +742,64 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
         {/* Document Thumbnails */}
         <div className="mb-3">
           <div className="text-xs font-medium text-slate-700 mb-2">Documents:</div>
-          <div className="flex space-x-2">
-            {verification.documents && getDocumentThumbnail(verification.documents, 'id_document') && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onViewImage(getDocumentThumbnail(verification.documents, 'id_document')!)}
-                className="text-xs"
-              >
-                <FileText className="w-3 h-3 mr-1" />
-                ID Document
-              </Button>
+          <div className="flex flex-wrap gap-2">
+            {verification.documents && verification.documents.find(d => d.document_type === 'id_document') && (
+              <div className="flex space-x-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const signedUrl = await getDocumentThumbnail(verification.documents, 'id_document');
+                    if (signedUrl) onViewImage(signedUrl);
+                  }}
+                  className="text-xs"
+                >
+                  <Eye className="w-3 h-3 mr-1" />
+                  View ID
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const doc = verification.documents?.find(d => d.document_type === 'id_document');
+                    const fileName = doc?.file_name || `ID_Document_${verification.id}.jpg`;
+                    await downloadDocument(verification.documents, 'id_document', fileName);
+                  }}
+                  className="text-xs"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Download
+                </Button>
+              </div>
             )}
-            {verification.documents && getDocumentThumbnail(verification.documents, 'selfie_photo') && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onViewImage(getDocumentThumbnail(verification.documents, 'selfie_photo')!)}
-                className="text-xs"
-              >
-                <Camera className="w-3 h-3 mr-1" />
-                Selfie
-              </Button>
+            {verification.documents && verification.documents.find(d => d.document_type === 'selfie_photo') && (
+              <div className="flex space-x-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const signedUrl = await getDocumentThumbnail(verification.documents, 'selfie_photo');
+                    if (signedUrl) onViewImage(signedUrl);
+                  }}
+                  className="text-xs"
+                >
+                  <Camera className="w-3 h-3 mr-1" />
+                  View Selfie
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const doc = verification.documents?.find(d => d.document_type === 'selfie_photo');
+                    const fileName = doc?.file_name || `Selfie_${verification.id}.jpg`;
+                    await downloadDocument(verification.documents, 'selfie_photo', fileName);
+                  }}
+                  className="text-xs"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Download
+                </Button>
+              </div>
             )}
             {(!verification.documents || verification.documents.length === 0) && (
               <span className="text-xs text-slate-500 italic">No documents available</span>

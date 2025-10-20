@@ -57,6 +57,7 @@ export interface UserProfile {
 export interface KYCVerification {
   id: string;
   user_id: string;
+  email?: string;
   verification_type: VerificationType;
   status: VerificationStatus;
   
@@ -120,11 +121,13 @@ export interface KYCDocument {
 
 // Enhanced KYC verification with user details
 export interface KYCVerificationWithUser extends KYCVerification {
-  user: {
-    first_name: string;
-    last_name: string;
-    email: string;
+  user?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
     phone?: string;
+    user_role?: string;
   };
   documents: KYCDocument[];
 }

@@ -136,7 +136,10 @@ export const getAllKYCVerifications = async (
     // First, get the KYC verifications
     let query = supabase
       .from('kyc_verifications')
-      .select('*')
+      .select(`
+        *,
+        user:user_profiles!kyc_verifications_user_id_fkey(id, first_name, last_name, email, phone, user_role)
+      `)
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -184,7 +187,7 @@ export const getAllKYCVerifications = async (
     const { data: documents, error: documentsError } = await supabase
       .from('kyc_documents')
       .select('*')
-      .in('kyc_verification_id', verificationIds);
+      .in('verification_id', verificationIds);
 
     if (documentsError) {
       console.error('Error fetching KYC documents:', documentsError);
@@ -192,22 +195,20 @@ export const getAllKYCVerifications = async (
     }
 
     // Combine the data
-    const combinedData: KYCVerificationWithUser[] = verifications.map(verification => {
-      const user = users?.find(u => u.id === verification.user_id);
-      const verificationDocuments = documents?.filter(d => d.kyc_verification_id === verification.id) || [];
+    const combinedData: KYCVerificationWithUser[] = verifications.map((verification: any) => {
+      const embeddedUser = verification.user as any | undefined;
+      const relatedUser = embeddedUser || users?.find(u => u.id === verification.user_id);
+      const verificationDocuments = documents?.filter(d => d.verification_id === verification.id) || [];
+
+      // Prefer linked user profile; fallback to verified_* fields from the submission
+      const firstName = relatedUser?.first_name || verification.verified_first_name || 'Unknown';
+      const lastName = relatedUser?.last_name || verification.verified_last_name || 'User';
+      const email = relatedUser?.email || 'unknown@example.com';
+      const phone = relatedUser?.phone;
 
       return {
         ...verification,
-        user: user ? {
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          phone: user.phone
-        } : {
-          first_name: 'Unknown',
-          last_name: 'User',
-          email: 'unknown@example.com'
-        },
+        user: { id: relatedUser?.id || verification.user_id, first_name: firstName, last_name: lastName, email, phone },
         documents: verificationDocuments
       };
     });
@@ -217,9 +218,9 @@ export const getAllKYCVerifications = async (
     if (filters?.search) {
       const searchTerm = filters.search.toLowerCase();
       filteredData = combinedData.filter(verification => 
-        verification.user.first_name.toLowerCase().includes(searchTerm) ||
-        verification.user.last_name.toLowerCase().includes(searchTerm) ||
-        verification.user.email.toLowerCase().includes(searchTerm) ||
+        (verification.user?.first_name?.toLowerCase() || '').includes(searchTerm) ||
+        (verification.user?.last_name?.toLowerCase() || '').includes(searchTerm) ||
+        (verification.user?.email?.toLowerCase() || '').includes(searchTerm) ||
         (verification.id_number || '').toLowerCase().includes(searchTerm)
       );
     }
@@ -240,6 +241,23 @@ export const updateKYCVerification = async (
   data: UpdateKYCVerificationRequest
 ): Promise<{ data: KYCVerification | null; error: string | null }> => {
   try {
+    // First, get the verification to get the user_id
+    const { data: existingVerification, error: fetchError } = await supabase
+      .from('kyc_verifications')
+      .select('user_id, verification_type')
+      .eq('id', verificationId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching verification:', fetchError);
+      return { data: null, error: fetchError.message };
+    }
+
+    if (!existingVerification) {
+      return { data: null, error: 'Verification not found' };
+    }
+
+    // Update the KYC verification status
     const updateData: any = {
       status: data.status,
       reviewed_by: adminUserId,
@@ -264,6 +282,19 @@ export const updateKYCVerification = async (
     if (error) {
       console.error('Error updating KYC verification:', error);
       return { data: null, error: error.message };
+    }
+
+    // If approved, update ONLY the user profile is_identity_verified column
+    if (data.status === 'approved') {
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({ is_identity_verified: true })
+        .eq('id', existingVerification.user_id);
+
+      if (profileError) {
+        console.error('Error updating user profile:', profileError);
+        return { data: null, error: `KYC updated but failed to update user profile: ${profileError.message}` };
+      }
     }
 
     return { data: verification, error: null };
