@@ -420,7 +420,7 @@ export const getPropertyByIdFromSupabase = async (propertyId: string): Promise<P
         price: property.price,
         currency: property.currency as any,
         rentToBuyDeposit: property.rent_to_buy_deposit,
-        monthlyInstallment: property.monthly_installment,
+        monthlyInstallment: property.monthly_rental,
         paymentDuration: property.payment_duration,
       },
       media: {
@@ -439,9 +439,9 @@ export const getPropertyByIdFromSupabase = async (propertyId: string): Promise<P
       status: (property.status || 'active') as PropertyListing['status'],
       createdAt: new Date(property.created_at),
       updatedAt: new Date(property.updated_at),
-      views: property.views || 0,
-      savedBy: property.saved_by || 0,
-      inquiries: property.inquiries || 0,
+      views: property.views_count || 0,
+      savedBy: property.saved_count || 0,
+      inquiries: property.inquiries_count || 0,
     };
 
     console.log('Successfully transformed property to PropertyListing format');
