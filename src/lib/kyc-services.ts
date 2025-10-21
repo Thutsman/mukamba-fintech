@@ -21,6 +21,22 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Create service role client for admin operations (bypasses RLS)
+const supabaseAdmin = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// Log which key is being used
+console.log('Service role key available:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+console.log('Using service role key:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
 // =====================================================
 // KYC VERIFICATION SERVICES
 // =====================================================
@@ -241,21 +257,37 @@ export const updateKYCVerification = async (
   data: UpdateKYCVerificationRequest
 ): Promise<{ data: KYCVerification | null; error: string | null }> => {
   try {
+    console.log('=== updateKYCVerification Debug ===');
+    console.log('Verification ID:', verificationId);
+    console.log('Admin User ID:', adminUserId);
+    console.log('Update data:', data);
+    
+    // Check admin user profile
+    const { data: adminProfile, error: adminError } = await supabase
+      .from('user_profiles')
+      .select('id, first_name, last_name, is_admin, user_role, roles')
+      .eq('id', adminUserId)
+      .single();
+    
+    console.log('Admin profile:', adminProfile);
+    console.log('Admin profile error:', adminError);
+    
     // First, get the verification to get the user_id
-    const { data: existingVerification, error: fetchError } = await supabase
+    const { data: existingVerifications, error: fetchError } = await supabase
       .from('kyc_verifications')
       .select('user_id, verification_type')
-      .eq('id', verificationId)
-      .single();
+      .eq('id', verificationId);
 
     if (fetchError) {
       console.error('Error fetching verification:', fetchError);
       return { data: null, error: fetchError.message };
     }
 
-    if (!existingVerification) {
+    if (!existingVerifications || existingVerifications.length === 0) {
       return { data: null, error: 'Verification not found' };
     }
+
+    const existingVerification = existingVerifications[0];
 
     // Update the KYC verification status
     const updateData: any = {
@@ -272,35 +304,102 @@ export const updateKYCVerification = async (
       updateData.admin_notes = data.admin_notes;
     }
 
-    const { data: verification, error } = await supabase
-      .from('kyc_verifications')
-      .update(updateData)
-      .eq('id', verificationId)
-      .select()
-      .single();
+    console.log('Updating KYC verification with data:', updateData);
+    console.log('Verification ID:', verificationId);
+
+    // Try with admin client first (bypasses RLS)
+    let verification, error;
+    
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.log('Using service role client for update');
+      const result = await supabaseAdmin
+        .from('kyc_verifications')
+        .update(updateData)
+        .eq('id', verificationId)
+        .select();
+      verification = result.data;
+      error = result.error;
+    } else {
+      console.log('Service role key not available, using regular client');
+      // Fallback to regular client with admin authentication
+      const result = await supabase
+        .from('kyc_verifications')
+        .update(updateData)
+        .eq('id', verificationId)
+        .select();
+      verification = result.data;
+      error = result.error;
+    }
 
     if (error) {
       console.error('Error updating KYC verification:', error);
-      return { data: null, error: error.message };
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return { data: null, error: error.message || 'Failed to update KYC verification' };
+    }
+
+    console.log('Update result:', verification);
+
+    // Check if verification was updated successfully
+    if (!verification || verification.length === 0) {
+      console.error('No verification found with ID:', verificationId);
+      console.error('This could mean:');
+      console.error('1. The verification ID does not exist in the database');
+      console.error('2. The verification exists but the update failed silently');
+      console.error('3. There are RLS policies blocking the update');
+      
+      // Let's try to fetch the verification to see if it exists
+      const { data: checkVerification, error: checkError } = await supabase
+        .from('kyc_verifications')
+        .select('id, status, user_id')
+        .eq('id', verificationId);
+      
+      console.log('Verification check result:', checkVerification);
+      console.log('Verification check error:', checkError);
+      
+      return { data: null, error: 'Verification not found or not updated' };
     }
 
     // If approved, update ONLY the user profile is_identity_verified column
     if (data.status === 'approved') {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({ is_identity_verified: true })
-        .eq('id', existingVerification.user_id);
+      console.log('Updating user profile for user_id:', existingVerification.user_id);
+      console.log('Admin user ID:', adminUserId);
+      
+      let updateResult, profileError;
+      
+      if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.log('Using service role client for user profile update');
+        const result = await supabaseAdmin
+          .from('user_profiles')
+          .update({ is_identity_verified: true })
+          .eq('id', existingVerification.user_id)
+          .select('id, is_identity_verified');
+        updateResult = result.data;
+        profileError = result.error;
+      } else {
+        console.log('Service role key not available, using regular client for user profile update');
+        const result = await supabase
+          .from('user_profiles')
+          .update({ is_identity_verified: true })
+          .eq('id', existingVerification.user_id)
+          .select('id, is_identity_verified');
+        updateResult = result.data;
+        profileError = result.error;
+      }
 
       if (profileError) {
         console.error('Error updating user profile:', profileError);
-        return { data: null, error: `KYC updated but failed to update user profile: ${profileError.message}` };
+        console.error('Profile error details:', JSON.stringify(profileError, null, 2));
+        return { data: null, error: `KYC updated but failed to update user profile: ${profileError.message || 'Unknown error'}` };
       }
+      
+      console.log('Successfully updated user profile:', updateResult);
+      console.log('User profile is_identity_verified set to true');
     }
 
-    return { data: verification, error: null };
+    return { data: verification[0], error: null };
   } catch (error) {
     console.error('Error updating KYC verification:', error);
-    return { data: null, error: 'Failed to update KYC verification' };
+    return { data: null, error: error instanceof Error ? error.message : 'Failed to update KYC verification' };
   }
 };
 

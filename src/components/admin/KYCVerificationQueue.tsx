@@ -78,6 +78,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   const [showImageModal, setShowImageModal] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState<string>('');
   const [error, setError] = React.useState<string | null>(null);
+  const [loadingVerificationId, setLoadingVerificationId] = React.useState<string | null>(null);
   const [rejectionReasons] = React.useState([
     'Document image is too blurry or unclear',
     'ID has expired',
@@ -242,11 +243,14 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
   const handleApprove = async (verification: KYCVerificationWithUser) => {
     try {
       setError(null);
+      setLoadingVerificationId(verification.id);
       await onApproveVerification(verification.id);
       await fetchVerifications(); // Refresh data
     } catch (error) {
       console.error('Error approving verification:', error);
       setError(`Failed to approve verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoadingVerificationId(null);
     }
   };
 
@@ -290,6 +294,7 @@ export const KYCVerificationQueue: React.FC<KYCVerificationQueueProps> = ({
               onApprove={handleApprove}
               onReject={handleReject}
               onViewImage={openImageModal}
+              isLoading={loadingVerificationId === verification.id}
             />
           ))}
         </CardContent>
@@ -525,13 +530,15 @@ interface VerificationCardProps {
   onApprove: (verification: KYCVerificationWithUser) => void;
   onReject: (verification: KYCVerificationWithUser, reason: string) => void;
   onViewImage: (imageUrl: string) => void;
+  isLoading?: boolean;
 }
 
 const VerificationCard: React.FC<VerificationCardProps> = ({
   verification,
   onApprove,
   onReject,
-  onViewImage
+  onViewImage,
+  isLoading = false
 }) => {
   const [showRejectDialog, setShowRejectDialog] = React.useState(false);
   const [selectedReason, setSelectedReason] = React.useState('');
@@ -821,10 +828,20 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                   setCardError(`Failed to approve: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
               }}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={isLoading}
+              className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Approve
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 mr-1 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Approve
+                </>
+              )}
             </Button>
             <Button
               size="sm"

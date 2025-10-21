@@ -622,18 +622,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <KYCVerificationQueue
                 onApproveVerification={async (verificationId) => {
                   try {
-                    await updateKYCVerification(verificationId, user.id, { status: 'approved' });
+                    console.log('Approving verification:', verificationId);
+                    const result = await updateKYCVerification(verificationId, user.id, { status: 'approved' });
+                    
+                    if (result.error) {
+                      console.error('Error from updateKYCVerification:', result.error);
+                      toast.error(`Failed to approve: ${result.error}`);
+                      return;
+                    }
+                    
                     setKycVerifications(prev => prev.map(v => v.id === verificationId ? { ...v, status: 'approved', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
-                    toast.success('Verification approved');
+                    
+                    // Enhanced success message with more details
+                    toast.success('✅ KYC Verification Approved!', {
+                      description: 'User identity has been verified and they now have access to all platform features.',
+                      duration: 5000,
+                      action: {
+                        label: 'View User',
+                        onClick: () => {
+                          // You could add navigation to user details here
+                          console.log('Navigate to user details');
+                        }
+                      }
+                    });
                   } catch (e) {
-                    toast.error('Failed to approve');
+                    console.error('Error in onApproveVerification:', e);
+                    toast.error(`Failed to approve: ${e instanceof Error ? e.message : 'Unknown error'}`);
                   }
                 }}
                 onRejectVerification={async (verificationId, reason) => {
                   try {
                     await updateKYCVerification(verificationId, user.id, { status: 'rejected', rejection_reason: reason });
                     setKycVerifications(prev => prev.map(v => v.id === verificationId ? { ...v, status: 'rejected', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
-                    toast.success('Verification rejected');
+                    
+                    // Enhanced rejection message
+                    toast.error('❌ KYC Verification Rejected', {
+                      description: 'The verification has been rejected. User will be notified to resubmit documents.',
+                      duration: 5000,
+                      action: {
+                        label: 'View Reason',
+                        onClick: () => {
+                          console.log('View rejection reason');
+                        }
+                      }
+                    });
                   } catch (e) {
                     toast.error('Failed to reject');
                   }
