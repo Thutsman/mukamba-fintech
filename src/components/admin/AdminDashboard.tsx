@@ -38,12 +38,14 @@ import { User as UserType } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { OverviewCards } from './OverviewCards';
 import { RecentUsersFeed } from './RecentUsersFeed';
-import { RecentPropertiesFeed } from './RecentPropertiesFeed';
+import { RealUsersFeed } from './RealUsersFeed';
+import { UsersPage } from './UsersPage';
 import { AdminNavigation } from './AdminNavigation';
 import { ListingsPage } from './ListingsPage';
 import { KYCPage } from './KYCPage';
 import { KYCVerificationQueue } from './KYCVerificationQueue';
 import { getAllKYCVerifications, updateKYCVerification } from '@/lib/kyc-services';
+import { getRecentUsers, getUserStats, type AdminUser as RealAdminUser } from '@/lib/user-services';
 import type { KYCVerificationWithUser } from '@/types/database';
 import { ReportsTab } from './ReportsTab';
 import { MessagesTab } from './MessagesTab';
@@ -73,6 +75,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [kycVerifications, setKycVerifications] = useState<KYCVerificationWithUser[]>([]);
   const [isLoadingKyc, setIsLoadingKyc] = useState<boolean>(false);
+  const [recentUsers, setRecentUsers] = useState<RealAdminUser[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState<boolean>(false);
+  const [userStats, setUserStats] = useState({ total_users: 0, new_users_today: 0, new_users_this_week: 0, new_users_this_month: 0, verified_users: 0, unverified_users: 0 });
 
   // Load real property stats
   useEffect(() => {
@@ -106,6 +111,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     loadKyc();
   }, []);
 
+  // Load real user data
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setIsLoadingUsers(true);
+        const [users, stats] = await Promise.all([
+          getRecentUsers(10),
+          getUserStats()
+        ]);
+        setRecentUsers(users);
+        setUserStats(stats);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+    loadUsers();
+  }, []);
+
   // Mock admin data
   const adminStats: AdminStats = {
     totalUsers: 1247,
@@ -122,127 +147,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     activeRentToBuy: 89
   };
 
-  const recentUsers: AdminUser[] = [
-    { 
-      id: '1', 
-      name: 'John Doe', 
-      email: 'john@example.com', 
-      status: 'verified', 
-      joined: '2 hours ago',
-      role: 'buyer',
-      lastActive: '1 hour ago',
-      isPhoneVerified: true,
-      isIdentityVerified: true,
-      isFinanciallyVerified: true,
-      isPropertyVerified: false,
-      kycStatus: 'approved'
-    },
-    { 
-      id: '2', 
-      name: 'Sarah Smith', 
-      email: 'sarah@example.com', 
-      status: 'pending', 
-      joined: '4 hours ago',
-      role: 'seller',
-      lastActive: '3 hours ago',
-      isPhoneVerified: true,
-      isIdentityVerified: false,
-      isFinanciallyVerified: false,
-      isPropertyVerified: false,
-      kycStatus: 'pending'
-    },
-    { 
-      id: '3', 
-      name: 'Mike Johnson', 
-      email: 'mike@example.com', 
-      status: 'verified', 
-      joined: '6 hours ago',
-      role: 'both',
-      lastActive: '2 hours ago',
-      isPhoneVerified: true,
-      isIdentityVerified: true,
-      isFinanciallyVerified: true,
-      isPropertyVerified: true,
-      kycStatus: 'approved'
-    },
-    { 
-      id: '4', 
-      name: 'Lisa Brown', 
-      email: 'lisa@example.com', 
-      status: 'rejected', 
-      joined: '1 day ago',
-      role: 'buyer',
-      lastActive: '1 day ago',
-      isPhoneVerified: false,
-      isIdentityVerified: false,
-      isFinanciallyVerified: false,
-      isPropertyVerified: false,
-      kycStatus: 'rejected'
-    }
-  ];
 
-  const recentProperties: AdminProperty[] = [
-    { 
-      id: '1', 
-      title: 'Modern 3-Bedroom House', 
-      location: 'Harare, Zimbabwe', 
-      price: 250000, 
-      status: 'active',
-      type: 'residential',
-      bedrooms: 3,
-      bathrooms: 2,
-      size: 150,
-      listedBy: 'John Smith',
-      listedAt: '2 hours ago',
-      rentToBuy: true,
-      monthlyRental: 1200,
-      verificationStatus: 'approved'
-    },
-    { 
-      id: '2', 
-      title: 'Luxury Apartment', 
-      location: 'Johannesburg, SA', 
-      price: 180000, 
-      status: 'pending',
-      type: 'residential',
-      bedrooms: 2,
-      bathrooms: 1,
-      size: 80,
-      listedBy: 'Sarah Wilson',
-      listedAt: '4 hours ago',
-      rentToBuy: false,
-      verificationStatus: 'pending'
-    },
-    { 
-      id: '3', 
-      title: 'Family Home', 
-      location: 'Bulawayo, Zimbabwe', 
-      price: 320000, 
-      status: 'active',
-      type: 'residential',
-      bedrooms: 4,
-      bathrooms: 3,
-      size: 200,
-      listedBy: 'Mike Davis',
-      listedAt: '6 hours ago',
-      rentToBuy: true,
-      monthlyRental: 1500,
-      verificationStatus: 'approved'
-    },
-    { 
-      id: '4', 
-      title: 'Investment Property', 
-      location: 'Cape Town, SA', 
-      price: 450000, 
-      status: 'draft',
-      type: 'commercial',
-      size: 300,
-      listedBy: 'Lisa Brown',
-      listedAt: '1 day ago',
-      rentToBuy: false,
-      verificationStatus: 'pending'
-    }
-  ];
 
 
 
@@ -540,39 +445,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Recent Activity
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-                  <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                        Recent Users
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3 sm:p-6">
-                      <RecentUsersFeed 
+                <RealUsersFeed 
                         users={recentUsers}
+                  isLoading={isLoadingUsers}
                         onViewUser={(userId) => console.log('View user:', userId)}
                         onViewAll={() => setActiveTab('users')}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-slate-200 shadow-lg shadow-slate-200/10">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                        <Home className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
-                        Recent Properties
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3 sm:p-6">
-                      <RecentPropertiesFeed 
-                        properties={recentProperties}
-                        onViewProperty={(propertyId) => console.log('View property:', propertyId)}
-                        onViewAll={() => setActiveTab('messages')}
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
+                  onUserDeleted={(userId) => {
+                    // Remove the deleted user from the local state
+                    setRecentUsers(prev => prev.filter(user => user.id !== userId));
+                  }}
+                />
               </section>
             </div>
           )}
@@ -684,45 +566,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {activeTab === 'users' && (
             <section>
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                User Management
-              </h2>
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs sm:text-sm text-slate-600">
-                      Manage user accounts, roles, and permissions
-                    </p>
-                  </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm" suppressHydrationWarning>
-                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Add User
-                  </Button>
-                </div>
-                
-                <Card>
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 sm:mb-6">
-                      <div className="flex-1">
-                        <Input
-                          placeholder="Search users..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="max-w-sm text-xs sm:text-sm"
-                        />
-                      </div>
-                      <Button variant="outline" className="text-xs sm:text-sm" suppressHydrationWarning>
-                        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                        Filter
-                      </Button>
-                    </div>
-                    
-                    <p className="text-slate-600 text-center py-6 sm:py-8 text-sm">
-                      User management interface coming soon...
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+              <UsersPage 
+                onViewUser={(userId) => console.log('View user:', userId)}
+              />
             </section>
           )}
 

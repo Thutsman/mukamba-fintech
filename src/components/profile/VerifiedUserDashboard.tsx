@@ -60,6 +60,7 @@ import { ApplicationStatus as AppStatus } from '@/components/applications/Applic
 import { BuyerMessaging } from '@/components/messaging';
 import { BuyerOffers } from './BuyerOffers';
 import { BuyerMessages } from './BuyerMessages';
+import { GeneralInquiryModal } from '@/components/messaging/GeneralInquiryModal';
 import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
 import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { PaymentModal } from '@/components/property/PaymentModal';
@@ -405,6 +406,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   // Messaging state
   const [showMessaging, setShowMessaging] = React.useState(false);
   const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
+  const [showGeneralInquiryModal, setShowGeneralInquiryModal] = React.useState(false);
 
   // Mock data for metrics and lists
   interface BuyerStats {
@@ -961,7 +963,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             return (
               <button key={item.key} onClick={() => {
                 if (item.key === 'messages') {
-                  setShowBuyerMessages(true);
+                  setShowGeneralInquiryModal(true);
                 } else if (item.key === 'profile') {
                   // Profile button in VerifiedUserDashboard should do nothing
                   // to prevent the "narrower" version from appearing
@@ -1073,7 +1075,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                         key={item.key} 
                         onClick={() => {
                           if (item.key === 'messages') {
-                            setShowBuyerMessages(true);
+                            setShowGeneralInquiryModal(true);
                           } else if (item.key === 'profile') {
                             // Profile button in VerifiedUserDashboard should do nothing
                             // to prevent the "narrower" version from appearing
@@ -1674,6 +1676,13 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           onSubmit={handlePaymentSubmit}
         />
       )}
+
+      {/* General Inquiry Modal */}
+      <GeneralInquiryModal
+        isOpen={showGeneralInquiryModal}
+        onClose={() => setShowGeneralInquiryModal(false)}
+        user={user}
+      />
     </div>
   );
 }; 

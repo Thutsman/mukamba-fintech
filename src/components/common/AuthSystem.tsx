@@ -304,19 +304,6 @@ export const AuthSystem: React.FC = () => {
                     Admin Dashboard
                   </button>
                 )}
-                {isAuthenticated && user && isFullyVerified(user) && !user.roles.includes('admin') && (
-                  <button 
-                    onClick={() => {
-                      setCurrentView('properties');
-                      // Scroll to top of the page
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Dashboard
-                  </button>
-                )}
               </div>
 
               {/* Mobile hamburger */}
@@ -357,17 +344,6 @@ export const AuthSystem: React.FC = () => {
                         className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
                       >
                         Admin Dashboard
-                      </button>
-                    )}
-                    {isAuthenticated && user && isFullyVerified(user) && !user.roles.includes('admin') && (
-                      <button 
-                        onClick={() => { 
-                          setCurrentView('properties'); 
-                          if (mobileMenuRef.current) mobileMenuRef.current.open = false; 
-                        }}
-                        className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
-                      >
-                        Dashboard
                       </button>
                     )}
                     {isAuthenticated && user?.roles.includes('seller') && (
