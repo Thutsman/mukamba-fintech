@@ -64,7 +64,8 @@ import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
 import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { PaymentModal } from '@/components/property/PaymentModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
-import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
+import { getPropertiesFromSupabase, getSavedProperties } from '@/lib/property-services-supabase';
+import { getPropertyOffers } from '@/lib/offer-services';
 import { PropertyListing } from '@/types/property';
 
 // Local interface to ensure type compatibility
@@ -412,26 +413,120 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     viewsThisMonth: number;
     viewsGrowthPct: number;
   }
-  interface RecentActivityItem { text: string; time: string }
+  interface RecentActivityItem { 
+    text: string; 
+    time: string;
+    type: 'offer' | 'view' | 'other';
+  }
   interface PreviewProperty { id: string; title: string; address: string; price: number; beds: number; baths: number; area: number; imageUrl?: string; status?: string }
 
+  // State for recent activities
+  const [recentActivities, setRecentActivities] = React.useState<RecentActivityItem[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = React.useState(true);
+  const [activeOffersCount, setActiveOffersCount] = React.useState(0);
+
+  // State for saved properties
+  const [savedPropertiesCount, setSavedPropertiesCount] = React.useState(0);
+  const [isLoadingSavedProperties, setIsLoadingSavedProperties] = React.useState(true);
+
   const stats: BuyerStats = {
-    savedCount: 8,
-    activeApps: 2, // This will show active offers count
+    savedCount: savedPropertiesCount, // Dynamic count from database
+    activeApps: activeOffersCount, // Dynamic count from database
     viewsThisMonth: 745,
     viewsGrowthPct: 15,
   };
 
-  const recentActivities: RecentActivityItem[] = [
-    { text: 'Property viewed: 3BR House in Sandton', time: '2 hours ago' },
-    { text: 'Offer submitted for property in Rosebank', time: '5 hours ago' },
-    { text: 'New property matching your criteria available', time: '1 day ago' },
-    { text: 'Financing pre-approval updated', time: '2 days ago' },
-  ];
-
   // State for live properties
   const [liveProperties, setLiveProperties] = React.useState<PreviewProperty[]>([]);
   const [isLoadingProperties, setIsLoadingProperties] = React.useState(true);
+
+  // Fetch recent bidding activities from database (all offers, not just user's)
+  const fetchRecentActivities = React.useCallback(async () => {
+    try {
+      setIsLoadingActivities(true);
+      // Fetch all offers from the database (not filtered by buyer_id)
+      const offers = await getPropertyOffers();
+      
+      // Convert offers to recent activities, showing only the most recent 4
+      const activities: RecentActivityItem[] = offers
+        .slice(0, 4)
+        .map(offer => {
+          const propertyName = offer.property?.title || 'Unknown Property';
+          const offerPrice = offer.offer_price;
+          const status = offer.status;
+          
+          let activityText = '';
+          switch (status) {
+            case 'pending':
+              activityText = `New offer submitted: ${propertyName} - $${offerPrice.toLocaleString()}`;
+              break;
+            case 'approved':
+              activityText = `Offer approved: ${propertyName} - $${offerPrice.toLocaleString()}`;
+              break;
+            case 'rejected':
+              activityText = `Offer rejected: ${propertyName} - $${offerPrice.toLocaleString()}`;
+              break;
+            case 'expired':
+              activityText = `Offer expired: ${propertyName} - $${offerPrice.toLocaleString()}`;
+              break;
+            default:
+              activityText = `Offer ${status}: ${propertyName} - $${offerPrice.toLocaleString()}`;
+          }
+          
+          // Calculate time ago
+          const submittedDate = new Date(offer.submitted_at);
+          const now = new Date();
+          const diffInHours = Math.floor((now.getTime() - submittedDate.getTime()) / (1000 * 60 * 60));
+          const diffInDays = Math.floor(diffInHours / 24);
+          
+          let timeAgo = '';
+          if (diffInHours < 1) {
+            timeAgo = 'Just now';
+          } else if (diffInHours < 24) {
+            timeAgo = `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+          } else if (diffInDays < 7) {
+            timeAgo = `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+          } else {
+            timeAgo = submittedDate.toLocaleDateString();
+          }
+          
+          return {
+            text: activityText,
+            time: timeAgo,
+            type: 'offer' as const
+          };
+        });
+      
+      setRecentActivities(activities);
+      
+      // Count active offers (pending and approved) from all users
+      const activeOffers = offers.filter(offer => 
+        offer.status === 'pending' || offer.status === 'approved'
+      );
+      setActiveOffersCount(activeOffers.length);
+    } catch (error) {
+      console.error('Error fetching recent activities:', error);
+      // Fallback to empty array if there's an error
+      setRecentActivities([]);
+      setActiveOffersCount(0);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  }, []);
+
+  // Fetch saved properties from database
+  const fetchSavedProperties = React.useCallback(async () => {
+    try {
+      setIsLoadingSavedProperties(true);
+      const savedProperties = await getSavedProperties(user.id);
+      setSavedPropertiesCount(savedProperties.length);
+    } catch (error) {
+      console.error('Error fetching saved properties:', error);
+      setSavedPropertiesCount(0);
+    } finally {
+      setIsLoadingSavedProperties(false);
+    }
+  }, [user.id]);
 
   // Fetch live properties from database
   const fetchLiveProperties = React.useCallback(async () => {
@@ -485,7 +580,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   React.useEffect(() => {
     fetchLiveProperties();
-  }, [fetchLiveProperties]);
+    fetchRecentActivities();
+    fetchSavedProperties();
+  }, [fetchLiveProperties, fetchRecentActivities, fetchSavedProperties]);
 
   // Use live properties for previews
   const previews: PreviewProperty[] = liveProperties;
@@ -1014,7 +1111,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"><UserIcon className="w-5 h-5 text-blue-700"/></div>
           <div>
-              <div className="text-slate-800 font-semibold">Welcome, Verified Buyer</div>
+              <div className="text-slate-800 font-semibold">Welcome, {user.firstName || 'Verified Buyer'}</div>
               <div className="text-xs text-slate-500">{user.email}</div>
             </div>
           </div>
@@ -1035,8 +1132,22 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 <div className="text-xs uppercase tracking-wide text-slate-600">Saved Properties</div>
                 <Bookmark className="w-4 h-4 text-blue-600"/>
                 </div>
-              <div className="text-2xl font-bold">{stats.savedCount}</div>
-              <div className="text-xs text-slate-500">Properties Bookmarked • +2 this month</div>
+              {isLoadingSavedProperties ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600 text-sm">Loading...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats.savedCount}</div>
+                  <div className="text-xs text-slate-500">
+                    {stats.savedCount === 0 
+                      ? 'No properties saved yet' 
+                      : `Properties Bookmarked${stats.savedCount > 1 ? 's' : ''}`
+                    }
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
           <Card className="border-slate-200">
@@ -1196,14 +1307,33 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
+          {isLoadingActivities ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading activities...</span>
+            </div>
+          ) : recentActivities.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Recent Bidding Activity</h3>
+              <p className="text-gray-600 mb-4">No recent property offers have been submitted by buyers.</p>
+              <Button 
+                className="bg-red-800 hover:bg-red-900 text-white"
+                onClick={() => setShowPropertyListings(true)}
+              >
+                Browse Properties
+              </Button>
+            </div>
+          ) : (
             <div className="space-y-3">
               {recentActivities.map((a, idx)=> (
                 <div key={idx} className="flex items-center justify-between text-sm">
                   <span className="text-slate-700">{a.text}</span>
                   <span className="text-slate-500">{a.time}</span>
-        </div>
-                ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
           </>

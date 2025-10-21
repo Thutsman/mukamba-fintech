@@ -451,3 +451,173 @@ export const getPropertyByIdFromSupabase = async (propertyId: string): Promise<P
     return null;
   }
 };
+
+// Saved Properties Services
+export interface SavedProperty {
+  id: string;
+  user_id: string;
+  property_id: string;
+  notes?: string;
+  saved_at: string;
+  property?: PropertyListing;
+}
+
+export const getSavedProperties = async (userId: string): Promise<SavedProperty[]> => {
+  try {
+    if (!supabase) {
+      console.log('Supabase client not available, returning empty array');
+      return [];
+    }
+
+    console.log('Fetching saved properties for user:', userId);
+
+    // Get saved properties with property details
+    const { data: savedProperties, error: savedError } = await supabase
+      .from('saved_properties')
+      .select(`
+        *,
+        properties (
+          id,
+          title,
+          description,
+          property_type,
+          listing_type,
+          country,
+          city,
+          suburb,
+          street_address,
+          size_sqm,
+          bedrooms,
+          bathrooms,
+          price,
+          currency,
+          status,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq('user_id', userId)
+      .order('saved_at', { ascending: false });
+
+    if (savedError) {
+      console.error('Error fetching saved properties:', savedError);
+      return [];
+    }
+
+    console.log('Successfully fetched saved properties:', savedProperties?.length || 0);
+
+    // Transform the data to include property details
+    return (savedProperties || []).map((saved: any) => ({
+      id: saved.id,
+      user_id: saved.user_id,
+      property_id: saved.property_id,
+      notes: saved.notes,
+      saved_at: saved.saved_at,
+      property: saved.properties ? {
+        id: saved.properties.id,
+        title: saved.properties.title,
+        description: saved.properties.description,
+        propertyType: saved.properties.property_type,
+        listingType: saved.properties.listing_type,
+        location: {
+          country: saved.properties.country,
+          city: saved.properties.city,
+          suburb: saved.properties.suburb,
+          streetAddress: saved.properties.street_address || '',
+        },
+        details: {
+          size: saved.properties.size_sqm,
+          type: saved.properties.property_type,
+          bedrooms: saved.properties.bedrooms,
+          bathrooms: saved.properties.bathrooms,
+          features: [],
+          amenities: [],
+        },
+        financials: {
+          price: saved.properties.price,
+          currency: saved.properties.currency,
+        },
+        media: {
+          mainImage: '/placeholder-property.jpg',
+          images: ['/placeholder-property.jpg'],
+        },
+        seller: {
+          id: 'default-seller',
+          name: 'Property Owner',
+          isVerified: true,
+          contactInfo: {
+            phone: '',
+            email: '',
+          },
+        },
+        status: saved.properties.status || 'active',
+        createdAt: new Date(saved.properties.created_at),
+        updatedAt: new Date(saved.properties.updated_at),
+        views: 0,
+        savedBy: 0,
+        inquiries: 0,
+      } as PropertyListing : undefined
+    }));
+  } catch (error) {
+    console.error('Error in getSavedProperties:', error);
+    return [];
+  }
+};
+
+export const saveProperty = async (userId: string, propertyId: string, notes?: string): Promise<boolean> => {
+  try {
+    if (!supabase) {
+      console.log('Supabase client not available');
+      return false;
+    }
+
+    console.log('Saving property for user:', userId, 'property:', propertyId);
+
+    const { error } = await supabase
+      .from('saved_properties')
+      .insert({
+        user_id: userId,
+        property_id: propertyId,
+        notes: notes || null
+      });
+
+    if (error) {
+      console.error('Error saving property:', error);
+      return false;
+    }
+
+    console.log('Successfully saved property');
+    return true;
+  } catch (error) {
+    console.error('Error in saveProperty:', error);
+    return false;
+  }
+};
+
+export const unsaveProperty = async (userId: string, propertyId: string): Promise<boolean> => {
+  try {
+    if (!supabase) {
+      console.log('Supabase client not available');
+      return false;
+    }
+
+    console.log('Unsaving property for user:', userId, 'property:', propertyId);
+
+    const { error } = await supabase
+      .from('saved_properties')
+      .delete()
+      .eq('user_id', userId)
+      .eq('property_id', propertyId);
+
+    if (error) {
+      console.error('Error unsaving property:', error);
+      return false;
+    }
+
+    console.log('Successfully unsaved property');
+    return true;
+  } catch (error) {
+    console.error('Error in unsaveProperty:', error);
+    return false;
+  }
+};
