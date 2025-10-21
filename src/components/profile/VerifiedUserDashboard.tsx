@@ -962,6 +962,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <button key={item.key} onClick={() => {
                 if (item.key === 'messages') {
                   setShowBuyerMessages(true);
+                } else if (item.key === 'profile') {
+                  // Profile button in VerifiedUserDashboard should do nothing
+                  // to prevent the "narrower" version from appearing
+                  // No action needed - just prevent the section change
                 } else {
                   setActiveSection(item.key);
                 }
@@ -1070,6 +1074,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                         onClick={() => {
                           if (item.key === 'messages') {
                             setShowBuyerMessages(true);
+                          } else if (item.key === 'profile') {
+                            // Profile button in VerifiedUserDashboard should do nothing
+                            // to prevent the "narrower" version from appearing
+                            // No action needed - just prevent the section change
                           } else {
                             setActiveSection(item.key);
                           }
@@ -1095,7 +1103,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       </AnimatePresence>
 
       {/* Main */}
-      <main className="dashboard-main flex-1 md:ml-[19rem] w-full px-4 md:px-6 lg:px-8 pb-10 space-y-8 overflow-x-hidden">
+      <main className="dashboard-main flex-1 md:ml-[19rem] w-full px-4 md:px-6 lg:px-8 pb-10 space-y-10 overflow-x-hidden">
         {/* Header */}
         <div className="w-full bg-white border border-slate-200 rounded-2xl px-6 md:px-8 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">

@@ -245,7 +245,7 @@ export const AuthSystem: React.FC = () => {
         {/* Header matching Mukamba Gateway marketing site */}
         <header className="bg-white shadow-lg border-b border-slate-200 sticky top-0 z-40">
           <div className="w-full px-6 md:px-8">
-            <div className="flex items-center justify-between h-17 sm:h-21 md:h-24">
+            <div className="flex items-center justify-between h-14 sm:h-18 md:h-21">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center">
                 <div className="flex items-center">

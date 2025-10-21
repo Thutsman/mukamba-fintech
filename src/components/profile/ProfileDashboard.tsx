@@ -2035,6 +2035,14 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     </motion.div>
   );
 
+  // Redirect verified users back to AuthSystem context to use consistent navigation
+  React.useEffect(() => {
+    if (isFullyVerified(user)) {
+      console.log('User is fully verified, redirecting to AuthSystem context');
+      onBackToHome?.();
+    }
+  }, [user, onBackToHome]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
@@ -2045,8 +2053,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         onLogout={onLogout}
       />
 
-      {/* Main Content */}
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6 sm:space-y-8">
+      {/* Main Content - Only show for non-verified users */}
+      {!isFullyVerified(user) ? (
+        // For non-verified users, use the constrained container
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6 sm:space-y-8">
       {/* Header - Only show for non-verified users */}
       {!isFullyVerified(user) && (
         <motion.div 
@@ -2110,28 +2120,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
 
 
-        {/* Conditional Dashboard Rendering */}
-        {isFullyVerified(user) ? (
-          <VerifiedUserDashboard
-            user={user}
-            onViewProperty={(propertyId) => {
-              console.log('View property:', propertyId);
-              // Navigate to property details
-            }}
-            onViewApplication={(applicationId) => {
-              console.log('View application:', applicationId);
-              // Navigate to application details
-            }}
-            onStartNewApplication={() => {
-              console.log('Start new application');
-              // Navigate to property search or application form
-            }}
-            onViewMarketInsights={() => {
-              console.log('View market insights');
-              // Navigate to market insights page
-            }}
-          />
-        ) : (
           <>
             {/* New User Welcome Card */}
             {isNewUser && (
@@ -2434,7 +2422,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </motion.div>
         )}
       </>
-      )}
 
       {/* Guided Tour */}
       <GuidedTour
@@ -2518,7 +2505,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </Button>
         </motion.div>
       )}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }; 
