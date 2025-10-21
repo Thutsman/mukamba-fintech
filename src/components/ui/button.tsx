@@ -86,6 +86,51 @@ function Button({
 
   const isDisabled = disabled || loading
 
+  // When asChild is true, we need to wrap everything in a single element
+  if (asChild) {
+    return (
+      <Comp
+        data-slot="button"
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          isClicked && "scale-95",
+          loading && "cursor-wait"
+        )}
+        disabled={isDisabled}
+        onClick={handleClick}
+        {...props}
+      >
+        <span className="relative inline-flex items-center">
+          {/* Ripple effect container */}
+          {ripples.map(ripple => (
+            <span
+              key={ripple.id}
+              className="absolute rounded-full bg-white/30 pointer-events-none animate-ripple"
+              style={{
+                left: ripple.x,
+                top: ripple.y,
+                width: 0,
+                height: 0,
+              }}
+            />
+          ))}
+          
+          {/* Loading spinner */}
+          {loading && (
+            <Loader2 className="animate-spin" />
+          )}
+          
+          {/* Button content */}
+          {loading && loadingText ? (
+            <span>{loadingText}</span>
+          ) : (
+            children
+          )}
+        </span>
+      </Comp>
+    )
+  }
+
   return (
     <Comp
       data-slot="button"

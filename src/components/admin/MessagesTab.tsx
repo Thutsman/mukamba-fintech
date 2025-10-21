@@ -167,7 +167,7 @@ export const MessagesTab: React.FC = () => {
                 <div className="shrink-0 flex gap-2">
                   {m.buyerEmail && (
                     <Button variant="outline" size="sm" asChild>
-                      <a href={`mailto:${m.buyerEmail}`}>
+                      <a href={`mailto:${m.buyerEmail}`} className="flex items-center">
                         <Mail className="w-4 h-4 mr-1" /> Email
                       </a>
                     </Button>
@@ -178,7 +178,9 @@ export const MessagesTab: React.FC = () => {
                     onClick={() => handleMarkRead(m.id)}
                     disabled={isLoading}
                   >
-                    <CheckCircle className="w-4 h-4 mr-1" /> {m.readByAdmin ? 'Read' : 'Mark read'}
+                    <span className="flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-1" /> {m.readByAdmin ? 'Read' : 'Mark read'}
+                    </span>
                   </Button>
                   <Button 
                     size="sm" 
@@ -229,10 +231,10 @@ export const MessagesTab: React.FC = () => {
                         disabled={!responseText.trim() || isSubmittingResponse}
                       >
                         {isSubmittingResponse ? (
-                          <>
+                          <span className="flex items-center">
                             <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                             Sending...
-                          </>
+                          </span>
                         ) : (
                           'Send Response'
                         )}
