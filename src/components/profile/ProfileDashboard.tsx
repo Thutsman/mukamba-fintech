@@ -83,6 +83,7 @@ import { useAuthStore } from '@/lib/store';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { useRouter } from 'next/navigation';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
+import { checkPendingIdentityVerification } from '../../lib/kyc-services';
 
 // Verification Modals
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
@@ -1191,6 +1192,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const [successMessage, setSuccessMessage] = React.useState('');
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [isFirstVisit, setIsFirstVisit] = React.useState(false);
+  const [isIdentityPending, setIsIdentityPending] = React.useState(false);
 
   // Verification Modal State
   const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | null>(null);
@@ -1210,6 +1212,22 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       localStorage.setItem('mukamba-dashboard-visited', 'true');
     }
   }, []);
+
+  // Check for pending identity verification
+  React.useEffect(() => {
+    const checkPendingVerification = async () => {
+      if (!user?.id || user.isIdentityVerified) return;
+      
+      try {
+        const { hasPending } = await checkPendingIdentityVerification(user.id);
+        setIsIdentityPending(hasPending);
+      } catch (error) {
+        console.error('Error checking pending identity verification:', error);
+      }
+    };
+
+    checkPendingVerification();
+  }, [user?.id, user?.isIdentityVerified]);
 
   // Progress celebration logic - only show once per verification level
   React.useEffect(() => {
@@ -1493,7 +1511,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         updates.is_phone_verified = true;
         break;
       case 'identity':
-        updates.isIdentityVerified = true;
+        // For identity verification, don't set isIdentityVerified to true yet
+        // It should only be true after admin approval
+        // The pending status will be handled by isIdentityPending state
         break;
       case 'financial':
         updates.isFinanciallyVerified = true;
@@ -1518,17 +1538,23 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     }, 100);
     
     // Show success message
-    setSuccessMessage(`${verificationType.charAt(0).toUpperCase() + verificationType.slice(1)} verification completed successfully!`);
+    if (verificationType === 'identity') {
+      setSuccessMessage('Identity verification submitted successfully! You\'ll hear from us within 24-48 hours.');
+    } else {
+      setSuccessMessage(`${verificationType.charAt(0).toUpperCase() + verificationType.slice(1)} verification completed successfully!`);
+    }
     setShowSuccess(true);
     
-    // Trigger progress celebration
-    setCelebrationData({
-      title: `${verificationType.charAt(0).toUpperCase() + verificationType.slice(1)} Verified!`,
-      description: 'You\'ve unlocked new features and higher account level.',
-      level: userLevel,
-      newFeatures: []
-    });
-    setShowCelebration(true);
+    // Only trigger progress celebration for non-identity verifications
+    if (verificationType !== 'identity') {
+      setCelebrationData({
+        title: `${verificationType.charAt(0).toUpperCase() + verificationType.slice(1)} Verified!`,
+        description: 'You\'ve unlocked new features and higher account level.',
+        level: userLevel,
+        newFeatures: []
+      });
+      setShowCelebration(true);
+    }
   };
 
   const handleRecommendationAction = (recommendationId: string) => {
@@ -2260,6 +2286,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 <div className={`p-4 rounded-lg border ${
                   user.isIdentityVerified 
                     ? 'bg-green-50 border-green-200' 
+                    : isIdentityPending
+                    ? 'bg-yellow-50 border-yellow-200'
                     : 'bg-slate-50 border-slate-200'
                 }`}>
                   <div className="flex items-center justify-between">
@@ -2267,6 +2295,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                       <div className={`p-2 rounded-full ${
                         user.isIdentityVerified 
                           ? 'bg-green-100 text-green-600' 
+                          : isIdentityPending
+                          ? 'bg-yellow-100 text-yellow-600'
                           : 'bg-slate-100 text-slate-600'
                       }`}>
                         <Shield className="w-4 h-4" />
@@ -2274,11 +2304,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                       <div>
                         <h4 className="font-semibold text-sm">Identity Verification</h4>
                         <p className="text-xs text-slate-600">
-                          {user.isIdentityVerified ? 'Verified' : 'Required for installment purchases and property applications'}
+                          {isIdentityPending
+                            ? 'Under Review - You\'ll hear from us within 24-48 hours'
+                            : user.isIdentityVerified 
+                            ? 'Verified' 
+                            : 'Required for installment purchases and property applications'
+                          }
                         </p>
                       </div>
                     </div>
-                    {user.isIdentityVerified ? (
+                    {isIdentityPending ? (
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4 text-yellow-600 animate-pulse" />
+                        <span className="text-xs text-yellow-700 font-medium">Under Review</span>
+                      </div>
+                    ) : user.isIdentityVerified ? (
                       <CheckCircle className="w-5 h-5 text-green-600" />
                     ) : (
                       <Button
