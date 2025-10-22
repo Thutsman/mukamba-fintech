@@ -63,6 +63,18 @@ export interface RiskAssessment {
 
 export async function assessImageQuality(imageFile: File): Promise<ImageQualityResult> {
   try {
+    // Check if imageFile is valid
+    if (!imageFile || !(imageFile instanceof File)) {
+      console.error('Invalid imageFile provided to assessImageQuality:', imageFile);
+      return {
+        overallScore: 0,
+        blurScore: 0,
+        brightnessScore: 0,
+        fileSizeScore: 0,
+        isCorrupted: true
+      };
+    }
+
     // Get image metadata
     const fileSize = imageFile.size;
     const fileSizeScore = calculateFileSizeScore(fileSize);
@@ -325,6 +337,21 @@ export async function compareFaces(selfieFile: File, idPhotoFile: File): Promise
 
 export async function detectDocumentType(imageFile: File): Promise<DocumentTypeResult> {
   try {
+    // Check if imageFile is valid
+    if (!imageFile || !(imageFile instanceof File)) {
+      console.error('Invalid imageFile provided to detectDocumentType:', imageFile);
+      return {
+        isDocument: false,
+        confidence: 0,
+        documentFeatures: {
+          hasTextRegions: false,
+          hasCorners: false,
+          aspectRatio: 0,
+          colorVariety: 0
+        }
+      };
+    }
+
     const imageUrl = URL.createObjectURL(imageFile);
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -510,6 +537,17 @@ export async function validateDocumentsAutomatically(
   };
 }> {
   console.log('Starting client-side automated document validation...');
+  
+  // Validate input files
+  if (!selfieFile || !(selfieFile instanceof File)) {
+    throw new Error('Invalid selfie file provided');
+  }
+  if (!idFrontFile || !(idFrontFile instanceof File)) {
+    throw new Error('Invalid ID front file provided');
+  }
+  if (!idBackFile || !(idBackFile instanceof File)) {
+    throw new Error('Invalid ID back file provided');
+  }
   
   try {
     // Run all checks in parallel for speed
