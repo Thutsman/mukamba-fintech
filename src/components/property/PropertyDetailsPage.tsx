@@ -74,6 +74,7 @@ import { getPropertyOffers } from '@/lib/offer-services';
 import { IdentityVerificationModal } from '@/components/forms/IdentityVerificationModal';
 import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
 import { useMessageStore } from '@/lib/message-store';
+import { checkPendingIdentityVerification } from '@/lib/kyc-services';
 
 interface PropertyDetailsPageProps {
   property: PropertyListing;
@@ -96,6 +97,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   const [activeTab, setActiveTab] = React.useState('overview');
   // Local verification state to immediately unlock actions post-upload
   const [identityVerifiedLocal, setIdentityVerifiedLocal] = React.useState<boolean>(false);
+  const [isIdentityPending, setIsIdentityPending] = React.useState<boolean>(false);
   
   // Offer flow state
   const [showExpressInterestModal, setShowExpressInterestModal] = React.useState(false);
@@ -193,6 +195,22 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
     loadOffers();
   }, [property.id, user]);
 
+  // Check for pending identity verification
+  React.useEffect(() => {
+    const checkPendingVerification = async () => {
+      if (!user?.id || user.isIdentityVerified) return;
+      
+      try {
+        const { hasPending } = await checkPendingIdentityVerification(user.id);
+        setIsIdentityPending(hasPending);
+      } catch (error) {
+        console.error('Error checking pending identity verification:', error);
+      }
+    };
+
+    checkPendingVerification();
+  }, [user?.id, user?.isIdentityVerified]);
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -274,6 +292,12 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
     // Require phone verification first for any action
     if (!user.is_phone_verified) {
       setShowPhoneVerificationModal(true);
+      return;
+    }
+
+    // Check if identity verification is pending
+    if (isIdentityPending) {
+      // Show pending status message instead of opening modal
       return;
     }
 
@@ -847,7 +871,9 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                                   ? 'Sign up to make an offer on this property'
                                   : !user.is_phone_verified
                                     ? 'Verify your phone to make an offer'
-                                    : 'Complete identity verification to make an offer'
+                                    : isIdentityPending
+                                      ? 'Identity verification under review - You\'ll hear from us within 24-48 hours'
+                                      : 'Complete identity verification to make an offer'
                               }
                             </p>
                           </div>
@@ -856,12 +882,23 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                             className={`ml-4 h-12 px-6 font-semibold transition-all duration-200 ${
                               canMakeOffer()
                                 ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
-                                : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
+                                : isIdentityPending
+                                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 shadow-md'
+                                  : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
                             } text-white border-0`}
                             disabled={!user && false}
                           >
-                            <DollarSign className="w-5 h-5 mr-2" />
-                            {canMakeOffer() ? 'Make Offer' : !user ? 'Sign Up to Offer' : 'Make Offer'}
+                            {isIdentityPending ? (
+                              <>
+                                <Clock className="w-5 h-5 mr-2 animate-pulse" />
+                                Under Review
+                              </>
+                            ) : (
+                              <>
+                                <DollarSign className="w-5 h-5 mr-2" />
+                                {canMakeOffer() ? 'Make Offer' : !user ? 'Sign Up to Offer' : 'Make Offer'}
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -1163,7 +1200,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               hasUserOffer={hasUserOffer()}
               canMakeOffer={canMakeOffer()}
               userOfferStatus={userOffer?.status}
-                showScheduleViewing={false}
+              showScheduleViewing={false}
+              isIdentityPending={isIdentityPending}
               />
             )}
 

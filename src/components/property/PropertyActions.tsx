@@ -33,6 +33,7 @@ interface PropertyActionsProps {
   canMakeOffer?: boolean;
   userOfferStatus?: string;
   showScheduleViewing?: boolean;
+  isIdentityPending?: boolean;
 }
 
 export const PropertyActions: React.FC<PropertyActionsProps> = ({
@@ -46,7 +47,8 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
   hasUserOffer = false,
   canMakeOffer = true,
   userOfferStatus,
-  showScheduleViewing = true
+  showScheduleViewing = true,
+  isIdentityPending = false
 }) => {
   // Determine user's access level based on KYC
   const getAccessLevel = () => {
@@ -104,31 +106,42 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
 
           {/* Make Offer Button */}
           <motion.div
-            whileHover={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') ? 1 : 1.02 }}
-            whileTap={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') ? 1 : 0.98 }}
+            whileHover={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending ? 1 : 1.02 }}
+            whileTap={{ scale: (hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending ? 1 : 0.98 }}
           >
             <Button
-            onClick={(hasUserOffer && userOfferStatus !== 'rejected') 
+            onClick={(hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending
               ? undefined 
               : (user ? onMakeOffer : onSignUpPrompt)}
               className={`w-full h-14 font-semibold transition-all duration-200 ${
                 (hasUserOffer && userOfferStatus !== 'rejected')
                   ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed shadow-md'
+                : isIdentityPending
+                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 shadow-md'
                 : (user && !canMakeOffer)
                   ? 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
                   : canMakeOffer 
                     ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
                     : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
               } text-white border-0 text-base`}
-            disabled={!user || (hasUserOffer && userOfferStatus !== 'rejected')}
+            disabled={!user || (hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending}
             >
-              <DollarSign className="w-5 h-5 mr-2" />
-            {(hasUserOffer && userOfferStatus !== 'rejected') 
-              ? 'Offer Submitted' 
-              : (hasUserOffer && userOfferStatus === 'rejected')
-                ? 'Make New Offer'
-                : (user ? 'Make Offer' : 'Sign Up to Offer')
-            }
+              {isIdentityPending ? (
+                <>
+                  <Clock className="w-5 h-5 mr-2 animate-pulse" />
+                  Under Review
+                </>
+              ) : (
+                <>
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  {(hasUserOffer && userOfferStatus !== 'rejected') 
+                    ? 'Offer Submitted' 
+                    : (hasUserOffer && userOfferStatus === 'rejected')
+                      ? 'Make New Offer'
+                      : (user ? 'Make Offer' : 'Sign Up to Offer')
+                  }
+                </>
+              )}
             </Button>
           </motion.div>
         </div>
@@ -210,7 +223,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
               Sign up to access all property features
             </div>
           )}
-          {user && user.is_phone_verified && !user.isIdentityVerified && (
+          {user && user.is_phone_verified && !user.isIdentityVerified && !isIdentityPending && (
             <div className="flex items-center justify-between text-sm text-gray-600">
               <div className="flex items-center">
                 <AlertCircle className="w-4 h-4 mr-2 text-blue-500" />
@@ -219,6 +232,12 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
               <Button size="sm" variant="outline" onClick={onMakeOffer} className="h-7 px-2">
                 Start
               </Button>
+            </div>
+          )}
+          {isIdentityPending && (
+            <div className="flex items-center text-sm text-yellow-600">
+              <Clock className="w-4 h-4 mr-2 text-yellow-500 animate-pulse" />
+              Identity verification under review - You'll hear from us within 24-48 hours
             </div>
           )}
         </div>
