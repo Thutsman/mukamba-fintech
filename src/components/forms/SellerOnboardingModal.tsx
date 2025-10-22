@@ -499,6 +499,9 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         })
         .eq('id', user?.id);
       
+      // Show success message
+      toast.success("Submission successful! A member of our team will reach out to you within 24 hours.");
+      
       // Reset form data and close modal
       resetForm();
       onComplete(formData);
