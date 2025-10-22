@@ -767,7 +767,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
                       <div>
                         <h4 className="font-semibold text-sm text-blue-800">Why we need this</h4>
                         <p className="text-sm text-blue-700 mt-1">
-                          Phone verification enables direct communication with potential buyers and ensures secure transactions.
+                          Phone verification enables direct communication with Mukamba Gateway team and ensures secure transactions.
                         </p>
                       </div>
                     </div>
@@ -810,7 +810,10 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
                     <p className="text-sm text-slate-600 mb-4">
                       Accepted: Driver's License, Passport, National ID
                     </p>
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowIdentityVerificationModal(true)}
+                    >
                       <Camera className="w-4 h-4 mr-2" />
                       Take Photo or Upload
                     </Button>
