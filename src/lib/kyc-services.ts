@@ -14,7 +14,7 @@ import type {
   KYCVerificationFilters,
   KYCVerificationStats,
   DocumentType
-} from '@/types/database';
+} from '../types/database';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -187,7 +187,7 @@ export const getAllKYCVerifications = async (
     }
 
     // Get user details for each verification
-    const userIds = [...new Set(verifications.map(v => v.user_id))];
+    const userIds = Array.from(new Set(verifications.map(v => v.user_id)));
     const { data: users, error: usersError } = await supabase
       .from('user_profiles')
       .select('id, first_name, last_name, email, phone')
@@ -400,6 +400,38 @@ export const updateKYCVerification = async (
   } catch (error) {
     console.error('Error updating KYC verification:', error);
     return { data: null, error: error instanceof Error ? error.message : 'Failed to update KYC verification' };
+  }
+};
+
+/**
+ * Check if user has pending identity verification
+ */
+export const checkPendingIdentityVerification = async (
+  userId: string
+): Promise<{ hasPending: boolean; verificationId?: string; error?: string }> => {
+  try {
+    const { data, error } = await supabase
+      .from('kyc_verifications')
+      .select('id, status, verification_type')
+      .eq('user_id', userId)
+      .eq('verification_type', 'identity')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('Error checking pending identity verification:', error);
+      return { hasPending: false, error: error.message };
+    }
+
+    const hasPending = data && data.length > 0;
+    return { 
+      hasPending, 
+      verificationId: hasPending ? data[0].id : undefined 
+    };
+  } catch (error) {
+    console.error('Error checking pending identity verification:', error);
+    return { hasPending: false, error: 'Failed to check pending verification' };
   }
 };
 

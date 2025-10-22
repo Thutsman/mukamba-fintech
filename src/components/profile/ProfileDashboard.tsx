@@ -83,7 +83,7 @@ import { useAuthStore } from '@/lib/store';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { useRouter } from 'next/navigation';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
-import { checkPendingIdentityVerification } from '../../lib/kyc-services';
+import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
 
 // Verification Modals
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';

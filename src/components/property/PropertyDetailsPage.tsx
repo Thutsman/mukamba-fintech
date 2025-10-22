@@ -74,7 +74,7 @@ import { getPropertyOffers } from '@/lib/offer-services';
 import { IdentityVerificationModal } from '@/components/forms/IdentityVerificationModal';
 import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
 import { useMessageStore } from '@/lib/message-store';
-import { checkPendingIdentityVerification } from '../../lib/kyc-services';
+import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
 
 interface PropertyDetailsPageProps {
   property: PropertyListing;
