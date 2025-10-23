@@ -83,6 +83,7 @@ import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { useRouter } from 'next/navigation';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
+import { supabase } from '@/lib/supabase';
 
 // Verification Modals
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
@@ -1169,6 +1170,46 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     checkPendingVerification();
   }, [user?.id, user?.isIdentityVerified]);
 
+  // Realtime subscription to auto-refresh identity verification status
+  React.useEffect(() => {
+    const sb = supabase;
+    if (!user?.id || !sb) return;
+
+    const channel = sb
+      .channel(`user-profile-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'user_profiles', filter: `id=eq.${user.id}` },
+        (payload: any) => {
+          const newRow = payload?.new as any;
+          if (!newRow) return;
+
+          // If identity verification was approved, update the local store/UI immediately
+          if (newRow.is_identity_verified && !user.isIdentityVerified) {
+            const updatedUser = { ...user, isIdentityVerified: true } as UserType;
+            updateUser({
+              isIdentityVerified: true,
+              kyc_level: newRow.kyc_level || user.kyc_level || 'identity',
+              permissions: getUserPermissions(updatedUser),
+              level: getUserLevel(updatedUser)
+            });
+            setIsIdentityPending(false);
+            setSuccessMessage("Identity verification approved! Premium features unlocked.");
+            setShowSuccess(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try {
+        sb.removeChannel(channel);
+      } catch (_) {
+        // no-op
+      }
+    };
+  }, [user?.id, user?.isIdentityVerified]);
+
   // Progress celebration logic - only show once per verification level
   React.useEffect(() => {
     const verificationCount = [user.is_phone_verified, user.isIdentityVerified, user.isFinanciallyVerified].filter(Boolean).length;
@@ -1291,7 +1332,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     ];
     const completedSteps = verificationSteps.filter(Boolean).length;
     const totalSteps = verificationSteps.length;
-    const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
+    const actualProgress = Math.round((completedSteps / totalSteps) * 100);
+    
+    // Use the same calculation logic as the progress bar
+    const baseProgress = userLevel === 'basic' ? 10 : 0;
+    const visualProgress = Math.max(actualProgress, baseProgress);
+    
+    let progressPercentage;
+    if (userLevel === 'verified') {
+      progressPercentage = Math.max(actualProgress, 50);
+    } else if (userLevel === 'premium') {
+      progressPercentage = Math.max(actualProgress, 75);
+    } else {
+      progressPercentage = visualProgress;
+    }
+    
     const remainingSteps = totalSteps - completedSteps;
     
     if (completedSteps === 0) {
