@@ -44,7 +44,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getAllUsers, updateUserStatus, type AdminUser } from '@/lib/user-services';
+import { getAllUsers, updateUserStatus, deleteUser, type AdminUser } from '@/lib/user-services';
 import { toast } from 'sonner';
 
 interface UsersPageProps {
@@ -429,24 +429,24 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
-                              {user.status === 'banned' ? (
-                                <DropdownMenuItem 
-                                  onClick={() => handleStatusUpdate(user.id, 'active')}
-                                  disabled={isUpdating === user.id}
-                                >
-                                  <UserCheck className="w-4 h-4 mr-2" />
-                                  Unban User
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem 
-                                  onClick={() => handleStatusUpdate(user.id, 'banned')}
-                                  disabled={isUpdating === user.id}
-                                  className="text-red-600"
-                                >
-                                  <Ban className="w-4 h-4 mr-2" />
-                                  Ban User
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  const confirmed = confirm('Are you sure you want to delete this user? This action cannot be undone.');
+                                  if (!confirmed) return;
+                                  try {
+                                    await deleteUser(user.id);
+                                    toast.success('User deleted successfully');
+                                    setUsers((prev) => prev.filter((u) => u.id !== user.id));
+                                  } catch (err) {
+                                    console.error('Delete user failed', err);
+                                    toast.error('Failed to delete user');
+                                  }
+                                }}
+                                className="text-red-600"
+                              >
+                                <Ban className="w-4 h-4 mr-2" />
+                                Delete User
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

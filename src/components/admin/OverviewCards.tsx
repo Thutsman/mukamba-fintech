@@ -12,10 +12,10 @@ import {
   UserCheck
 } from 'lucide-react';
 import { EnhancedStatCard } from './EnhancedStatCard';
-import type { AdminStats } from '@/types/admin';
+import type { RealAdminStats } from '@/lib/admin-stats-services';
 
 interface OverviewCardsProps {
-  stats: AdminStats;
+  stats: RealAdminStats;
 }
 
 // Mock trend data (replace with real data in production)
@@ -67,34 +67,18 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({ stats }) => {
     },
     {
       title: 'Active Properties',
-      value: stats.totalProperties.toLocaleString(),
+      value: stats.activeProperties.toLocaleString(),
       change: {
         value: stats.propertyGrowth,
         type: stats.propertyGrowth >= 0 ? 'increase' as const : 'decrease' as const,
         period: 'last month'
       },
-      trend: generateTrendData(stats.totalProperties * 0.9, stats.totalProperties * 0.1),
+      trend: generateTrendData(stats.activeProperties * 0.9, stats.activeProperties * 0.1),
       icon: <Building2 className="w-6 h-6" />,
       color: 'green',
       additionalInfo: [
         { label: 'Pending', value: stats.pendingListings },
         { label: 'Rejected', value: stats.rejectedListings }
-      ]
-    },
-    {
-      title: 'Verification Rate',
-      value: `${stats.verificationRate}%`,
-      change: {
-        value: 5.2,
-        type: 'increase' as const,
-        period: 'last month'
-      },
-      trend: generateTrendData(stats.verificationRate, 5),
-      icon: <ShieldCheck className="w-6 h-6" />,
-      color: 'purple',
-      additionalInfo: [
-        { label: 'Pending', value: stats.pendingVerifications },
-        { label: 'Approved', value: Math.floor(stats.totalUsers * (stats.verificationRate / 100)) }
       ]
     },
     {
@@ -116,7 +100,7 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {cards.map((card, index) => (
         <EnhancedStatCard
           key={index}

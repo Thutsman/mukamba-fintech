@@ -37,6 +37,7 @@ import {
   PropertyApplication 
 } from '@/lib/property-application-services';
 import { toast } from 'sonner';
+import { getSellerOnboardingEntries, type SellerOnboardingEntry } from '@/lib/seller-onboarding-services';
 
 interface ListingsPageProps {
   onViewListing: (listingId: string) => void;
@@ -53,7 +54,8 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
   onBulkAction,
   onAddToListings
 }) => {
-  const [applications, setApplications] = useState<PropertyApplication[]>([]);
+  const [applications, setApplications] = useState<PropertyApplication[]>([]); // kept for compatibility if needed
+  const [sellerEntries, setSellerEntries] = useState<SellerOnboardingEntry[]>([]);
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,20 +65,23 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [isPropertyDetailsOpen, setIsPropertyDetailsOpen] = useState(false);
   const [isEditPropertyOpen, setIsEditPropertyOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTitle, setPreviewTitle] = useState<string>('');
+  const [previewItems, setPreviewItems] = useState<{ name?: string; url?: string; signedUrl?: string; type?: string }[]>([]);
 
   useEffect(() => {
-    loadApplications();
+    loadSellerEntries();
     loadStats();
   }, []);
 
-  const loadApplications = async () => {
+  const loadSellerEntries = async () => {
     setIsLoading(true);
     try {
-      const data = await getPropertyApplications();
-      setApplications(data);
+      const data = await getSellerOnboardingEntries(false);
+      setSellerEntries(data);
     } catch (error) {
-      console.error('Error loading applications:', error);
-      toast.error('Failed to load applications');
+      console.error('Error loading seller onboarding entries:', error);
+      toast.error('Failed to load seller entries');
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +101,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       const success = await approvePropertyApplication(applicationId, 'admin-user-id');
       if (success) {
         toast.success('Application approved successfully');
-        await loadApplications();
+        await loadSellerEntries();
         await loadStats();
       } else {
         toast.error('Failed to approve application');
@@ -112,7 +117,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       const success = await rejectPropertyApplication(applicationId, 'admin-user-id', reason);
       if (success) {
         toast.success('Application rejected successfully');
-        await loadApplications();
+        await loadSellerEntries();
         await loadStats();
       } else {
         toast.error('Failed to reject application');
@@ -144,10 +149,16 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
     toast.info('Restore property functionality coming soon');
   };
 
-  const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.property_data.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         app.property_data.location.city.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+  const filteredSellerEntries = sellerEntries.filter(entry => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      (entry.firstName || '').toLowerCase().includes(q) ||
+      (entry.lastName || '').toLowerCase().includes(q) ||
+      (entry.propertyAddress || '').toLowerCase().includes(q) ||
+      (entry.propertyType || '').toLowerCase().includes(q) ||
+      String(entry.estimatedValue || '').toLowerCase().includes(q);
+    // statusFilter not applicable; keep for future compatibility
+    const matchesStatus = statusFilter === 'all';
     return matchesSearch && matchesStatus;
   });
 
@@ -255,7 +266,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <h3 className="text-lg font-semibold text-slate-900">Property Applications</h3>
-          <p className="text-sm text-slate-600">Review and manage property submissions</p>
+          <p className="text-sm text-slate-600">Review and manage property submissions from Sellers</p>
         </div>
         <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-3">
           <Button variant="outline" className="flex items-center justify-center gap-2 text-sm">
@@ -299,7 +310,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
         </Button>
       </div>
 
-      {/* Applications List */}
+      {/* Applications List (Populated from seller_onboarding_progress) */}
       <Card>
         <CardContent className="p-6">
           {isLoading ? (
@@ -307,77 +318,117 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-slate-600 mt-2">Loading applications...</p>
             </div>
-          ) : filteredApplications.length === 0 ? (
+          ) : filteredSellerEntries.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
               <p className="text-slate-600">No applications found</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredApplications.map((application) => (
-                <motion.div
-                  key={application.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-3 mb-2">
-                        <h4 className="font-medium text-slate-900 truncate">
-                          {application.property_data.title}
-                        </h4>
-                        {getStatusBadge(application.status)}
-                      </div>
-                      <div className="text-sm text-slate-600 space-y-1">
-                        <p className="truncate">Location: {application.property_data.location.city}, {application.property_data.location.country}</p>
-                        <p>Price: {application.property_data.financials.currency} {application.property_data.financials.price.toLocaleString()}</p>
-                        <p>Submitted: {new Date(application.submitted_at || '').toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-1 sm:gap-2 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewListing(application.id!)}
-                        className="text-slate-600 hover:text-slate-900 p-2"
-                        title="View"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      {application.status === 'pending' && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleApprove(application.id!)}
-                            className="text-green-600 hover:text-green-700 p-2"
-                            title="Approve"
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReject(application.id!, 'Does not meet requirements')}
-                            className="text-red-600 hover:text-red-700 p-2"
-                            title="Reject"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                      <Button variant="ghost" size="sm" className="text-slate-600 p-2" title="More options">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-slate-600 border-b">
+                    <th className="py-2 pr-4">Name</th>
+                    <th className="py-2 pr-4">Surname</th>
+                    <th className="py-2 pr-4">Date</th>
+                    <th className="py-2 pr-4">Property Address</th>
+                    <th className="py-2 pr-4">Property Type</th>
+                    <th className="py-2 pr-4">Proposed Price</th>
+                    <th className="py-2 pr-4">Email</th>
+                    <th className="py-2 pr-4">Images</th>
+                    <th className="py-2 pr-4">Documents</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSellerEntries.map((entry) => (
+                    <tr key={entry.id} className="border-b align-top">
+                      <td className="py-3 pr-4 text-slate-900">{entry.firstName || '-'}</td>
+                      <td className="py-3 pr-4 text-slate-900">{entry.lastName || '-'}</td>
+                      <td className="py-3 pr-4">{entry.completedAt ? new Date(entry.completedAt).toLocaleDateString() : '-'}</td>
+                      <td className="py-3 pr-4 max-w-xs truncate">{entry.propertyAddress || '-'}</td>
+                      <td className="py-3 pr-4">{entry.propertyType || '-'}</td>
+                      <td className="py-3 pr-4">{entry.estimatedValue ? `${entry.estimatedValue}` : '-'}</td>
+                      <td className="py-3 pr-4 max-w-xs truncate" title={entry.email || ''}>{entry.email || '-'}</td>
+                      <td className="py-3 pr-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPreviewTitle('Images');
+                            setPreviewItems(entry.photos || []);
+                            setPreviewOpen(true);
+                          }}
+                        >
+                          View ({entry.photos?.length || 0})
+                        </Button>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPreviewTitle('Documents');
+                            setPreviewItems(entry.documents || []);
+                            setPreviewOpen(true);
+                          }}
+                        >
+                          View ({entry.documents?.length || 0})
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Preview Modal */}
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setPreviewOpen(false)}>
+          <div className="bg-white rounded-lg max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b p-4">
+              <h4 className="text-base font-semibold text-slate-900">{previewTitle}</h4>
+              <button className="text-slate-500 hover:text-slate-700" onClick={() => setPreviewOpen(false)}>×</button>
+            </div>
+            <div className="p-4 max-h-[70vh] overflow-y-auto space-y-4">
+              {previewItems.length === 0 ? (
+                <p className="text-sm text-slate-600">No files.</p>
+              ) : (
+                previewItems.map((item, idx) => (
+                  <div key={idx} className="border rounded p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium truncate max-w-[60%]">{item.name || `file-${idx+1}`}</div>
+                      <div className="flex gap-2">
+                        {(() => {
+                          const href = item.signedUrl || item.url;
+                          return (
+                            <a href={href} download className="text-blue-600 text-sm hover:underline" target="_blank" rel="noreferrer">Download</a>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    {/* Preview area */}
+                    {item?.type?.startsWith('image/') ? (
+                      <img src={item.signedUrl || item.url} alt={item.name || `image-${idx+1}`} className="w-full max-h-[400px] object-contain bg-slate-50" />
+                    ) : (
+                      <iframe
+                        src={item.signedUrl || item.url}
+                        className="w-full h-[400px] bg-slate-50"
+                        title={item.name || `doc-${idx+1}`}
+                      />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="border-t p-4 flex justify-end">
+              <Button onClick={() => setPreviewOpen(false)} variant="outline">Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
           {/* AdminListingModal */}
           <AdminListingModal

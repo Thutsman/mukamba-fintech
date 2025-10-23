@@ -56,6 +56,7 @@ import { getPropertyListingsStats } from '@/lib/property-application-services';
 import { theme, getColor } from '@/lib/theme';
 import { toast } from 'sonner';
 import { useMessageStore } from '@/lib/message-store';
+import { getRealAdminStats, type RealAdminStats } from '@/lib/admin-stats-services';
 
 interface AdminDashboardProps {
   user: UserType;
@@ -78,6 +79,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [recentUsers, setRecentUsers] = useState<RealAdminUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState<boolean>(false);
   const [userStats, setUserStats] = useState({ total_users: 0, new_users_today: 0, new_users_this_week: 0, new_users_this_month: 0, verified_users: 0, unverified_users: 0 });
+  const [realAdminStats, setRealAdminStats] = useState<RealAdminStats | null>(null);
+  const [isLoadingRealStats, setIsLoadingRealStats] = useState<boolean>(true);
 
   // Load real property stats
   useEffect(() => {
@@ -129,6 +132,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
     };
     loadUsers();
+  }, []);
+
+  // Load real admin stats
+  useEffect(() => {
+    const loadRealStats = async () => {
+      try {
+        setIsLoadingRealStats(true);
+        const stats = await getRealAdminStats();
+        setRealAdminStats(stats);
+      } catch (error) {
+        console.error('Error loading real admin stats:', error);
+      } finally {
+        setIsLoadingRealStats(false);
+      }
+    };
+    loadRealStats();
   }, []);
 
   // Mock admin data
@@ -318,7 +337,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
                   Overview
                 </h2>
-                <OverviewCards stats={adminStats} />
+                {isLoadingRealStats ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="bg-slate-200 rounded-2xl h-32"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : realAdminStats ? (
+                  <OverviewCards stats={realAdminStats} />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-slate-600">Failed to load statistics</p>
+                  </div>
+                )}
               </section>
 
               {/* Document Review Queue */}
@@ -390,55 +423,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </Card>
               </section>
 
-              {/* Quick Actions */}
-              <section>
-                <h2 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4 sm:mb-6">
-                  Quick Actions
-                </h2>
-                <Card>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-                      Quick Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                      <Button 
-                        className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                        onClick={() => setActiveTab('listings')}
-                        suppressHydrationWarning
-                      >
-                        <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Review Documents</span>
-                      </Button>
-                      <Button 
-                        className="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/10 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                        suppressHydrationWarning
-                      >
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Add User</span>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                        suppressHydrationWarning
-                      >
-                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Edit Property</span>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex items-center justify-center space-x-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-700 transition-all duration-150 text-xs sm:text-sm py-2 sm:py-3" 
-                        suppressHydrationWarning
-                      >
-                        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Export Data</span>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </section>
 
               {/* Recent Activity */}
               <section>

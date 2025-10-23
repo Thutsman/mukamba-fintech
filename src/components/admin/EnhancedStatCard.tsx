@@ -88,7 +88,7 @@ const MiniChart: React.FC<{ data: number[]; color: string; isVisible?: boolean }
   }, [normalizedData]);
 
      return (
-     <div className="relative h-12 w-full" role="img" aria-label={`Mini chart with ${data.length} data points`}>
+     <div className="relative h-8 w-full" role="img" aria-label={`Mini chart with ${data.length} data points`}>
        <svg
          className="w-full h-full"
          viewBox="0 0 100 100"
@@ -253,12 +253,12 @@ export const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-white/5 rounded-full blur-3xl opacity-50 transition-all duration-1000 group-hover:scale-200" />
           </div>
 
-                     <div className="relative p-6 text-white z-10">
+                     <div className="relative p-4 text-white z-10">
                           {/* Card Header - Enhanced */}
-             <div className="flex items-center justify-between mb-6" role="banner">
+             <div className="flex items-center justify-between mb-3" role="banner">
                <motion.div 
                  className={`
-                   w-14 h-14 rounded-2xl flex items-center justify-center
+                   w-10 h-10 rounded-xl flex items-center justify-center
                    bg-white/20 backdrop-blur-md border border-white/30
                    shadow-lg shadow-black/20
                    transition-all duration-300 group-hover:scale-110
@@ -318,14 +318,14 @@ export const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
              </div>
 
                          {/* Card Content - Enhanced Typography with Specific Hierarchy */}
-             <div className="space-y-2 mb-6" role="main">
+             <div className="space-y-1 mb-3" role="main">
                <motion.h3 
                  className="text-base font-semibold text-white/90 tracking-wide"
                  style={{
-                   fontSize: '1rem', /* 16px */
+                   fontSize: '0.875rem', /* 14px */
                    fontWeight: 600,
                    color: 'rgba(255,255,255,0.9)',
-                   marginTop: '0.5rem'
+                   marginTop: '0.25rem'
                  }}
                  initial={{ opacity: 0, y: 10 }}
                  animate={{ opacity: 1, y: 0 }}
@@ -338,7 +338,7 @@ export const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
                <motion.p 
                  className="font-extrabold tracking-tight"
                  style={{
-                   fontSize: '2.5rem', /* 40px */
+                   fontSize: '1.75rem', /* 28px */
                    fontWeight: 800,
                    lineHeight: 1,
                    color: 'white',
@@ -357,10 +357,10 @@ export const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
                <motion.p 
                  className="font-medium"
                  style={{
-                   fontSize: '0.875rem', /* 14px */
+                   fontSize: '0.75rem', /* 12px */
                    fontWeight: 500,
                    color: 'rgba(255,255,255,0.7)',
-                   marginTop: '0.25rem'
+                   marginTop: '0.125rem'
                  }}
                  initial={{ opacity: 0, y: 10 }}
                  animate={{ opacity: 1, y: 0 }}
@@ -372,7 +372,7 @@ export const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
 
             {/* Enhanced Mini Chart */}
             <motion.div 
-              className="mb-4"
+              className="mb-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -385,7 +385,7 @@ export const EnhancedStatCard: React.FC<EnhancedStatCardProps> = ({
             {/* Additional Info Section */}
             {additionalInfo.length > 0 && (
               <motion.div 
-                className="pt-4 border-t border-white/20"
+                className="pt-2 border-t border-white/20"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
