@@ -80,6 +80,21 @@ export const metadata: Metadata = {
     // google: 'your-google-verification-code',
     // yandex: 'your-yandex-verification-code',
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180' },
+    ],
+    other: [
+      { rel: 'mask-icon', url: '/safari-pinned-tab.svg', color: '#7f1518' },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -92,12 +107,13 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#ffffff" />
-        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.svg?v=2" type="image/png" />
-        <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
-        <link rel="shortcut icon" href="/favicon.svg?v=2" />
-        <link rel="icon" href="/favicon.svg?v=2" sizes="32x32" />
-        <link rel="icon" href="/favicon.svg?v=2" sizes="16x16" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7f1518" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* Structured Data for SEO */}
