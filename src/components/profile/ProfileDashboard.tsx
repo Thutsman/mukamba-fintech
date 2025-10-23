@@ -16,7 +16,6 @@ import {
   Lock,
   Unlock,
   ArrowLeft,
-  Bell,
   ChevronDown,
   Settings,
   LogOut,
@@ -160,7 +159,7 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
         description: 'Get notified about new properties matching your criteria',
         action: 'Set Up Alerts',
         priority: 2,
-        icon: <Bell className="w-4 h-4" />,
+        icon: <MessageCircle className="w-4 h-4" />,
         benefit: 'Never miss your perfect property',
         timeRequired: '2 minutes',
         difficulty: 'Easy',
@@ -208,7 +207,7 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
           description: 'Get notified about exclusive cash buyer opportunities',
           action: 'Configure Alerts',
           priority: 2,
-          icon: <Bell className="w-4 h-4" />,
+          icon: <MessageCircle className="w-4 h-4" />,
           benefit: 'First access to new listings',
           timeRequired: '2 minutes',
           difficulty: 'Easy',
@@ -864,7 +863,6 @@ const NavigationBar: React.FC<{
   onProfileSettings?: () => void;
   onLogout?: () => void;
 }> = ({ user, onBackToHome, onProfileSettings, onLogout }) => {
-  const [notificationCount] = React.useState(3);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
@@ -952,38 +950,6 @@ const NavigationBar: React.FC<{
 
               {/* Desktop items - Hidden on mobile */}
               <div className="hidden sm:flex items-center space-x-4">
-              {/* Notification Bell */}
-              <Tooltip content="View your notifications and updates">
-                <motion.div 
-                  whileHover={{ scale: 1.1 }} 
-                  whileTap={{ scale: 0.9 }}
-                  className="relative"
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                      className="relative text-slate-600 hover:text-slate-900 transition-colors duration-200"
-                      aria-label="View notifications"
-                  >
-                    <motion.div
-                      animate={{ rotate: notificationCount > 0 ? [0, -10, 10, 0] : 0 }}
-                      transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
-                    >
-                      <Bell className="w-5 h-5" />
-                    </motion.div>
-                    {notificationCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
-                          aria-label={`${notificationCount} unread notifications`}
-                      >
-                        {notificationCount}
-                      </motion.span>
-                    )}
-                  </Button>
-                </motion.div>
-              </Tooltip>
 
               {/* User Profile Avatar with Dropdown */}
               <div className="relative" ref={userMenuRef}>
@@ -1035,21 +1001,6 @@ const NavigationBar: React.FC<{
                           Profile Settings
                         </button>
                         
-                        <button
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            // Handle notifications
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-150 flex items-center"
-                        >
-                          <Bell className="w-4 h-4 mr-3 text-slate-500" />
-                          Notifications
-                          {notificationCount > 0 && (
-                            <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                              {notificationCount}
-                            </span>
-                          )}
-                        </button>
                       </div>
 
                       {/* Logout */}
@@ -1094,17 +1045,6 @@ const NavigationBar: React.FC<{
                   Back to Home
                 </Button>
                 
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-600 hover:text-slate-900 h-12"
-                  onClick={() => {
-                    // Handle notifications
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <Bell className="w-4 h-4 mr-3" />
-                  Notifications ({notificationCount})
-                </Button>
                 
                 <Button
                   variant="ghost"
