@@ -1534,6 +1534,12 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
           try {
             const { checkAuth } = useAuthStore.getState();
             await checkAuth();
+            
+            // Also immediately check for pending verification to update UI
+            if (user?.id) {
+              const { hasPending } = await checkPendingIdentityVerification(user.id);
+              setIsIdentityPending(hasPending);
+            }
           } catch (error) {
             console.error('Error refreshing user data:', error);
           }
