@@ -1349,14 +1349,202 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </>
         )}
 
-        {/* Portfolio Section - Coming Soon */}
+        {/* Portfolio Section */}
         {activeSection === 'portfolio' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Building className="w-8 h-8 text-gray-400" />
+          <div className="space-y-6">
+            {/* Portfolio Summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="text-sm text-blue-600 font-medium">Total Properties Owned</div>
+                <div className="text-3xl font-bold text-blue-900 mt-2">2</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="text-sm text-green-600 font-medium">Total Investment Value</div>
+                <div className="text-2xl font-bold text-green-900 mt-2">$2,050,000</div>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <div className="text-sm text-purple-600 font-medium">Total Paid to Date</div>
+                <div className="text-2xl font-bold text-purple-900 mt-2">$465,000</div>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Portfolio Coming Soon</h3>
-            <p className="text-gray-600">Your investment portfolio tracking feature is under development.</p>
+
+            {/* Property 1 - Fully Paid */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">Modern 3BR House</CardTitle>
+                    <p className="text-sm text-gray-500 mt-1">123 Oak Street, Harare, Zimbabwe</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Fully Paid</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Purchase Price</div>
+                    <div className="text-lg font-semibold text-gray-900">$500,000</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Payment Method</div>
+                    <div className="text-lg font-semibold text-gray-900">Installment</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Total Paid</div>
+                    <div className="text-lg font-semibold text-green-600">$500,000</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Remaining Balance</div>
+                    <div className="text-lg font-semibold text-green-600">$0</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-gray-700">Payment Progress</div>
+                    <div className="text-sm font-semibold text-gray-900">100% Complete</div>
+                  </div>
+                  <Progress value={100} className="h-3" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">Transaction History</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Date</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Type</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium text-gray-600">Amount</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-01-15</td>
+                          <td className="text-gray-600">Deposit</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$100,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-02-15</td>
+                          <td className="text-gray-600">Installment 1</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$50,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-03-15</td>
+                          <td className="text-gray-600">Installment 2</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$50,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-04-15</td>
+                          <td className="text-gray-600">Installment 3</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$50,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-05-15</td>
+                          <td className="text-gray-600">Installment 4</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$50,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-06-15</td>
+                          <td className="text-gray-600">Installment 5</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$200,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Property 2 - Paying */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">2BR Apartment</CardTitle>
+                    <p className="text-sm text-gray-500 mt-1">456 Pine Avenue, Bulawayo, Zimbabwe</p>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800"><Clock className="w-3 h-3 mr-1" />Paying</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Purchase Price</div>
+                    <div className="text-lg font-semibold text-gray-900">$1,550,000</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Payment Method</div>
+                    <div className="text-lg font-semibold text-gray-900">Installment</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Total Paid</div>
+                    <div className="text-lg font-semibold text-green-600">$465,000</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Remaining Balance</div>
+                    <div className="text-lg font-semibold text-orange-600">$1,085,000</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-gray-700">Payment Progress</div>
+                    <div className="text-sm font-semibold text-gray-900">30% Complete</div>
+                  </div>
+                  <Progress value={30} className="h-3" />
+                  <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
+                    <span>Paid: $465,000</span>
+                    <span>Total: $1,550,000</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">Transaction History</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Date</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Type</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium text-gray-600">Amount</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-02-01</td>
+                          <td className="text-gray-600">Deposit</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$155,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-03-01</td>
+                          <td className="text-gray-600">Installment 1</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$77,500</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-04-01</td>
+                          <td className="text-gray-600">Installment 2</td>
+                          <td className="py-3 px-3 text-right font-semibold text-green-600">$77,500</td>
+                          <td className="py-3 px-3"><Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge></td>
+                        </tr>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-gray-900">2024-05-15</td>
+                          <td className="text-gray-600">Installment 3 (Due)</td>
+                          <td className="py-3 px-3 text-right font-semibold text-gray-900">$155,000</td>
+                          <td className="py-3 px-3"><Badge className="bg-yellow-100 text-yellow-800 text-xs">Pending</Badge></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

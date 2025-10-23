@@ -865,7 +865,9 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                               Interested in this property?
                             </h4>
                             <p className="text-sm text-gray-600">
-                              {canMakeOffer() 
+                              {hasUserOffer()
+                                ? `Your offer is ${userOffer?.status === 'approved' ? 'approved' : userOffer?.status === 'rejected' ? 'rejected' : 'under review'}`
+                                : canMakeOffer() 
                                 ? 'Submit your offer now to secure this property' 
                                 : !user 
                                   ? 'Sign up to make an offer on this property'
@@ -880,15 +882,22 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                           <Button
                             onClick={canMakeOffer() ? handleMakeOffer : (!user ? onSignUpPrompt : handleMakeOffer)}
                             className={`ml-4 h-12 px-6 font-semibold transition-all duration-200 ${
-                              canMakeOffer()
+                              hasUserOffer()
+                                ? 'bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 shadow-md'
+                                : canMakeOffer()
                                 ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
                                 : isIdentityPending
                                   ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 shadow-md'
                                   : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
                             } text-white border-0`}
-                            disabled={!user && false}
+                            disabled={hasUserOffer() || (!user && false)}
                           >
-                            {isIdentityPending ? (
+                            {hasUserOffer() ? (
+                              <>
+                                <CheckCircle className="w-5 h-5 mr-2" />
+                                Offer Submitted
+                              </>
+                            ) : isIdentityPending ? (
                               <>
                                 <Clock className="w-5 h-5 mr-2 animate-pulse" />
                                 Under Review
