@@ -1053,7 +1053,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                             ) : accessLevel === 'email_verified' ? (
                               <div className="mt-6 bg-orange-50 rounded-lg p-4 border border-orange-200">
                                 <p className="text-sm text-orange-700 mb-3">
-                                  Verify your phone number to contact the seller for payment details
+                                  Verify your phone number to contact the admin for payment details
                                 </p>
                                 <Button 
                                   className="w-full"

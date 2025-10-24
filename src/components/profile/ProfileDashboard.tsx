@@ -1351,7 +1351,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     
     if (completedSteps === 0) {
       return {
-        message: "Start your verification journey to unlock premium features",
+        message: "",
         timeEstimate: "5 minutes to complete phone verification",
         nextStep: "Phone verification"
       };
@@ -2110,9 +2110,24 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>{progressMotivation.timeEstimate}</span>
           </div>
-          <div className="flex items-center space-x-1 sm:space-x-2 text-green-600">
-            <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span>Next: {progressMotivation.nextStep}</span>
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (progressMotivation.nextStep === "Phone verification") {
+                  setActiveModal('phone');
+                } else if (progressMotivation.nextStep === "Identity verification") {
+                  setActiveModal('identity');
+                } else if (progressMotivation.nextStep === "Financial assessment") {
+                  setActiveModal('financial');
+                }
+              }}
+              className="text-green-600 border-green-300 hover:bg-green-50 hover:border-green-400 h-8 px-3 text-xs sm:text-sm"
+            >
+              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              Next: {progressMotivation.nextStep}
+            </Button>
           </div>
         </div>
           
@@ -2240,6 +2255,34 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </p>
             </CardHeader>
             <CardContent>
+              {/* Account Level Progress */}
+              <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-slate-700 flex items-center">
+                    <User className="w-4 h-4 mr-2" />
+                    Account Level: {levelInfo.title}
+                    <Tooltip content={`${levelInfo.progress}% complete - ${100 - levelInfo.progress}% to next level`}>
+                      <Info className="w-3 h-3 ml-2 text-blue-500 cursor-help" />
+                    </Tooltip>
+                  </h3>
+                  <span className="text-sm font-medium text-slate-600">
+                    {levelInfo.progress}%
+                  </span>
+                </div>
+                <div className="flex items-center mb-2">
+                  <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <motion.div 
+                      className={`${levelInfo.color} h-2 rounded-full`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${levelInfo.progress}%` }}
+                      transition={{ duration: 2, ease: 'easeOut', delay: 0.5 }}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600">
+                  {levelInfo.description}
+                </p>
+              </div>
               <div className="space-y-4">
                 {/* Phone Verification */}
                 <div className={`p-4 rounded-lg border ${
@@ -2332,54 +2375,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </Card>
         </motion.div>
 
+        {/* Enhanced Capabilities Grid */}
+        <CapabilitiesGrid user={user} onFeatureClick={handleRecommendationAction} />
+
         {/* Personalized Property Recommendations */}
         <PersonalizedPropertyRecommendations user={user} />
-
-      {/* Account Level */}
-        <motion.div
-          id="account-level"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <User className="w-5 h-5 mr-2" />
-            Account Level: {levelInfo.title}
-                <Tooltip content={`${levelInfo.progress}% complete - ${100 - levelInfo.progress}% to next level`}>
-                  <Info className="w-4 h-4 ml-2 text-blue-500 cursor-help" />
-                </Tooltip>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center mb-4">
-                <div className="flex-1 bg-slate-200 rounded-full h-3 overflow-hidden">
-                  <motion.div 
-                    className={`${levelInfo.color} h-3 rounded-full`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${levelInfo.progress}%` }}
-                    transition={{ duration: 2, ease: 'easeOut', delay: 0.5 }}
-              />
-            </div>
-                <motion.span 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  className="ml-3 text-sm font-medium text-slate-600"
-                >
-              {levelInfo.progress}%
-                </motion.span>
-          </div>
-          <p className="text-slate-600 text-sm">
-            {levelInfo.description}
-          </p>
-        </CardContent>
-      </Card>
-        </motion.div>
-
-      {/* Enhanced Capabilities Grid */}
-      <CapabilitiesGrid user={user} onFeatureClick={handleRecommendationAction} />
 
 
       {/* Additional Features Section */}
