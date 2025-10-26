@@ -98,7 +98,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [showBuyerPhoneVerificationModal, setShowBuyerPhoneVerificationModal] = React.useState(false);
   const [selectedPropertyForSignup, setSelectedPropertyForSignup] = React.useState<Property | null>(null);
   const [selectedPropertyForContact, setSelectedPropertyForContact] = React.useState<Property | null>(null);
-  const [userBuyerType, setUserBuyerType] = React.useState<'cash' | 'installment' | undefined>(undefined);
   const [userPhoneVerified, setUserPhoneVerified] = React.useState(user?.is_phone_verified || false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [showAgentModal, setShowAgentModal] = React.useState(false);
@@ -1616,23 +1615,19 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           }, 1000); // Small delay to let signup modal close gracefully
         }}
         propertyTitle={selectedPropertyForSignup?.title}
-        onSignupComplete={async (email, buyerType) => {
+        onSignupComplete={async (email) => {
           setShowSignupModal(false);
-          
-          // Store buyer type for future use
-          setUserBuyerType(buyerType);
           
           // Track successful buyer signup
           trackEvent('buyer_signup_completed', {
             email: email,
-            buyer_type: buyerType,
             property_id: selectedPropertyForSignup?.id,
             property_title: selectedPropertyForSignup?.title,
             source: 'property_details_gate',
             event_category: 'conversion'
           });
           
-          console.log('Buyer signup completed:', { email, buyerType, property: selectedPropertyForSignup });
+          console.log('Buyer signup completed:', { email, property: selectedPropertyForSignup });
           
           // Show success message using the auth store
           const { showSuccessMessage } = useAuthStore.getState();
@@ -1700,7 +1695,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           // Track successful phone verification
           trackEvent('buyer_phone_verified', {
             phone_number: phoneNumber,
-            buyer_type: userBuyerType,
             property_id: selectedPropertyForContact?.id,
             property_title: selectedPropertyForContact?.title,
             source: 'seller_contact_gate',
@@ -1708,7 +1702,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           });
           
           // TODO: Update user profile with phone verification in real implementation
-          console.log('Phone verification completed:', { phoneNumber, buyerType: userBuyerType });
+          console.log('Phone verification completed:', { phoneNumber });
           
           // Show success message or redirect to seller contact
           alert(`Phone verified! You can now contact sellers directly. Feature coming soon.`);
@@ -1716,7 +1710,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           // Reset state
           setSelectedPropertyForContact(null);
         }}
-        buyerType={userBuyerType}
+        buyerType={undefined}
         userEmail={user?.email}
       />
 
