@@ -1418,8 +1418,13 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             setShowOfferDetailsModal(true);
           }}
           onViewProperty={(propertyId) => {
-            // Navigate to property details page
-            router.push(`/property/${propertyId}`);
+            // Handle special case for browse properties
+            if (propertyId === 'browse') {
+              setShowPropertyListings(true);
+            } else {
+              // Navigate to property details page
+              router.push(`/property/${propertyId}`);
+            }
           }}
           onMakePayment={(offer) => {
             // Open payment modal for approved offers
@@ -1601,6 +1606,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             // The modal handles the submission internally
             // Refresh the live properties to show updated status
             await fetchLiveProperties();
+          }}
+          onViewOffers={() => {
+            setShowMakeOfferModal(false);
+            setSelectedProperty(null);
+            setActiveSection('offers');
           }}
         />
       )}

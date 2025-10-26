@@ -26,7 +26,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PropertyOffer } from '@/types/offers';
-import { getPropertyOffers, updatePropertyOffer } from '@/lib/offer-services';
+import { getPropertyOffers, updatePropertyOffer, deletePropertyOffer } from '@/lib/offer-services';
+import { SuccessPopup } from '@/components/ui/SuccessPopup';
 import { User as UserType } from '@/types/auth';
 
 interface BuyerOffersProps {
@@ -48,6 +49,9 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [cancellingOffer, setCancellingOffer] = useState<string | null>(null);
   const [deletingOffer, setDeletingOffer] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ isOpen: boolean; offerId: string; action: 'cancel' | 'delete' }>({ isOpen: false, offerId: '', action: 'cancel' });
+  const [isConfirmProcessing, setIsConfirmProcessing] = useState(false);
+  const [successPopup, setSuccessPopup] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
 
   // Load buyer's offers
   useEffect(() => {
@@ -69,24 +73,46 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   };
 
   const handleCancelOffer = async (offerId: string) => {
+    setConfirmState({ isOpen: true, offerId, action: 'cancel' });
+  };
+
+  const performCancelOffer = async (offerId: string) => {
     try {
       setCancellingOffer(offerId);
-      await updatePropertyOffer(offerId, { status: 'withdrawn', rejection_reason: 'Cancelled by buyer' });
-      await loadOffers(); // Refresh the list
+      const success = await deletePropertyOffer(offerId);
+      if (success) {
+        await loadOffers();
+        setSuccessPopup({ visible: true, title: 'Offer Cancelled', message: 'Your offer has been cancelled successfully.' });
+      } else {
+        console.error('Failed to cancel (delete) offer - permission denied or database error');
+        alert('Unable to cancel this offer. Ensure it is yours and still pending. If the issue persists, contact support.');
+      }
     } catch (error) {
       console.error('Error cancelling offer:', error);
+      alert('An error occurred while cancelling the offer. Please try again or contact support.');
     } finally {
       setCancellingOffer(null);
     }
   };
 
   const handleDeleteOffer = async (offerId: string) => {
+    setConfirmState({ isOpen: true, offerId, action: 'delete' });
+  };
+
+  const performDeleteOffer = async (offerId: string) => {
     try {
       setDeletingOffer(offerId);
-      await updatePropertyOffer(offerId, { status: 'deleted', rejection_reason: 'Deleted by buyer' });
-      await loadOffers(); // Refresh the list
+      const success = await deletePropertyOffer(offerId);
+      if (success) {
+        await loadOffers();
+        setSuccessPopup({ visible: true, title: 'Offer Deleted', message: 'The offer was removed successfully.' });
+      } else {
+        console.error('Failed to delete offer - permission denied or database error');
+        alert('Unable to delete offer. Please contact support if this issue persists.');
+      }
     } catch (error) {
       console.error('Error deleting offer:', error);
+      alert('An error occurred while deleting the offer. Please try again or contact support.');
     } finally {
       setDeletingOffer(null);
     }
@@ -291,7 +317,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
               </p>
               {!searchQuery && statusFilter === 'all' && (
                 <Button 
-                  className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => onViewProperty?.('browse')}
                 >
                   Browse Properties
@@ -410,6 +436,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                         size="sm"
                         variant="outline"
                         onClick={() => onViewOffer?.(offer)}
+                        className="w-full justify-start"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         View Details
@@ -418,6 +445,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                         size="sm"
                         variant="outline"
                         onClick={() => onViewProperty?.(offer.property_id)}
+                        className="w-full justify-start"
                       >
                         <Home className="w-4 h-4 mr-2" />
                         View Property
@@ -428,6 +456,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                           variant="destructive"
                           onClick={() => handleCancelOffer(offer.id)}
                           disabled={cancellingOffer === offer.id}
+                          className="w-full justify-start bg-red-600 hover:bg-red-700 text-white border-red-600"
                         >
                           {cancellingOffer === offer.id ? (
                             <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -440,7 +469,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                       {offer.status === 'approved' && (
                         <Button
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
                           onClick={() => onMakePayment?.(offer)}
                         >
                           <DollarSign className="w-4 h-4 mr-2" />
@@ -453,6 +482,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                           variant="destructive"
                           onClick={() => handleDeleteOffer(offer.id)}
                           disabled={deletingOffer === offer.id}
+                          className="w-full justify-start bg-red-600 hover:bg-red-700 text-white border-red-600"
                         >
                           {deletingOffer === offer.id ? (
                             <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -470,6 +500,40 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
           ))
         )}
       </div>
+      
+      {/* Confirm Modal */}
+      {confirmState.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-lg shadow-2xl p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">{confirmState.action === 'cancel' ? 'Cancel Offer' : 'Delete Offer'}</h3>
+            <p className="text-sm text-slate-600 mb-4">Are you sure you want to {confirmState.action === 'cancel' ? 'cancel' : 'delete'} this offer? This action cannot be undone.</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setConfirmState({ isOpen: false, offerId: '', action: 'cancel' })} disabled={isConfirmProcessing}>No, keep offer</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" disabled={isConfirmProcessing} onClick={async () => {
+                setIsConfirmProcessing(true);
+                const id = confirmState.offerId;
+                if (confirmState.action === 'cancel') {
+                  await performCancelOffer(id);
+                } else {
+                  await performDeleteOffer(id);
+                }
+                setConfirmState({ isOpen: false, offerId: '', action: 'cancel' });
+                setIsConfirmProcessing(false);
+              }}>Yes, {confirmState.action}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success popup */}
+      <SuccessPopup
+        isVisible={successPopup.visible}
+        onClose={() => setSuccessPopup({ visible: false, title: '', message: '' })}
+        title={successPopup.title}
+        message={successPopup.message}
+        showSpamGuidance={false}
+        autoCloseDelay={3000}
+      />
     </div>
   );
 };

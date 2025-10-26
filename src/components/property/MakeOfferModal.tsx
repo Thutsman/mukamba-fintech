@@ -52,6 +52,7 @@ interface MakeOfferModalProps {
   property: PropertyListing;
   user: UserType;
   onSubmit?: (data: OfferData) => Promise<void>;
+  onViewOffers?: () => void;
 }
 
 interface OfferData {
@@ -68,7 +69,8 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
   onClose,
   property,
   user,
-  onSubmit
+  onSubmit,
+  onViewOffers
 }) => {
   const [step, setStep] = React.useState<'form' | 'review' | 'submitting' | 'success'>('form');
   const [formData, setFormData] = React.useState<OfferData>({
@@ -358,10 +360,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
         }
         
       setStep('success');
-      setTimeout(() => {
-        onClose();
-          resetForm();
-        }, 3000);
+      // Remove auto-close timeout - modal will only close when user clicks "View offer Submitted"
       } else {
         throw new Error('Failed to create offer');
       }
@@ -940,6 +939,20 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     <p className="text-xs text-gray-500 mt-2">
                       Next step: Complete your deposit payment via Ecocash to secure your offer.
                     </p>
+                  </div>
+                  <div className="pt-4">
+                    <Button
+                      onClick={() => {
+                        if (onViewOffers) {
+                          onViewOffers();
+                        }
+                        onClose();
+                        resetForm();
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      View offer Submitted
+                    </Button>
                   </div>
                 </div>
               )}
