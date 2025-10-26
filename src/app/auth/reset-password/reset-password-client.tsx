@@ -113,7 +113,7 @@ export default function ResetPasswordClient() {
           </div>
           <Button
             onClick={() => router.push('/?login=true')}
-            className="w-full bg-red-700 hover:bg-red-800"
+            className="w-full bg-red-700 hover:bg-red-800 text-white"
           >
             Go to Login
           </Button>

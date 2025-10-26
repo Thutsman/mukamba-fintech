@@ -428,7 +428,7 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={isForgotPasswordLoading || !forgotPasswordEmail}
-                    className="flex-1 bg-red-700 hover:bg-red-800"
+                    className="flex-1 bg-red-700 hover:bg-red-800 text-white"
                     suppressHydrationWarning
                   >
                     {isForgotPasswordLoading ? (

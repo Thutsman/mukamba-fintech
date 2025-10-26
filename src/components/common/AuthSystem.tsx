@@ -355,12 +355,12 @@ export const AuthSystem: React.FC = () => {
                       {!isAuthenticated ? (
                         <>
                           <Button size="sm" variant="outline" onClick={() => { setShowRegister(true); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }} className="flex-1 border-slate-300 text-slate-700">Create Account</Button>
-                          <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800" onClick={() => { setShowSigninModal(true); console.log('Sign-in modal opened from AuthSystem mobile menu'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}>Sign In</Button>
+                          <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800 text-white" onClick={() => { setShowSigninModal(true); console.log('Sign-in modal opened from AuthSystem mobile menu'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}>Sign In</Button>
                         </>
                       ) : (
                         <>
                           <Button size="sm" variant="outline" onClick={handleManualProfileNavigation} className="flex-1 border-slate-300">Profile</Button>
-                          <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800" onClick={handleLogout}>Sign Out</Button>
+                          <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800 text-white" onClick={handleLogout}>Sign Out</Button>
                         </>
                       )}
                     </div>
@@ -551,7 +551,7 @@ export const AuthSystem: React.FC = () => {
                 <Button
                   size="sm"
                   onClick={() => setShowRegister(true)}
-                  className="flex-1 bg-red-700 hover:bg-red-800"
+                  className="flex-1 bg-red-700 hover:bg-red-800 text-white"
                   suppressHydrationWarning
                 >
                   Sign Up
