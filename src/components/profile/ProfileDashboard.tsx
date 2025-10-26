@@ -744,16 +744,11 @@ const PersonalizedPropertyRecommendations: React.FC<{
                       className="flex-1 bg-[#7F1518] hover:bg-[#8B1A1D] text-white"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (user) {
-                          // User is authenticated - navigate to property details
-                          router.push(`/property/${property.id}`);
-                        } else {
-                          // User not authenticated - show buyer signup modal
-                          handleBuyerSignup(property);
-                        }
+                        // Ungated: always navigate to property details
+                        router.push(`/property/${property.id}`);
                       }}
                     >
-                      {user ? 'View Details' : 'Sign Up to View Details'}
+                      View Details
                     </Button>
                     <Button 
                       size="sm" 

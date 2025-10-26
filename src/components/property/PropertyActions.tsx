@@ -96,10 +96,10 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl' 
                     : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
                 } text-white border-0 text-base`}
-                disabled={!user}
+                disabled={false}
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
-                {canContactSeller ? 'Send Message' : 'Sign Up to Message'}
+                {canContactSeller ? 'Send Message' : 'Sign in to Message'}
               </Button>
             </motion.div>
           )}
@@ -124,7 +124,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
                     ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl' 
                     : 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 shadow-md'
               } text-white border-0 text-base`}
-            disabled={!user || (hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending}
+            disabled={(hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending}
             >
               {isIdentityPending ? (
                 <>
@@ -138,7 +138,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
                     ? 'Offer Submitted' 
                     : (hasUserOffer && userOfferStatus === 'rejected')
                       ? 'Make New Offer'
-                      : (user ? 'Make Offer' : 'Sign Up to Offer')
+                      : (user ? 'Make Offer' : 'Sign in to Make Offer')
                   }
                 </>
               )}
@@ -156,10 +156,10 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
               onClick={user ? onScheduleViewing : onSignUpPrompt}
               variant="outline"
               className="w-full h-14 font-semibold border-2 border-purple-600 text-purple-600 hover:bg-purple-50 hover:border-purple-700 hover:text-purple-700 transition-all duration-200 shadow-md hover:shadow-lg text-base"
-              disabled={!user}
+              disabled={false}
             >
               <Calendar className="w-5 h-5 mr-3" />
-              {user ? 'Schedule Viewing' : 'Sign Up to Schedule'}
+              {user ? 'Schedule Viewing' : 'Sign in to Schedule'}
             </Button>
           </motion.div>
         )}

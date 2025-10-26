@@ -75,6 +75,8 @@ import { IdentityVerificationModal } from '@/components/forms/IdentityVerificati
 import { FinancialAssessmentModal } from '@/components/forms/FinancialAssessmentModal';
 import { useMessageStore } from '@/lib/message-store';
 import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
+import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
+import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 
 interface PropertyDetailsPageProps {
   property: PropertyListing;
@@ -110,6 +112,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   // Identity & Financial verification modals
   const [showIdentityModal, setShowIdentityModal] = React.useState(false);
   const [showFinancialModal, setShowFinancialModal] = React.useState(false);
+  const [showSignupModal, setShowSignupModal] = React.useState(false);
+  const [showSigninModal, setShowSigninModal] = React.useState(false);
   
   // Offer status tracking
   const [propertyOffers, setPropertyOffers] = React.useState<any[]>([]);
@@ -905,7 +909,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                             ) : (
                               <>
                                 <DollarSign className="w-5 h-5 mr-2" />
-                                {canMakeOffer() ? 'Make Offer' : !user ? 'Sign Up to Offer' : 'Make Offer'}
+                            {canMakeOffer() ? 'Make Offer' : !user ? 'Sign in to Make Offer' : 'Make Offer'}
                               </>
                             )}
                           </Button>
@@ -1204,7 +1208,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               onContactSeller={handleContactSeller}
               onScheduleViewing={handleScheduleViewing}
               onMakeOffer={handleMakeOffer}
-              onSignUpPrompt={onSignUpPrompt || (() => {})}
+              onSignUpPrompt={() => setShowSignupModal(true)}
               onPhoneVerification={handlePhoneVerification}
               hasUserOffer={hasUserOffer()}
               canMakeOffer={canMakeOffer()}
@@ -1590,6 +1594,31 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         user={user!}
         onSubmit={handleScheduleViewingSubmit}
       />
+
+  {/* Unified Signup Modal - for guests from grey buttons */}
+  <UnifiedSignupModal
+    isOpen={showSignupModal}
+    onClose={() => setShowSignupModal(false)}
+    onSwitchToLogin={() => {
+      setShowSignupModal(false);
+      setShowSigninModal(true);
+    }}
+    propertyTitle={property.title}
+    onSignupComplete={async (email) => {
+      setShowSignupModal(false);
+      // After successful signup, user will be able to view/act; keep on the same page
+    }}
+  />
+
+  {/* Basic Signin Modal */}
+  <BasicSigninModal
+    isOpen={showSigninModal}
+    onClose={() => setShowSigninModal(false)}
+    onSwitchToSignup={() => {
+      setShowSigninModal(false);
+      setShowSignupModal(true);
+    }}
+  />
     </div>
   );
 };

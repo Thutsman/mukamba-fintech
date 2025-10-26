@@ -328,13 +328,8 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
       whileHover={{ y: -8, transition: { duration: 0.3 } }}
       className="group cursor-pointer h-full"
       onClick={() => {
-        if (user) {
-          // User is authenticated - allow property selection
-          onPropertySelect?.(property);
-        } else {
-          // User not authenticated - show signup prompt
-          onSignUpPrompt?.();
-        }
+        // Ungated: always allow property selection to navigate to details
+        onPropertySelect?.(property);
       }}
     >
       <Card className="overflow-hidden border border-slate-200 shadow-md hover:shadow-xl transition-all duration-300 bg-white rounded-xl h-full flex flex-col">
@@ -555,28 +550,14 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             <Button
               onClick={(e) => {
                 e.stopPropagation();
-                if (user) {
-                  // User is authenticated - navigate to property details
-                  router.push(`/property/${property.id}`);
-                } else {
-                  // User not authenticated - show buyer signup modal
-                  handleBuyerSignup(property);
-                }
+                // Ungated: always navigate to property details
+                router.push(`/property/${property.id}`);
               }}
               className="w-full bg-gradient-to-r from-[#7F1518] to-[#6A1214] hover:from-[#6A1214] hover:to-[#5A0F11] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
               size="sm"
             >
-              {user ? (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  View Details
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Sign Up to View
-                </>
-              )}
+              <Eye className="w-4 h-4 mr-2" />
+              View Details
             </Button>
           </div>
         </CardContent>

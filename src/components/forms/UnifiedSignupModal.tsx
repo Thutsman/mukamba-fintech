@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader2, Mail, User, Phone, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield, LogIn, DollarSign, CreditCard } from 'lucide-react';
+import { X, Loader2, Mail, User, Phone, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield, LogIn } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,8 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+// Removed select components; not needed after simplifying modal
 import type { BasicSignupData } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { signUpWithGoogle } from '@/lib/auth-utils';
@@ -24,7 +23,7 @@ interface UnifiedSignupModalProps {
   sellerIntent?: boolean;
   onSellerSignupComplete?: () => void;
   propertyTitle?: string; // For property-specific signups
-  onSignupComplete?: (email: string, buyerType?: 'cash' | 'installment') => void; // For buyer signups
+  onSignupComplete?: (email: string) => void; // For buyer signups
 }
 
 // Enhanced validation schema
@@ -82,13 +81,13 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [emailAvailability, setEmailAvailability] = React.useState<'checking' | 'available' | 'taken' | null>(null);
-  const [buyerType, setBuyerType] = React.useState<'cash' | 'installment' | null>(null);
+  // Removed buyer type selection (cash/installments)
 
   // Close modal immediately when success popup appears (email confirmation message)
   React.useEffect(() => {
     console.log('UnifiedSignupModal effect - showSuccessPopup:', showSuccessPopup, 'isOpen:', isOpen, 'hasStartedSignup:', hasStartedSignup);
     
-    if (showSuccessPopup && isOpen && hasStartedSignup) {
+      if (showSuccessPopup && isOpen && hasStartedSignup) {
       console.log('✅ SUCCESS POPUP DETECTED - Closing signup modal to prevent duplicate signups');
       // Close modal immediately when "check your email" message appears
       onClose();
@@ -97,13 +96,12 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
       // Handle different completion scenarios
       if (sellerIntent && onSellerSignupComplete) {
         onSellerSignupComplete();
-      } else if (onSignupComplete) {
-        // For property-specific signups, we need to get the email from the form
+        } else if (onSignupComplete) {
         const formData = form.getValues();
-        onSignupComplete(formData.email, buyerType ?? undefined);
+        onSignupComplete(formData.email);
       }
     }
-  }, [showSuccessPopup, isOpen, hasStartedSignup, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete, buyerType]);
+  }, [showSuccessPopup, isOpen, hasStartedSignup, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete]);
 
   // Only close modal when authentication succeeds AFTER user started signup (for OAuth flows)
   React.useEffect(() => {
@@ -117,13 +115,12 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
         if (sellerIntent && onSellerSignupComplete) {
           onSellerSignupComplete();
         } else if (onSignupComplete) {
-          // For property-specific signups, we need to get the email from the form
           const formData = form.getValues();
-          onSignupComplete(formData.email, buyerType ?? undefined);
+          onSignupComplete(formData.email);
         }
       }, 500);
     }
-  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, showSuccessPopup, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete, buyerType]);
+  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, showSuccessPopup, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete]);
 
   // Reset signup state when modal closes
   React.useEffect(() => {
@@ -133,7 +130,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
       setShowConfirmPassword(false);
       setIsGoogleLoading(false);
       setEmailAvailability(null);
-      setBuyerType(null);
+      // no-op
     }
   }, [isOpen]);
 
@@ -237,7 +234,6 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
         sessionStorage.setItem('postAuthRedirect', window.location.pathname);
         if (sellerIntent) sessionStorage.setItem('sellerIntent', 'true');
         if (propertyTitle) sessionStorage.setItem('propertyTitle', propertyTitle);
-        if (buyerType) sessionStorage.setItem('buyerType', buyerType);
       } catch (_) {}
 
       const { error } = await signUpWithGoogle();
@@ -262,7 +258,6 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
       setShowConfirmPassword(false);
       setIsGoogleLoading(false);
       setEmailAvailability(null);
-      setBuyerType(null);
       onClose();
     }
   };
@@ -465,38 +460,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
               </p>
             </div>
 
-            {/* Buyer Type Selection (only for property-specific signups) */}
-            {propertyTitle && (
-              <div>
-                <Label className="flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  How do you plan to purchase?
-                </Label>
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <Button
-                    type="button"
-                    variant={buyerType === 'cash' ? 'default' : 'outline'}
-                    onClick={() => setBuyerType('cash')}
-                    className="h-12"
-                  >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Cash Purchase
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={buyerType === 'installment' ? 'default' : 'outline'}
-                    onClick={() => setBuyerType('installment')}
-                    className="h-12"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Installments
-                  </Button>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  You can change this preference later
-                </p>
-              </div>
-            )}
+            {/* Buyer Type Selection removed as per requirements */}
 
             {/* Password */}
             <div>
@@ -717,31 +681,11 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
           {/* Benefits */}
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-50 dark:to-red-50 rounded-lg border border-blue-200 dark:border-blue-200">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-800 mb-2">
-              {propertyTitle ? '🎉 What you get immediately:' :
-               sellerIntent ? '🏠 What you get as a seller:' : 
-               '🎉 What you get immediately:'}
+              🎉 What you get immediately:
             </h4>
             <ul className="text-xs text-slate-600 dark:text-slate-600 space-y-1">
-              {propertyTitle ? (
-                <>
-                  <li>• View full property details and photos</li>
-                  <li>• Access contact information for sellers</li>
-                  <li>• Save properties to your favorites</li>
-                  <li>• Get notified about price changes</li>
-                </>
-              ) : sellerIntent ? (
-                <>
-                  <li>• List your property for free</li>
-                  <li>• Reach thousands of qualified buyers</li>
-                  <li>• Get competitive offers quickly</li>
-                  <li>• Access seller dashboard & analytics</li>
-                </>
-              ) : (
-                <>
-                  <li>• Save your favorite listings</li>
-                  <li>• Access market insights</li>
-                </>
-              )}
+              <li>• Save your favorite listings</li>
+              <li>• Access market insights</li>
             </ul>
           </div>
         </div>

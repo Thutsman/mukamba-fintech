@@ -630,25 +630,11 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   className="bg-[#7F1518] hover:bg-[#6a1215] text-white text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (user) {
-                      // User is authenticated - show property details
+                    // Ungated: always navigate to property details
                     handlePropertySelect(property);
-                    } else {
-                      // User not authenticated - show unified signup modal
-                      setSelectedPropertyForSignup(property);
-                      setShowSignupModal(true);
-                      
-                      // Track analytics
-                      trackEvent('property_details_gated', {
-                        property_id: property.id,
-                        property_title: property.title,
-                        source: 'featured_properties',
-                        event_category: 'lead_generation'
-                      });
-                    }
                   }}
                 >
-                  {user ? 'View Details' : 'Sign Up to View Details'}
+                  View Details
                 </Button>
               </div>
             </div>

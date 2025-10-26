@@ -204,11 +204,8 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
 
   // Handle property selection
   const handlePropertyClick = () => {
-    if (user) {
-      onPropertySelect(property);
-    } else {
-      onSignUpPrompt?.();
-    }
+    // Ungated: always allow navigating to property details
+    onPropertySelect(property);
   };
 
   // Handle comparison toggle
@@ -471,14 +468,11 @@ export const EnhancedPropertyCard: React.FC<EnhancedPropertyCardProps> = ({
                 className="flex-1 bg-[#7F1518] hover:bg-[#6a1215] text-white"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (user) {
-                    onPropertySelect(property);
-                  } else {
-                    onSignUpPrompt?.();
-                  }
+                  // Ungated: always allow navigating to property details
+                  onPropertySelect(property);
                 }}
               >
-                {user ? 'View Details' : 'Sign Up to View Details'}
+                View Details
               </Button>
 
               {/* Quick Contact Button */}
