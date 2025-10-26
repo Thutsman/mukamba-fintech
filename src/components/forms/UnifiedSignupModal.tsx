@@ -76,7 +76,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
   propertyTitle,
   onSignupComplete
 }) => {
-  const { basicSignup, isLoading, error, setError, isAuthenticated } = useAuthStore();
+  const { basicSignup, isLoading, error, setError, isAuthenticated, showSuccessPopup } = useAuthStore();
   const [hasStartedSignup, setHasStartedSignup] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
@@ -84,9 +84,30 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
   const [emailAvailability, setEmailAvailability] = React.useState<'checking' | 'available' | 'taken' | null>(null);
   const [buyerType, setBuyerType] = React.useState<'cash' | 'installment' | null>(null);
 
-  // Only close modal when authentication succeeds AFTER user started signup
+  // Close modal immediately when success popup appears (email confirmation message)
   React.useEffect(() => {
-    if (isAuthenticated && isOpen && hasStartedSignup && !isLoading) {
+    console.log('UnifiedSignupModal effect - showSuccessPopup:', showSuccessPopup, 'isOpen:', isOpen, 'hasStartedSignup:', hasStartedSignup);
+    
+    if (showSuccessPopup && isOpen && hasStartedSignup) {
+      console.log('✅ SUCCESS POPUP DETECTED - Closing signup modal to prevent duplicate signups');
+      // Close modal immediately when "check your email" message appears
+      onClose();
+      setHasStartedSignup(false); // Reset for next time
+      
+      // Handle different completion scenarios
+      if (sellerIntent && onSellerSignupComplete) {
+        onSellerSignupComplete();
+      } else if (onSignupComplete) {
+        // For property-specific signups, we need to get the email from the form
+        const formData = form.getValues();
+        onSignupComplete(formData.email, buyerType ?? undefined);
+      }
+    }
+  }, [showSuccessPopup, isOpen, hasStartedSignup, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete, buyerType]);
+
+  // Only close modal when authentication succeeds AFTER user started signup (for OAuth flows)
+  React.useEffect(() => {
+    if (isAuthenticated && isOpen && hasStartedSignup && !isLoading && !showSuccessPopup) {
       console.log('User authenticated after signup, closing signup modal');
       setTimeout(() => {
         onClose();
@@ -102,7 +123,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
         }
       }, 500);
     }
-  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete, buyerType]);
+  }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, showSuccessPopup, onClose, sellerIntent, onSellerSignupComplete, onSignupComplete, buyerType]);
 
   // Reset signup state when modal closes
   React.useEffect(() => {
@@ -168,7 +189,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
     try {
       setError(null);
       setHasStartedSignup(true);
-      console.log('Submitting signup form:', data.email);
+      console.log('🚀 STARTING SIGNUP - hasStartedSignup set to TRUE for:', data.email);
       
       // Double-check email availability before signup
       try {
@@ -246,8 +267,9 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
     }
   };
 
-  // Don't show modal if not open
-  if (!isOpen) return null;
+  // Don't show modal if not open OR if success popup is showing
+  // This provides an extra layer of safety to ensure modal doesn't show during success message
+  if (!isOpen || (showSuccessPopup && hasStartedSignup)) return null;
 
   const passwordStrength = getPasswordStrength(password);
 

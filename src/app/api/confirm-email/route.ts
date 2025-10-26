@@ -76,9 +76,38 @@ export async function POST(request: Request) {
       console.error('Failed to update confirmation record:', markConfirmedError);
     }
 
+    // 6. Generate an access token for auto sign-in
+    // Create a short-lived session token that the client can use to sign in
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: updateData.user.email!,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/`
+      }
+    });
+
+    if (sessionError) {
+      console.error('Failed to generate session token:', sessionError);
+      // Still return success since email was confirmed
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Email confirmed successfully',
+        userId: confirmationData.user_id
+      });
+    }
+
+    // Extract tokens from the magic link URL
+    const actionLink = sessionData.properties.action_link;
+    const url = new URL(actionLink);
+    const accessToken = url.searchParams.get('access_token');
+    const refreshToken = url.searchParams.get('refresh_token');
+
     return NextResponse.json({ 
       success: true, 
-      message: 'Email confirmed successfully' 
+      message: 'Email confirmed successfully',
+      userId: confirmationData.user_id,
+      accessToken: accessToken,
+      refreshToken: refreshToken
     });
 
   } catch (error) {

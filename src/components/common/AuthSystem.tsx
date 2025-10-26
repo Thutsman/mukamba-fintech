@@ -88,7 +88,8 @@ export const AuthSystem: React.FC = () => {
   // Only redirect users who just confirmed email and need immediate KYC (not on every load)
   React.useEffect(() => {
     // Only redirect if user needs KYC, is on properties view, hasn't been redirected yet, and JUST confirmed email
-    if (isAuthenticated && user && !user.is_phone_verified && user.kyc_level === 'none' && currentView === 'properties' && !hasRedirectedToProfile) {
+    // Check for both 'none' (shouldn't happen) and 'email' (expected after confirmation)
+    if (isAuthenticated && user && !user.is_phone_verified && (user.kyc_level === 'none' || user.kyc_level === 'email') && currentView === 'properties' && !hasRedirectedToProfile) {
       // Check if this is a fresh email confirmation (within last 2 minutes) to prevent unwanted redirects
       const emailConfirmTime = localStorage.getItem('userEmailConfirmTime');
       const now = Date.now();

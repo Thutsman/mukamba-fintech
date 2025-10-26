@@ -27,12 +27,18 @@ export const SuccessPopup: React.FC<SuccessPopupProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = React.useState(autoCloseDelay / 1000);
 
+  // Separate effect to handle auto-close when time runs out
+  React.useEffect(() => {
+    if (isVisible && timeLeft === 0 && autoCloseDelay > 0) {
+      onClose();
+    }
+  }, [timeLeft, isVisible, autoCloseDelay, onClose]);
+
   React.useEffect(() => {
     if (isVisible && autoCloseDelay > 0) {
       const interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            onClose();
             return 0;
           }
           return prev - 1;
@@ -41,7 +47,7 @@ export const SuccessPopup: React.FC<SuccessPopupProps> = ({
 
       return () => clearInterval(interval);
     }
-  }, [isVisible, autoCloseDelay, onClose]);
+  }, [isVisible, autoCloseDelay]);
 
   React.useEffect(() => {
     if (isVisible) {

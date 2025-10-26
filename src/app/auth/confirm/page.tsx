@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
 
 function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -47,14 +48,43 @@ function ConfirmEmailContent() {
         if (result.alreadyConfirmed) {
           setStatus('success');
           setMessage('Your email has already been confirmed! Redirecting to home...');
+          
+          // Note: We don't set userEmailConfirmTime for already confirmed emails
+          // because they don't need the "fresh confirmation" redirect to ProfileDashboard
+          
           setTimeout(() => router.push('/'), 2000);
           return;
         }
 
         setStatus('success');
-        setMessage('Email confirmed successfully! You now have full access to all features.');
+        setMessage('Email confirmed successfully! Signing you in and redirecting to your profile...');
         
-        // Redirect to home page after 3 seconds
+        // Set timestamp for fresh email confirmation (for AuthSystem redirect logic)
+        try {
+          localStorage.setItem('userEmailConfirmTime', Date.now().toString());
+        } catch (_) {}
+        
+        // If we have access and refresh tokens, use them to sign in automatically
+        if (result.accessToken && result.refreshToken && supabase) {
+          try {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: result.accessToken,
+              refresh_token: result.refreshToken
+            });
+
+            if (sessionError) {
+              console.error('Failed to establish session:', sessionError);
+              // Still redirect but user will need to sign in manually
+            } else {
+              console.log('User signed in successfully after email confirmation');
+            }
+          } catch (sessionError) {
+            console.error('Session establishment error:', sessionError);
+            // Continue with redirect anyway
+          }
+        }
+        
+        // Redirect to home page after 3 seconds where AuthSystem will detect fresh confirmation and redirect to ProfileDashboard
         setTimeout(() => {
           router.push('/');
         }, 3000);

@@ -127,6 +127,7 @@ export const useAuthStore = create<AuthStore>()(
             });
             
             // Show email confirmation message
+            console.log('📧 SETTING showSuccessPopup to TRUE in store for email:', data.email);
             set({
               showSuccessPopup: true,
               successPopupData: {
@@ -135,6 +136,7 @@ export const useAuthStore = create<AuthStore>()(
                 message: "Your account has been created! Please check your email and click the confirmation link to activate your account."
               }
             });
+            console.log('✅ Store updated - showSuccessPopup should now be TRUE');
             return;
           }
 
