@@ -26,6 +26,7 @@ import { useAuthStore } from '@/lib/store';
 import { createClient } from '@supabase/supabase-js';
 import { validateDocumentsAutomatically } from '@/lib/automated-validation-service';
 import { VerificationTimeline } from './VerificationTimeline';
+import { IdentityVerificationNotification } from './IdentityVerificationNotification';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -63,6 +64,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
     reasons: string[];
   } | null>(null);
   const [processingStatus, setProcessingStatus] = React.useState<string>('');
+  const [showNotification, setShowNotification] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const selfieInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUpload, setCurrentUpload] = React.useState<'front' | 'back'>('front');
@@ -166,11 +168,14 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
   const handleCameraCapture = (side: 'front' | 'back') => {
     setCurrentUpload(side);
-    // Trigger camera input with capture attribute
+    // Create a hidden file input with proper mobile camera attributes
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'environment'; // Use back camera for documents
+    input.style.display = 'none';
+    input.setAttribute('data-capture', 'environment');
+    
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -179,7 +184,12 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
           [side]: file
         }));
       }
+      // Clean up the input element
+      document.body.removeChild(input);
     };
+    
+    // Add to DOM temporarily to ensure proper mobile handling
+    document.body.appendChild(input);
     input.click();
   };
 
@@ -200,17 +210,25 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   };
 
   const handleSelfieCameraCapture = () => {
-    // Trigger camera input with capture attribute for selfie
+    // Create a hidden file input with proper mobile camera attributes for selfie
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'user'; // Use front camera for selfie
+    input.style.display = 'none';
+    input.setAttribute('data-capture', 'user');
+    
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         setSelfiePhoto(file);
       }
+      // Clean up the input element
+      document.body.removeChild(input);
     };
+    
+    // Add to DOM temporarily to ensure proper mobile handling
+    document.body.appendChild(input);
     input.click();
   };
 
@@ -351,35 +369,62 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
         
         // Run automated validation
         console.log('Running automated document validation...');
-        const validationResult = await validateDocumentsAutomatically(verification.id, {
-          selfieFile: selfiePhoto!,
-          idFrontFile: uploadedFiles.front!,
-          idBackFile: uploadedFiles.back!
-        });
+        
+        // Only run validation if we have the required files
+        if (selfiePhoto && uploadedFiles.front) {
+          try {
+            const validationFiles: any = {
+              selfieFile: selfiePhoto,
+              idFrontFile: uploadedFiles.front
+            };
+            
+            // Only include idBackFile if it exists
+            if (uploadedFiles.back) {
+              validationFiles.idBackFile = uploadedFiles.back;
+            }
+            
+            const validationResult = await validateDocumentsAutomatically(verification.id, validationFiles);
 
-        if (validationResult.success) {
-          setValidationResult({
-            autoApproved: validationResult.autoApproved,
-            reasons: validationResult.reasons
-          });
-          
-          if (validationResult.autoApproved) {
-            console.log('Documents auto-approved by validation system');
-            setProcessingStatus('✓ Automatically approved! You can access premium features now');
-            // User is now verified - no admin review needed
-          } else {
-            console.log('Documents require admin review:', validationResult.reasons);
+            if (validationResult.success) {
+              setValidationResult({
+                autoApproved: validationResult.autoApproved,
+                reasons: validationResult.reasons
+              });
+              
+              if (validationResult.autoApproved) {
+                console.log('Documents auto-approved by validation system');
+                setProcessingStatus('✓ Automatically approved! You can access premium features now');
+                // User is now verified - no admin review needed
+              } else {
+                console.log('Documents require admin review:', validationResult.reasons);
+                setProcessingStatus('📋 Pending admin review. You\'ll hear from us within 24-48 hours');
+                // Admin will review - user not yet verified
+              }
+            } else {
+              console.error('Automated validation failed:', validationResult.error);
+              setValidationResult({
+                autoApproved: false,
+                reasons: ['Validation system error']
+              });
+              setProcessingStatus('📋 Pending admin review. You\'ll hear from us within 24-48 hours');
+              // Continue to admin review as fallback
+            }
+          } catch (validationError) {
+            console.error('Validation error:', validationError);
+            setValidationResult({
+              autoApproved: false,
+              reasons: ['Validation system error']
+            });
             setProcessingStatus('📋 Pending admin review. You\'ll hear from us within 24-48 hours');
-            // Admin will review - user not yet verified
+            // Continue to admin review as fallback
           }
         } else {
-          console.error('Automated validation failed:', validationResult.error);
+          // If we don't have required files, skip validation and go to admin review
           setValidationResult({
             autoApproved: false,
-            reasons: ['Validation system error']
+            reasons: ['Manual review required']
           });
           setProcessingStatus('📋 Pending admin review. You\'ll hear from us within 24-48 hours');
-          // Continue to admin review as fallback
         }
       } else {
         // If any uploads failed, don't mark as verified
@@ -389,9 +434,10 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
       // Move to success - validation results determine if user is verified
       setStep('success');
+      
+      // Show custom notification instead of auto-dismissing
       setTimeout(() => {
-        onComplete();
-        handleClose();
+        setShowNotification(true);
       }, 2000);
     } catch (error) {
       console.error('Document verification failed:', error);
@@ -401,6 +447,12 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNotificationClose = () => {
+    setShowNotification(false);
+    onComplete();
+    handleClose();
   };
 
   const handleClose = () => {
@@ -421,6 +473,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
       setShowUpdateForm(false);
       setValidationResult(null);
       setProcessingStatus('');
+      setShowNotification(false);
       onClose();
     }
   };
@@ -454,6 +507,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   if (!isOpen) return null;
 
   return (
+    <>
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <motion.div
@@ -743,7 +797,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
                       <Button
                         onClick={handlePersonalInfoSubmit}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                         disabled={!personalInfo.firstName || !personalInfo.lastName || !personalInfo.dateOfBirth || !personalInfo.idNumber}
                       >
                         Continue to Document Upload
@@ -921,7 +975,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                         <Button
                           onClick={handleSubmitDocuments}
                           disabled={!canSubmit}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700"
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           Continue to Selfie
                         </Button>
@@ -1098,7 +1152,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                         <Button
                           onClick={handleSubmitSelfie}
                           disabled={!selfiePhoto}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700"
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                         >
                           Complete Verification
                         </Button>
@@ -1205,6 +1259,14 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
           </Card>
         </motion.div>
       </div>
+
     </AnimatePresence>
+
+    {/* Custom Identity Verification Notification - Outside AnimatePresence */}
+    <IdentityVerificationNotification
+      isVisible={showNotification}
+      onClose={handleNotificationClose}
+    />
+    </>
   );
 }; 

@@ -42,12 +42,12 @@ export interface DocumentTypeResult {
 export interface ValidationChecks {
   selfieQuality: ImageQualityResult;
   idFrontQuality: ImageQualityResult;
-  idBackQuality: ImageQualityResult;
+  idBackQuality?: ImageQualityResult;
   selfieFaceDetection: FaceDetectionResult;
   idFrontFaceDetection: FaceDetectionResult;
   faceMatch: FaceComparisonResult;
   idFrontDocumentType: DocumentTypeResult;
-  idBackDocumentType: DocumentTypeResult;
+  idBackDocumentType?: DocumentTypeResult;
 }
 
 export interface RiskAssessment {
@@ -448,12 +448,16 @@ export function calculateRiskScore(checks: ValidationChecks): RiskAssessment {
   const reasons: string[] = [];
   let riskScore = 0;
   
-  // Quality checks (40% weight)
+  // Quality checks (40% weight) - only include back quality if it exists
   const qualityScores = [
     checks.selfieQuality.overallScore,
-    checks.idFrontQuality.overallScore,
-    checks.idBackQuality.overallScore
+    checks.idFrontQuality.overallScore
   ];
+  
+  // Add back quality score only if it exists
+  if (checks.idBackQuality) {
+    qualityScores.push(checks.idBackQuality.overallScore);
+  }
   
   const avgQuality = qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length;
   if (avgQuality < 50) {
@@ -490,7 +494,8 @@ export function calculateRiskScore(checks: ValidationChecks): RiskAssessment {
     reasons.push('ID front does not appear to be a document');
   }
   
-  if (!checks.idBackDocumentType.isDocument) {
+  // Only check back document type if it exists
+  if (checks.idBackDocumentType && !checks.idBackDocumentType.isDocument) {
     riskScore += 0.1;
     reasons.push('ID back does not appear to be a document');
   }
@@ -525,7 +530,7 @@ export function calculateRiskScore(checks: ValidationChecks): RiskAssessment {
 export async function validateDocumentsAutomatically(
   selfieFile: File,
   idFrontFile: File,
-  idBackFile: File
+  idBackFile?: File
 ): Promise<{
   riskAssessment: RiskAssessment;
   checks: ValidationChecks;
@@ -545,42 +550,56 @@ export async function validateDocumentsAutomatically(
   if (!idFrontFile || !(idFrontFile instanceof File)) {
     throw new Error('Invalid ID front file provided');
   }
-  if (!idBackFile || !(idBackFile instanceof File)) {
+  // idBackFile is optional for single-sided documents like passports
+  if (idBackFile && !(idBackFile instanceof File)) {
     throw new Error('Invalid ID back file provided');
   }
   
   try {
     // Run all checks in parallel for speed
+    // Run validation checks - back file is optional
     const [
       selfieQuality,
       idFrontQuality,
-      idBackQuality,
       selfieFaceDetection,
       idFrontFaceDetection,
       faceMatch,
-      idFrontDocumentType,
-      idBackDocumentType
+      idFrontDocumentType
     ] = await Promise.all([
       assessImageQuality(selfieFile),
       assessImageQuality(idFrontFile),
-      assessImageQuality(idBackFile),
       detectFaceInImage(selfieFile),
       detectFaceInImage(idFrontFile),
       compareFaces(selfieFile, idFrontFile),
-      detectDocumentType(idFrontFile),
-      detectDocumentType(idBackFile)
+      detectDocumentType(idFrontFile)
     ]);
+
+    // Only validate back file if it exists
+    let idBackQuality = null;
+    let idBackDocumentType = null;
+    if (idBackFile) {
+      [idBackQuality, idBackDocumentType] = await Promise.all([
+        assessImageQuality(idBackFile),
+        detectDocumentType(idBackFile)
+      ]);
+    }
     
     const checks: ValidationChecks = {
       selfieQuality,
       idFrontQuality,
-      idBackQuality,
       selfieFaceDetection,
       idFrontFaceDetection,
       faceMatch,
-      idFrontDocumentType,
-      idBackDocumentType
+      idFrontDocumentType
     };
+    
+    // Only include back properties if they exist
+    if (idBackQuality) {
+      checks.idBackQuality = idBackQuality;
+    }
+    if (idBackDocumentType) {
+      checks.idBackDocumentType = idBackDocumentType;
+    }
     
     const riskAssessment = calculateRiskScore(checks);
     
@@ -596,7 +615,7 @@ export async function validateDocumentsAutomatically(
       scores: {
         selfieQuality: selfieQuality.overallScore,
         idFrontQuality: idFrontQuality.overallScore,
-        idBackQuality: idBackQuality.overallScore,
+        idBackQuality: idBackQuality?.overallScore || 0,
         faceMatch: faceMatch.similarity
       }
     };

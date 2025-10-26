@@ -34,7 +34,7 @@ export interface ValidationResult {
 export interface DocumentFiles {
   selfieFile: File;
   idFrontFile: File;
-  idBackFile: File;
+  idBackFile?: File;
 }
 
 // =====================================================
