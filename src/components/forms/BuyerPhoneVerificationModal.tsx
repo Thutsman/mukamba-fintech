@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Phone, Shield, CheckCircle, ArrowRight, MessageSquare } from 'lucide-react';
+import { X, Phone, Shield, CheckCircle, ArrowRight, MessageSquare, AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +35,11 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [errors, setErrors] = useState<{ phone?: string; otp?: string }>({});
+  const [phoneValidation, setPhoneValidation] = useState<{
+    isValid: boolean;
+    error: any;
+    suggestion: string;
+  } | null>(null);
 
   // Get full phone number with country code
   const getFullPhoneNumber = () => {
@@ -49,10 +54,71 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
     }
   }, [countdown]);
 
+  // Real-time phone validation
+  useEffect(() => {
+    if (phoneNumber.trim()) {
+      const validationError = getPhoneValidationError(phoneNumber, selectedCountry.dialCode);
+      const isValid = !validationError && validatePhoneNumber(phoneNumber);
+      
+      setPhoneValidation({
+        isValid,
+        error: validationError,
+        suggestion: validationError?.suggestion || ''
+      });
+    } else {
+      setPhoneValidation(null);
+    }
+  }, [phoneNumber, selectedCountry.dialCode]);
+
   const validatePhoneNumber = (phone: string) => {
     // International phone validation - more flexible for global users
     const phoneRegex = /^\+?[1-9]\d{7,14}$/; // International format
     return phoneRegex.test(phone.replace(/\s/g, ''));
+  };
+
+  // Check for common phone number issues
+  const getPhoneValidationError = (phone: string, countryCode: string) => {
+    if (!phone.trim()) return null;
+    
+    const cleanPhone = phone.replace(/\s/g, '');
+    
+    // Check for leading zero after country code (common issue)
+    if (cleanPhone.startsWith('0')) {
+      return {
+        type: 'leading_zero',
+        message: 'Remove the leading "0" - international numbers don\'t need it',
+        suggestion: `Try: ${cleanPhone.substring(1)}`
+      };
+    }
+    
+    // Check for too short numbers
+    if (cleanPhone.length < 7) {
+      return {
+        type: 'too_short',
+        message: 'Phone number is too short',
+        suggestion: 'Enter your complete phone number'
+      };
+    }
+    
+    // Check for too long numbers
+    if (cleanPhone.length > 15) {
+      return {
+        type: 'too_long',
+        message: 'Phone number is too long',
+        suggestion: 'Check your number and try again'
+      };
+    }
+    
+    // Check for invalid characters
+    if (!/^[0-9\s\-\(\)]+$/.test(cleanPhone)) {
+      return {
+        type: 'invalid_chars',
+        message: 'Phone number contains invalid characters',
+        suggestion: 'Use only numbers, spaces, hyphens, and parentheses'
+      };
+    }
+    
+    return null;
   };
 
   const handleSendOTP = async (e: React.FormEvent) => {
@@ -60,6 +126,13 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
     
     if (!phoneNumber.trim()) {
       setErrors({ phone: 'Phone number is required' });
+      return;
+    }
+    
+    // Check for specific validation issues first
+    const validationError = getPhoneValidationError(phoneNumber, selectedCountry.dialCode);
+    if (validationError) {
+      setErrors({ phone: validationError.message });
       return;
     }
     
@@ -199,10 +272,10 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
-          <div className="relative bg-gradient-to-r from-green-600 to-green-700 px-6 py-8 text-white">
+          <div className="relative px-6 py-6 text-white" style={{background: 'linear-gradient(to right, #7F1518, #7F1518)'}}>
             <button
               onClick={onClose}
               className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -221,44 +294,19 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
               <h2 className="text-2xl font-bold mb-2">
                 {step === 'phone' ? 'Verify Your Phone' : 'Enter Verification Code'}
               </h2>
-                              <p className="text-green-100 text-sm">
-                  {step === 'phone' 
-                    ? 'Required to contact sellers and receive property updates'
-                    : `We sent a 6-digit code to ${getFullPhoneNumber()}`
-                  }
+              {step === 'verification' && (
+                <p className="text-sm" style={{color: '#FFE5E5'}}>
+                  We sent a 6-digit code to {getFullPhoneNumber()}
                 </p>
+              )}
             </div>
           </div>
 
           {/* Content */}
-          <div className="px-6 py-8">
+          <div className="px-6 py-6">
             {step === 'phone' ? (
               /* Phone Number Step */
-              <form onSubmit={handleSendOTP} className="space-y-6">
-                {/* User Info */}
-                {userEmail && (
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      <span className="text-slate-600">Signed up as:</span>
-                      <span className="font-medium text-slate-800">{userEmail}</span>
-                    </div>
-                    {buyerType && (
-                      <div className="mt-2">
-                        <Badge 
-                          variant="secondary" 
-                          className={
-                            buyerType === 'cash' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }
-                        >
-                          {buyerType === 'cash' ? '💰 Cash Buyer' : '🏦 Installment Buyer'}
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                )}
+              <form onSubmit={handleSendOTP} className="space-y-4">
 
                 {/* Phone Input */}
                 <div>
@@ -276,33 +324,92 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
                       placeholder="123 456 7890"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className={`flex-1 ${errors.phone ? 'border-red-500' : ''} rounded-l-none`}
+                      className={`flex-1 ${
+                        errors.phone || (phoneValidation && !phoneValidation.isValid) 
+                          ? 'border-red-500' 
+                          : phoneValidation && phoneValidation.isValid 
+                            ? 'border-green-500' 
+                            : ''
+                      } rounded-l-none`}
                     />
                   </div>
-                  {errors.phone && (
-                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  
+                  {/* Real-time validation feedback */}
+                  {phoneValidation && phoneValidation.error && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-red-700 font-medium">
+                            {phoneValidation.error.message}
+                          </p>
+                          {phoneValidation.suggestion && (
+                            <p className="text-sm text-red-600 mt-1">
+                              💡 {phoneValidation.suggestion}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    Full number: {getFullPhoneNumber()}
-                  </p>
+                  
+                  {/* Success feedback */}
+                  {phoneValidation && phoneValidation.isValid && (
+                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <p className="text-sm text-green-700 font-medium">
+                          ✓ Valid phone number format
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Form submission errors */}
+                  {errors.phone && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700">{errors.phone}</p>
+                    </div>
+                  )}
+                  
+                  {/* Country-specific hints */}
+                  {selectedCountry.code === 'ZW' && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-blue-700 font-medium">
+                            🇿🇼 Zimbabwe Phone Number Format
+                          </p>
+                          <p className="text-xs text-blue-600 mt-1">
+                            Enter your number without the leading "0". For example: 779035404 (not 0779035404)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Full number display - only show if valid or no validation yet */}
+                  {phoneNumber && (
+                    <div className="mt-2 p-2 bg-slate-50 rounded-lg border">
+                      <p className="text-xs text-slate-600">
+                        <span className="font-medium">Full number:</span> {getFullPhoneNumber()}
+                        {phoneValidation && phoneValidation.isValid && (
+                          <span className="ml-2 text-green-600">✓</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Benefits */}
-                <Card className="bg-green-50 border-green-200">
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-green-800 mb-2">What you'll unlock:</h3>
-                    <div className="space-y-2 text-sm text-green-700">
+                <Card className="border-red-200" style={{backgroundColor: '#FFE5E5'}}>
+                  <CardContent className="p-3">
+                    <h3 className="font-semibold mb-2" style={{color: '#7F1518'}}>What you'll unlock:</h3>
+                    <div className="space-y-2 text-sm" style={{color: '#7F1518'}}>
                       <div className="flex items-center space-x-2">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Direct contact with property sellers</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Instant property alerts via SMS</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Priority support from our team</span>
+                        <CheckCircle className="w-4 h-4" style={{color: '#7F1518'}} />
+                        <span>Direct contact with Admin</span>
                       </div>
                     </div>
                   </CardContent>
@@ -311,7 +418,8 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 text-lg font-semibold"
+                  className="w-full text-white py-3 text-lg font-semibold"
+                  style={{background: 'linear-gradient(to right, #7F1518, #7F1518)'}}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -359,7 +467,8 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
                       type="button"
                       onClick={handleResendOTP}
                       disabled={isLoading}
-                      className="text-sm text-green-600 hover:text-green-700 underline"
+                      className="text-sm underline"
+                      style={{color: '#7F1518'}}
                     >
                       Didn't receive the code? Resend
                     </button>
@@ -378,7 +487,8 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+                    className="flex-1 text-white"
+                    style={{background: 'linear-gradient(to right, #7F1518, #7F1518)'}}
                     disabled={isLoading || otp.length !== 6}
                   >
                     {isLoading ? (
@@ -398,19 +508,6 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
             )}
           </div>
 
-          {/* Trust Footer */}
-          <div className="bg-slate-50 px-6 py-4 border-t">
-            <div className="flex items-center justify-center space-x-4 text-xs text-slate-600">
-              <div className="flex items-center space-x-1">
-                <Shield className="w-4 h-4 text-green-500" />
-                <span>Secure verification</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>SMS charges may apply</span>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </div>
     </AnimatePresence>

@@ -227,7 +227,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   // Handle favorite toggle
   const toggleFavorite = () => {
     if (!user) {
-      setShowSignupModal(true);
+      setShowSigninModal(true);
       return;
     }
     setIsFavorite(!isFavorite);
@@ -236,7 +236,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   // Phone verification handlers
   const handlePhoneVerification = () => {
     if (!user) {
-      setShowSignupModal(true);
+      setShowSigninModal(true);
       return;
     }
     setShowPhoneVerificationModal(true);
@@ -266,7 +266,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
   // Offer flow handlers
   const handleContactSeller = () => {
     if (!user) {
-      setShowSignupModal(true);
+      setShowSigninModal(true);
       return;
     }
     if (!user.is_phone_verified) {
@@ -278,7 +278,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
   const handleScheduleViewing = () => {
     if (!user) {
-      setShowSignupModal(true);
+      setShowSigninModal(true);
       return;
     }
     if (!user.is_phone_verified) {
@@ -290,7 +290,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
   const handleMakeOffer = () => {
     if (!user) {
-      setShowSignupModal(true);
+      setShowSigninModal(true);
       return;
     }
     // Require phone verification first for any action
@@ -320,7 +320,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
 
   const handleAddToFavorites = () => {
     if (!user) {
-      setShowSignupModal(true);
+      setShowSigninModal(true);
       return;
     }
     setIsFavorite(!isFavorite);
@@ -884,7 +884,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                             </p>
                           </div>
                           <Button
-                            onClick={canMakeOffer() ? handleMakeOffer : (!user ? () => setShowSignupModal(true) : handleMakeOffer)}
+                            onClick={canMakeOffer() ? handleMakeOffer : (!user ? () => setShowSigninModal(true) : handleMakeOffer)}
                             className={`ml-4 h-12 px-6 font-semibold transition-all duration-200 ${
                               hasUserOffer()
                                 ? 'bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 shadow-md'
@@ -1209,6 +1209,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               onScheduleViewing={handleScheduleViewing}
               onMakeOffer={handleMakeOffer}
               onSignUpPrompt={() => setShowSignupModal(true)}
+              onSignInPrompt={() => setShowSigninModal(true)}
               onPhoneVerification={handlePhoneVerification}
               hasUserOffer={hasUserOffer()}
               canMakeOffer={canMakeOffer()}

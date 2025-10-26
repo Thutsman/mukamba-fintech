@@ -28,6 +28,7 @@ interface PropertyActionsProps {
   onScheduleViewing: () => void;
   onMakeOffer: () => void;
   onSignUpPrompt: () => void;
+  onSignInPrompt: () => void;
   onPhoneVerification: () => void;
   hasUserOffer?: boolean;
   canMakeOffer?: boolean;
@@ -43,6 +44,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
   onScheduleViewing,
   onMakeOffer,
   onSignUpPrompt,
+  onSignInPrompt,
   onPhoneVerification,
   hasUserOffer = false,
   canMakeOffer = true,
@@ -90,7 +92,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
               whileTap={{ scale: 0.98 }}
             >
               <Button
-                onClick={canContactSeller ? onContactSeller : onSignUpPrompt}
+                onClick={canContactSeller ? onContactSeller : onSignInPrompt}
                 className={`w-full h-14 font-semibold transition-all duration-200 ${
                   canContactSeller 
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl' 
@@ -112,7 +114,7 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
             <Button
             onClick={(hasUserOffer && userOfferStatus !== 'rejected') || isIdentityPending
               ? undefined 
-              : (user ? onMakeOffer : onSignUpPrompt)}
+              : (user ? onMakeOffer : onSignInPrompt)}
               className={`w-full h-14 font-semibold transition-all duration-200 ${
                 (hasUserOffer && userOfferStatus !== 'rejected')
                   ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed shadow-md'
