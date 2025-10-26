@@ -2051,13 +2051,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     </motion.div>
   );
 
-  // Redirect verified users back to AuthSystem context to use consistent navigation
-  React.useEffect(() => {
-    if (isFullyVerified(user)) {
-      console.log('User is fully verified, redirecting to AuthSystem context');
-      onBackToHome?.();
-    }
-  }, [user, onBackToHome]);
+  // Do not redirect away when user becomes fully verified; parent decides which dashboard to show
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -21,6 +21,11 @@ interface AuthStore {
     title?: string;
     message?: string;
   } | null;
+  showAuthNotification: boolean; // Show auth notification (sign in/out)
+  authNotificationData: {
+    type: 'signin' | 'signout';
+    message: string;
+  } | null;
   
   // Actions
   basicSignup: (data: BasicSignupData) => Promise<void>;
@@ -34,6 +39,8 @@ interface AuthStore {
   markUserAsReturning: () => void; // Mark user as no longer new
   showSuccessMessage: (data: { email?: string; title?: string; message?: string }) => void;
   hideSuccessMessage: () => void;
+  showAuthNotificationMessage: (type: 'signin' | 'signout', message: string) => void;
+  hideAuthNotification: () => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -48,6 +55,8 @@ export const useAuthStore = create<AuthStore>()(
       hasHydrated: false,
       showSuccessPopup: false,
       successPopupData: null,
+      showAuthNotification: false,
+      authNotificationData: null,
 
       // Basic signup - creates account immediately
       basicSignup: async (data: BasicSignupData) => {
@@ -281,6 +290,9 @@ export const useAuthStore = create<AuthStore>()(
               isLoading: false,
               isNewUser: false
           });
+
+          // Show sign-in success notification
+          get().showAuthNotificationMessage('signin', `Welcome back, ${user.firstName}!`);
         } catch (error) {
           set({
             error: 'Login failed. Please check your credentials.',
@@ -290,6 +302,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
              logout: async () => {
+         const currentUser = get().user;
          try {
            if (supabase) {
              await supabase.auth.signOut();
@@ -305,6 +318,11 @@ export const useAuthStore = create<AuthStore>()(
           isLoading: false,
           isNewUser: false
         });
+
+        // Show sign-out success notification
+        if (currentUser) {
+          get().showAuthNotificationMessage('signout', `Goodbye, ${currentUser.firstName}! You've been signed out.`);
+        }
       },
 
                checkAuth: async () => {
@@ -481,6 +499,25 @@ export const useAuthStore = create<AuthStore>()(
         set({
           showSuccessPopup: false,
           successPopupData: null
+        });
+      },
+
+      showAuthNotificationMessage: (type, message) => {
+        set({
+          showAuthNotification: true,
+          authNotificationData: { type, message }
+        });
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+          get().hideAuthNotification();
+        }, 3000);
+      },
+
+      hideAuthNotification: () => {
+        set({
+          showAuthNotification: false,
+          authNotificationData: null
         });
       }
     }),

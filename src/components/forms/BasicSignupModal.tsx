@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import type { BasicSignupData } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { signUpWithGoogle } from '@/lib/auth-utils';
+import { useRouter } from 'next/navigation';
 
 interface BasicSignupModalProps {
   isOpen: boolean;
@@ -83,6 +84,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
   sellerIntent = false,
   onSellerSignupComplete
 }) => {
+  const router = useRouter();
   const { basicSignup, isLoading, error, setError, isAuthenticated } = useAuthStore();
   const [hasStartedSignup, setHasStartedSignup] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -102,6 +104,10 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
         if (sellerIntent && onSellerSignupComplete) {
           onSellerSignupComplete();
         }
+        try {
+          sessionStorage.setItem('postAuthView', 'profile');
+        } catch (_) {}
+        router.replace('/?view=profile');
       }, 500);
     }
   }, [isAuthenticated, isOpen, hasStartedSignup, isLoading, onClose, sellerIntent, onSellerSignupComplete]);
@@ -204,6 +210,9 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       
       await basicSignup(signupData);
       // Modal will close automatically when isAuthenticated becomes true
+      try {
+        sessionStorage.setItem('postAuthView', 'profile');
+      } catch (_) {}
     } catch (error) {
       console.error('Signup error:', error);
       setHasStartedSignup(false);
@@ -218,6 +227,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
       // Persist redirect and seller intent across OAuth redirect
       try {
         sessionStorage.setItem('postAuthRedirect', window.location.pathname);
+        sessionStorage.setItem('postAuthView', 'profile');
         if (sellerIntent) sessionStorage.setItem('sellerIntent', 'true');
       } catch (_) {}
 

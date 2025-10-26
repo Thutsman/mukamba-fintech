@@ -218,6 +218,9 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
       
       await basicSignup(signupData);
       // Modal will close automatically when isAuthenticated becomes true
+      try {
+        sessionStorage.setItem('postAuthView', 'profile');
+      } catch (_) {}
     } catch (error) {
       console.error('Signup error:', error);
       setHasStartedSignup(false);
@@ -264,7 +267,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
 
   // Don't show modal if not open OR if success popup is showing
   // This provides an extra layer of safety to ensure modal doesn't show during success message
-  if (!isOpen || (showSuccessPopup && hasStartedSignup)) return null;
+  if (!isOpen || (showSuccessPopup && hasStartedSignup) || isAuthenticated) return null;
 
   const passwordStrength = getPasswordStrength(password);
 

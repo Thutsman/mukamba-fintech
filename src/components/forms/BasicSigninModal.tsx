@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { LoginCredentials } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { signInWithGoogle } from '@/lib/auth-utils';
+import { useRouter } from 'next/navigation';
 
 interface BasicSigninModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
   onClose,
   onSwitchToSignup
 }) => {
+  const router = useRouter();
   const { login, isLoading, error, setError, isAuthenticated } = useAuthStore();
   const [hasStartedLogin, setHasStartedLogin] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -50,6 +52,10 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
       setTimeout(() => {
         onClose();
         setHasStartedLogin(false); // Reset for next time
+        try {
+          sessionStorage.setItem('postAuthView', 'profile');
+        } catch (_) {}
+        router.replace('/?view=profile');
       }, 500);
     }
   }, [isAuthenticated, isOpen, hasStartedLogin, isLoading, onClose]);

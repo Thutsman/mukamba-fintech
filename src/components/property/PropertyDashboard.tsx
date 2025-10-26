@@ -122,6 +122,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
     setIsClient(true);
   }, []);
 
+  // SAFEGUARD: Never show signup modal when authenticated
+  React.useEffect(() => {
+    if (user && showSignupModal) {
+      setShowSignupModal(false);
+    }
+  }, [user, showSignupModal]);
+
   React.useEffect(() => {
     const loadFeaturedProperties = async () => {
       try {
@@ -796,7 +803,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 variant="outline"
                   className="border-white/40 text-white hover:bg-white/20 hover:text-white px-8 sm:px-10 py-4 text-base sm:text-lg font-semibold bg-white/10 backdrop-blur-xl w-full sm:w-auto shadow-xl hover:shadow-white/25 transition-all duration-300"
                 onClick={() => {
+                // If already signed-in, go straight to profile; else open signin
+                if (user) {
+                  router.push('/?view=profile');
+                } else {
                   setShowSigninModal(true);
+                }
                   // Analytics tracking for signin modal
                   trackEvent('signin_modal_opened', {
                     source: 'hero_section',
@@ -1033,7 +1045,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 size="lg"
                 className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
-                  // Navigate to listings page
+                  // Navigate to listings page; avoid any signup prompts if already authenticated
                   router.push('/listings');
                   // Track analytics
                   trackEvent('view_all_properties_clicked', {

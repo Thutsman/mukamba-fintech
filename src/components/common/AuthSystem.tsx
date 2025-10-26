@@ -26,7 +26,7 @@ export const AuthSystem: React.FC = () => {
   const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
   
   const router = useRouter();
-  const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth } = useAuthStore();
+  const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth, showAuthNotification, authNotificationData, hideAuthNotification } = useAuthStore();
   // Theme is app-controlled (light-only). No toggle here.
 
   // Check authentication status on component mount
@@ -59,6 +59,27 @@ export const AuthSystem: React.FC = () => {
     setShowSignupWidget(false);
     localStorage.setItem('signupWidgetClosed', 'true');
   };
+
+  // Initialize desired view from URL query or session flag (e.g., after OAuth)
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      if (view === 'profile') {
+        setCurrentView('profile');
+        // Clean URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        return;
+      }
+
+      const postAuthView = sessionStorage.getItem('postAuthView');
+      if (postAuthView === 'profile') {
+        setCurrentView('profile');
+        sessionStorage.removeItem('postAuthView');
+      }
+    } catch (_) {}
+  }, []);
 
   // Only redirect new users to profile view if they just signed up (not on every load)
   React.useEffect(() => {
@@ -129,6 +150,17 @@ export const AuthSystem: React.FC = () => {
   // Close modals when authentication state changes (but not on initial load)
   const [isInitialLoad, setIsInitialLoad] = React.useState(true);
   
+  // Redirect to profile immediately after a successful sign-in/up (auth transition)
+  const prevAuthRef = React.useRef(isAuthenticated);
+  React.useEffect(() => {
+    const wasAuthenticated = prevAuthRef.current;
+    if (!wasAuthenticated && isAuthenticated) {
+      setCurrentView('profile');
+      setHasRedirectedToProfile(true);
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+
   React.useEffect(() => {
     // Don't close modals on initial load if user is already authenticated
     if (isInitialLoad) {
@@ -139,6 +171,11 @@ export const AuthSystem: React.FC = () => {
     if (isAuthenticated) {
       console.log('User authenticated, closing modals');
       setShowRegister(false);
+      setShowSigninModal(false);
+      setShowResendModal(false);
+      try {
+        sessionStorage.removeItem('postAuthRedirect');
+      } catch (_) {}
     }
   }, [isAuthenticated, isInitialLoad]);
 
@@ -219,6 +256,13 @@ export const AuthSystem: React.FC = () => {
 
     // If authenticated and viewing profile
     if (isAuthenticated && user && currentView === 'profile') {
+      // If fully verified, redirect to the main view (which will show VerifiedUserDashboard with AuthSystem header)
+      if (isFullyVerified(user)) {
+        setCurrentView('properties');
+        return null; // This will cause a re-render with the main VerifiedUserDashboard
+      }
+
+      // Otherwise show the KYC-driven ProfileDashboard
       return (
         <ProfileDashboard 
           user={user} 
@@ -232,7 +276,6 @@ export const AuthSystem: React.FC = () => {
             }
           }}
           onProfileSettings={() => {
-            // This could open a profile settings modal in the future
             alert('Profile settings coming soon!');
           }}
           isNewUser={isNewUser}
@@ -599,6 +642,59 @@ export const AuthSystem: React.FC = () => {
             isOpen={showResendModal}
             onClose={handleCloseModals}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Auth Notification */}
+      <AnimatePresence>
+        {showAuthNotification && authNotificationData && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="fixed top-4 right-4 z-[9999]"
+          >
+            <div className={`bg-white rounded-lg shadow-2xl border-2 p-4 max-w-sm ${
+              authNotificationData.type === 'signin' 
+                ? 'border-green-200 bg-green-50' 
+                : 'border-blue-200 bg-blue-50'
+            }`}>
+              <div className="flex items-center space-x-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  authNotificationData.type === 'signin' 
+                    ? 'bg-green-100 text-green-600' 
+                    : 'bg-blue-100 text-blue-600'
+                }`}>
+                  {authNotificationData.type === 'signin' ? (
+                    <LogIn className="w-4 h-4" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className={`text-sm font-semibold ${
+                    authNotificationData.type === 'signin' ? 'text-green-800' : 'text-blue-800'
+                  }`}>
+                    {authNotificationData.type === 'signin' ? 'Signed In Successfully!' : 'Signed Out Successfully!'}
+                  </p>
+                  <p className={`text-xs ${
+                    authNotificationData.type === 'signin' ? 'text-green-700' : 'text-blue-700'
+                  }`}>
+                    {authNotificationData.message}
+                  </p>
+                </div>
+                <button
+                  onClick={hideAuthNotification}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/50 transition-colors ${
+                    authNotificationData.type === 'signin' ? 'text-green-600' : 'text-blue-600'
+                  }`}
+                >
+                  <span className="text-sm">×</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

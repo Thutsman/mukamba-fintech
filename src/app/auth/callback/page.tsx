@@ -23,6 +23,8 @@ export default function AuthCallbackPage() {
         try {
           const stored = sessionStorage.getItem('postAuthRedirect');
           if (stored) redirect = stored;
+          // Ensure we land on profile dashboard after OAuth
+          sessionStorage.setItem('postAuthView', 'profile');
         } catch (_) {}
 
         // Clear temporary flags
