@@ -122,6 +122,9 @@ export const AuthSystem: React.FC = () => {
           console.log('Fresh email confirmation detected, redirecting to profile for KYC');
           setCurrentView('profile');
           setHasRedirectedToProfile(true);
+          
+          // Clear the timestamp to prevent repeated redirects
+          localStorage.removeItem('userEmailConfirmTime');
         }, 2000); // 2 second delay to allow user to see the dashboard first
         
         return () => clearTimeout(timer);

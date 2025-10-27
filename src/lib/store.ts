@@ -389,12 +389,14 @@ export const useAuthStore = create<AuthStore>()(
           
 
             // Check if user just confirmed their email and needs to complete KYC
-            const needsKYC = !profileData?.is_phone_verified && profileData?.kyc_level === 'none';
+            const needsKYC = !profileData?.is_phone_verified && (profileData?.kyc_level === 'none' || profileData?.kyc_level === 'email');
             const isNewlyConfirmed = Boolean(user.email_confirmed_at) && !profileData?.is_phone_verified;
             
             // Set timestamp for fresh email confirmation to prevent unwanted redirects
             if (isNewlyConfirmed) {
-              localStorage.setItem('userEmailConfirmTime', Date.now().toString());
+              try {
+                localStorage.setItem('userEmailConfirmTime', Date.now().toString());
+              } catch (_) {}
             }
 
             set({

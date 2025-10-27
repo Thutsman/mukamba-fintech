@@ -578,7 +578,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
                       window.open('/terms', '_blank');
                     }}
                   >
-                    Terms of Service
+                    Terms & Conditions
                   </button>
                 </Label>
               </div>

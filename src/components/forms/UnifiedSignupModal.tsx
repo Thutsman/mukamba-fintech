@@ -597,7 +597,7 @@ export const UnifiedSignupModal: React.FC<UnifiedSignupModalProps> = ({
                       window.open('/terms', '_blank');
                     }}
                   >
-                    Terms of Service
+                    Terms & Conditions
                   </button>
                 </Label>
               </div>

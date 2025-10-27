@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/lib/store';
 
 function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { checkAuth } = useAuthStore();
 
   useEffect(() => {
     const confirmEmail = async () => {
@@ -77,6 +79,9 @@ function ConfirmEmailContent() {
               // Still redirect but user will need to sign in manually
             } else {
               console.log('User signed in successfully after email confirmation');
+              
+              // CRITICAL: Call checkAuth to update the auth store state
+              await checkAuth();
             }
           } catch (sessionError) {
             console.error('Session establishment error:', sessionError);
@@ -97,7 +102,7 @@ function ConfirmEmailContent() {
     };
 
     confirmEmail();
-  }, [searchParams, router]);
+  }, [searchParams, router, checkAuth]);
 
   const handleResendEmail = () => {
     router.push('/?action=resend-confirmation');
