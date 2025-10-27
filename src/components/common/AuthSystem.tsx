@@ -15,6 +15,7 @@ import { VerifiedUserDashboard } from '@/components/profile/VerifiedUserDashboar
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAuthStore } from '@/lib/store';
 import { isFullyVerified } from '@/types/auth';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 export const AuthSystem: React.FC = () => {
   const [showRegister, setShowRegister] = React.useState(false);
@@ -190,7 +191,7 @@ export const AuthSystem: React.FC = () => {
   // If authenticated and user is agent, redirect to agent dashboard
   React.useEffect(() => {
     if (isAuthenticated && user && user.roles.includes('agent')) {
-      router.push('/agent-dashboard');
+      navigateWithScrollToTop(router, '/agent-dashboard');
     }
   }, [isAuthenticated, user, router]);
 
@@ -277,6 +278,10 @@ export const AuthSystem: React.FC = () => {
             if (isNewUser) {
               markUserAsReturning(); // Mark user as no longer new when they navigate away from profile
             }
+            // Scroll to top of the page
+            if (typeof window !== 'undefined') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
           onProfileSettings={() => {
             alert('Profile settings coming soon!');
@@ -331,7 +336,7 @@ export const AuthSystem: React.FC = () => {
                   Home
                 </button>
                 <button 
-                  onClick={() => router.push('/listings')}
+                  onClick={() => navigateWithScrollToTop(router, '/listings')}
                   className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
                 >
                   <Building className="w-4 h-4 mr-2" />
@@ -377,7 +382,7 @@ export const AuthSystem: React.FC = () => {
                       Home
                     </button>
                     <button 
-                      onClick={() => { router.push('/listings'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
+                      onClick={() => { navigateWithScrollToTop(router, '/listings'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
                       className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
                       Properties
@@ -447,7 +452,7 @@ export const AuthSystem: React.FC = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => router.push('/dashboard/seller')}
+                        onClick={() => navigateWithScrollToTop(router, '/dashboard/seller')}
                         className="border-slate-300 text-slate-700 hover:bg-slate-50"
                       >
                         Seller Dashboard

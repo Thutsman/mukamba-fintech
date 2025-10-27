@@ -84,6 +84,7 @@ import { useRouter } from 'next/navigation';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
 import { supabase } from '@/lib/supabase';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 // Verification Modals
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
@@ -1568,7 +1569,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       
       // Capabilities Grid actions
       case 'browse-properties':
-        router.push('/listings');
+        navigateWithScrollToTop(router, '/listings');
         break;
       case 'save-favorites':
         setSuccessMessage('Favorites feature coming soon!');

@@ -92,6 +92,7 @@ interface LocalProperty {
   status: 'active' | 'under_offer' | 'sold' | 'rented' | 'pending' | 'draft';
 }
 import { useRouter } from 'next/navigation';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 import { 
   type User as UserType,
   type FinancialProfile,
@@ -386,7 +387,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
   const [showPropertySearch, setShowPropertySearch] = React.useState(false);
   const [showPropertyGrid, setShowPropertyGrid] = React.useState(false);
-  const [showPropertyListings, setShowPropertyListings] = React.useState(false);
   const [showPropertyDetails, setShowPropertyDetails] = React.useState(false);
   const [showMakeOfferModal, setShowMakeOfferModal] = React.useState(false);
   const [selectedProperty, setSelectedProperty] = React.useState<any>(null);
@@ -596,7 +596,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const handleBackToDashboard = () => {
     setShowPropertySearch(false);
     setShowPropertyGrid(false);
-    setShowPropertyListings(false);
     setShowPropertyDetails(false);
     setShowMakeOfferModal(false);
     setSelectedProperty(null);
@@ -828,14 +827,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     );
   }
 
-  if (showPropertyListings) {
-    return (
-      <PropertyListings
-        onPropertySelect={(property) => onViewProperty(property.id)}
-        user={user}
-      />
-    );
-  }
 
   if (showPropertyDetails && selectedProperty) {
     return (
@@ -1127,7 +1118,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
         <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/>Verified</Badge>
-            <Button className="bg-red-800 hover:bg-red-900 text-white" size="sm" onClick={() => setShowPropertyListings(true)}>Start New Search</Button>
+            <Button className="bg-red-800 hover:bg-red-900 text-white" size="sm" onClick={() => navigateWithScrollToTop(router, '/listings')}>Start New Search</Button>
           </div>
         </div>
 
@@ -1189,7 +1180,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2 bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400 transition-colors duration-200" 
-                onClick={() => setShowPropertyListings(true)}
+                onClick={() => navigateWithScrollToTop(router, '/listings')}
               >
                 <Home className="w-4 h-4"/>
                 Browse Properties
@@ -1208,7 +1199,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <Button 
                 size="sm" 
                 variant="outline" 
-                onClick={() => setShowPropertyListings(true)}
+                onClick={() => navigateWithScrollToTop(router, '/listings')}
                 className="bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400 transition-colors duration-200"
               >
                 <Eye className="w-4 h-4 mr-1" />
@@ -1229,7 +1220,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <p className="text-gray-600 mb-4">No active properties found at the moment.</p>
               <Button 
                 className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => setShowPropertyListings(true)}
+                onClick={() => navigateWithScrollToTop(router, '/listings')}
               >
                 Browse All Properties
               </Button>
@@ -1329,7 +1320,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <p className="text-gray-600 mb-4">No recent property offers have been submitted by buyers.</p>
               <Button 
                 className="bg-red-800 hover:bg-red-900 text-white"
-                onClick={() => setShowPropertyListings(true)}
+                onClick={() => navigateWithScrollToTop(router, '/listings')}
               >
                 Browse Properties
               </Button>
@@ -1398,7 +1389,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 </ul>
                 <Button 
                   className="bg-red-800 hover:bg-red-900 text-white"
-                  onClick={() => setShowPropertyListings(true)}
+                  onClick={() => navigateWithScrollToTop(router, '/listings')}
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Browse Properties
@@ -1420,7 +1411,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           onViewProperty={(propertyId) => {
             // Handle special case for browse properties
             if (propertyId === 'browse') {
-              setShowPropertyListings(true);
+              navigateWithScrollToTop(router, '/listings');
             } else {
               // Navigate to property details page
               router.push(`/property/${propertyId}`);

@@ -53,6 +53,7 @@ import { useRouter } from 'next/navigation';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { useAuthStore } from '@/lib/store';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -746,7 +747,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               {/* Back to Home Button - Mukamba Brand Color */}
               <Button
                 size="sm"
-                onClick={() => router.push('/')}
+                onClick={() => navigateWithScrollToTop(router, '/')}
                 className="bg-[#7F1518] hover:bg-[#6A1214] text-white font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />

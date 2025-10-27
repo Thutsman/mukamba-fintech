@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -929,7 +930,7 @@ export const VerifiedSellerDashboard: React.FC<VerifiedSellerDashboardProps> = (
       <div>
         <Button
           variant="ghost"
-          onClick={() => router.push('/')}
+          onClick={() => navigateWithScrollToTop(router, '/')}
           className="flex items-center text-slate-600 hover:text-slate-900 px-2"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

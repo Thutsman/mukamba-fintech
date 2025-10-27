@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 interface IdentityVerificationNotificationProps {
   isVisible: boolean;
@@ -25,7 +26,7 @@ export const IdentityVerificationNotification: React.FC<IdentityVerificationNoti
   const router = useRouter();
 
   const handleBrowseProperties = () => {
-    router.push('/listings');
+    navigateWithScrollToTop(router, '/listings');
     onClose();
   };
 

@@ -38,6 +38,7 @@ import { LeadEntryModal } from '@/components/agent/LeadEntryModal';
 import { EarningsEntryModal } from '@/components/agent/EarningsEntryModal';
 import { useAuthStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 interface AgentDashboardProps {
   user: User;
@@ -74,12 +75,12 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ user }) => {
     }
     
     updateUser({ roles: updatedRoles });
-    router.push('/');
+    navigateWithScrollToTop(router, '/');
   };
 
   const handleSignOut = () => {
     logout();
-    router.push('/');
+    navigateWithScrollToTop(router, '/');
   };
 
   return (

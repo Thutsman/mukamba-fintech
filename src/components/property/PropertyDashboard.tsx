@@ -66,6 +66,7 @@ import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal'
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 // Analytics tracking function
 const trackEvent = (eventName: string, parameters: Record<string, any>) => {
@@ -1046,7 +1047,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
                   // Navigate to listings page; avoid any signup prompts if already authenticated
-                  router.push('/listings');
+                  navigateWithScrollToTop(router, '/listings');
                   // Track analytics
                   trackEvent('view_all_properties_clicked', {
                     source: 'featured_properties_main',
@@ -1421,7 +1422,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               className="bg-white text-[#7f1518] hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
               onClick={() => {
                 // Navigate to PropertyListings page
-                router.push('/listings');
+                navigateWithScrollToTop(router, '/listings');
                 // Track analytics
                 trackEvent('browse_properties_cta_clicked', {
                   source: 'ready_to_start_section',

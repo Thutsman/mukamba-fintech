@@ -77,6 +77,7 @@ import { useMessageStore } from '@/lib/message-store';
 import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
 import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
+import { navigateBackWithScrollToTop } from '@/utils/navigation';
 
 interface PropertyDetailsPageProps {
   property: PropertyListing;
@@ -717,26 +718,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                   e.preventDefault();
                   e.stopPropagation();
                   
-                  // More robust back navigation for mobile
-                  try {
-                    // Check if we can go back in history
-                    if (typeof window !== 'undefined') {
-                      // Try native browser back first (works better on mobile)
-                      if (window.history.length > 1) {
-                        window.history.back();
-                      } else {
-                        // Fallback to Next.js router
-                        router.back();
-                      }
-                    } else {
-                      // Server-side fallback
-                      router.push('/listings');
-                    }
-                  } catch (error) {
-                    console.error('Navigation error:', error);
-                    // Ultimate fallback to home page
-                    router.push('/');
-                  }
+                  // Use utility function for consistent back navigation with scroll to top
+                  navigateBackWithScrollToTop(router, '/listings');
                 }}
                 className="flex items-center space-x-2 touch-manipulation"
                 style={{ 

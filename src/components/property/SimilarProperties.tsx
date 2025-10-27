@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Home
 } from 'lucide-react';
+import { navigateWithScrollToTop } from '@/utils/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -84,7 +85,7 @@ export const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
   // Handle View All button click
   const handleViewAll = () => {
     // Navigate to PropertyListings without any filters to show all properties
-    router.push('/listings');
+    navigateWithScrollToTop(router, '/listings');
   };
 
   // Format currency
