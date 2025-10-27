@@ -82,7 +82,11 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       const success = await deletePropertyOffer(offerId);
       if (success) {
         await loadOffers();
-        setSuccessPopup({ visible: true, title: 'Offer Cancelled', message: 'Your offer has been cancelled successfully.' });
+        setSuccessPopup({ 
+          visible: true, 
+          title: 'Offer Cancelled', 
+          message: 'Your offer has been cancelled successfully. The property status has been updated to available.' 
+        });
       } else {
         console.error('Failed to cancel (delete) offer - permission denied or database error');
         alert('Unable to cancel this offer. Ensure it is yours and still pending. If the issue persists, contact support.');
@@ -105,7 +109,11 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       const success = await deletePropertyOffer(offerId);
       if (success) {
         await loadOffers();
-        setSuccessPopup({ visible: true, title: 'Offer Deleted', message: 'The offer was removed successfully.' });
+        setSuccessPopup({ 
+          visible: true, 
+          title: 'Offer Deleted', 
+          message: 'The offer was removed successfully. The property status has been updated to available.' 
+        });
       } else {
         console.error('Failed to delete offer - permission denied or database error');
         alert('Unable to delete offer. Please contact support if this issue persists.');

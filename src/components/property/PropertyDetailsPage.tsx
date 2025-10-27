@@ -1346,8 +1346,8 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               </CardContent>
             </Card>
 
-            {/* Bidding Activity - Show if property has offers or is under offer */}
-            {(propertyOffers.length > 0 || isPropertyUnderOffer() || isLoadingOffers) && (
+            {/* Bidding Activity - Always show for active properties */}
+            {(property as LocalPropertyWithStatus).status !== 'sold' && (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1383,9 +1383,14 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                           <div className="text-2xl font-bold text-blue-900">{propertyOffers.length}</div>
                         </div>
                         <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                          <div className="text-sm text-green-600 font-medium">Highest Offer</div>
+                          <div className="text-sm text-green-600 font-medium">
+                            {propertyOffers.length > 0 ? 'Highest Offer' : 'Starting Price'}
+                          </div>
                           <div className="text-xl font-bold text-green-900">
-                            {propertyOffers.length > 0 ? formatCurrency(Math.max(...propertyOffers.map(offer => offer.offer_price))) : 'No offers yet'}
+                            {propertyOffers.length > 0 
+                              ? formatCurrency(Math.max(...propertyOffers.map(offer => offer.offer_price))) 
+                              : formatCurrency(property.financials.price)
+                            }
                           </div>
                         </div>
                       </div>
@@ -1477,8 +1482,30 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                     ) : (
                       <div className="text-center py-8 text-gray-500">
                         <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                        <p className="text-sm">No offers yet</p>
-                        <p className="text-xs text-gray-400 mt-1">Be the first to make an offer</p>
+                        <p className="text-sm font-medium">No offers yet</p>
+                        <p className="text-xs text-gray-400 mt-1">Be the first to make an offer on this property</p>
+                        {!user && (
+                          <div className="mt-4">
+                            <Button 
+                              size="sm"
+                              onClick={() => setShowSignupModal(true)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              Sign up to make an offer
+                            </Button>
+                          </div>
+                        )}
+                        {user && canMakeOffer() && (
+                          <div className="mt-4">
+                            <Button 
+                              size="sm"
+                              onClick={handleMakeOffer}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Make the first offer
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1504,9 +1531,14 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                           <div className="flex items-start space-x-2">
                             <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
                             <div>
-                              <h5 className="font-medium text-blue-900 mb-1">Make Your Offer</h5>
+                              <h5 className="font-medium text-blue-900 mb-1">
+                                {propertyOffers.length === 0 ? 'Make the First Offer' : 'Make Your Offer'}
+                              </h5>
                               <p className="text-sm text-blue-800 mb-3">
-                                Submit your offer to be considered for this property.
+                                {propertyOffers.length === 0 
+                                  ? 'Be the first to make an offer on this property and set the starting point for negotiations.'
+                                  : 'Submit your offer to be considered for this property.'
+                                }
                               </p>
                               <Button 
                                 onClick={handleMakeOffer}
@@ -1514,7 +1546,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                                 size="sm"
                               >
                                 <DollarSign className="w-4 h-4 mr-2" />
-                                Make an Offer
+                                {propertyOffers.length === 0 ? 'Make the First Offer' : 'Make an Offer'}
                               </Button>
                             </div>
                           </div>

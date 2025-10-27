@@ -306,15 +306,31 @@ export const updatePropertyOffer = async (
 
     // If offer is approved or rejected, update property status
     if (updateData.status === 'approved') {
-      await supabase
-        .from('properties')
-        .update({ status: 'sold' })
-        .eq('id', (await getPropertyOfferById(offerId))?.property_id);
+      const offer = await getPropertyOfferById(offerId);
+      if (offer?.property_id) {
+        await supabase
+          .from('properties')
+          .update({ status: 'sold' })
+          .eq('id', offer.property_id);
+      }
     } else if (updateData.status === 'rejected') {
-      await supabase
-        .from('properties')
-        .update({ status: 'active' })
-        .eq('id', (await getPropertyOfferById(offerId))?.property_id);
+      const offer = await getPropertyOfferById(offerId);
+      if (offer?.property_id) {
+        // Check if there are any other pending or approved offers for this property
+        const { data: remainingOffers, error: checkError } = await supabase
+          .from('property_offers')
+          .select('id')
+          .eq('property_id', offer.property_id)
+          .in('status', ['pending', 'approved']);
+
+        if (!checkError && (!remainingOffers || remainingOffers.length === 0)) {
+          // Only update to active if no other offers exist
+          await supabase
+            .from('properties')
+            .update({ status: 'active' })
+            .eq('id', offer.property_id);
+        }
+      }
     }
 
     return true;
@@ -336,6 +352,26 @@ export const deletePropertyOffer = async (offerId: string): Promise<boolean> => 
 
     console.log('Deleting property offer:', { offerId });
 
+    // First, get the offer details to know which property it belongs to
+    const { data: offerData, error: fetchError } = await supabase
+      .from('property_offers')
+      .select('property_id')
+      .eq('id', offerId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching offer details:', fetchError);
+      return false;
+    }
+
+    if (!offerData) {
+      console.error('Offer not found');
+      return false;
+    }
+
+    const propertyId = offerData.property_id;
+
+    // Delete the offer
     const { error } = await supabase
       .from('property_offers')
       .delete()
@@ -348,6 +384,36 @@ export const deletePropertyOffer = async (offerId: string): Promise<boolean> => 
         console.error('Row-level security policy violation - user does not have permission to delete this offer');
       }
       return false;
+    }
+
+    // Check if there are any other pending or approved offers for this property
+    const { data: remainingOffers, error: checkError } = await supabase
+      .from('property_offers')
+      .select('id')
+      .eq('property_id', propertyId)
+      .in('status', ['pending', 'approved']);
+
+    if (checkError) {
+      console.error('Error checking remaining offers:', checkError);
+      // Don't fail the deletion if we can't check remaining offers
+    } else {
+      // If no remaining offers, update property status back to 'active'
+      if (!remainingOffers || remainingOffers.length === 0) {
+        console.log('No remaining offers for property, updating status to active');
+        const { error: updateError } = await supabase
+          .from('properties')
+          .update({ status: 'active' })
+          .eq('id', propertyId);
+
+        if (updateError) {
+          console.error('Error updating property status to active:', updateError);
+          // Don't fail the deletion if we can't update the property status
+        } else {
+          console.log('Successfully updated property status to active');
+        }
+      } else {
+        console.log(`Property still has ${remainingOffers.length} remaining offers, keeping status as 'under_offer'`);
+      }
     }
 
     return true;
