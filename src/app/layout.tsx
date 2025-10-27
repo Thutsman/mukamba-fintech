@@ -104,9 +104,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="light">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="light only" />
+        <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content="#ffffff" />
         {/* Icon link tags are generated via the Metadata API above. */}
         <link rel="manifest" href="/manifest.json" />
@@ -150,14 +150,18 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  // Force app-controlled light theme regardless of device or previous storage
-                  document.documentElement.classList.remove('dark');
-                  document.documentElement.classList.add('light');
-                  try { localStorage.setItem('theme', 'light'); } catch (_) {}
-                  // Override any system preference
-                  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.classList.add('light');
+                  var stored = null;
+                  try { stored = localStorage.getItem('theme'); } catch (_) {}
+                  var prefersDark = false;
+                  try { prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (_) {}
+                  var useDark = stored ? stored === 'dark' : prefersDark;
+                  var root = document.documentElement;
+                  if (useDark) {
+                    root.classList.add('dark');
+                    root.classList.remove('light');
+                  } else {
+                    root.classList.remove('dark');
+                    root.classList.add('light');
                   }
                 } catch (e) {}
               })();

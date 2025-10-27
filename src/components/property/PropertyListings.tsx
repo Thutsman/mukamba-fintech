@@ -49,7 +49,7 @@ import {
   UserPlus
 } from 'lucide-react';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
 import { useAuthStore } from '@/lib/store';
@@ -91,14 +91,17 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   onSignUpPrompt
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [filters, setFilters] = React.useState<PropertySearchFilters>(
     initialFilters ? { ...defaultFilters, ...initialFilters } : defaultFilters
   );
+  const [hasInitializedFilters, setHasInitializedFilters] = React.useState(false);
   const [properties, setProperties] = React.useState<PropertyListing[]>([]);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [savedProperties, setSavedProperties] = React.useState<Set<string>>(new Set());
+  const isLandSelected = React.useMemo(() => (filters.propertyType || []).includes('land' as PropertyType), [filters.propertyType]);
   
   // Phone verification modal state
   const [showPhoneVerificationModal, setShowPhoneVerificationModal] = React.useState(false);
@@ -162,7 +165,49 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
         });
       }
     }
+    setHasInitializedFilters(true);
   }, []); // Empty dependency array ensures this only runs once on mount
+
+  // Sync filters to URL query so navigating away and back preserves selection
+  React.useEffect(() => {
+    if (!hasInitializedFilters) return;
+    const params = new URLSearchParams();
+
+    if (filters.propertyType && filters.propertyType.length > 0) {
+      for (const type of filters.propertyType) params.append('propertyType', String(type));
+    }
+    if (filters.listingType) params.set('listingType', String(filters.listingType));
+    if (filters.priceRange) {
+      if (filters.priceRange.min !== undefined && filters.priceRange.min > 0) {
+        params.set('priceRange.min', String(filters.priceRange.min));
+      }
+      if (filters.priceRange.max !== undefined) {
+        params.set('priceRange.max', String(filters.priceRange.max));
+      }
+    }
+    if (filters.location) {
+      if (filters.location.city) params.set('city', filters.location.city);
+      if (filters.location.suburb) params.set('suburb', filters.location.suburb);
+    }
+    if (filters.bedrooms !== undefined && filters.bedrooms !== null) {
+      params.set('bedrooms', String(filters.bedrooms));
+    }
+    if (filters.sortBy && filters.sortBy !== 'date-newest') {
+      params.set('sortBy', filters.sortBy);
+    }
+
+    const qs = params.toString();
+    const url = qs ? `${pathname}?${qs}` : pathname;
+    // Use replace to avoid growing history entries while changing filters
+    router.replace(url);
+  }, [filters, pathname, router, hasInitializedFilters]);
+
+  // If land is selected, bedrooms filter is irrelevant; clear it automatically
+  React.useEffect(() => {
+    if (isLandSelected && filters.bedrooms !== undefined) {
+      setFilters(prev => ({ ...prev, bedrooms: undefined }));
+    }
+  }, [isLandSelected, filters.bedrooms]);
 
   // Load properties from Supabase only
   React.useEffect(() => {
@@ -619,7 +664,14 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           setBedrooms(value);
           clearTimeout(timeoutId);
           timeoutId = setTimeout(() => {
-            const numValue = value === '' ? undefined : Number(value);
+            let numValue: number | undefined = value === '' ? undefined : Number(value);
+            if (typeof numValue === 'number') {
+              if (isNaN(numValue)) {
+                numValue = undefined;
+              } else if (numValue < 0) {
+                numValue = 0; // clamp to 0 to prevent negative bedrooms
+              }
+            }
             updateFilter('bedrooms', numValue);
           }, 500);
         };
@@ -690,16 +742,19 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             </div>
           </div>
 
-          {/* Bedrooms */}
-          <div className="space-y-2">
-            <Label>Bedrooms</Label>
-            <Input
-              placeholder="Number of bedrooms"
-              type="number"
-              value={bedrooms}
-              onChange={(e) => updateBedrooms(e.target.value)}
-            />
-          </div>
+          {/* Bedrooms (hidden for land) */}
+          {!isLandSelected && (
+            <div className="space-y-2">
+              <Label>Bedrooms</Label>
+              <Input
+                placeholder="Number of bedrooms"
+                type="number"
+                min={0}
+                value={bedrooms}
+                onChange={(e) => updateBedrooms(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Listing Type */}
           <div className="space-y-2">
@@ -708,10 +763,10 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               <SelectTrigger>
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="sale">For Sale</SelectItem>
-                <SelectItem value="rent-to-buy">Rent-to-Buy</SelectItem>
+              <SelectContent className="bg-white border border-slate-200 shadow-lg rounded-md p-1 z-[100] max-h-64 overflow-auto">
+                <SelectItem value="all" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">All Types</SelectItem>
+                <SelectItem value="sale" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">For Sale</SelectItem>
+                <SelectItem value="rent-to-buy" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">Installments</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -723,12 +778,12 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
               <SelectTrigger>
                 <SelectValue placeholder="Sort by..." />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="date-newest">Newest First</SelectItem>
-                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="date-oldest">Oldest First</SelectItem>
+              <SelectContent className="bg-white border border-slate-200 shadow-lg rounded-md p-1 z-[100] max-h-64 overflow-auto">
+                <SelectItem value="default" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">Default</SelectItem>
+                <SelectItem value="date-newest" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">Newest First</SelectItem>
+                <SelectItem value="price-asc" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">Price: High to Low</SelectItem>
+                <SelectItem value="date-oldest" className="px-3 py-2 text-sm data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none data-[state=checked]:bg-slate-100">Oldest First</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -798,6 +853,18 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                 {showFilters && <ChevronDown className="w-3 h-3 rotate-180 transition-transform" />}
                 {!showFilters && <ChevronDown className="w-3 h-3 transition-transform" />}
               </Button>
+
+              {/* Clear Filters - visible when any filter differs from defaults */}
+              {(filters.propertyType?.length || filters.listingType || filters.priceRange?.min || filters.priceRange?.max || filters.bedrooms !== undefined || filters.location?.city || filters.location?.suburb || (filters.sortBy && filters.sortBy !== 'date-newest')) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="border-slate-300 hover:border-slate-400"
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
           </div>
 

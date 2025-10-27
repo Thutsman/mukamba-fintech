@@ -384,7 +384,36 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const router = useRouter();
   const isVerified = isFullyVerified(user);
   const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'profile' | 'settings'>('overview');
+  // Keep theme in sync with document and localStorage
+  React.useEffect(() => {
+    try {
+      const storedTheme = typeof window !== 'undefined' ? window.localStorage.getItem('theme') : null;
+      if (storedTheme === 'dark') {
+        setDarkModeEnabled(true);
+      }
+    } catch (_) {
+      // ignore storage read errors
+    }
+  }, []);
+
+  const applyTheme = React.useCallback((enabled: boolean) => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    if (enabled) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      try { window.localStorage.setItem('theme', 'dark'); } catch (_) {}
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      try { window.localStorage.setItem('theme', 'light'); } catch (_) {}
+    }
+  }, []);
+
+  React.useEffect(() => {
+    applyTheme(darkModeEnabled);
+  }, [darkModeEnabled, applyTheme]);
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>('overview');
   const [showPropertySearch, setShowPropertySearch] = React.useState(false);
   const [showPropertyGrid, setShowPropertyGrid] = React.useState(false);
   const [showPropertyDetails, setShowPropertyDetails] = React.useState(false);
@@ -927,16 +956,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             <Badge className="mt-2 bg-green-100 text-green-800 flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Verified Buyer</Badge>
               </div>
             </div>
-        <div className="px-3 py-3 border-b border-slate-200">
-          <div className="text-xs font-medium text-slate-500 mb-2">Quick Settings</div>
-          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-2">
-            <div className="flex items-center gap-2 text-slate-700"><SunIcon className="w-4 h-4"/>Dark Mode</div>
-            <button onClick={()=>setDarkModeEnabled(v=>!v)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled?'bg-red-800':'bg-slate-300'}`}
-              aria-pressed={darkModeEnabled}>
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${darkModeEnabled?'translate-x-5':'translate-x-1'}`}/>
-            </button>
-            </div>
-        </div>
+        
 
         {/* Navigation */}
         <nav className="p-2 space-y-1">
@@ -947,7 +967,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
             {key:'messages', label:'Messages', icon:MessageCircle},
             {key:'documents', label:'Documents', icon:FileText},
-            {key:'profile', label:'Profile', icon:UserIcon},
             {key:'settings', label:'Settings', icon:SettingsIcon},
           ].map((item:any)=>{
             const Icon = item.icon;
@@ -955,10 +974,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <button key={item.key} onClick={() => {
                 if (item.key === 'messages') {
                   setShowGeneralInquiryModal(true);
-                } else if (item.key === 'profile') {
-                  // Profile button in VerifiedUserDashboard should do nothing
-                  // to prevent the "narrower" version from appearing
-                  // No action needed - just prevent the section change
                 } else {
                   setActiveSection(item.key);
                 }
@@ -1029,24 +1044,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
         </div>
 
-        {/* Quick Settings */}
-                <div className="mb-6">
-                  <div className="text-xs font-medium text-slate-500 mb-3">Quick Settings</div>
-                  <div className="space-y-2">
-          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2 text-slate-700 text-sm">
-                        <SunIcon className="w-4 h-4"/>Dark Mode
-            </div>
-            <button
-                        onClick={() => setDarkModeEnabled(v => !v)} 
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${darkModeEnabled ? 'bg-red-800' : 'bg-slate-300'}`}
-              aria-pressed={darkModeEnabled}
-            >
-                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${darkModeEnabled ? 'translate-x-5' : 'translate-x-1'}`}/>
-            </button>
-          </div>
-          </div>
-        </div>
+                
 
                 {/* Navigation Items */}
                 <nav className="space-y-1">
@@ -1057,7 +1055,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
                     {key: 'messages', label: 'Messages', icon: MessageCircle},
                     {key: 'documents', label: 'Documents', icon: FileText},
-                    {key: 'profile', label: 'Profile', icon: UserIcon},
                     {key: 'settings', label: 'Settings', icon: SettingsIcon},
                   ].map((item: any) => {
                     const Icon = item.icon;
@@ -1067,10 +1064,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                         onClick={() => {
                           if (item.key === 'messages') {
                             setShowGeneralInquiryModal(true);
-                          } else if (item.key === 'profile') {
-                            // Profile button in VerifiedUserDashboard should do nothing
-                            // to prevent the "narrower" version from appearing
-                            // No action needed - just prevent the section change
                           } else {
                             setActiveSection(item.key);
                           }
@@ -1501,48 +1494,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       </Card>
       )}
 
-      {/* Profile Section */}
-      {activeSection === 'profile' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <h5 className="text-sm font-medium text-slate-900 mb-1">Full Name</h5>
-                <p className="text-slate-500">{user.firstName} {user.lastName}</p>
-            </div>
-              <div>
-                <h5 className="text-sm font-medium text-slate-900 mb-1">Email</h5>
-                <p className="text-slate-500">{user.email}</p>
-          </div>
-              <div>
-                <h5 className="text-sm font-medium text-slate-900 mb-1">Phone</h5>
-                <p className="text-slate-500">{user.phone || 'N/A'}</p>
-        </div>
-            <div>
-                <h5 className="text-sm font-medium text-slate-900 mb-1">Credit Score</h5>
-                <p className="text-slate-500">{user.creditScore}</p>
-            </div>
-          </div>
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold text-slate-900 mb-2">Financial Profile</h4>
-              <FinancialSummaryCard profile={mockFinancialProfile} />
-        </div>
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold text-slate-900 mb-2">Application History</h4>
-              <Button 
-                size="sm" 
-                className="bg-blue-600 hover:bg-blue-700 text-white" 
-                onClick={handleViewApplicationHistory}
-              >
-                View All Applications
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Settings Section */}
       {activeSection === 'settings' && (
