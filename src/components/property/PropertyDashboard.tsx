@@ -1732,7 +1732,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 2, duration: 0.5 }}
-        className="fixed bottom-32 right-6 z-40"
+        className="fixed bottom-48 right-6 z-40"
       >
         <Button
           className="bg-[#7f1518] hover:bg-[#6a1215] text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full px-6 py-3"

@@ -73,6 +73,14 @@ export const AuthSystem: React.FC = () => {
         window.history.replaceState({}, '', cleanUrl);
         return;
       }
+      
+      if (view === 'home') {
+        setCurrentView('home');
+        // Clean URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        return;
+      }
 
       const postAuthView = sessionStorage.getItem('postAuthView');
       if (postAuthView === 'profile') {
