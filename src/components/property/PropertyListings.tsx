@@ -247,7 +247,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
 
   // Filter properties based on current filters
   const filteredProperties = React.useMemo(() => {
-    return properties.filter(property => {
+    const filtered = properties.filter(property => {
       // Property type filter
       if (filters.propertyType && filters.propertyType.length > 0) {
         if (!filters.propertyType.includes(property.details.type)) {
@@ -292,6 +292,24 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
 
       return true;
     });
+
+    // Sort based on filters.sortBy
+    const sortBy = filters.sortBy || 'date-newest';
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc':
+          return (a.financials.price || 0) - (b.financials.price || 0);
+        case 'price-desc':
+          return (b.financials.price || 0) - (a.financials.price || 0);
+        case 'date-oldest':
+          return (a.createdAt?.getTime?.() || 0) - (b.createdAt?.getTime?.() || 0);
+        case 'date-newest':
+        default:
+          return (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0);
+      }
+    });
+
+    return sorted;
   }, [properties, filters]);
 
   const clearFilters = () => {
