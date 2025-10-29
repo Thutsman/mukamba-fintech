@@ -119,8 +119,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         buyer_phone: buyerData?.phone || user.phone,
         buyer_uid: o.buyer_id,
         property_title: o.property?.title || 'Property',
-        property_address: o.property?.address || '',
-        listing_type: o.property?.listing_type || '',
+        property_address: o.property?.location ? `${o.property.location.city}, ${o.property.location.country}` : '',
         payment_method: o.payment_method
       }
     };
