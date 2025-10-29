@@ -80,7 +80,7 @@ const StepImage: React.FC<{
   }
 
   return (
-        <div className="relative rounded-2xl h-80 overflow-hidden border-2 border-gray-400 shadow-md">
+        <div className="relative rounded-2xl h-64 sm:h-72 md:h-80 overflow-hidden border-2 border-gray-400 shadow-md">
       {/* Loading shimmer */}
       {!isLoaded && (
         <div className="absolute inset-0 animate-pulse bg-gray-100" />
@@ -90,7 +90,7 @@ const StepImage: React.FC<{
         alt={alt}
         fill
         className="object-cover"
-        sizes="(max-width: 1024px) 100vw, 50vw"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw"
         onError={() => {
           setImageLoadErrors(prev => new Set(prev).add(src));
         }}
@@ -155,6 +155,25 @@ export default function HowToBuyPage() {
               </a>
             </div>
 
+            {/* Mobile Back to Home Button */}
+            <div className="md:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-gray-700 border-gray-300 hover:bg-gray-50 flex items-center"
+                onClick={() => {
+                  router.push('/');
+                  trackEvent('how_to_buy_back_to_home_clicked', {
+                    source: 'mobile_navigation',
+                    event_category: 'navigation'
+                  });
+                }}
+              >
+                <Home className="w-4 h-4 mr-1" />
+                Back to Home
+              </Button>
+            </div>
+
             {/* Right Side - Auth Buttons */}
             <div className="flex items-center space-x-3">
               <Button
@@ -214,14 +233,14 @@ export default function HowToBuyPage() {
         </div>
 
         {/* Step 1: Create Your Account */}
-        <div className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="order-2 lg:order-1">
+        <div className="mb-16 lg:mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="order-1 lg:order-1">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-4">
-                  <User className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                  <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <span className="text-6xl font-light text-gray-300">01</span>
+                <span className="text-4xl sm:text-6xl font-light text-gray-300">01</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Sign Up & Complete KYC
@@ -244,7 +263,7 @@ export default function HowToBuyPage() {
                 ))}
               </ul>
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-2 lg:order-2">
               <StepImage
                 src="/images/step-1-create-account.png"
                 alt="Create Your Account - Step 1"
@@ -258,9 +277,9 @@ export default function HowToBuyPage() {
         </div>
 
         {/* Step 2: Browse Verified Properties */}
-        <div className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="order-1">
+        <div className="mb-16 lg:mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="order-2 lg:order-2">
               <StepImage
                 src="/images/step-2-browse-properties.png"
                 alt="Browse Verified Properties - Step 2"
@@ -270,12 +289,12 @@ export default function HowToBuyPage() {
                 setImageLoadErrors={setImageLoadErrors}
               />
             </div>
-            <div className="order-2">
+            <div className="order-1 lg:order-1">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-4">
-                  <Search className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                  <Search className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <span className="text-6xl font-light text-gray-300">02</span>
+                <span className="text-4xl sm:text-6xl font-light text-gray-300">02</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Make Offer Or Bid
@@ -302,14 +321,14 @@ export default function HowToBuyPage() {
         </div>
 
         {/* Step 3: Review Property Details */}
-        <div className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="order-2 lg:order-1">
+        <div className="mb-16 lg:mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="order-1 lg:order-1">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-4">
-                  <FileText className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                  <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <span className="text-6xl font-light text-gray-300">03</span>
+                <span className="text-4xl sm:text-6xl font-light text-gray-300">03</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Submit Your Offer
@@ -330,7 +349,7 @@ export default function HowToBuyPage() {
                 ))}
               </ul>
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-2 lg:order-2">
               <StepImage
                 src="/images/step-3-review-details.png"
                 alt="Review Property Details - Step 3"
@@ -344,9 +363,9 @@ export default function HowToBuyPage() {
         </div>
 
         {/* Step 4: Make Your Offer */}
-        <div className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="order-1">
+        <div className="mb-16 lg:mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="order-2 lg:order-2">
               <StepImage
                 src="/images/step-4-make-offer.png"
                 alt="Make Your Offer - Step 4"
@@ -356,12 +375,12 @@ export default function HowToBuyPage() {
                 setImageLoadErrors={setImageLoadErrors}
               />
             </div>
-            <div className="order-2">
+            <div className="order-1 lg:order-1">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-4">
-                  <DollarSign className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                  <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <span className="text-6xl font-light text-gray-300">04</span>
+                <span className="text-4xl sm:text-6xl font-light text-gray-300">04</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Make Payment
@@ -391,14 +410,14 @@ export default function HowToBuyPage() {
         </div>
 
         {/* Step 5: Complete Due Diligence */}
-        <div className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="order-2 lg:order-1">
+        <div className="mb-16 lg:mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="order-1 lg:order-1">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-4">
-                  <CheckCircle className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#7f1518] rounded-full flex items-center justify-center mr-3 sm:mr-4">
+                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <span className="text-6xl font-light text-gray-300">05</span>
+                <span className="text-4xl sm:text-6xl font-light text-gray-300">05</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                 Track Your Payments
@@ -422,7 +441,7 @@ export default function HowToBuyPage() {
                 ))}
               </ul>
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-2 lg:order-2">
               <StepImage
                 src="/images/step-5-due-diligence.png"
                 alt="Track Your Payments - Step 5"

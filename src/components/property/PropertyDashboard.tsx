@@ -1438,7 +1438,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               size="lg"
               className="bg-black text-white hover:bg-gray-800 px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
               onClick={() => {
-                navigateWithScrollToTop(router, '/how-to-buy');
+                router.push('/how-to-buy');
                 // Track analytics
                 trackEvent('how_to_buy_cta_clicked', {
                   source: 'ready_to_start_section',
