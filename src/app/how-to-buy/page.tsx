@@ -64,7 +64,7 @@ const StepImage: React.FC<{
   
   if (hasError) {
     return (
-      <div className="bg-gray-100 rounded-2xl h-80 flex items-center justify-center border border-dashed border-gray-300">
+          <div className="bg-gray-100 rounded-2xl h-80 flex items-center justify-center border-2 border-dashed border-gray-500 shadow-md">
         <div className="text-center text-gray-500 px-6">
           <div className="mx-auto mb-3 w-12 h-12 relative">
             <Image src="/file.svg" alt="Placeholder" fill className="object-contain" />
@@ -80,7 +80,7 @@ const StepImage: React.FC<{
   }
 
   return (
-    <div className="relative rounded-2xl h-80 overflow-hidden border border-gray-300">
+        <div className="relative rounded-2xl h-80 overflow-hidden border-2 border-gray-400 shadow-md">
       {/* Loading shimmer */}
       {!isLoaded && (
         <div className="absolute inset-0 animate-pulse bg-gray-100" />

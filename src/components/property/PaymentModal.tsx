@@ -114,7 +114,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       line_items: [{ description: `Deposit for ${o.property?.title || 'Property'}`, quantity: 1, unit_price: subtotal, total: subtotal }],
       metadata: { 
         offer_reference: o.offer_reference,
-        buyer_name: buyerData?.name || user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        buyer_name: buyerData?.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         buyer_email: buyerData?.email || user.email,
         buyer_phone: buyerData?.phone || user.phone,
         buyer_uid: o.buyer_id,
