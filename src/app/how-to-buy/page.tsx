@@ -22,7 +22,8 @@ import {
   Mail,
   MessageCircle,
   Loader2,
-  X
+  X,
+  Menu
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -110,6 +111,24 @@ export default function HowToBuyPage() {
   const [showSellerModal, setShowSellerModal] = React.useState(false);
   const [showBuyerPhoneVerificationModal, setShowBuyerPhoneVerificationModal] = React.useState(false);
   const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  // Close mobile menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobileMenuOpen) {
+        const target = event.target as Element;
+        if (!target.closest('[data-mobile-menu]')) {
+          setIsMobileMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -155,27 +174,20 @@ export default function HowToBuyPage() {
               </a>
             </div>
 
-            {/* Mobile Back to Home Button */}
-            <div className="md:hidden">
+            {/* Mobile Hamburger Menu */}
+            <div className="md:hidden" data-mobile-menu>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="text-gray-700 border-gray-300 hover:bg-gray-50 flex items-center"
-                onClick={() => {
-                  router.push('/');
-                  trackEvent('how_to_buy_back_to_home_clicked', {
-                    source: 'mobile_navigation',
-                    event_category: 'navigation'
-                  });
-                }}
+                className="text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                <Home className="w-4 h-4 mr-1" />
-                Back to Home
+                <Menu className="w-6 h-6" />
               </Button>
             </div>
 
-            {/* Right Side - Auth Buttons */}
-            <div className="flex items-center space-x-3">
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex items-center space-x-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -208,6 +220,70 @@ export default function HowToBuyPage() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden bg-white border-t border-gray-200 shadow-lg"
+              data-mobile-menu
+            >
+              <div className="px-4 py-4 space-y-3">
+                {/* Home Link */}
+                <button
+                  className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  onClick={() => {
+                    router.push('/');
+                    setIsMobileMenuOpen(false);
+                    trackEvent('how_to_buy_mobile_home_clicked', {
+                      source: 'mobile_menu',
+                      event_category: 'navigation'
+                    });
+                  }}
+                >
+                  <Home className="w-4 h-4 mr-3" />
+                  Home
+                </button>
+
+                {/* Create Account Button */}
+                <button
+                  className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  onClick={() => {
+                    setShowSignupModal(true);
+                    setIsMobileMenuOpen(false);
+                    trackEvent('how_to_buy_mobile_create_account_clicked', {
+                      source: 'mobile_menu',
+                      event_category: 'conversion'
+                    });
+                  }}
+                >
+                  <UserPlus className="w-4 h-4 mr-3" />
+                  Create Account
+                </button>
+
+                {/* Sign In Button */}
+                <button
+                  className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  onClick={() => {
+                    setShowSigninModal(true);
+                    setIsMobileMenuOpen(false);
+                    trackEvent('how_to_buy_mobile_sign_in_clicked', {
+                      source: 'mobile_menu',
+                      event_category: 'conversion'
+                    });
+                  }}
+                >
+                  <LogIn className="w-4 h-4 mr-3" />
+                  Sign In
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero Section */}
