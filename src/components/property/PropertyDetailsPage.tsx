@@ -1601,6 +1601,10 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
         property={property}
         user={user!}
         onSubmit={handleSubmitOffer}
+        onViewOffers={() => {
+          // Navigate to home page with offers section parameter
+          router.push('/?section=offers');
+        }}
       />
 
       <ScheduleViewingModal

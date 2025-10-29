@@ -1438,17 +1438,19 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               size="lg"
               className="bg-black text-white hover:bg-gray-800 px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
               onClick={() => {
-                setShowSignupModal(true);
+                navigateWithScrollToTop(router, '/how-to-buy');
                 // Track analytics
-                trackEvent('sign_up_now_cta_clicked', {
+                trackEvent('how_to_buy_cta_clicked', {
                   source: 'ready_to_start_section',
-                  event_category: 'conversion'
+                  event_category: 'navigation'
                 });
               }}
             >
               <UserPlus className="w-5 h-5 mr-2" />
-              Sign Up Now
+              How to Buy
             </Button>
+
+            
                 </motion.div>
               </div>
             </motion.div>

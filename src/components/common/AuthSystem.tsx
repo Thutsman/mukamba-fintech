@@ -22,6 +22,7 @@ export const AuthSystem: React.FC = () => {
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [showResendModal, setShowResendModal] = React.useState(false);
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile' | 'home'>('properties');
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>('overview');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
   const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
   const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
@@ -66,6 +67,8 @@ export const AuthSystem: React.FC = () => {
     try {
       const params = new URLSearchParams(window.location.search);
       const view = params.get('view');
+      const section = params.get('section');
+      
       if (view === 'profile') {
         setCurrentView('profile');
         // Clean URL
@@ -76,6 +79,16 @@ export const AuthSystem: React.FC = () => {
       
       if (view === 'home') {
         setCurrentView('home');
+        // Clean URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        return;
+      }
+
+      // Handle section parameter for offers
+      if (section === 'offers') {
+        setActiveSection('offers');
+        setCurrentView('properties'); // Show dashboard with offers section
         // Clean URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, '', cleanUrl);
@@ -497,6 +510,7 @@ export const AuthSystem: React.FC = () => {
           // Show VerifiedUserDashboard for fully verified users (unless they want to see home)
           <VerifiedUserDashboard
             user={user}
+            activeSection={activeSection}
             onViewProperty={(propertyId) => {
               console.log('View property:', propertyId);
               // Navigate to property details

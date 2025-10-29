@@ -46,6 +46,7 @@ import { PropertyOffer } from '@/types/offers';
 import type { Invoice } from '@/types/invoices';
 import { getInvoiceByOffer, markInvoicePaid } from '@/lib/invoice-services';
 import { User as UserType } from '@/types/auth';
+import { createClient } from '@/lib/supabase/client';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -87,8 +88,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [uploadingFile, setUploadingFile] = React.useState(false);
   const [copiedField, setCopiedField] = React.useState<string | null>(null);
   const [invoice, setInvoice] = React.useState<Invoice | null>(null);
+  const [buyerInfo, setBuyerInfo] = React.useState<{ name: string; email: string; phone: string } | null>(null);
   
-  const buildInvoiceFromOffer = (o: PropertyOffer): Invoice => {
+  const buildInvoiceFromOffer = (o: PropertyOffer, buyerData?: { name: string; email: string; phone: string }): Invoice => {
     const subtotal = o.payment_method === 'cash' ? o.offer_price : o.deposit_amount;
     const taxes = 0;
     const total = subtotal + taxes;
@@ -110,7 +112,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       issue_date: issueDate.toISOString(),
       due_date: dueDate.toISOString(),
       line_items: [{ description: `Deposit for ${o.property?.title || 'Property'}`, quantity: 1, unit_price: subtotal, total: subtotal }],
-      metadata: { offer_reference: o.offer_reference }
+      metadata: { 
+        offer_reference: o.offer_reference,
+        buyer_name: buyerData?.name || user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        buyer_email: buyerData?.email || user.email,
+        buyer_phone: buyerData?.phone || user.phone,
+        buyer_uid: o.buyer_id,
+        property_title: o.property?.title || 'Property',
+        property_address: o.property?.address || '',
+        listing_type: o.property?.listing_type || '',
+        payment_method: o.payment_method
+      }
     };
   };
 
@@ -124,19 +136,52 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       });
       setValidationErrors({});
       (async () => {
-        const inv = await getInvoiceByOffer(offer.id);
-        if (inv) {
-          setInvoice(inv);
-          setPaymentData(p => ({ ...p, amount: inv.total || offer.deposit_amount }));
-        } else {
-          // Fallback: build a local invoice so buyers still see invoice details in dev/mock
-          const local = buildInvoiceFromOffer(offer);
-          setInvoice(local);
-          setPaymentData(p => ({ ...p, amount: local.total }));
+        // Fetch buyer information from user_profiles
+        try {
+          const supabase = createClient();
+          const { data: buyerData, error } = await supabase
+            .from('user_profiles')
+            .select('id, first_name, last_name, email, phone')
+            .eq('id', offer.buyer_id)
+            .single();
+
+          let buyerDetails = null;
+          if (!error && buyerData) {
+            buyerDetails = {
+              name: `${buyerData.first_name || ''} ${buyerData.last_name || ''}`.trim() || 'Buyer',
+              email: buyerData.email || '',
+              phone: buyerData.phone || ''
+            };
+            setBuyerInfo(buyerDetails);
+          }
+          
+          // Load or build invoice with buyer info
+          const inv = await getInvoiceByOffer(offer.id);
+          if (inv) {
+            setInvoice(inv);
+            setPaymentData(p => ({ ...p, amount: inv.total || offer.deposit_amount }));
+          } else {
+            // Fallback: build a local invoice so buyers still see invoice details in dev/mock
+            const local = buildInvoiceFromOffer(offer, buyerDetails || undefined);
+            setInvoice(local);
+            setPaymentData(p => ({ ...p, amount: local.total }));
+          }
+        } catch (error) {
+          console.error('Error fetching buyer info:', error);
+          // Fallback: build invoice without specific buyer data
+          const inv = await getInvoiceByOffer(offer.id);
+          if (inv) {
+            setInvoice(inv);
+            setPaymentData(p => ({ ...p, amount: inv.total || offer.deposit_amount }));
+          } else {
+            const local = buildInvoiceFromOffer(offer);
+            setInvoice(local);
+            setPaymentData(p => ({ ...p, amount: local.total }));
+          }
         }
       })();
     }
-  }, [isOpen, offer.id, offer.deposit_amount]);
+  }, [isOpen, offer.id, offer.deposit_amount, offer.buyer_id]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -238,7 +283,6 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
         <div><strong>${inv.metadata?.buyer_name || ''}</strong></div>
         <div class="muted">${inv.metadata?.buyer_email || ''}</div>
         <div class="muted">${inv.metadata?.buyer_phone || ''}</div>
-        ${inv.metadata?.buyer_uid ? `<div class="muted">UID: ${inv.metadata.buyer_uid}</div>` : ''}
       </div>
       <div>
         <div class="section-title">Property</div>
@@ -263,13 +307,12 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
 
     <div class="section-title">Payment Instructions</div>
     <div class="instructions">
-      <p class="muted">Payment Method: ${inv.metadata?.payment_method === 'cash' ? 'Cash' : (inv.metadata?.payment_method || 'Installments')}</p>
       <p class="muted">Please complete payment by ${new Date(inv.due_date).toLocaleDateString()}.</p>
       <p class="muted"><strong>Validity:</strong> This invoice is valid for 7 working days from the date of issue. After this period the offer and invoice will automatically expire.</p>
       <p class="muted">Upload proof of payment in your Mukamba dashboard after transfer. Your payment will be reviewed and confirmed within 24–48 hours.</p>
     </div>
 
-    <div class="section-title">Bank Transfer (if selected)</div>
+    <div class="section-title"><strong>Banking Details</strong></div>
     <table>
       <tbody>
         <tr><td>Bank Name</td><td>NEDBANK</td></tr>
@@ -281,7 +324,7 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
     </table>
 
     <div class="footer">
-      <div>Mukamba Gateway • support@mukamba.com • +263 77 000 0000 • https://mukamba.com</div>
+      <div>Mukamba Gateway • hello@mukambagateway.com</div>
       <div class="muted">This invoice is issued for the purpose of property purchase under Mukamba Gateway. All payments are subject to verification. Terms apply.</div>
     </div>
   </div>
@@ -406,21 +449,6 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
           onClose();
           setStep('method');
         }, 3000);
-      } else {
-        // Handle other payment methods (diaspora)
-        // Simulate processing for now
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Call custom onSubmit if provided
-        if (onSubmit) {
-          await onSubmit(paymentData);
-        }
-        
-        setStep('success');
-        setTimeout(() => {
-          onClose();
-          setStep('method');
-        }, 3000);
       }
     } catch (error) {
       console.error('Payment failed:', error);
@@ -467,13 +495,13 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                 </Button>
               </div>
               <CardTitle className="text-xl">
-                {step === 'method' && 'Choose Payment Method'}
+                {step === 'method' && 'Make Payment'}
                 {step === 'details' && 'Payment Details'}
                 {step === 'processing' && 'Processing Payment'}
                 {step === 'success' && 'Payment Successful!'}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-2">
-                {step === 'method' && 'Select your preferred payment method'}
+                {step === 'method' && 'Complete your deposit payment'}
                 {step === 'details' && 'Enter your payment details'}
                 {step === 'processing' && 'Please wait while we process your payment...'}
                 {step === 'success' && 'Your payment has been processed successfully!'}
@@ -541,54 +569,17 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
 
                   {/* Payment Methods */}
                   <div className="space-y-3">
-                    <Label className="text-base font-medium">Select Payment Method</Label>
-                    <RadioGroup
-                      value={paymentData.paymentMethod}
-                      onValueChange={handlePaymentMethodChange}
-                      className="space-y-3"
-                    >
-                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        paymentData.paymentMethod === 'bank_transfer' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                      }`}>
-                        <RadioGroupItem 
-                          value="bank_transfer" 
-                          id="bank_transfer" 
-                          className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
-                        />
-                        <Label htmlFor="bank_transfer" className="cursor-pointer flex-1">
-                          <div className="flex items-center">
-                            <Building2 className="w-5 h-5 mr-3 text-gray-600" />
-                            <div>
-                              <span className="text-base font-medium">Bank Transfer</span>
-                              <p className="text-sm text-gray-500">Direct bank transfer</p>
-                            </div>
-                          </div>
-                        </Label>
+                    <Label className="text-base font-medium">Payment Method</Label>
+                    <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg border-green-500 bg-green-50`}>
+                      <div className="w-5 h-5 rounded-full border-2 border-green-500 bg-green-500" aria-hidden />
+                      <div className="flex items-center">
+                        <Building2 className="w-5 h-5 mr-3 text-gray-600" />
+                        <div>
+                          <span className="text-base font-medium">Bank Transfer</span>
+                          <p className="text-sm text-gray-500">Direct bank transfer</p>
+                        </div>
                       </div>
-
-                      <div className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        paymentData.paymentMethod === 'diaspora' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                      }`}>
-                        <RadioGroupItem 
-                          value="diaspora" 
-                          id="diaspora" 
-                          className="w-5 h-5 border-2 border-gray-400 data-[state=checked]:border-green-500 data-[state=checked]:bg-green-500"
-                        />
-                        <Label htmlFor="diaspora" className="cursor-pointer flex-1">
-                          <div className="flex items-center">
-                            <Globe className="w-5 h-5 mr-3 text-gray-600" />
-                            <div>
-                              <span className="text-base font-medium">Diaspora Payment</span>
-                              <p className="text-sm text-gray-500">International payment (Stripe/PayPal)</p>
-                            </div>
-                          </div>
-                        </Label>
-                      </div>
-                    </RadioGroup>
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -620,12 +611,7 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      {paymentData.paymentMethod === 'bank_transfer' && 
-                        'Transfer the exact amount to our bank account and upload proof of payment. Your payment will be verified manually within 1-2 business days.'
-                      }
-                      {paymentData.paymentMethod === 'diaspora' && 
-                        'You will be redirected to a secure payment gateway for international payment.'
-                      }
+                      Transfer the exact amount to our bank account and upload proof of payment. Your payment will be verified manually within 1-2 business days.
                     </AlertDescription>
                   </Alert>
 
@@ -825,17 +811,7 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                     </div>
                   )}
 
-                  {paymentData.paymentMethod === 'diaspora' && (
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium">Payment Gateway</Label>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-sm text-gray-600">
-                          You will be redirected to a secure payment gateway powered by Stripe or PayPal 
-                          to complete your international payment.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {/* Diaspora payment removed */}
 
                   {/* Action Buttons */}
                   <div className="flex space-x-3 pt-4">
@@ -888,20 +864,12 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">
-                      {paymentData.paymentMethod === 'bank_transfer' ? 'Payment Submitted!' : 'Payment Successful!'}
-                    </h3>
+                    <h3 className="font-semibold text-gray-800">Payment Submitted!</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      {paymentData.paymentMethod === 'bank_transfer' 
-                        ? `Your bank transfer of ${formatCurrency(offer.deposit_amount)} has been submitted for verification.`
-                        : `Your payment of ${formatCurrency(offer.deposit_amount)} has been processed successfully.`
-                      }
+                      {`Your bank transfer of ${formatCurrency(offer.deposit_amount)} has been submitted for verification.`}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      {paymentData.paymentMethod === 'bank_transfer'
-                        ? 'Your payment will be verified within 1-2 business days. You will receive an email confirmation once verified.'
-                        : 'You will receive a confirmation email shortly.'
-                      }
+                      Your payment will be verified within 1-2 business days. You will receive an email confirmation once verified.
                     </p>
                   </div>
                 </div>

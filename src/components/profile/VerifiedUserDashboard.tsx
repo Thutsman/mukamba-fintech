@@ -104,6 +104,7 @@ import {
 
 interface VerifiedUserDashboardProps {
   user: UserType;
+  activeSection?: 'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings';
   onViewProperty: (propertyId: string) => void;
   onViewApplication: (applicationId: string) => void;
   onStartNewApplication: () => void;
@@ -376,6 +377,7 @@ const FinancialSummaryCard: React.FC<{
 
 export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   user,
+  activeSection: initialActiveSection = 'overview',
   onViewProperty,
   onViewApplication,
   onStartNewApplication,
@@ -413,7 +415,12 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   React.useEffect(() => {
     applyTheme(darkModeEnabled);
   }, [darkModeEnabled, applyTheme]);
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>('overview');
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>(initialActiveSection);
+
+  // Update activeSection when initialActiveSection prop changes
+  React.useEffect(() => {
+    setActiveSection(initialActiveSection);
+  }, [initialActiveSection]);
   const [showPropertySearch, setShowPropertySearch] = React.useState(false);
   const [showPropertyGrid, setShowPropertyGrid] = React.useState(false);
   const [showPropertyDetails, setShowPropertyDetails] = React.useState(false);
