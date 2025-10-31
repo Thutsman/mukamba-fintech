@@ -4,15 +4,12 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/lib/store';
 
 function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { checkAuth } = useAuthStore();
 
   useEffect(() => {
     const confirmEmail = async () => {
@@ -49,50 +46,12 @@ function ConfirmEmailContent() {
         // Check if already confirmed
         if (result.alreadyConfirmed) {
           setStatus('success');
-          setMessage('Your email has already been confirmed! Redirecting to home...');
-          
-          // Note: We don't set userEmailConfirmTime for already confirmed emails
-          // because they don't need the "fresh confirmation" redirect to ProfileDashboard
-          
-          setTimeout(() => router.push('/'), 2000);
+          setMessage('Your email has already been confirmed!');
           return;
         }
 
         setStatus('success');
-        setMessage('Email confirmed successfully! Signing you in and redirecting to your profile...');
-        
-        // Set timestamp for fresh email confirmation (for AuthSystem redirect logic)
-        try {
-          localStorage.setItem('userEmailConfirmTime', Date.now().toString());
-        } catch (_) {}
-        
-        // If we have access and refresh tokens, use them to sign in automatically
-        if (result.accessToken && result.refreshToken && supabase) {
-          try {
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token: result.accessToken,
-              refresh_token: result.refreshToken
-            });
-
-            if (sessionError) {
-              console.error('Failed to establish session:', sessionError);
-              // Still redirect but user will need to sign in manually
-            } else {
-              console.log('User signed in successfully after email confirmation');
-              
-              // CRITICAL: Call checkAuth to update the auth store state
-              await checkAuth();
-            }
-          } catch (sessionError) {
-            console.error('Session establishment error:', sessionError);
-            // Continue with redirect anyway
-          }
-        }
-        
-        // Redirect to home page after 3 seconds where AuthSystem will detect fresh confirmation and redirect to ProfileDashboard
-        setTimeout(() => {
-          router.push('/');
-        }, 3000);
+        setMessage('Account successfully created! You can now sign in with your email and password.');
 
       } catch (error) {
         console.error('Confirmation error:', error);
@@ -102,7 +61,7 @@ function ConfirmEmailContent() {
     };
 
     confirmEmail();
-  }, [searchParams, router, checkAuth]);
+  }, [searchParams, router]);
 
   const handleResendEmail = () => {
     router.push('/?action=resend-confirmation');
@@ -145,7 +104,7 @@ function ConfirmEmailContent() {
           {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             {status === 'loading' && 'Confirming Your Email'}
-            {status === 'success' && 'Email Confirmed!'}
+            {status === 'success' && 'Account Successfully Created!'}
             {status === 'error' && 'Confirmation Failed'}
           </h1>
 
