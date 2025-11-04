@@ -52,6 +52,8 @@ import {
 import { useRouter, usePathname } from 'next/navigation';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
+import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
+import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { useAuthStore } from '@/lib/store';
 import { navigateWithScrollToTop } from '@/utils/navigation';
 
@@ -70,7 +72,8 @@ import { User } from '@/types/auth';
 interface LocalPropertyWithStatus {
   status: 'active' | 'under_offer' | 'sold' | 'rented' | 'pending' | 'draft';
 }
-import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
+import { getPropertiesFromSupabase, getSavedProperties, saveProperty, unsaveProperty } from '@/lib/property-services-supabase';
+import { shufflePropertiesByPeriod, getCurrentPeriod } from '@/utils/property-shuffle';
 
 interface PropertyListingsProps {
   initialFilters?: PropertySearchFilters;
@@ -101,6 +104,8 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   const [showFilters, setShowFilters] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [savedProperties, setSavedProperties] = React.useState<Set<string>>(new Set());
+  const [shufflePeriod, setShufflePeriod] = React.useState(getCurrentPeriod());
+  const [savingPropertyId, setSavingPropertyId] = React.useState<string | null>(null);
   const isLandSelected = React.useMemo(() => (filters.propertyType || []).includes('land' as PropertyType), [filters.propertyType]);
   
   // Phone verification modal state
@@ -112,8 +117,19 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
   const [selectedPropertyForSignup, setSelectedPropertyForSignup] = React.useState<PropertyListing | null>(null);
   const [userBuyerType, setUserBuyerType] = React.useState<'cash' | 'installment' | undefined>(undefined);
   
+  // Signup/Signin modal state for saving properties
+  const [showSignupModal, setShowSignupModal] = React.useState(false);
+  const [showSigninModal, setShowSigninModal] = React.useState(false);
+  
   // Get updateUser function from auth store
   const { updateUser } = useAuthStore();
+
+  // SAFEGUARD: Never show signup modal when authenticated
+  React.useEffect(() => {
+    if (user && showSignupModal) {
+      setShowSignupModal(false);
+    }
+  }, [user, showSignupModal]);
 
   // Parse URL query parameters and apply as initial filters (only once on mount)
   React.useEffect(() => {
@@ -228,6 +244,46 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     loadProperties();
   }, []); // Only run once on mount
 
+  // Load saved properties from Supabase when user is logged in
+  React.useEffect(() => {
+    const loadSavedProperties = async () => {
+      if (!user?.id) {
+        setSavedProperties(new Set());
+        return;
+      }
+
+      try {
+        const saved = await getSavedProperties(user.id);
+        const savedIds = new Set(saved.map(sp => sp.property_id));
+        setSavedProperties(savedIds);
+      } catch (error) {
+        console.error('Error loading saved properties:', error);
+        // Don't clear saved properties on error, keep existing state
+      }
+    };
+
+    loadSavedProperties();
+  }, [user?.id]);
+
+  // Update shuffle period every 2 hours to trigger property reordering
+  React.useEffect(() => {
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+    const checkPeriod = () => {
+      const currentPeriod = getCurrentPeriod();
+      if (currentPeriod !== shufflePeriod) {
+        setShufflePeriod(currentPeriod);
+      }
+    };
+
+    // Check immediately
+    checkPeriod();
+
+    // Set up interval to check every minute (to catch period changes)
+    const interval = setInterval(checkPeriod, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [shufflePeriod]);
+
   // Debounced filter update to prevent excessive re-renders
   const updateFilter = React.useCallback((key: keyof PropertySearchFilters, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -295,7 +351,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
 
     // Sort based on filters.sortBy
     const sortBy = filters.sortBy || 'date-newest';
-    const sorted = [...filtered].sort((a, b) => {
+    let sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
           return (a.financials.price || 0) - (b.financials.price || 0);
@@ -309,28 +365,87 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
       }
     });
 
+    // Apply randomized shuffle when using default sort (date-newest)
+    // This ensures properties appear in different positions every 2 hours
+    // User's explicit sort choices (price-asc, price-desc, date-oldest) are respected
+    if (sortBy === 'date-newest' || !sortBy) {
+      sorted = shufflePropertiesByPeriod(sorted);
+    }
+
     return sorted;
-  }, [properties, filters]);
+  }, [properties, filters, shufflePeriod]);
 
   const clearFilters = () => {
     setFilters(defaultFilters);
   };
 
-  const toggleSaveProperty = (propertyId: string) => {
-    if (!user) {
-      onSignUpPrompt?.();
+  const toggleSaveProperty = async (propertyId: string) => {
+    if (!user?.id) {
+      // Show signup modal if onSignUpPrompt is not provided, otherwise call the callback
+      if (onSignUpPrompt) {
+        onSignUpPrompt();
+      } else {
+        setShowSignupModal(true);
+      }
       return;
     }
 
+    // Optimistically update UI
+    const isCurrentlySaved = savedProperties.has(propertyId);
     setSavedProperties(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(propertyId)) {
+      if (isCurrentlySaved) {
         newSet.delete(propertyId);
       } else {
         newSet.add(propertyId);
       }
       return newSet;
     });
+
+    // Set loading state
+    setSavingPropertyId(propertyId);
+
+    try {
+      if (isCurrentlySaved) {
+        // Unsave property
+        const success = await unsaveProperty(user.id, propertyId);
+        if (!success) {
+          // Revert on error
+          setSavedProperties(prev => {
+            const newSet = new Set(prev);
+            newSet.add(propertyId);
+            return newSet;
+          });
+          console.error('Failed to unsave property');
+        }
+      } else {
+        // Save property
+        const success = await saveProperty(user.id, propertyId);
+        if (!success) {
+          // Revert on error
+          setSavedProperties(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(propertyId);
+            return newSet;
+          });
+          console.error('Failed to save property');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling save property:', error);
+      // Revert on error
+      setSavedProperties(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlySaved) {
+          newSet.add(propertyId);
+        } else {
+          newSet.delete(propertyId);
+        }
+        return newSet;
+      });
+    } finally {
+      setSavingPropertyId(null);
+    }
   };
 
   // Buyer signup handlers
@@ -494,6 +609,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                   e.stopPropagation();
                   toggleSaveProperty(property.id);
                 }}
+                disabled={savingPropertyId === property.id}
               >
                 <Heart className={`w-4 h-4 ${savedProperties.has(property.id) ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
               </Button>
@@ -1032,6 +1148,39 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
           setSelectedPropertyForSignup(null);
         }}
         propertyTitle={selectedPropertyForSignup?.title}
+      />
+
+      {/* Unified Signup Modal - for saving properties */}
+      <UnifiedSignupModal
+        isOpen={showSignupModal}
+        onClose={() => {
+          setShowSignupModal(false);
+        }}
+        onSwitchToLogin={() => {
+          setShowSignupModal(false);
+          setShowSigninModal(true);
+        }}
+        onSignupComplete={async (email) => {
+          setShowSignupModal(false);
+          
+          // Show success message using the auth store
+          const { showSuccessMessage } = useAuthStore.getState();
+          showSuccessMessage({
+            email: email,
+            title: "Account Created Successfully! 🎉",
+            message: "Your account has been created! Please check your email and click the confirmation link to activate your account. You can now save properties."
+          });
+        }}
+      />
+
+      {/* Basic Signin Modal - for saving properties */}
+      <BasicSigninModal
+        isOpen={showSigninModal}
+        onClose={() => setShowSigninModal(false)}
+        onSwitchToSignup={() => {
+          setShowSigninModal(false);
+          setShowSignupModal(true);
+        }}
       />
     </div>
   );

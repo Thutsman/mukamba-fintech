@@ -491,6 +491,11 @@ export const getSavedProperties = async (userId: string): Promise<SavedProperty[
           bathrooms,
           price,
           currency,
+          rent_to_buy_deposit,
+          monthly_installment,
+          payment_duration,
+          features,
+          amenities,
           status,
           created_at,
           updated_at
@@ -506,58 +511,106 @@ export const getSavedProperties = async (userId: string): Promise<SavedProperty[
 
     console.log('Successfully fetched saved properties:', savedProperties?.length || 0);
 
+    // Get all property IDs to fetch images
+    const propertyIds = (savedProperties || [])
+      .map((saved: any) => saved.properties?.id)
+      .filter((id: string) => id);
+
+    let propertyMedia: any[] = [];
+    
+    if (propertyIds.length > 0) {
+      const { data: mediaData, error: mediaError } = await supabase
+        .from('property_images')
+        .select('*')
+        .in('property_id', propertyIds)
+        .order('image_order', { ascending: true });
+
+      if (mediaError) {
+        console.error('Error fetching property media:', mediaError);
+      } else {
+        propertyMedia = mediaData || [];
+        console.log('Successfully fetched media records:', propertyMedia.length);
+      }
+    }
+
     // Transform the data to include property details
-    return (savedProperties || []).map((saved: any) => ({
-      id: saved.id,
-      user_id: saved.user_id,
-      property_id: saved.property_id,
-      notes: saved.notes,
-      saved_at: saved.saved_at,
-      property: saved.properties ? {
-        id: saved.properties.id,
-        title: saved.properties.title,
-        description: saved.properties.description,
-        propertyType: saved.properties.property_type,
-        listingType: saved.properties.listing_type,
-        location: {
-          country: saved.properties.country,
-          city: saved.properties.city,
-          suburb: saved.properties.suburb,
-          streetAddress: saved.properties.street_address || '',
-        },
-        details: {
-          size: saved.properties.size_sqm,
-          type: saved.properties.property_type,
-          bedrooms: saved.properties.bedrooms,
-          bathrooms: saved.properties.bathrooms,
-          features: [],
-          amenities: [],
-        },
-        financials: {
-          price: saved.properties.price,
-          currency: saved.properties.currency,
-        },
-        media: {
-          mainImage: '/placeholder-property.jpg',
-          images: ['/placeholder-property.jpg'],
-        },
-        seller: {
-          id: 'default-seller',
-          name: 'Property Owner',
-          isVerified: true,
-          contactInfo: {
-            phone: '',
-            email: '',
+    return (savedProperties || []).map((saved: any) => {
+      if (!saved.properties) {
+        return {
+          id: saved.id,
+          user_id: saved.user_id,
+          property_id: saved.property_id,
+          notes: saved.notes,
+          saved_at: saved.saved_at,
+          property: undefined
+        };
+      }
+
+      // Find media for this property
+      const propertyImages = propertyMedia
+        .filter(media => media.property_id === saved.properties.id)
+        .sort((a, b) => (a.image_order || 0) - (b.image_order || 0));
+      
+      const mainImage = propertyImages.find(media => media.is_main_image)?.image_url || '/placeholder-property.jpg';
+      const allImages = propertyImages.length > 0 
+        ? propertyImages.map(media => media.image_url)
+        : ['/placeholder-property.jpg'];
+
+      return {
+        id: saved.id,
+        user_id: saved.user_id,
+        property_id: saved.property_id,
+        notes: saved.notes,
+        saved_at: saved.saved_at,
+        property: {
+          id: saved.properties.id,
+          title: saved.properties.title,
+          description: saved.properties.description,
+          propertyType: saved.properties.property_type,
+          listingType: saved.properties.listing_type,
+          location: {
+            country: saved.properties.country,
+            city: saved.properties.city,
+            suburb: saved.properties.suburb,
+            streetAddress: saved.properties.street_address || '',
           },
-        },
-        status: saved.properties.status || 'active',
-        createdAt: new Date(saved.properties.created_at),
-        updatedAt: new Date(saved.properties.updated_at),
-        views: 0,
-        savedBy: 0,
-        inquiries: 0,
-      } as PropertyListing : undefined
-    }));
+          details: {
+            size: saved.properties.size_sqm,
+            type: saved.properties.property_type,
+            bedrooms: saved.properties.bedrooms,
+            bathrooms: saved.properties.bathrooms,
+            features: saved.properties.features || [],
+            amenities: saved.properties.amenities || [],
+          },
+          financials: {
+            price: saved.properties.price,
+            currency: saved.properties.currency,
+            rentToBuyDeposit: saved.properties.rent_to_buy_deposit,
+            monthlyInstallment: saved.properties.monthly_installment,
+            paymentDuration: saved.properties.payment_duration,
+          },
+          media: {
+            mainImage,
+            images: allImages,
+          },
+          seller: {
+            id: 'default-seller',
+            name: 'Property Owner',
+            isVerified: true,
+            contactInfo: {
+              phone: '',
+              email: '',
+            },
+          },
+          status: saved.properties.status || 'active',
+          createdAt: new Date(saved.properties.created_at),
+          updatedAt: new Date(saved.properties.updated_at),
+          views: 0,
+          savedBy: 0,
+          inquiries: 0,
+        } as PropertyListing
+      };
+    });
   } catch (error) {
     console.error('Error in getSavedProperties:', error);
     return [];

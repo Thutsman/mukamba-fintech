@@ -43,7 +43,8 @@ import {
   Search,
   Folder,
   Menu,
-  Square
+  Square,
+  TreePine
 } from 'lucide-react';
 import { Camera as CameraIcon, Sun as SunIcon, LogOut as LogOutIcon, Pencil as PencilIcon } from 'lucide-react';
 
@@ -65,7 +66,7 @@ import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
 import { MakeOfferModal } from '@/components/property/MakeOfferModal';
 import { PaymentModal } from '@/components/property/PaymentModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
-import { getPropertiesFromSupabase, getSavedProperties } from '@/lib/property-services-supabase';
+import { getPropertiesFromSupabase, getSavedProperties, unsaveProperty } from '@/lib/property-services-supabase';
 import { getPropertyOffers } from '@/lib/offer-services';
 import { PropertyListing } from '@/types/property';
 
@@ -465,6 +466,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   // State for saved properties
   const [savedPropertiesCount, setSavedPropertiesCount] = React.useState(0);
+  const [savedPropertiesList, setSavedPropertiesList] = React.useState<any[]>([]);
   const [isLoadingSavedProperties, setIsLoadingSavedProperties] = React.useState(true);
 
   const stats: BuyerStats = {
@@ -558,9 +560,12 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       setIsLoadingSavedProperties(true);
       const savedProperties = await getSavedProperties(user.id);
       setSavedPropertiesCount(savedProperties.length);
+      // Store the actual saved properties with property data
+      setSavedPropertiesList(savedProperties);
     } catch (error) {
       console.error('Error fetching saved properties:', error);
       setSavedPropertiesCount(0);
+      setSavedPropertiesList([]);
     } finally {
       setIsLoadingSavedProperties(false);
     }
@@ -970,7 +975,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           {[
             {key:'overview', label:'Overview', icon:Home},
             {key:'portfolio', label:'Portfolio', icon:Folder},
-            {key:'saved', label:'Saved Properties', icon:Bookmark},
+            {key:'saved', label:'Saved Properties', icon:Bookmark, badge: savedPropertiesCount},
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
             {key:'messages', label:'Messages', icon:MessageCircle},
             {key:'documents', label:'Documents', icon:FileText},
@@ -1058,7 +1063,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   {[
                     {key: 'overview', label: 'Overview', icon: Home},
                     {key: 'portfolio', label: 'Portfolio', icon: Folder},
-                    {key: 'saved', label: 'Saved Properties', icon: Bookmark},
+                    {key: 'saved', label: 'Saved Properties', icon: Bookmark, badge: savedPropertiesCount},
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
                     {key: 'messages', label: 'Messages', icon: MessageCircle},
                     {key: 'documents', label: 'Documents', icon: FileText},
@@ -1398,6 +1403,309 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             </Card>
           </div>
         )}
+
+      {/* Saved Properties Section */}
+      {activeSection === 'saved' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Saved Properties</span>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => navigateWithScrollToTop(router, '/listings')}
+                  className="bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400 transition-colors duration-200"
+                >
+                  <Search className="w-4 h-4 mr-1" />
+                  Browse More Properties
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSavedProperties ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600">Loading saved properties...</span>
+                </div>
+              ) : savedPropertiesList.length === 0 ? (
+                <div className="text-center py-12">
+                  <Bookmark className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Saved Properties</h3>
+                  <p className="text-gray-600 mb-6">
+                    You haven't saved any properties yet. Start browsing and save properties you're interested in.
+                  </p>
+                  <Button 
+                    className="bg-red-800 hover:bg-red-900 text-white"
+                    onClick={() => navigateWithScrollToTop(router, '/listings')}
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    Browse Properties
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {savedPropertiesList
+                    .filter(saved => saved.property) // Only show properties that have data
+                    .map((saved, index) => {
+                      const property = saved.property;
+                      if (!property) return null;
+
+                      const formatCurrency = (amount: number) => {
+                        return new Intl.NumberFormat('en-CA', {
+                          style: 'currency',
+                          currency: 'CAD',
+                          minimumFractionDigits: 0,
+                        }).format(amount);
+                      };
+                      
+                      return (
+                        <motion.div
+                          key={saved.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                          className="group cursor-pointer h-full"
+                          onClick={() => router.push(`/property/${property.id}`)}
+                        >
+                          <Card className="overflow-hidden border border-slate-200 shadow-md hover:shadow-xl transition-all duration-300 bg-white rounded-xl h-full flex flex-col">
+                            {/* Property Image */}
+                            <div className="relative h-48 sm:h-64 overflow-hidden">
+                              {property.media?.mainImage && property.media.mainImage !== '/placeholder-property.jpg' ? (
+                                <img
+                                  src={property.media.mainImage}
+                                  alt={property.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/placeholder-property.jpg';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                                  <div className="text-center text-slate-500">
+                                    <div className="w-16 h-16 mx-auto mb-2">
+                                      <svg className="w-full h-full text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                    <p className="text-sm">Image unavailable</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Badges */}
+                              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                                {/* Available Status Badge */}
+                                {(!property.status || property.status === 'active' || (property.status !== 'under_offer' && property.status !== 'sold' && property.status !== 'rented')) && (
+                                  <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Available
+                                  </Badge>
+                                )}
+                                {property.status === 'under_offer' && (
+                                  <Badge className="bg-orange-100 text-orange-800 border border-orange-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Under Offer
+                                  </Badge>
+                                )}
+                                {property.status === 'sold' && (
+                                  <Badge className="bg-red-100 text-red-800 border border-red-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                                    <X className="w-3 h-3 mr-1" />
+                                    Sold
+                                  </Badge>
+                                )}
+                                {property.status === 'rented' && (
+                                  <Badge className="bg-purple-100 text-purple-800 border border-purple-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                                    <Users className="w-3 h-3 mr-1" />
+                                    Rented
+                                  </Badge>
+                                )}
+                                
+                                {/* Property Type Badge */}
+                                <Badge className="bg-blue-100 text-blue-800 border border-blue-300 shadow-sm px-3 py-1 text-xs font-semibold rounded-full">
+                                  {property.details.type === 'house' ? (
+                                    <>
+                                      <Home className="w-3 h-3 mr-1" />
+                                      house
+                                    </>
+                                  ) : property.details.type === 'land' ? (
+                                    <>
+                                      <TreePine className="w-3 h-3 mr-1" />
+                                      land
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Building className="w-3 h-3 mr-1" />
+                                      {property.details.type}
+                                    </>
+                                  )}
+                                </Badge>
+                                
+                                {/* Payment Type Badge */}
+                                {property.listingType === 'installment' && (
+                                  <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg border-0 px-3 py-1 text-xs font-semibold">
+                                    Installments
+                                  </Badge>
+                                )}
+                                {property.listingType === 'sale' && (
+                                  <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg border-0 px-3 py-1 text-xs font-semibold">
+                                    Cash Sale
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                  <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="bg-white/95 hover:bg-white shadow-md backdrop-blur-sm border border-slate-200"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const success = await unsaveProperty(user.id, property.id);
+                                        if (success) {
+                                          await fetchSavedProperties();
+                                        }
+                                      } catch (error) {
+                                        console.error('Error unsaving property:', error);
+                                      }
+                                    }}
+                                  >
+                                    <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                                  </Button>
+                                </motion.div>
+                              </div>
+
+                              {/* Price Badge */}
+                              <div className="absolute bottom-4 left-4">
+                                <div className="bg-gradient-to-br from-white via-white to-slate-50 backdrop-blur-md rounded-xl px-4 py-3 shadow-xl border border-slate-200">
+                                  <div className="text-xl font-bold text-slate-900">
+                                    {formatCurrency(property.financials.price)}
+                                  </div>
+                                  {property.financials.monthlyInstallment && (
+                                    <div className="text-sm text-slate-600 font-medium">
+                                      {formatCurrency(property.financials.monthlyInstallment)}<span className="text-xs">/month</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Property Details */}
+                            <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
+                              <div className="space-y-4 flex-1">
+                                {/* Title and Location */}
+                                <div className="space-y-2">
+                                  <h3 className="text-lg sm:text-xl font-bold text-slate-800 group-hover:text-[#7F1518] transition-colors line-clamp-2 leading-tight">
+                                    {property.title}
+                                  </h3>
+                                  <div className="flex items-center text-slate-600">
+                                    <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0 text-slate-500" />
+                                    <span className="text-sm font-medium">{property.location.suburb}, {property.location.city}</span>
+                                  </div>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="border-t border-slate-100"></div>
+
+                                {/* Property Stats */}
+                                <div className="flex items-center justify-between text-sm bg-slate-50 rounded-lg p-3">
+                                  <div className="flex items-center gap-1">
+                                    <Bed className="w-4 h-4 text-slate-600" />
+                                    <span className="font-semibold text-slate-800">{property.details.bedrooms || 0}</span>
+                                    <span className="text-slate-600 text-xs">bed{(property.details.bedrooms || 0) !== 1 ? 's' : ''}</span>
+                                  </div>
+                                  <div className="w-px h-4 bg-slate-300"></div>
+                                  <div className="flex items-center gap-1">
+                                    <Bath className="w-4 h-4 text-slate-600" />
+                                    <span className="font-semibold text-slate-800">{property.details.bathrooms || 0}</span>
+                                    <span className="text-slate-600 text-xs">bath{(property.details.bathrooms || 0) !== 1 ? 's' : ''}</span>
+                                  </div>
+                                  <div className="w-px h-4 bg-slate-300"></div>
+                                  <div className="flex items-center gap-1">
+                                    <Square className="w-4 h-4 text-slate-600" />
+                                    <span className="font-semibold text-slate-800">{property.details.size.toLocaleString()}</span>
+                                    <span className="text-slate-600 text-xs">m²</span>
+                                  </div>
+                                </div>
+
+                                {/* Features */}
+                                {property.details.features && property.details.features.length > 0 && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {property.details.features.slice(0, 3).map((feature: string, idx: number) => (
+                                      <Badge key={idx} variant="outline" className="text-xs border-slate-300 text-slate-700 bg-white hover:bg-slate-50">
+                                        {feature}
+                                      </Badge>
+                                    ))}
+                                    {property.details.features.length > 3 && (
+                                      <Badge variant="outline" className="text-xs border-slate-300 text-slate-700 bg-white">
+                                        +{property.details.features.length - 3} more
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Owner Info */}
+                                <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-100">
+                                  <div className="flex items-center gap-2 text-slate-600">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-[#7F1518] to-[#6A1214] rounded-full flex items-center justify-center shadow-sm">
+                                      <span className="text-xs font-bold text-white">
+                                        {property.seller.name[0]}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium text-slate-800">{property.seller.name}</span>
+                                      {property.seller.isVerified && (
+                                        <span className="flex items-center text-xs text-green-600">
+                                          <CheckCircle className="w-3 h-3 mr-1" />
+                                          Verified Seller
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                    <Eye className="w-3 h-3" />
+                                    <span className="text-xs font-medium">{property.views}</span>
+                                  </div>
+                                </div>
+
+                                {/* Saved Notes */}
+                                {saved.notes && (
+                                  <div className="pt-2 border-t border-slate-100">
+                                    <p className="text-xs text-slate-600 italic">"{saved.notes}"</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="pt-4 mt-auto">
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/property/${property.id}`);
+                                  }}
+                                  className="w-full bg-gradient-to-r from-[#7F1518] to-[#6A1214] hover:from-[#6A1214] hover:to-[#5A0F11] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                                  size="sm"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Offers Section */}
       {activeSection === 'offers' && (

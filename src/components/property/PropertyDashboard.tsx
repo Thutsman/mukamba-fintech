@@ -57,6 +57,7 @@ import { EnhancedPropertyCardSkeleton } from './EnhancedPropertyCardSkeleton';
 import { PropertyListing as Property, PropertySearchFilters, PropertyCountry } from '@/types/property';
 import { getPropertyStats, getPopularCities, getFeaturedProperties } from '@/lib/property-services';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
+import { shufflePropertiesByPeriod, getCurrentPeriod } from '@/utils/property-shuffle';
 import { User as UserType } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
@@ -109,6 +110,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [error, setError] = React.useState<string | null>(null);
   const [imageLoadErrors, setImageLoadErrors] = React.useState<Set<string>>(new Set());
   const [isClient, setIsClient] = React.useState(false);
+  const [shufflePeriod, setShufflePeriod] = React.useState(getCurrentPeriod());
   
   // Search filters state
   const [searchFilters, setSearchFilters] = React.useState({
@@ -136,19 +138,42 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
         const supabaseProperties = await getPropertiesFromSupabase();
         // Store total count
         setTotalPropertiesCount(supabaseProperties.length);
-        // Show first 6 properties as featured
-        setFeaturedProperties(supabaseProperties.slice(0, 6));
+        // Shuffle properties using time-based seed (changes every 2 hours)
+        const shuffledProperties = shufflePropertiesByPeriod(supabaseProperties);
+        // Show first 6 properties as featured (after shuffling)
+        setFeaturedProperties(shuffledProperties.slice(0, 6));
       } catch (error) {
         console.error('Error loading featured properties:', error);
         // Fallback to mock data
         const mockProperties = getFeaturedProperties(selectedCountry);
         setTotalPropertiesCount(mockProperties.length);
-        setFeaturedProperties(mockProperties);
+        // Also shuffle mock data for consistency
+        const shuffledMockProperties = shufflePropertiesByPeriod(mockProperties);
+        setFeaturedProperties(shuffledMockProperties.slice(0, 6));
       }
     };
 
     loadFeaturedProperties();
-  }, [selectedCountry]);
+  }, [selectedCountry, shufflePeriod]);
+
+  // Update shuffle period every 2 hours to trigger property reordering
+  React.useEffect(() => {
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+    const checkPeriod = () => {
+      const currentPeriod = getCurrentPeriod();
+      if (currentPeriod !== shufflePeriod) {
+        setShufflePeriod(currentPeriod);
+      }
+    };
+
+    // Check immediately
+    checkPeriod();
+
+    // Set up interval to check every minute (to catch period changes)
+    const interval = setInterval(checkPeriod, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [shufflePeriod]);
 
   React.useEffect(() => {
     // Update stats and properties when country changes with loading state
