@@ -271,6 +271,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
     const checkPeriod = () => {
       const currentPeriod = getCurrentPeriod();
       if (currentPeriod !== shufflePeriod) {
+        console.log(`[PropertyListings] Period changed from ${shufflePeriod} to ${currentPeriod} - reshuffling properties`);
         setShufflePeriod(currentPeriod);
       }
     };

@@ -15,27 +15,47 @@ export function getCurrentPeriod(): number {
 }
 
 /**
- * Simple seeded random number generator
- * Uses a seed to generate deterministic pseudo-random numbers
+ * Enhanced seeded random number generator using Linear Congruential Generator (LCG)
+ * with better distribution properties for more aggressive shuffling
  */
 function seededRandom(seed: number): () => number {
+  // Use a larger modulus and better constants for better randomness
   let currentSeed = seed;
+  const a = 1664525; // Multiplier
+  const c = 1013904223; // Increment
+  const m = Math.pow(2, 32); // Modulus (2^32)
+  
   return function() {
-    currentSeed = (currentSeed * 9301 + 49297) % 233280;
-    return currentSeed / 233280;
+    currentSeed = (currentSeed * a + c) % m;
+    return currentSeed / m;
   };
 }
 
 /**
  * Shuffle an array using Fisher-Yates algorithm with a seed
  * This ensures deterministic shuffling based on the seed
+ * Uses multiple passes for more aggressive randomization
  */
 function seededShuffle<T>(array: T[], seed: number): T[] {
+  if (array.length <= 1) {
+    return [...array];
+  }
+  
   const shuffled = [...array];
   const random = seededRandom(seed);
   
+  // Perform Fisher-Yates shuffle - standard pass
   for (let i = shuffled.length - 1; i > 0; i--) {
+    // Generate random index from 0 to i (inclusive)
     const j = Math.floor(random() * (i + 1));
+    // Swap elements
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  // Additional pass for more aggressive shuffling - reverse direction
+  // This helps ensure properties that were near the end can move to the front
+  for (let i = 0; i < shuffled.length - 1; i++) {
+    const j = Math.floor(random() * (shuffled.length - i)) + i;
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   
@@ -54,11 +74,26 @@ export function shufflePropertiesByPeriod<T>(properties: T[]): T[] {
   
   const period = getCurrentPeriod();
   
-  // Use the period as the seed, combined with a base seed for consistency
-  // We multiply by a large prime to ensure different periods produce different orders
-  const seed = period * 7919 + 1009;
+  // Create a more varied seed by combining period with additional factors
+  // This ensures each period produces a completely different shuffle
+  // Using multiple large primes and bit operations for better distribution
+  const baseSeed = period * 7919; // Large prime multiplier
+  const variationSeed = (period % 1000) * 1009; // Additional variation
+  const lengthSeed = properties.length * 9973; // Include array length for variation
   
-  return seededShuffle(properties, seed);
+  // Combine seeds using bitwise XOR and addition for better mixing
+  // Note: We don't use Date.now() here to keep it deterministic within the same period
+  const seed = (baseSeed ^ variationSeed) + lengthSeed;
+  
+  // Ensure seed is positive and within reasonable range
+  const finalSeed = Math.abs(seed) % 2147483647; // Max 32-bit integer
+  
+  // Debug log (can be removed in production)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log(`[Property Shuffle] Period: ${period}, Seed: ${finalSeed}, Properties: ${properties.length}`);
+  }
+  
+  return seededShuffle(properties, finalSeed);
 }
 
 /**
