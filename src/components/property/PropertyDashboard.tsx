@@ -1114,7 +1114,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       transition={{ duration: 0.8, delay: 0.2 }}
                       viewport={{ once: true }}
                     >
-                      Why Mukamba Gateway
+                      Why People Choose Mukamba Gateway
                     </motion.h2>
               <motion.div
                       className="text-lg sm:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0"
@@ -1124,7 +1124,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       viewport={{ once: true }}
                     >
                       <p>
-                        Mukamba Gateway is a buyer-focused, fintech-enabled real estate platform for Zimbabwe (with South Africa to follow) that makes verified, installment-based and cash property purchases transparent, secure, and practical for local and diaspora buyers.
+                        We're not another property listing site. Mukamba Gateway connects buyers, sellers, and developers through a verified process that protects everyone involved.
                       </p>
                     </motion.div>
                   </motion.div>
@@ -1154,13 +1154,13 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       {
                         icon: DollarSign,
                         title: "Secure Payments",
-                        description: "All deposits and instalments go into a regulated trust account — your money is protected.",
+                        description: "All deposits and installments go into a regulated trust account — your money protected.",
                         gradient: "from-[#7f1518] to-[#7f1518]"
                       },
                       {
                         icon: Building,
                         title: "Track Your Progress",
-                        description: "Live dashboards let you see every step until title transfer. Total transparency.",
+                        description: "Use dashboards to see every step until title transfer. Total transparency.",
                         gradient: "from-[#7f1518] to-[#7f1518]"
                       }
                     ].map((feature, index) => (
@@ -1325,10 +1325,121 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       </div>
               </motion.div>
 
-
         </div>
         
-      {/* What Our Users Say */}
+      {/* Sell Your Property on Your Terms */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-slate-50 py-16 px-4 sm:px-6 lg:px-8"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg"
+            >
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+                Sell Your Property on Your Terms
+              </h2>
+              
+              <p className="text-base sm:text-lg text-slate-600 mb-8 leading-relaxed">
+                Whether you're an individual or developer, Mukamba Gateway helps you sell faster and safer — to verified buyers only. You stay in control of your listing, set your terms, and receive payment securely through escrow.
+              </p>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6">
+                Key Benefits for Sellers:
+              </h3>
+
+              <ul className="space-y-4 mb-8">
+                {[
+                  "Access a verified pool of ready buyers",
+                  "Get your property listed quickly and legally",
+                  "Enjoy escrow-protected payments",
+                  "Avoid agent fraud and title disputes"
+                ].map((benefit, index) => (
+                  <motion.li
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="flex items-start gap-3"
+                  >
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center mt-0.5">
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-base sm:text-lg text-slate-700 leading-relaxed">
+                      {benefit}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  size="lg"
+                  className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => {
+                    // Track analytics
+                    trackEvent('list_property_cta_clicked', {
+                      source: 'sell_property_section',
+                      event_category: 'conversion',
+                      user_status: user ? 'authenticated' : 'guest'
+                    });
+                    
+                    // Smart routing based on authentication
+                    if (user) {
+                      // Authenticated user: Open seller onboarding
+                      setShowSellerModal(true);
+                    } else {
+                      // Guest user: Open signup modal with seller intent
+                      setSellerIntent(true);
+                      setShowSignupModal(true);
+                    }
+                  }}
+                >
+                  List Your Property Today
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </motion.div>
+            </motion.div>
+
+            {/* Right Column - Seller Experience Mockup */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="bg-[#7f1518] rounded-2xl p-4 sm:p-6 lg:p-8 aspect-square flex flex-col items-center justify-center min-h-[400px] shadow-2xl overflow-hidden">
+                {/* Seller Experience Mockup Image */}
+                <div className="relative w-full h-full rounded-xl overflow-hidden">
+                  <Image
+                    src="/images/seller-experiance.png"
+                    alt="Seller Experience Mockup"
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+        
+      {/* What Verified Buyers & Sellers Say */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1344,7 +1455,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             className="text-center mb-16"
             >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-gray-900">
-              What Our Users Say
+              What Verified Buyers & Sellers Say
               </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
               Hear from people who have successfully found their path to homeownership with Mukamba Gateway.
@@ -1411,6 +1522,89 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           </motion.div>
         </div>
                 </motion.div>
+
+      {/* Coming Soon to Mukamba Gateway */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="bg-slate-50 py-16 px-4 sm:px-6 lg:px-8"
+      >
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-gray-900">
+              Coming Soon to Mukamba Gateway
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+              We're constantly innovating to bring you better tools and insights for your property journey.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2
+                }
+              }
+            }}
+          >
+            {[
+              {
+                icon: MapPin,
+                title: "Neighborhood Insights",
+                description: "Discover lifestyle and pricing info per area",
+                gradient: "from-[#7f1518] to-[#7f1518]"
+              },
+              {
+                icon: TrendingUp,
+                title: "News & Market Trends",
+                description: "Stay informed on housing and investment updates",
+                gradient: "from-[#7f1518] to-[#7f1518]"
+              },
+              {
+                icon: Building,
+                title: "Developer Hub",
+                description: "Dedicated tools for estate developers and property managers",
+                gradient: "from-[#7f1518] to-[#7f1518]"
+              }
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 text-center group"
+              >
+                <motion.div
+                  className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+                >
+                  <feature.icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                </motion.div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                  {feature.title}
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                  {feature.description}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.div>
 
       {/* Ready to Start Your Journey to Homeownership */}
                 <motion.div
