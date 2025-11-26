@@ -932,7 +932,6 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">Offer Submitted Successfully!</h3>
                     <p className="text-sm text-gray-600 mt-1">
                       Your offer has been sent to the seller. You'll receive a response soon.
                     </p>
@@ -951,7 +950,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                       }}
                       className="w-full bg-green-600 hover:bg-green-700 text-white"
                     >
-                      View offer Submitted
+                      View Offer Submitted
                     </Button>
                   </div>
                 </div>

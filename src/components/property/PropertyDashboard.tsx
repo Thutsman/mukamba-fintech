@@ -1795,6 +1795,15 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     hello@mukambagateway.com
                   </a>
                 </div>
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-white/80" />
+                  <a 
+                    href="tel:+263787075706"
+                    className="text-white/80 hover:text-white transition-colors text-sm"
+                  >
+                    +263 787 075 706
+                  </a>
+                </div>
               </div>
             </motion.div>
           </div>
