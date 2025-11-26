@@ -845,8 +845,9 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
             </Button>
             <Button
               size="sm"
-              variant="destructive"
+              variant="outline"
               onClick={() => setShowRejectDialog(true)}
+              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               <XCircle className="w-4 h-4 mr-1" />
               Reject
@@ -869,9 +870,16 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
         )}
 
         {getStatus(verification) === 'rejected' && (
-          <div className="flex items-center space-x-2 text-red-600 text-sm">
-            <XCircle className="w-4 h-4" />
-            <span>Rejected {verification.reviewed_at && formatDate(verification.reviewed_at)}</span>
+          <div className="text-red-600 text-sm space-y-1">
+            <div className="flex items-center space-x-2">
+              <XCircle className="w-4 h-4" />
+              <span>Rejected {verification.reviewed_at && formatDate(verification.reviewed_at)}</span>
+            </div>
+            {verification.rejection_reason && (
+              <p className="text-xs text-red-500 pl-6">
+                Reason: {verification.rejection_reason}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
@@ -914,11 +922,11 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                 ))}
               </div>
 
-              <div className="flex space-x-2">
+              <div className="flex space-x-3 mt-6">
                 <Button
                   variant="outline"
                   onClick={() => setShowRejectDialog(false)}
-                  className="flex-1"
+                  className="flex-1 border-slate-200 text-slate-700 hover:bg-slate-100"
                 >
                   Cancel
                 </Button>
@@ -937,9 +945,9 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                     }
                   }}
                   disabled={!selectedReason}
-                  className="flex-1"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Reject
+                  Confirm Reject
                 </Button>
               </div>
             </motion.div>
