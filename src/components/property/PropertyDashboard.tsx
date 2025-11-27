@@ -1767,7 +1767,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   { name: 'Home', href: '/' },
                   { name: 'About', href: '/about' },
                   { name: 'Properties', href: '/listings' },
-                  { name: 'How to Buy', href: '/how-to-buy' }
+                  { name: 'How to Buy', href: '/how-to-buy' },
+                  { name: 'How to Sell', href: '/how-to-sell' }
                 ].map((link, index) => (
                   <li key={index}>
                     <a 
