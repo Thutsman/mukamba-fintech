@@ -1100,6 +1100,16 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 <div className="absolute inset-0 bg-gradient-to-br from-red-50/30 via-transparent to-blue-50/20"></div>
                 
                 <div className="relative z-10 py-16 px-4 sm:px-6 lg:px-8">
+                  <div className="mb-12 -mx-4 sm:-mx-6 lg:-mx-8 bg-[#7f1518] text-white py-16 px-4 sm:px-10 text-center relative overflow-hidden">
+                    {/* Subtle texture overlay */}
+                    <div className="absolute inset-0 opacity-10 bg-[url('/noise.png')] mix-blend-overlay"></div>
+                    <div className="max-w-4xl mx-auto relative z-10">
+                      <p className="text-xl sm:text-2xl md:text-3xl leading-relaxed font-light tracking-wide">
+                        <span className="font-semibold text-red-100 block mb-2 text-lg sm:text-xl uppercase tracking-widest opacity-90">We Are Different</span>
+                        "We are <span className="font-bold text-white border-b-2 border-red-400 pb-1">not</span> another Real Estate Advertising Company — no one needs that. We are the <span className="font-bold text-white italic">ecosystem</span> that underpins your ability to sell your house on <span className="font-bold text-white">your terms</span>, under <span className="font-bold text-white">your control</span>, from anywhere in the world."
+                      </p>
+                    </div>
+                  </div>
                       <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -1124,7 +1134,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                       viewport={{ once: true }}
                     >
                       <p>
-                        We're not another property listing site. Mukamba Gateway connects buyers, sellers, and developers through a verified process that protects everyone involved.
+                        Mukamba Gateway connects buyers, sellers, and developers through a verified process that protects everyone involved.
                       </p>
                     </motion.div>
                   </motion.div>
@@ -1322,6 +1332,21 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     </motion.div>
                     ))}
               </motion.div>
+                  <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      className="bg-white text-[#7f1518] border-white hover:bg-white/90 shadow-lg px-8 py-4 text-base font-semibold"
+                      onClick={() => navigateWithScrollToTop(router, '/listings')}
+                    >
+                      View Available Properties
+                    </Button>
+                    <Button
+                      className="bg-[#7f1518] hover:bg-[#6a1214] text-white shadow-lg px-8 py-4 text-base font-semibold"
+                      onClick={() => navigateWithScrollToTop(router, '/how-to-buy')}
+                    >
+                      How to Buy
+                    </Button>
+                  </div>
       </div>
               </motion.div>
 
@@ -1550,7 +1575,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-12"
             variants={{
               hidden: { opacity: 0 },
               visible: {
@@ -1578,6 +1603,12 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 icon: Building,
                 title: "Developer Hub",
                 description: "Dedicated tools for estate developers and property managers",
+                gradient: "from-[#7f1518] to-[#7f1518]"
+              },
+              {
+                icon: Building,
+                title: "Concierge Services",
+                description: "Curated listings, 24/7 admin support, premium newsletter guidance from experts",
                 gradient: "from-[#7f1518] to-[#7f1518]"
               }
             ].map((feature, index) => (
@@ -1735,7 +1766,8 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'About', href: '/about' },
-                  { name: 'Properties', href: '/listings' }
+                  { name: 'Properties', href: '/listings' },
+                  { name: 'How to Buy', href: '/how-to-buy' }
                 ].map((link, index) => (
                   <li key={index}>
                     <a 

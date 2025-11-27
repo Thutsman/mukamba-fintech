@@ -318,45 +318,52 @@ export default function AboutPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.0 }}
         >
-          <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Advisory Board and Superstars</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              { name: "Christabel Shava", url: "https://www.linkedin.com/in/christabel-shava/", type: "linkedin" },
-              { name: "Kura Chihota", url: "https://www.linkedin.com/in/kura-chihota-94b1098/", type: "linkedin" },
-              { name: "John Pocock's - Lead Zimbabwean Partner", url: "https://pocock.property.co.zw/", type: "website" },
-              { name: "FNB - our bankers", url: "https://www.fnb.co.za/", type: "website" },
-              { name: "Tjeludo Ndlovu", url: "https://www.linkedin.com/in/tjeludondlovu/", type: "linkedin" },
-              { name: "EY - providing all our legal support", url: "https://www.ey.com/en_zw", type: "website" },
-              { name: "Obsidian Investments - Lead South African partner", url: "https://obsidianproperty.co.za/", type: "website" }
-            ].map((member, index) => (
-              <motion.a
-                key={index}
-                href={member.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-lg transition-all duration-300 min-h-[100px] flex flex-col items-center justify-center hover:border-red-300 hover:scale-105 cursor-pointer group relative"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1.1 + index * 0.1 }}
-                whileHover={{ y: -2 }}
-              >
-                {/* Link Type Icon */}
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  {member.type === "linkedin" ? (
-                    <Linkedin className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <Globe className="w-5 h-5 text-green-600" />
-                  )}
-                </div>
-                
-                <div className="text-center">
-                  <h3 className="text-base font-semibold text-gray-900 group-hover:text-red-600 transition-colors">{member.name}</h3>
-                  <p className="text-xs text-gray-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {member.type === "linkedin" ? "View LinkedIn Profile" : "Visit Website"}
-                  </p>
-                </div>
-              </motion.a>
-            ))}
+          <div className="bg-slate-50 rounded-3xl p-6 sm:p-10 shadow-inner">
+            <div className="text-center mb-10">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Advisory Board and Superstars</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Our success is built on the expertise and guidance of industry leaders, strategic partners,
+                and trusted advisors who share our vision.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { name: "Christabel Shava", role: "Strategic Advisor", url: "https://www.linkedin.com/in/christabel-shava/", type: "linkedin", initial: "C" },
+                { name: "Kura Chihota", role: "Legal Advisor", url: "https://www.linkedin.com/in/kura-chihota-94b1098/", type: "linkedin", initial: "K" },
+                { name: "John Pocock's", role: "Lead Zimbabwean Partner", url: "https://pocock.property.co.zw/", type: "website", initial: "J" },
+                { name: "FNB", role: "Banking Partner", url: "https://www.fnb.co.za/", type: "website", initial: "F" },
+                { name: "Tjeludo Ndlovu", role: "Financial Advisor", url: "https://www.linkedin.com/in/tjeludondlovu/", type: "linkedin", initial: "T" },
+                { name: "EY", role: "Legal Support Partner", url: "https://www.ey.com/en_zw", type: "website", initial: "E" },
+                { name: "Obsidian Investments", role: "Lead South African Partner", url: "https://obsidianproperty.co.za/", type: "website", initial: "O" }
+              ].map((member, index) => (
+                <motion.a
+                  key={member.name}
+                  href={member.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center group relative"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.1 + index * 0.1 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {member.type === "linkedin" ? (
+                      <Linkedin className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <Globe className="w-5 h-5 text-green-600" />
+                    )}
+                  </div>
+                  <div className="w-14 h-14 rounded-full bg-[#7F1518] text-white font-bold text-xl flex items-center justify-center mb-4">
+                    {member.initial || member.name.charAt(0)}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#7f1518] transition-colors">
+                    {member.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">{member.role}</p>
+                </motion.a>
+              ))}
+            </div>
           </div>
         </motion.section>
 
