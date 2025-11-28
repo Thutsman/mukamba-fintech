@@ -1105,8 +1105,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                     <div className="absolute inset-0 opacity-10 bg-[url('/noise.png')] mix-blend-overlay"></div>
                     <div className="max-w-4xl mx-auto relative z-10">
                       <p className="text-xl sm:text-2xl md:text-3xl leading-relaxed font-light tracking-wide">
-                        <span className="font-semibold text-red-100 block mb-2 text-lg sm:text-xl uppercase tracking-widest opacity-90">We Are Different</span>
-                        "We are <span className="font-bold text-white border-b-2 border-red-400 pb-1">not</span> another Real Estate Advertising Company — no one needs that. We are the <span className="font-bold text-white italic">ecosystem</span> that underpins your ability to sell your house on <span className="font-bold text-white">your terms</span>, under <span className="font-bold text-white">your control</span>, from anywhere in the world."
+                        "We are not another Real Estate Advertising Company — no one needs that. We are the ecosystem that underpins your ability to sell your house on your terms, under your control, from anywhere in the world."
                       </p>
                     </div>
                   </div>
