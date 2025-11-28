@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, UserPlus, LogOut, User, Building, BookOpen } from 'lucide-react';
+import { LogIn, UserPlus, LogOut, User, Building } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -363,13 +363,6 @@ export const AuthSystem: React.FC = () => {
                   <Building className="w-4 h-4 mr-2" />
                   Properties
                 </button>
-                <button 
-                  onClick={() => navigateWithScrollToTop(router, '/how-to-buy')}
-                  className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
-                >
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  How to Buy
-                </button>
                 {isAuthenticated && user && user.roles.includes('admin') && (
                   <button 
                     onClick={() => {
@@ -414,12 +407,6 @@ export const AuthSystem: React.FC = () => {
                       className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
                       Properties
-                    </button>
-                    <button 
-                      onClick={() => { navigateWithScrollToTop(router, '/how-to-buy'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
-                      className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
-                    >
-                      How to Buy
                     </button>
                     {isAuthenticated && user && user.roles.includes('admin') && (
                       <button 
