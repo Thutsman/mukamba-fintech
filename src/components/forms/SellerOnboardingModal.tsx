@@ -1191,7 +1191,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       />
       
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 pb-32 sm:pb-0">
+      <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 modal-scrollable">
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between mb-4">
@@ -1265,12 +1265,12 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         </div>
 
         {/* Step Content */}
-        <div className="px-6 py-6 pb-6">
+        <div className="px-6 py-6 pb-4">
           {renderStepContent()}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="sticky bottom-0 bg-white flex items-center justify-between p-6 border-t border-slate-200 z-10 shadow-lg sm:shadow-none">
+        <div className="bg-white flex items-center justify-between p-6 border-t border-slate-200">
           <Button
             variant="outline"
             onClick={handleBack}
