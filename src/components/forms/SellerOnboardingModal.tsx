@@ -1183,7 +1183,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Modal Overlay */}
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm"
@@ -1191,7 +1191,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       />
       
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200">
+      <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 pb-32 sm:pb-0">
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between mb-4">
@@ -1265,12 +1265,12 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         </div>
 
         {/* Step Content */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-6 pb-6">
           {renderStepContent()}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between p-6 border-t border-slate-200">
+        <div className="sticky bottom-0 bg-white flex items-center justify-between p-6 border-t border-slate-200 z-10 shadow-lg sm:shadow-none">
           <Button
             variant="outline"
             onClick={handleBack}
