@@ -20,7 +20,8 @@ import {
   Upload,
   Loader2,
   Star,
-  Zap
+  Zap,
+  ChevronDown
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,8 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   const [showPhoneVerificationModal, setShowPhoneVerificationModal] = React.useState(false);
   const [showIdentityVerificationModal, setShowIdentityVerificationModal] = React.useState(false);
   const [formErrors, setFormErrors] = React.useState<{[key: string]: string}>({});
+  const [hasScrolled, setHasScrolled] = React.useState(false);
+  const modalContentRef = React.useRef<HTMLDivElement>(null);
   const [formData, setFormData] = React.useState({
     phone: '',
     propertyAddress: '',
@@ -1177,8 +1180,35 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) {
       resetForm();
+      setHasScrolled(false);
     }
   }, [isOpen]);
+
+  // Reset scroll indicator when step changes
+  React.useEffect(() => {
+    setHasScrolled(false);
+    // Scroll to top when step changes
+    if (modalContentRef.current) {
+      modalContentRef.current.scrollTop = 0;
+    }
+  }, [currentStep]);
+
+  // Track scroll to hide indicator
+  React.useEffect(() => {
+    const modalContent = modalContentRef.current;
+    if (!modalContent || !isOpen) return;
+
+    const handleScroll = () => {
+      if (modalContent.scrollTop > 50) {
+        setHasScrolled(true);
+      } else {
+        setHasScrolled(false);
+      }
+    };
+
+    modalContent.addEventListener('scroll', handleScroll);
+    return () => modalContent.removeEventListener('scroll', handleScroll);
+  }, [isOpen, currentStep]);
 
   if (!isOpen) return null;
 
@@ -1191,7 +1221,10 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       />
       
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 modal-scrollable">
+      <div 
+        ref={modalContentRef}
+        className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 modal-scrollable"
+      >
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between mb-4">
@@ -1268,6 +1301,29 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         <div className="px-6 py-6 pb-4">
           {renderStepContent()}
         </div>
+
+        {/* Scroll Indicator - Mobile Only */}
+        <AnimatePresence>
+          {!hasScrolled && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="sm:hidden flex flex-col items-center justify-center py-4 px-6"
+            >
+              <div className="inline-flex items-center gap-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-4 py-2 rounded-full shadow-sm">
+                <span className="font-medium">Scroll down to continue</span>
+                <motion.div
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <ChevronDown className="w-4 h-4 text-slate-500" />
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Navigation Buttons */}
         <div className="bg-white flex items-center justify-between p-6 border-t border-slate-200">
