@@ -11,6 +11,8 @@ export interface AdminUser {
   role?: string;
   status: 'active' | 'inactive' | 'banned';
   is_verified: boolean;
+  is_phone_verified?: boolean;
+  is_identity_verified?: boolean;
   signup_method: 'email' | 'phone' | 'oauth';
   provider?: string;
 }

@@ -55,7 +55,7 @@ export const RealUsersFeed: React.FC<RealUsersFeedProps> = ({
     if (user.is_verified) {
       return { icon: CheckCircle, color: 'text-green-600', text: 'Verified' };
     }
-    return { icon: Clock, color: 'text-yellow-600', text: 'Pending' };
+    return { icon: Clock, color: 'text-yellow-600', text: 'Not yet' };
   };
 
   const formatDate = (dateString: string) => {

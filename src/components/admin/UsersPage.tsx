@@ -144,8 +144,52 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    toast.info('Export functionality coming soon');
+    try {
+      const headers = [
+        'User',
+        'Email',
+        'Phone',
+        'Role',
+        'Status',
+        'Email Verified',
+        'Phone Verified',
+        'Identity Verified',
+        'Signup Date',
+        'Last Active'
+      ];
+
+      const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+      const rows = filteredUsers.map((user) => [
+        getUserDisplayName(user),
+        user.email,
+        user.phone || '',
+        user.role || 'user',
+        user.status,
+        user.is_verified ? 'Verified' : 'Not yet',
+        user.is_phone_verified ? 'Verified' : 'Not yet',
+        user.is_identity_verified ? 'Verified' : 'Not yet',
+        formatDate(user.created_at),
+        user.last_sign_in_at ? formatDate(user.last_sign_in_at) : 'Never'
+      ]);
+
+      const csvContent = [headers, ...rows]
+        .map((row) => row.map((cell) => escapeCsv(cell || '')).join(','))
+        .join('\r\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast.success('Exported users to CSV');
+    } catch (err) {
+      console.error('Export failed:', err);
+      toast.error('Failed to export users');
+    }
   };
 
   const getStatusColor = (status: AdminUser['status']) => {
@@ -165,7 +209,14 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
     if (user.is_verified) {
       return { icon: CheckCircle, color: 'text-green-600', text: 'Verified' };
     }
-    return { icon: Clock, color: 'text-yellow-600', text: 'Pending' };
+    return { icon: Clock, color: 'text-yellow-600', text: 'Not yet' };
+  };
+
+  const getFlagStatus = (flag?: boolean) => {
+    if (flag) {
+      return { icon: CheckCircle, color: 'text-green-600', text: 'Verified' };
+    }
+    return { icon: Clock, color: 'text-yellow-600', text: 'Not yet' };
   };
 
   const formatDate = (dateString: string) => {
@@ -346,8 +397,11 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Contact</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Verification</TableHead>
+                    <TableHead>Email Verified</TableHead>
+                    <TableHead>Phone Verified</TableHead>
+                    <TableHead>Identity Verified</TableHead>
                     <TableHead>Signup Date</TableHead>
                     <TableHead>Last Active</TableHead>
                     <TableHead className="w-12"></TableHead>
@@ -357,6 +411,10 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
                   {filteredUsers.map((user) => {
                     const verificationStatus = getVerificationStatus(user);
                     const VerificationIcon = verificationStatus.icon;
+                    const phoneStatus = getFlagStatus(user.is_phone_verified);
+                    const PhoneIcon = phoneStatus.icon;
+                    const identityStatus = getFlagStatus(user.is_identity_verified);
+                    const IdentityIcon = identityStatus.icon;
                     
                     return (
                       <TableRow key={user.id}>
@@ -381,12 +439,12 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
                               <Mail className="w-3 h-3 mr-1 text-slate-400" />
                               <span className="truncate max-w-48">{user.email}</span>
                             </div>
-                            {user.phone && (
-                              <div className="flex items-center text-sm text-slate-500">
-                                <Phone className="w-3 h-3 mr-1" />
-                                <span>{user.phone}</span>
-                              </div>
-                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center text-sm text-slate-500">
+                            <Phone className="w-3 h-3 mr-1" />
+                            <span>{user.phone || '—'}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -399,6 +457,22 @@ export const UsersPage: React.FC<UsersPageProps> = ({ onViewUser }) => {
                             <VerificationIcon className={`w-4 h-4 ${verificationStatus.color}`} />
                             <span className={`text-sm ${verificationStatus.color}`}>
                               {verificationStatus.text}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <PhoneIcon className={`w-4 h-4 ${phoneStatus.color}`} />
+                            <span className={`text-sm ${phoneStatus.color}`}>
+                              {phoneStatus.text}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <IdentityIcon className={`w-4 h-4 ${identityStatus.color}`} />
+                            <span className={`text-sm ${identityStatus.color}`}>
+                              {identityStatus.text}
                             </span>
                           </div>
                         </TableCell>
