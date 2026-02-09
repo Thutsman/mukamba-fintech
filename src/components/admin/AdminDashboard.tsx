@@ -81,6 +81,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [userStats, setUserStats] = useState({ total_users: 0, new_users_today: 0, new_users_this_week: 0, new_users_this_month: 0, verified_users: 0, unverified_users: 0 });
   const [realAdminStats, setRealAdminStats] = useState<RealAdminStats | null>(null);
   const [isLoadingRealStats, setIsLoadingRealStats] = useState<boolean>(true);
+  const [pendingPaymentsCount, setPendingPaymentsCount] = useState<number>(0);
 
   // Load real property stats
   useEffect(() => {
@@ -148,6 +149,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
     };
     loadRealStats();
+  }, []);
+
+  // Load pending payments count for sidebar badge
+  useEffect(() => {
+    const loadPendingPayments = async () => {
+      try {
+        const res = await fetch('/api/admin/payments/stats');
+        const json = await res.json();
+        if (res.ok && json.data) {
+          setPendingPaymentsCount(json.data.pendingCount || 0);
+        }
+      } catch (error) {
+        console.error('Error loading pending payments count:', error);
+      }
+    };
+    loadPendingPayments();
   }, []);
 
   // Mock admin data
@@ -320,8 +337,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           pendingActions={{ 
             listings: propertyStats.total, 
             kyc: kycVerifications.filter(v => v.status === 'pending').length, 
-            payments: 3, 
-            reports: 1, 
+            payments: pendingPaymentsCount, 
+            reports: 0, 
             users: 0, 
             messages: useMessageStore.getState().messages.filter((m) => !m.readByAdmin).length 
           }}

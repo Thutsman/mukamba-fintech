@@ -29,19 +29,23 @@ import { PropertyOffer } from '@/types/offers';
 import { getPropertyOffers, updatePropertyOffer, deletePropertyOffer } from '@/lib/offer-services';
 import { SuccessPopup } from '@/components/ui/SuccessPopup';
 import { User as UserType } from '@/types/auth';
+import { supabase } from '@/lib/supabase';
 
 interface BuyerOffersProps {
   user: UserType;
   onViewOffer?: (offer: PropertyOffer) => void;
   onViewProperty?: (propertyId: string) => void;
   onMakePayment?: (offer: PropertyOffer) => void;
+  /** Increment to force reload offers and payment status (e.g. after submitting proof) */
+  refreshTrigger?: number;
 }
 
 export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   user,
   onViewOffer,
   onViewProperty,
-  onMakePayment
+  onMakePayment,
+  refreshTrigger = 0
 }) => {
   const [offers, setOffers] = useState<PropertyOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,19 +56,47 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; offerId: string; action: 'cancel' | 'delete' }>({ isOpen: false, offerId: '', action: 'cancel' });
   const [isConfirmProcessing, setIsConfirmProcessing] = useState(false);
   const [successPopup, setSuccessPopup] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
+  // Latest payment status per offer (pending = proof submitted, completed = verified, failed/cancelled = rejected)
+  const [paymentStatusByOfferId, setPaymentStatusByOfferId] = useState<Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'>>({});
 
-  // Load buyer's offers
+  const loadPaymentStatus = React.useCallback(async () => {
+    if (!user.id || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('offer_payments')
+        .select('offer_id, status, created_at')
+        .eq('buyer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Could not load payment status for offers:', error.message);
+        return;
+      }
+
+      const byOffer: Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'> = {};
+      (data || []).forEach((row: { offer_id: string; status: string }) => {
+        if (byOffer[row.offer_id] === undefined && ['pending', 'completed', 'failed', 'cancelled'].includes(row.status)) {
+          byOffer[row.offer_id] = row.status as 'pending' | 'completed' | 'failed' | 'cancelled';
+        }
+      });
+      setPaymentStatusByOfferId(byOffer);
+    } catch (e) {
+      console.warn('Error loading payment status:', e);
+    }
+  }, [user.id]);
+
+  // Load buyer's offers (and payment status when refreshTrigger changes, e.g. after proof submission)
   useEffect(() => {
     loadOffers();
-  }, [user.id]);
+  }, [user.id, refreshTrigger]);
 
   const loadOffers = async () => {
     try {
       setIsLoading(true);
-      // Get offers filtered by buyer_id
       const buyerOffers = await getPropertyOffers({ buyer_id: user.id });
       console.log('Loaded offers for user:', user.id, buyerOffers);
       setOffers(buyerOffers);
+      await loadPaymentStatus();
     } catch (error) {
       console.error('Error loading buyer offers:', error);
     } finally {
@@ -474,16 +506,46 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                           Cancel Offer
                         </Button>
                       )}
-                      {offer.status === 'approved' && (
-                        <Button
-                          size="sm"
-                          className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => onMakePayment?.(offer)}
-                        >
-                          <DollarSign className="w-4 h-4 mr-2" />
-                          Make Payment
-                        </Button>
-                      )}
+                      {offer.status === 'approved' && (() => {
+                        const paymentStatus = paymentStatusByOfferId[offer.id];
+                        if (paymentStatus === 'completed') {
+                          return (
+                            <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
+                              <CheckCircle className="w-4 h-4 shrink-0" />
+                              <span>Payment verified</span>
+                            </div>
+                          );
+                        }
+                        if (paymentStatus === 'pending') {
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+                                <Clock className="w-4 h-4 shrink-0" />
+                                <span>Proof submitted — awaiting verification</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full justify-start border-amber-300 text-amber-800 hover:bg-amber-100"
+                                onClick={() => onMakePayment?.(offer)}
+                              >
+                                <DollarSign className="w-4 h-4 mr-2" />
+                                Submit another proof
+                              </Button>
+                            </div>
+                          );
+                        }
+                        return (
+                          <Button
+                            size="sm"
+                            className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => onMakePayment?.(offer)}
+                          >
+                            <DollarSign className="w-4 h-4 mr-2" />
+                            Make Payment
+                          </Button>
+                        );
+                      })()}
                       {(offer.status === 'rejected' || offer.status === 'expired') && (
                         <Button
                           size="sm"

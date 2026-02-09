@@ -471,7 +471,6 @@ export const AuthSystem: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <Button size="sm" variant="outline" onClick={handleManualProfileNavigation} className="flex-1 border-slate-300">Profile</Button>
                           <Button size="sm" className="flex-1 bg-red-700 hover:bg-red-800 text-white" onClick={handleLogout}>Sign Out</Button>
                         </>
                       )}
@@ -519,16 +518,6 @@ export const AuthSystem: React.FC = () => {
                         Seller Dashboard
                       </Button>
                     )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleManualProfileNavigation}
-                      className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                      suppressHydrationWarning
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Profile
-                    </Button>
                     <Button
                       size="sm"
                       className="bg-red-800 hover:bg-red-900 text-white"

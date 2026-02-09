@@ -60,6 +60,7 @@ import { ApplicationForm, ApplicationStatus, ApplicationHistory } from '@/compon
 import { ApplicationStatus as AppStatus } from '@/components/applications/ApplicationForm';
 import { BuyerMessaging } from '@/components/messaging';
 import { BuyerOffers } from './BuyerOffers';
+import { BuyerPortfolio } from './BuyerPortfolio';
 import { BuyerMessages } from './BuyerMessages';
 import { GeneralInquiryModal } from '@/components/messaging/GeneralInquiryModal';
 import { PropertyDetailsPage } from '@/components/property/PropertyDetailsPage';
@@ -68,6 +69,7 @@ import { PaymentModal } from '@/components/property/PaymentModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
 import { getPropertiesFromSupabase, getSavedProperties, unsaveProperty } from '@/lib/property-services-supabase';
 import { getPropertyOffers } from '@/lib/offer-services';
+import { supabase } from '@/lib/supabase';
 import { PropertyListing } from '@/types/property';
 
 // Local interface to ensure type compatibility
@@ -432,7 +434,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [selectedOffer, setSelectedOffer] = React.useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = React.useState(false);
   const [selectedOfferForPayment, setSelectedOfferForPayment] = React.useState<any>(null);
-  
+  const [offersRefreshTrigger, setOffersRefreshTrigger] = React.useState(0);
+
   // Application management states
   const [showApplicationForm, setShowApplicationForm] = React.useState(false);
   const [showApplicationStatus, setShowApplicationStatus] = React.useState(false);
@@ -445,12 +448,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
   const [showGeneralInquiryModal, setShowGeneralInquiryModal] = React.useState(false);
 
-  // Mock data for metrics and lists
+  // Stats for overview cards (real data from DB)
   interface BuyerStats {
     savedCount: number;
     activeApps: number;
-    viewsThisMonth: number;
-    viewsGrowthPct: number;
   }
   interface RecentActivityItem { 
     text: string; 
@@ -470,10 +471,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [isLoadingSavedProperties, setIsLoadingSavedProperties] = React.useState(true);
 
   const stats: BuyerStats = {
-    savedCount: savedPropertiesCount, // Dynamic count from database
-    activeApps: activeOffersCount, // Dynamic count from database
-    viewsThisMonth: 745,
-    viewsGrowthPct: 15,
+    savedCount: savedPropertiesCount,
+    activeApps: activeOffersCount,
   };
 
   // State for live properties
@@ -538,17 +537,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         });
       
       setRecentActivities(activities);
-      
-      // Count active offers (pending and approved) from all users
-      const activeOffers = offers.filter(offer => 
-        offer.status === 'pending' || offer.status === 'approved'
-      );
-      setActiveOffersCount(activeOffers.length);
     } catch (error) {
       console.error('Error fetching recent activities:', error);
-      // Fallback to empty array if there's an error
       setRecentActivities([]);
-      setActiveOffersCount(0);
     } finally {
       setIsLoadingActivities(false);
     }
@@ -568,6 +559,42 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       setSavedPropertiesList([]);
     } finally {
       setIsLoadingSavedProperties(false);
+    }
+  }, [user.id]);
+
+  // Count offers that still need user attention: pending approval, or approved but payment not yet verified
+  const fetchOffersBadgeCount = React.useCallback(async () => {
+    if (!user.id) {
+      setActiveOffersCount(0);
+      return;
+    }
+    try {
+      const buyerOffers = await getPropertyOffers({ buyer_id: user.id });
+      if (buyerOffers.length === 0) {
+        setActiveOffersCount(0);
+        return;
+      }
+      const offerIds = buyerOffers.map((o: any) => o.id);
+      let completedByOffer: Record<string, boolean> = {};
+      if (supabase) {
+        const { data: payments } = await supabase
+          .from('offer_payments')
+          .select('offer_id, status')
+          .eq('buyer_id', user.id)
+          .in('offer_id', offerIds);
+        (payments || []).forEach((p: { offer_id: string; status: string }) => {
+          if (p.status === 'completed') completedByOffer[p.offer_id] = true;
+        });
+      }
+      const needsAttention = buyerOffers.filter((o: any) => {
+        if (o.status === 'pending') return true;
+        if (o.status === 'approved' && !completedByOffer[o.id]) return true;
+        return false;
+      });
+      setActiveOffersCount(needsAttention.length);
+    } catch (e) {
+      console.warn('Error fetching offers badge count:', e);
+      setActiveOffersCount(0);
     }
   }, [user.id]);
 
@@ -626,6 +653,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     fetchRecentActivities();
     fetchSavedProperties();
   }, [fetchLiveProperties, fetchRecentActivities, fetchSavedProperties]);
+
+  React.useEffect(() => {
+    fetchOffersBadgeCount();
+  }, [fetchOffersBadgeCount, offersRefreshTrigger]);
 
   // Use live properties for previews
   const previews: PreviewProperty[] = liveProperties;
@@ -784,18 +815,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
   const handlePaymentSubmit = async (paymentData: any) => {
     try {
-      // TODO: Implement payment processing
       console.log('Payment submitted:', paymentData);
-      
-      // Update offer status to paid
-      // await updateOfferPaymentStatus(selectedOfferForPayment.id, paymentData);
-      
-      // Refresh offers to show updated status
-      // await fetchOffers();
-      
-      console.log('Payment processed successfully');
+      setOffersRefreshTrigger((t) => t + 1);
+      console.log('Payment proof submitted successfully');
     } catch (error) {
-      console.error('Payment processing failed:', error);
+      console.error('Payment proof submission failed:', error);
     }
   };
 
@@ -1130,53 +1154,43 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         {/* Overview Section */}
         {activeSection === 'overview' && (
           <>
-            {/* Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 px-1 md:px-0">
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs uppercase tracking-wide text-slate-600">Saved Properties</div>
-                <Bookmark className="w-4 h-4 text-blue-600"/>
-                </div>
-              {isLoadingSavedProperties ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-gray-600 text-sm">Loading...</span>
-                </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold">{stats.savedCount}</div>
-                  <div className="text-xs text-slate-500">
-                    {stats.savedCount === 0 
-                      ? 'No properties saved yet' 
-                      : `Properties Bookmarked${stats.savedCount > 1 ? 's' : ''}`
-                    }
+            {/* Metric Cards - real data only */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-1 md:px-0">
+              <Card className="border-slate-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs uppercase tracking-wide text-slate-600">Saved Properties</div>
+                    <Bookmark className="w-4 h-4 text-blue-600"/>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs uppercase tracking-wide text-slate-600">Active Offers</div>
-                <FileText className="w-4 h-4 text-emerald-600"/>
-                  </div>
-              <div className="text-2xl font-bold">{stats.activeApps}</div>
-              <div className="text-xs text-slate-500">Under Review • Pending</div>
-        </CardContent>
-      </Card>
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs uppercase tracking-wide text-slate-600">Property Views</div>
-                <Eye className="w-4 h-4 text-purple-600"/>
+                  {isLoadingSavedProperties ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-gray-600 text-sm">Loading...</span>
                     </div>
-              <div className="text-2xl font-bold">{stats.viewsThisMonth}</div>
-              <div className="text-xs text-slate-500">This Month • +{stats.viewsGrowthPct}% from last month</div>
-            </CardContent>
-          </Card>
-      </div>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold">{stats.savedCount}</div>
+                      <div className="text-xs text-slate-500">
+                        {stats.savedCount === 0 
+                          ? 'No properties saved yet' 
+                          : `Properties Bookmarked${stats.savedCount > 1 ? 's' : ''}`
+                        }
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="border-slate-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs uppercase tracking-wide text-slate-600">Active Offers</div>
+                    <FileText className="w-4 h-4 text-emerald-600"/>
+                  </div>
+                  <div className="text-2xl font-bold">{stats.activeApps}</div>
+                  <div className="text-xs text-slate-500">Under Review • Pending</div>
+                </CardContent>
+              </Card>
+            </div>
 
         {/* Quick Actions */}
         <Card>
@@ -1347,61 +1361,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 
         {/* Portfolio Section */}
         {activeSection === 'portfolio' && (
-          <div className="space-y-6">
-            {/* Portfolio Summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="text-sm text-blue-600 font-medium">Total Properties Owned</div>
-                <div className="text-3xl font-bold text-blue-900 mt-2">0</div>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <div className="text-sm text-green-600 font-medium">Total Investment Value</div>
-                <div className="text-2xl font-bold text-green-900 mt-2">$0</div>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <div className="text-sm text-purple-600 font-medium">Total Paid to Date</div>
-                <div className="text-2xl font-bold text-purple-900 mt-2">$0</div>
-              </div>
-            </div>
-
-            {/* Empty State Message */}
-            <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
-              <CardContent className="p-12 text-center">
-                <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Home className="w-8 h-8 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">No Properties Yet</h3>
-                <p className="text-slate-600 mb-4">
-                  Once you successfully purchase a property through Mukamba Gateway, your portfolio will display:
-                </p>
-                <ul className="text-sm text-slate-600 space-y-2 mb-6 text-left max-w-md mx-auto">
-                  <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>All your purchased properties with detailed information</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>Payment progress for each property with visual progress bars</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>Complete transaction history for all deposits and installments</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>Remaining balance and payment status for each property</span>
-                  </li>
-                </ul>
-                <Button 
-                  className="bg-red-800 hover:bg-red-900 text-white"
-                  onClick={() => navigateWithScrollToTop(router, '/listings')}
-                >
-                  <Home className="w-4 h-4 mr-2" />
-                  Browse Properties
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          <BuyerPortfolio
+            user={user}
+            refreshTrigger={offersRefreshTrigger}
+            onBrowseProperties={() => navigateWithScrollToTop(router, '/listings')}
+          />
         )}
 
       {/* Saved Properties Section */}
@@ -1711,6 +1675,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       {activeSection === 'offers' && (
         <BuyerOffers
           user={user}
+          refreshTrigger={offersRefreshTrigger}
           onViewOffer={(offer) => {
             // Show offer details modal with full offer data
             setSelectedOffer(offer);

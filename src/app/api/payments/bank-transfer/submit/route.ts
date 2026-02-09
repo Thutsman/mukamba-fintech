@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user_id,
         notification_type: 'payment_update',
-        title: 'Bank Transfer Payment Submitted',
-        message: `A bank transfer payment of $${amount} has been submitted for review. Please verify the proof of payment.`,
+        title: 'Proof of Payment Submitted',
+        message: `A proof of payment for $${amount} (bank transfer) has been submitted and is awaiting your verification.`,
         priority: 'high',
         metadata: {
           payment_id: payment_id,
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       success: true,
       payment_id: payment_id,
       status: 'pending',
-      message: 'Bank transfer payment submitted successfully. Your payment will be verified within 1-2 business days.',
+      message: 'Proof of payment submitted successfully. Your payment will be verified within 1-2 business days.',
       payment: payment
     });
 

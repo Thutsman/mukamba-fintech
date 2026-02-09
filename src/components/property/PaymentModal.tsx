@@ -496,14 +496,14 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
               <CardTitle className="text-xl">
                 {step === 'method' && 'Make Payment'}
                 {step === 'details' && 'Payment Details'}
-                {step === 'processing' && 'Processing Payment'}
-                {step === 'success' && 'Payment Successful!'}
+                {step === 'processing' && 'Submitting Proof'}
+                {step === 'success' && 'Proof Submitted!'}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-2">
                 {step === 'method' && 'Complete your deposit payment'}
                 {step === 'details' && 'Enter your payment details'}
-                {step === 'processing' && 'Please wait while we process your payment...'}
-                {step === 'success' && 'Your payment has been processed successfully!'}
+                {step === 'processing' && 'Please wait while we submit your proof of payment...'}
+                {step === 'success' && 'Your proof of payment has been submitted for verification.'}
               </p>
             </CardHeader>
 
@@ -829,7 +829,7 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                       className="flex-1 bg-green-600 hover:bg-green-700"
                       disabled={isLoading}
                     >
-                      Process Payment
+                      Submit Proof of Payment
                     </Button>
                   </div>
                 </div>
@@ -845,9 +845,9 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                     <CreditCard className="w-8 h-8 text-green-600" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">Processing Your Payment</h3>
+                    <h3 className="font-semibold text-gray-800">Submitting Your Proof</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Please wait while we process your payment...
+                      Please wait while we submit your proof of payment...
                     </p>
                   </div>
                 </div>
@@ -863,12 +863,12 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">Payment Submitted!</h3>
+                    <h3 className="font-semibold text-gray-800">Proof Submitted!</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      {`Your bank transfer of ${formatCurrency(offer.deposit_amount)} has been submitted for verification.`}
+                      {`Your proof of payment for ${formatCurrency(offer.deposit_amount)} has been submitted for verification.`}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      Your payment will be verified within 1-2 business days. You will receive an email confirmation once verified.
+                      Your proof will be reviewed within 1-2 business days. You will receive a notification once verified.
                     </p>
                   </div>
                 </div>
