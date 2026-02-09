@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, UserPlus, LogOut, User, Building } from 'lucide-react';
+import { LogIn, UserPlus, LogOut, User, Building, Info, BookOpen, Tag, Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -343,7 +343,7 @@ export const AuthSystem: React.FC = () => {
                 </div>
               </div>
 
-              {/* Navigation */}
+              {/* Navigation - matches Quick Links in footer (Home, About, Properties, How to Buy, How to Sell) */}
               <div className="hidden md:flex items-center space-x-8">
                 <button 
                   onClick={() => {
@@ -353,8 +353,15 @@ export const AuthSystem: React.FC = () => {
                   }}
                   className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
                 >
-                  <User className="w-4 h-4 mr-2" />
+                  <Home className="w-4 h-4 mr-2" />
                   Home
+                </button>
+                <button 
+                  onClick={() => navigateWithScrollToTop(router, '/about')}
+                  className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  About
                 </button>
                 <button 
                   onClick={() => navigateWithScrollToTop(router, '/listings')}
@@ -362,6 +369,20 @@ export const AuthSystem: React.FC = () => {
                 >
                   <Building className="w-4 h-4 mr-2" />
                   Properties
+                </button>
+                <button 
+                  onClick={() => navigateWithScrollToTop(router, '/how-to-buy')}
+                  className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  How to Buy
+                </button>
+                <button 
+                  onClick={() => navigateWithScrollToTop(router, '/how-to-sell')}
+                  className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium cursor-pointer"
+                >
+                  <Tag className="w-4 h-4 mr-2" />
+                  How to Sell
                 </button>
                 {isAuthenticated && user && user.roles.includes('admin') && (
                   <button 
@@ -398,15 +419,34 @@ export const AuthSystem: React.FC = () => {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         if (mobileMenuRef.current) mobileMenuRef.current.open = false; 
                       }}
+                      className="flex items-center w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <Home className="w-4 h-4 mr-2" />
+                      Home
+                    </button>
+                    <button 
+                      onClick={() => { navigateWithScrollToTop(router, '/about'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
                       className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
-                      Home
+                      About
                     </button>
                     <button 
                       onClick={() => { navigateWithScrollToTop(router, '/listings'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
                       className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
                       Properties
+                    </button>
+                    <button 
+                      onClick={() => { navigateWithScrollToTop(router, '/how-to-buy'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      How to Buy
+                    </button>
+                    <button 
+                      onClick={() => { navigateWithScrollToTop(router, '/how-to-sell'); if (mobileMenuRef.current) mobileMenuRef.current.open = false; }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      How to Sell
                     </button>
                     {isAuthenticated && user && user.roles.includes('admin') && (
                       <button 

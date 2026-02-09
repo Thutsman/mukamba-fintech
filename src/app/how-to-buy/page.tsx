@@ -23,7 +23,10 @@ import {
   MessageCircle,
   Loader2,
   X,
-  Menu
+  Menu,
+  Info,
+  BookOpen,
+  Tag
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -148,7 +151,7 @@ export default function HowToBuyPage() {
               />
             </div>
 
-            {/* Center Navigation */}
+            {/* Center Navigation - same as PropertyDashboard (Home, About, Properties, How to Buy, How to Sell) */}
             <div className="hidden md:flex items-center space-x-8">
               <a
                 href="/"
@@ -162,6 +165,17 @@ export default function HowToBuyPage() {
                 Home
               </a>
               <a
+                href="/about"
+                className="text-gray-700 hover:text-[#7f1518] transition-colors flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateWithScrollToTop(router, '/about');
+                }}
+              >
+                <Info className="w-4 h-4 mr-1" />
+                About
+              </a>
+              <a
                 href="/listings"
                 className="text-gray-700 hover:text-[#7f1518] transition-colors flex items-center"
                 onClick={(e) => {
@@ -171,6 +185,21 @@ export default function HowToBuyPage() {
               >
                 <Building className="w-4 h-4 mr-1" />
                 Properties
+              </a>
+              <span className="text-[#7f1518] font-medium flex items-center cursor-default">
+                <BookOpen className="w-4 h-4 mr-1" />
+                How to Buy
+              </span>
+              <a
+                href="/how-to-sell"
+                className="text-gray-700 hover:text-[#7f1518] transition-colors flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateWithScrollToTop(router, '/how-to-sell');
+                }}
+              >
+                <Tag className="w-4 h-4 mr-1" />
+                How to Sell
               </a>
             </div>
 
@@ -233,53 +262,72 @@ export default function HowToBuyPage() {
               data-mobile-menu
             >
               <div className="px-4 py-4 space-y-3">
-                {/* Home Link */}
                 <button
                   className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => {
-                    router.push('/');
+                    navigateWithScrollToTop(router, '/');
                     setIsMobileMenuOpen(false);
-                    trackEvent('how_to_buy_mobile_home_clicked', {
-                      source: 'mobile_menu',
-                      event_category: 'navigation'
-                    });
                   }}
                 >
                   <Home className="w-4 h-4 mr-3" />
                   Home
                 </button>
-
-                {/* Create Account Button */}
                 <button
                   className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => {
-                    setShowSignupModal(true);
+                    navigateWithScrollToTop(router, '/about');
                     setIsMobileMenuOpen(false);
-                    trackEvent('how_to_buy_mobile_create_account_clicked', {
-                      source: 'mobile_menu',
-                      event_category: 'conversion'
-                    });
                   }}
                 >
-                  <UserPlus className="w-4 h-4 mr-3" />
-                  Create Account
+                  <Info className="w-4 h-4 mr-3" />
+                  About
                 </button>
-
-                {/* Sign In Button */}
                 <button
                   className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => {
-                    setShowSigninModal(true);
+                    navigateWithScrollToTop(router, '/listings');
                     setIsMobileMenuOpen(false);
-                    trackEvent('how_to_buy_mobile_sign_in_clicked', {
-                      source: 'mobile_menu',
-                      event_category: 'conversion'
-                    });
                   }}
                 >
-                  <LogIn className="w-4 h-4 mr-3" />
-                  Sign In
+                  <Building className="w-4 h-4 mr-3" />
+                  Properties
                 </button>
+                <span className="w-full flex items-center px-3 py-2 text-[#7f1518] font-medium">
+                  <BookOpen className="w-4 h-4 mr-3" />
+                  How to Buy
+                </span>
+                <button
+                  className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  onClick={() => {
+                    navigateWithScrollToTop(router, '/how-to-sell');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <Tag className="w-4 h-4 mr-3" />
+                  How to Sell
+                </button>
+                <div className="pt-3 border-t border-gray-200 space-y-2">
+                  <button
+                    className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                    onClick={() => {
+                      setShowSignupModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <UserPlus className="w-4 h-4 mr-3" />
+                    Create Account
+                  </button>
+                  <button
+                    className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                    onClick={() => {
+                      setShowSigninModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogIn className="w-4 h-4 mr-3" />
+                    Sign In
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -637,7 +685,9 @@ export default function HowToBuyPage() {
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'About', href: '/about' },
-                  { name: 'Properties', href: '/listings' }
+                  { name: 'Properties', href: '/listings' },
+                  { name: 'How to Buy', href: '/how-to-buy' },
+                  { name: 'How to Sell', href: '/how-to-sell' }
                 ].map((link, index) => (
                   <li key={index}>
                     <a 
@@ -695,6 +745,15 @@ export default function HowToBuyPage() {
                     className="text-white/80 hover:text-white transition-colors text-sm"
                   >
                     hello@mukambagateway.com
+                  </a>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-white/80" />
+                  <a 
+                    href="tel:+263787075706"
+                    className="text-white/80 hover:text-white transition-colors text-sm"
+                  >
+                    +263 787 075 706
                   </a>
                 </div>
               </div>

@@ -19,18 +19,26 @@ import {
   Linkedin,
   Globe,
   Menu,
-  X
+  X,
+  Info,
+  BookOpen,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import Image from 'next/image';
 import { User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
+import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 
 export default function AboutPage() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [showSigninModal, setShowSigninModal] = React.useState(false);
+  const [showSignupModal, setShowSignupModal] = React.useState(false);
 
   // Analytics tracking function
   const trackEvent = (eventName: string, parameters: Record<string, any>) => {
@@ -111,7 +119,7 @@ export default function AboutPage() {
               </div>
             </Link>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - same as PropertyDashboard (Home, About, Properties, How to Buy, How to Sell) */}
             <div className="hidden md:flex items-center space-x-6">
               <Link
                 href="/"
@@ -120,6 +128,10 @@ export default function AboutPage() {
                 <Home className="w-4 h-4 mr-2" />
                 Home
               </Link>
+              <span className="flex items-center text-red-600 font-medium">
+                <Info className="w-4 h-4 mr-2" />
+                About
+              </span>
               <Link
                 href="/listings"
                 className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium"
@@ -127,9 +139,20 @@ export default function AboutPage() {
                 <Building className="w-4 h-4 mr-2" />
                 Properties
               </Link>
-              <span className="flex items-center text-red-600 font-medium">
-                About
-              </span>
+              <Link
+                href="/how-to-buy"
+                className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                How to Buy
+              </Link>
+              <Link
+                href="/how-to-sell"
+                className="flex items-center text-slate-700 hover:text-red-600 transition-colors font-medium"
+              >
+                <Tag className="w-4 h-4 mr-2" />
+                How to Sell
+              </Link>
             </div>
 
             {/* Desktop Action Buttons */}
@@ -138,6 +161,7 @@ export default function AboutPage() {
                 variant="outline"
                 size="sm"
                 className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => setShowSignupModal(true)}
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Create Account
@@ -145,6 +169,7 @@ export default function AboutPage() {
               <Button 
                 size="sm"
                 className="text-white bg-[#7F1518] hover:bg-[#6a1215]"
+                onClick={() => setShowSigninModal(true)}
               >
                 <LogIn className="w-4 h-4 mr-2" />
                 Sign In
@@ -160,7 +185,7 @@ export default function AboutPage() {
             </button>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu - same links as desktop */}
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-slate-200">
               <div className="flex flex-col space-y-3">
@@ -172,6 +197,10 @@ export default function AboutPage() {
                   <Home className="w-4 h-4 mr-3" />
                   Home
                 </Link>
+                <span className="flex items-center px-3 py-2 text-red-600 font-medium">
+                  <Info className="w-4 h-4 mr-3" />
+                  About
+                </span>
                 <Link
                   href="/listings"
                   className="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-md font-medium"
@@ -180,14 +209,28 @@ export default function AboutPage() {
                   <Building className="w-4 h-4 mr-3" />
                   Properties
                 </Link>
-                <span className="flex items-center px-3 py-2 text-red-600 font-medium">
-                  About
-                </span>
+                <Link
+                  href="/how-to-buy"
+                  className="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-md font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <BookOpen className="w-4 h-4 mr-3" />
+                  How to Buy
+                </Link>
+                <Link
+                  href="/how-to-sell"
+                  className="flex items-center px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-md font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Tag className="w-4 h-4 mr-3" />
+                  How to Sell
+                </Link>
                 <div className="pt-3 border-t border-slate-200 space-y-2">
                   <Button
                     variant="outline"
                     className="w-full justify-center border-slate-300 text-slate-700 hover:bg-slate-50"
                     size="sm"
+                    onClick={() => { setShowSignupModal(true); setMobileMenuOpen(false); }}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Create Account
@@ -195,6 +238,7 @@ export default function AboutPage() {
                   <Button 
                     className="w-full justify-center text-white bg-[#7F1518] hover:bg-[#6a1215]"
                     size="sm"
+                    onClick={() => { setShowSigninModal(true); setMobileMenuOpen(false); }}
                   >
                     <LogIn className="w-4 h-4 mr-2" />
                     Sign In
@@ -403,47 +447,89 @@ export default function AboutPage() {
         </motion.section>
       </main>
 
-      {/* Footer */}
+      {/* Footer - same as PropertyDashboard */}
       <footer className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Company Info */}
-            <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="lg:col-span-1"
+            >
               <div className="mb-4">
-                <img
+                <Image
                   src="/logo-white.svg"
                   alt="Mukamba Gateway Logo"
-                  className="h-auto w-[200px]"
+                  width={200}
+                  height={60}
+                  className="h-auto"
+                  priority
                 />
               </div>
               <p className="text-white/90 text-sm leading-relaxed mb-6">
                 Transforming property ownership in Southern Africa through innovative flexible installment plans.
               </p>
-            </div>
+              {/* Social Media Icons */}
+              <div className="flex space-x-4">
+                <a
+                  href="https://www.facebook.com/people/Mukamba-Gateway/61580417286014/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
+                  aria-label="Follow us on Facebook"
+                >
+                  <span className="text-xs font-bold">f</span>
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/mukamba-gateway/about/?viewAsMember=true"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
+                  aria-label="Follow us on LinkedIn"
+                >
+                  <span className="text-xs font-bold">in</span>
+                </a>
+              </div>
+            </motion.div>
 
             {/* Quick Links */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'About', href: '/about' },
-                  { name: 'Properties', href: '/listings' }
+                  { name: 'Properties', href: '/listings' },
+                  { name: 'How to Buy', href: '/how-to-buy' },
+                  { name: 'How to Sell', href: '/how-to-sell' }
                 ].map((link, index) => (
                   <li key={index}>
-                    <Link 
-                      href={link.href} 
+                    <a
+                      href={link.href}
                       className="text-white/80 hover:text-white transition-colors text-sm"
                     >
                       {link.name}
-                    </Link>
+                    </a>
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
             {/* Our Services */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
                 {[
@@ -454,37 +540,62 @@ export default function AboutPage() {
                   'Secure Transfers'
                 ].map((service, index) => (
                   <li key={index}>
-                    <span className="text-white/80 text-sm">{service}</span>
+                    <a
+                      href="#"
+                      className="text-white/80 hover:text-white transition-colors text-sm"
+                    >
+                      {service}
+                    </a>
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
             {/* Contact Us */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
               <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-2 text-white/80" />
-                  <a 
-                    href="mailto:contact@mukambagateway.com" 
+                  <a
+                    href="mailto:hello@mukambagateway.com"
                     className="text-white/80 hover:text-white transition-colors text-sm"
                   >
-                    contact@mukambagateway.com
+                    hello@mukambagateway.com
+                  </a>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-white/80" />
+                  <a
+                    href="tel:+263787075706"
+                    className="text-white/80 hover:text-white transition-colors text-sm"
+                  >
+                    +263 787 075 706
                   </a>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-white/20 mt-12 pt-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="border-t border-white/20 mt-12 pt-8"
+          >
             <div className="flex flex-col sm:flex-row justify-between items-center">
               <div className="flex flex-wrap gap-4 mb-4 sm:mb-0">
-                <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
+                <a href="/terms" className="text-white/60 hover:text-white transition-colors text-sm">
                   Terms & Conditions
                 </a>
-                <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
+                <a href="/privacy" className="text-white/60 hover:text-white transition-colors text-sm">
                   Privacy Policy
                 </a>
                 <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
@@ -495,9 +606,26 @@ export default function AboutPage() {
                 © 2025 Mukamba Gateway. All rights reserved.
               </p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </footer>
+
+      <BasicSigninModal
+        isOpen={showSigninModal}
+        onClose={() => setShowSigninModal(false)}
+        onSwitchToSignup={() => {
+          setShowSigninModal(false);
+          setShowSignupModal(true);
+        }}
+      />
+      <BasicSignupModal
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onSwitchToLogin={() => {
+          setShowSignupModal(false);
+          setShowSigninModal(true);
+        }}
+      />
     </div>
   );
 }

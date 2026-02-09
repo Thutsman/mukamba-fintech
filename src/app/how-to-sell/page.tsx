@@ -19,7 +19,10 @@ import {
   Menu,
   Mail,
   Phone,
-  Search
+  Search,
+  Info,
+  BookOpen,
+  Tag
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -290,6 +293,17 @@ export default function HowToSellPage() {
                 Home
               </a>
               <a
+                href="/about"
+                className="text-gray-700 hover:text-[#7f1518] transition-colors flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateWithScrollToTop(router, '/about');
+                }}
+              >
+                <Info className="w-4 h-4 mr-1" />
+                About
+              </a>
+              <a
                 href="/listings"
                 className="text-gray-700 hover:text-[#7f1518] transition-colors flex items-center"
                 onClick={(e) => {
@@ -300,6 +314,21 @@ export default function HowToSellPage() {
                 <Building className="w-4 h-4 mr-1" />
                 Properties
               </a>
+              <a
+                href="/how-to-buy"
+                className="text-gray-700 hover:text-[#7f1518] transition-colors flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigateWithScrollToTop(router, '/how-to-buy');
+                }}
+              >
+                <BookOpen className="w-4 h-4 mr-1" />
+                How to Buy
+              </a>
+              <span className="text-[#7f1518] font-medium flex items-center cursor-default">
+                <Tag className="w-4 h-4 mr-1" />
+                How to Sell
+              </span>
             </div>
 
             <div className="md:hidden" data-mobile-menu>
@@ -361,7 +390,7 @@ export default function HowToSellPage() {
                 <button
                   className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => {
-                    router.push('/');
+                    navigateWithScrollToTop(router, '/');
                     setIsMobileMenuOpen(false);
                   }}
                 >
@@ -371,7 +400,17 @@ export default function HowToSellPage() {
                 <button
                   className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => {
-                    router.push('/listings');
+                    navigateWithScrollToTop(router, '/about');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <Info className="w-4 h-4 mr-3" />
+                  About
+                </button>
+                <button
+                  className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  onClick={() => {
+                    navigateWithScrollToTop(router, '/listings');
                     setIsMobileMenuOpen(false);
                   }}
                 >
@@ -381,23 +420,39 @@ export default function HowToSellPage() {
                 <button
                   className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => {
-                    setShowSignupModal(true);
+                    navigateWithScrollToTop(router, '/how-to-buy');
                     setIsMobileMenuOpen(false);
                   }}
                 >
-                  <UserPlus className="w-4 h-4 mr-3" />
-                  Create Account
+                  <BookOpen className="w-4 h-4 mr-3" />
+                  How to Buy
                 </button>
-                <button
-                  className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
-                  onClick={() => {
-                    setShowSigninModal(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <LogIn className="w-4 h-4 mr-3" />
-                  Sign In
-                </button>
+                <span className="w-full flex items-center px-3 py-2 text-[#7f1518] font-medium">
+                  <Tag className="w-4 h-4 mr-3" />
+                  How to Sell
+                </span>
+                <div className="pt-3 border-t border-gray-200 space-y-2">
+                  <button
+                    className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                    onClick={() => {
+                      setShowSignupModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <UserPlus className="w-4 h-4 mr-3" />
+                    Create Account
+                  </button>
+                  <button
+                    className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                    onClick={() => {
+                      setShowSigninModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogIn className="w-4 h-4 mr-3" />
+                    Sign In
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -655,7 +710,7 @@ export default function HowToSellPage() {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             viewport={{ once: true }}
-            className="border-top border-white/20 mt-12 pt-8"
+            className="border-t border-white/20 mt-12 pt-8"
           >
             <div className="flex flex-col sm:flex-row justify-between items-center">
               <div className="flex flex-wrap gap-4 mb-4 sm:mb-0">
