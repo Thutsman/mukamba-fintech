@@ -40,6 +40,7 @@ import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal'
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { navigateWithScrollToTop } from '@/utils/navigation';
 import { useAuthStore } from '@/lib/store';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 
 // Analytics tracking function (mirrors PropertyDashboard)
 const trackEvent = (eventName: string, parameters: Record<string, any>) => {
@@ -750,10 +751,21 @@ export default function HowToBuyPage() {
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-2 text-white/80" />
                   <a 
-                    href="tel:+263787075706"
+                    href="https://wa.me/263787075706"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-white/80 hover:text-white transition-colors text-sm"
                   >
                     +263 787 075 706
+                  </a>
+                  <a
+                    href="https://wa.me/263787075706"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Chat with us on WhatsApp"
+                    className="ml-2 inline-flex items-center justify-center rounded-full p-1 transition-colors group"
+                  >
+                    <WhatsAppIcon className="w-4 h-4 text-green-400 group-hover:text-green-300" />
                   </a>
                 </div>
               </div>

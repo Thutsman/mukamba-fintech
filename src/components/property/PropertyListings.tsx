@@ -700,7 +700,7 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
             )}
 
             {/* Owner Info */}
-            <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-100">
+            <div className="flex items-center text-sm pt-2 border-t border-slate-100">
               <div className="flex items-center gap-2 text-slate-600">
                 <div className="w-8 h-8 bg-gradient-to-br from-[#7F1518] to-[#6A1214] rounded-full flex items-center justify-center shadow-sm">
                   <span className="text-xs font-bold text-white">
@@ -716,11 +716,6 @@ export const PropertyListings: React.FC<PropertyListingsProps> = ({
                     </span>
                   )}
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                <Eye className="w-3 h-3" />
-                <span className="text-xs font-medium">{property.views}</span>
               </div>
             </div>
           </div>
