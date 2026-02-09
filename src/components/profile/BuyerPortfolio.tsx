@@ -173,40 +173,45 @@ export const BuyerPortfolio: React.FC<BuyerPortfolioProps> = ({
         paymentsByOffer.get(p.offer_id)!.push(p);
       });
 
-      // 3. Build portfolio items
-      const portfolioItems: PortfolioProperty[] = offers.map((offer: any) => {
-        const prop = offer.property as any;
-        const offerPayments = paymentsByOffer.get(offer.id) || [];
+      // 3. Build portfolio items only for offers that have at least one admin-verified (completed) payment
+      const portfolioItems: PortfolioProperty[] = offers
+        .map((offer: any) => {
+          const prop = offer.property as any;
+          const offerPayments = paymentsByOffer.get(offer.id) || [];
 
-        const totalPaid = offerPayments
-          .filter((p: OfferPayment) => p.status === 'completed')
-          .reduce((sum: number, p: OfferPayment) => sum + (p.amount || 0), 0);
+          const hasVerifiedPayment = offerPayments.some((p: OfferPayment) => p.status === 'completed');
+          if (!hasVerifiedPayment) return null;
 
-        const paymentList = offerPayments.map((p: OfferPayment) => ({
-          id: p.id,
-          amount: p.amount,
-          status: p.status,
-          method: p.payment_method,
-          date: p.updated_at || p.created_at,
-        }));
+          const totalPaid = offerPayments
+            .filter((p: OfferPayment) => p.status === 'completed')
+            .reduce((sum: number, p: OfferPayment) => sum + (p.amount || 0), 0);
 
-        return {
-          offerId: offer.id,
-          offerReference: offer.offer_reference,
-          propertyId: offer.property_id,
-          propertyTitle: prop?.title || 'Unknown Property',
-          propertyCity: prop?.city || '',
-          propertyCountry: prop?.country || '',
-          propertyCurrency: prop?.currency || 'USD',
-          propertyPrice: prop?.price || 0,
-          offerPrice: offer.offer_price,
-          depositAmount: offer.deposit_amount,
-          paymentMethod: offer.payment_method,
-          offerStatus: offer.status,
-          totalPaid,
-          payments: paymentList,
-        };
-      });
+          const paymentList = offerPayments.map((p: OfferPayment) => ({
+            id: p.id,
+            amount: p.amount,
+            status: p.status,
+            method: p.payment_method,
+            date: p.updated_at || p.created_at,
+          }));
+
+          return {
+            offerId: offer.id,
+            offerReference: offer.offer_reference,
+            propertyId: offer.property_id,
+            propertyTitle: prop?.title || 'Unknown Property',
+            propertyCity: prop?.city || '',
+            propertyCountry: prop?.country || '',
+            propertyCurrency: prop?.currency || 'USD',
+            propertyPrice: prop?.price || 0,
+            offerPrice: offer.offer_price,
+            depositAmount: offer.deposit_amount,
+            paymentMethod: offer.payment_method,
+            offerStatus: offer.status,
+            totalPaid,
+            payments: paymentList,
+          };
+        })
+        .filter((item): item is PortfolioProperty => item !== null);
 
       setProperties(portfolioItems);
     } catch (err) {
