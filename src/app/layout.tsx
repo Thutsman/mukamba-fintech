@@ -168,6 +168,22 @@ export default function RootLayout({
             `,
           }}
         />
+        
+        {/* Google Analytics */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-C7DDL596RF"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-C7DDL596RF');
+            `,
+          }}
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased bg-white text-slate-900`}>
         <SuccessPopupProvider>
