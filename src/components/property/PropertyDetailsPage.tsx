@@ -813,6 +813,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                     <UnderOfferBadge />
                   </div>
                 </div>
+                <p className="text-sm text-gray-500 mt-1">Price in US $</p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 mb-6">
@@ -966,21 +967,26 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                                   <div className="flex justify-between">
                                     <span>Required Deposit:</span>
                                     <span className="font-medium">
-                                      {property.financials.rentToBuyDeposit ? formatCurrency(property.financials.rentToBuyDeposit) : 'Contact seller'}
+                                      {property.financials.rentToBuyDeposit ? formatCurrency(property.financials.rentToBuyDeposit) : '—'}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span>Payment Duration:</span>
                                     <span className="font-medium">
-                                      {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : 'Contact seller'}
+                                      {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : '—'}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span>Monthly Payment:</span>
                                     <span className="font-medium">
-                                      {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : 'Contact seller'}
+                                      {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : '—'}
                                     </span>
                                   </div>
+                                  {(!property.financials.rentToBuyDeposit || !property.financials.paymentDuration || !property.financials.monthlyInstallment) && (
+                                    <p className="text-sm text-gray-600 pt-2 mt-2 border-t border-gray-100">
+                                      Get in touch with Us for details.
+                                    </p>
+                                  )}
                                 </div>
                               </div>
 
@@ -1019,7 +1025,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                                   </li>
                                   <li className="flex items-start">
                                     <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                                    <span>Contact seller for specific payment arrangements</span>
+                                    <span>Get in touch with Us for specific payment arrangements</span>
                                   </li>
                                 </ul>
                               </div>
@@ -1053,7 +1059,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                               <div className="mt-6">
                                 <Button className="w-full">
                                   <Phone className="w-4 h-4 mr-2" />
-                                  Contact Seller for Payment Details
+                                  Get in touch with Us for Payment Details
                                 </Button>
                               </div>
                             )}
@@ -1119,7 +1125,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                                   </li>
                                   <li className="flex items-start">
                                     <AlertCircle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                                    <span>Contact seller for payment arrangements</span>
+                                    <span>Get in touch with Us for payment arrangements</span>
                                   </li>
                                 </ul>
                               </div>
@@ -1223,112 +1229,6 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
               </Card>
             )}
 
-            {/* Property Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Property Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Show sold status and sale price if property is sold */}
-                {(property as LocalPropertyWithStatus).status === 'sold' ? (
-                  <>
-                    <div className="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
-                      <div className="flex items-center mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                        <span className="font-semibold text-green-900">Property Sold</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-green-700">Final Sale Price</span>
-                          <span className="font-bold text-green-900 text-lg">
-                            {property.financials.finalSalePrice ? formatCurrency(property.financials.finalSalePrice) : formatCurrency(property.financials.price)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-green-700">Currency</span>
-                          <span className="font-semibold text-green-900">{property.financials.currency}</span>
-                        </div>
-                        {property.financials.saleDate && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-green-700">Sale Date</span>
-                            <span className="font-semibold text-green-900">
-                              {new Date(property.financials.saleDate).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Original listing price for comparison */}
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Original Listing Price</span>
-                        <span className="font-medium text-gray-800 line-through">
-                          {formatCurrency(property.financials.price)}
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                ) : property.listingType === 'installment' ? (
-                  <>
-                    {/* Installment Listing Stats */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Required Deposit</span>
-                      <span className="font-semibold">
-                        {property.financials.rentToBuyDeposit ? formatCurrency(property.financials.rentToBuyDeposit) : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Payment Duration</span>
-                      <span className="font-semibold">
-                        {property.financials.paymentDuration ? `${property.financials.paymentDuration} months` : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Currency</span>
-                      <span className="font-semibold">{property.financials.currency}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Monthly Installment</span>
-                      <span className="font-semibold">
-                        {property.financials.monthlyInstallment ? formatCurrency(property.financials.monthlyInstallment) : 'N/A'}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Cash Sale Listing Stats */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Selling Price</span>
-                      <span className="font-semibold">
-                        {formatCurrency(property.financials.price)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Currency</span>
-                      <span className="font-semibold">{property.financials.currency}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Price per m²</span>
-                      <span className="font-semibold">
-                        {formatCurrency(Math.round(property.financials.price / property.details.size))}
-                      </span>
-                    </div>
-                  </>
-                )}
-                
-                {/* Common Stats */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Views</span>
-                  <span className="font-semibold">{property.views}</span>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Bidding Activity - Always show for active properties */}
             {(property as LocalPropertyWithStatus).status !== 'sold' && (
               <Card>
@@ -1377,6 +1277,7 @@ export const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({
                           </div>
                         </div>
                       </div>
+                      <p className="text-xs text-gray-500">All prices in US $</p>
 
                   {/* Price Range - Only show if there are offers */}
                   {propertyOffers.length > 0 && (

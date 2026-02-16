@@ -81,6 +81,9 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({
         <p className="text-sm text-gray-600">
           Documents for: <span className="font-medium">{property.title}</span>
         </p>
+        <p className="text-sm text-gray-500 mt-1">
+          The following documents are available at your access level.
+        </p>
       </div>
       
       {mockDocuments.length > 0 ? (
@@ -99,9 +102,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({
                 </div>
               </div>
               {hasFullAccess ? (
-                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                  Download
-                </button>
+                <span className="text-sm text-green-600 font-medium">Available</span>
               ) : (
                 <span className="text-gray-400 text-sm">Restricted</span>
               )}
