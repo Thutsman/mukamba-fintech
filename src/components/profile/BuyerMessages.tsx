@@ -415,7 +415,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                   </div>
                 </div>
 
-                {/* Admin Response */}
+                {/* Team response (Mukamba Gateway) */}
                 {message.adminResponse && (
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <div className="flex items-start space-x-3">
@@ -425,7 +425,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium text-green-900">Admin Response</span>
+                            <span className="font-medium text-green-900">Mukamba Gateway</span>
                             <span className="text-sm text-green-600">
                               {message.adminResponseAt && formatDate(message.adminResponseAt)}
                             </span>

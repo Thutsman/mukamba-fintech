@@ -94,6 +94,7 @@ import { PropertyDocumentationModal } from '@/components/forms/PropertyDocumenta
 import { PropertyListingModal } from '@/components/forms/PropertyListingModal';
 
 import { VerifiedUserDashboard } from './VerifiedUserDashboard';
+import { BuyerMessages } from './BuyerMessages';
 
 interface ProfileDashboardProps {
   user: UserType;
@@ -123,14 +124,14 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
         id: 'verify-phone',
         type: 'primary',
         title: 'Verify Your Phone Number',
-        description: 'Enable direct communication with property owners',
+        description: 'Enable direct communication with our team',
         action: 'Start Phone Verification',
         priority: 1,
         icon: <Phone className="w-4 h-4" />,
         benefit: 'Unlock messaging and notifications',
         timeRequired: '2 minutes',
         difficulty: 'Easy',
-        whatYoullUnlock: 'Access seller contact info',
+        whatYoullUnlock: 'Access team messaging',
         badge: 'Recommended for you'
       });
 
@@ -171,15 +172,15 @@ const useSmartRecommendations = (user: UserType, selectedRole: 'buyer' | 'seller
       recommendations.push({
         id: 'contact-owners',
         type: 'secondary',
-        title: 'Contact Property Owners Directly',
-        description: 'You can now message sellers directly',
+        title: 'Contact Us',
+        description: 'Message our team directly',
         action: 'Start Messaging',
         priority: 3,
         icon: <MessageCircle className="w-4 h-4" />,
         benefit: 'Direct communication with sellers',
         timeRequired: 'Available now',
         difficulty: 'Easy',
-        whatYoullUnlock: 'Direct seller communication',
+        whatYoullUnlock: 'Message our team directly',
         badge: 'Unlocked'
       });
     }
@@ -1134,6 +1135,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   // Verification Modal State
   const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | null>(null);
   const [selectedCountry, setSelectedCountry] = React.useState<'ZW' | 'SA'>('ZW');
+  const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
 
   // Recalculate these when user or forceUpdate changes
   const buyerSteps = React.useMemo(() => getBuyerVerificationSteps(user), [user, forceUpdate]);
@@ -1218,7 +1220,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     if (verificationCount === 1 && user.is_phone_verified) {
       setCelebrationData({
         title: 'Phone Verified! 🎉',
-        description: 'You can now contact property owners directly',
+        description: 'You can now message our team directly',
         icon: <Phone className="w-6 h-6" />,
         reward: 'Messaging unlocked'
       });
@@ -1428,7 +1430,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           title: 'Verified Member',
           color: 'bg-green-500',
           progress: Math.max(actualProgress, 50), // Minimum 50% for verified members
-          description: 'You can contact sellers and list properties'
+          description: 'You can contact our team and list properties'
         };
       case 'premium':
         return {
@@ -1576,8 +1578,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         setShowSuccess(true);
         break;
       case 'contact-sellers':
-        setSuccessMessage('Messaging feature coming soon!');
-        setShowSuccess(true);
+        setShowBuyerMessages(true);
         break;
       case 'apply-financing':
         if (user.buyer_type === 'cash') {
@@ -1599,8 +1600,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         setShowSuccess(true);
         break;
       case 'contact-owners':
-        setSuccessMessage('Messaging feature coming soon!');
-        setShowSuccess(true);
+        setShowBuyerMessages(true);
         break;
       case 'cash-buyer-status':
         setSuccessMessage('Premium buyer status coming soon!');
@@ -1693,11 +1693,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       },
       {
         id: 'contact-sellers',
-        title: 'Contact Admin',
-        description: 'Message property owners directly',
+        title: 'Contact Us',
+        description: 'Message our team directly',
         icon: <MessageCircle className="w-5 h-5" />,
         action: 'Start Messaging',
-        stats: 'Direct communication unlocked',
+        stats: 'Team messaging unlocked',
         color: 'green'
       },
       {
@@ -2064,6 +2064,15 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         onLogout={onLogout}
       />
 
+      {/* Messaging: same experience as verified dashboard */}
+      {showBuyerMessages ? (
+        <BuyerMessages
+          user={user}
+          onBack={() => setShowBuyerMessages(false)}
+          onViewProperty={(propertyId) => navigateWithScrollToTop(router, `/property/${propertyId}`)}
+        />
+      ) : (
+      <>
       {/* Main Content - Only show for non-verified users */}
       {!isFullyVerified(user) ? (
         // For non-verified users, use the constrained container
@@ -2532,6 +2541,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       )}
         </div>
       ) : null}
+      </>
+      )}
     </div>
   );
 }; 
