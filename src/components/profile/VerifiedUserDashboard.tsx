@@ -69,8 +69,9 @@ import { PaymentModal } from '@/components/property/PaymentModal';
 import { getRecentlyViewedProperties, getFeaturedProperties } from '@/lib/property-data';
 import { getPropertiesFromSupabase, getSavedProperties, unsaveProperty } from '@/lib/property-services-supabase';
 import { getPropertyOffers } from '@/lib/offer-services';
-import { supabase } from '@/lib/supabase';
+import { createClient, supabase } from '@/lib/supabase';
 import { PropertyListing } from '@/types/property';
+import { useMessageStore } from '@/lib/message-store';
 
 // Local interface to ensure type compatibility
 interface LocalProperty {
@@ -388,6 +389,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
 }) => {
   const router = useRouter();
   const isVerified = isFullyVerified(user);
+  const { getUnreadAdminResponsesCount } = useMessageStore();
   const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
   // Keep theme in sync with document and localStorage
   React.useEffect(() => {
@@ -447,6 +449,56 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [showMessaging, setShowMessaging] = React.useState(false);
   const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
   const [showGeneralInquiryModal, setShowGeneralInquiryModal] = React.useState(false);
+  const [unreadInboxCount, setUnreadInboxCount] = React.useState(0);
+
+  const refreshUnreadInboxCount = React.useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const count = await getUnreadAdminResponsesCount(user.id);
+      setUnreadInboxCount(count);
+    } catch (e) {
+      console.warn('Failed to refresh unread inbox count:', e);
+      setUnreadInboxCount(0);
+    }
+  }, [user?.id, getUnreadAdminResponsesCount]);
+
+  React.useEffect(() => {
+    refreshUnreadInboxCount();
+  }, [refreshUnreadInboxCount]);
+
+  // Realtime: keep unread badge in sync with admin replies/read state
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    const supabaseClient = createClient();
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        refreshUnreadInboxCount();
+      }, 250);
+    };
+
+    const channel = supabaseClient
+      .channel(`buyer_messages_badge_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'buyer_messages',
+          filter: `buyer_id=eq.${user.id}`,
+        },
+        () => scheduleRefresh()
+      )
+      .subscribe();
+
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      supabaseClient.removeChannel(channel);
+    };
+  }, [user?.id, refreshUnreadInboxCount]);
 
   // Stats for overview cards (real data from DB)
   interface BuyerStats {
@@ -969,7 +1021,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     return (
       <BuyerMessages
         user={user}
-        onBack={() => setShowBuyerMessages(false)}
+        onBack={() => {
+          setShowBuyerMessages(false);
+          setActiveSection('overview');
+        }}
         onViewProperty={onViewProperty}
       />
     );
@@ -1001,7 +1056,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             {key:'portfolio', label:'Portfolio', icon:Folder},
             {key:'saved', label:'Saved Properties', icon:Bookmark, badge: savedPropertiesCount},
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
-            {key:'messages', label:'Messages', icon:MessageCircle},
+            {key:'messages', label:'Messages', icon:MessageCircle, badge: unreadInboxCount},
             {key:'documents', label:'Documents', icon:FileText},
             {key:'settings', label:'Settings', icon:SettingsIcon},
           ].map((item:any)=>{
@@ -1009,7 +1064,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             return (
               <button key={item.key} onClick={() => {
                 if (item.key === 'messages') {
-                  setShowGeneralInquiryModal(true);
+                  setActiveSection('messages');
+                  setShowBuyerMessages(true);
                 } else {
                   setActiveSection(item.key);
                 }
@@ -1089,7 +1145,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     {key: 'portfolio', label: 'Portfolio', icon: Folder},
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark, badge: savedPropertiesCount},
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
-                    {key: 'messages', label: 'Messages', icon: MessageCircle},
+                    {key: 'messages', label: 'Messages', icon: MessageCircle, badge: unreadInboxCount},
                     {key: 'documents', label: 'Documents', icon: FileText},
                     {key: 'settings', label: 'Settings', icon: SettingsIcon},
                   ].map((item: any) => {
@@ -1099,7 +1155,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                         key={item.key} 
                         onClick={() => {
                           if (item.key === 'messages') {
-                            setShowGeneralInquiryModal(true);
+                            setActiveSection('messages');
+                            setShowBuyerMessages(true);
                           } else {
                             setActiveSection(item.key);
                           }
@@ -1205,7 +1262,16 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 Browse Properties
           </Button>
               <Button variant="outline" className="flex items-center gap-2" onClick={()=>setActiveSection('offers')}><FileText className="w-4 h-4"/>View Offers</Button>
-              <Button variant="outline" className="flex items-center gap-2" onClick={()=>setShowMessaging(true)}><MessageCircle className="w-4 h-4"/>Messages</Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  setActiveSection('messages');
+                  setShowBuyerMessages(true);
+                }}
+              >
+                <MessageCircle className="w-4 h-4"/>Messages
+              </Button>
         </div>
         </CardContent>
       </Card>

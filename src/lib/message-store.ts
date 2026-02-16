@@ -18,7 +18,7 @@ import {
 
 export interface BuyerMessage {
   id: string;
-  propertyId: string;
+  propertyId: string | null;
   propertyTitle: string;
   buyerId: string;
   buyerName: string;
@@ -41,7 +41,7 @@ interface MessageStoreState {
   error: string | null;
   
   // Actions
-  addMessage: (msg: Omit<BuyerMessage, 'id' | 'createdAt' | 'readByBuyer' | 'readByAdmin' | 'adminResponseReadByBuyer'>) => Promise<BuyerMessage>;
+  addMessage: (msg: Omit<BuyerMessage, 'id' | 'createdAt' | 'readByBuyer' | 'readByAdmin' | 'adminResponseReadByBuyer' | 'propertyId'> & { propertyId: string | null }) => Promise<BuyerMessage>;
   loadMessages: (filters?: MessageFilters) => Promise<void>;
   // Buyer-specific loader that respects RLS
   loadBuyerMessages: (buyerId: string) => Promise<void>;

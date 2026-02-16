@@ -21,10 +21,14 @@ import {
   RefreshCw,
   Loader2,
   Send,
-  Reply
+  Reply,
+  ArrowLeft,
+  Plus
 } from 'lucide-react';
 import { useMessageStore } from '@/lib/message-store';
 import { BuyerMessage } from '@/lib/message-services';
+import { createClient } from '@/lib/supabase';
+import { GeneralInquiryModal } from '@/components/messaging/GeneralInquiryModal';
 
 interface BuyerMessagesProps {
   user: any;
@@ -48,12 +52,83 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [folder, setFolder] = useState<'all' | 'inbox' | 'sent'>('all');
+
+  const sentMessages = messages; // every row is a buyer-sent message in this schema
+  const inboxMessages = React.useMemo(
+    () => messages.filter((m) => Boolean(m.adminResponse)),
+    [messages]
+  );
+
+  const unreadInboxCount = unreadAdminResponsesCount();
+
+  const folderLabel = React.useMemo(() => {
+    switch (folder) {
+      case 'inbox':
+        return unreadInboxCount > 0
+          ? `Inbox (replies) • ${unreadInboxCount} unread`
+          : 'Inbox (replies)';
+      case 'sent':
+        return 'Sent';
+      case 'all':
+      default:
+        return 'All';
+    }
+  }, [folder, unreadInboxCount]);
+
+  const displayedMessages = React.useMemo(() => {
+    switch (folder) {
+      case 'inbox':
+        return inboxMessages;
+      case 'sent':
+        return sentMessages;
+      case 'all':
+      default:
+        return messages;
+    }
+  }, [folder, inboxMessages, sentMessages, messages]);
 
   useEffect(() => {
     // Load only this buyer's messages (RLS enforced)
     if (user?.id) {
       loadBuyerMessages(user.id);
     }
+  }, [user?.id, loadBuyerMessages]);
+
+  // Realtime updates: refresh when admin responds or new message is created
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const supabase = createClient();
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      // small debounce to coalesce rapid updates
+      refreshTimer = setTimeout(() => {
+        loadBuyerMessages(user.id);
+      }, 250);
+    };
+
+    const channel = supabase
+      .channel(`buyer_messages_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'buyer_messages',
+          filter: `buyer_id=eq.${user.id}`,
+        },
+        () => scheduleRefresh()
+      )
+      .subscribe();
+
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      supabase.removeChannel(channel);
+    };
   }, [user?.id, loadBuyerMessages]);
 
   const handleRefresh = async () => {
@@ -185,9 +260,20 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
       <div className="mx-auto px-3 sm:px-4 space-y-6 max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Your Messages</h2>
-          <p className="text-gray-600">Communicate with our team about properties</p>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to dashboard
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Your Messages</h2>
+            <p className="text-gray-600">Messages you’ve sent and replies from our team. Each card is one conversation.</p>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           {unreadAdminResponsesCount() > 0 && (
@@ -196,6 +282,14 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
               {unreadAdminResponsesCount()} unread
             </Badge>
           )}
+          <Button
+            size="sm"
+            onClick={() => setShowNewMessageModal(true)}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Message
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -208,23 +302,73 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
         </div>
       </div>
 
+      {/* Folder Tabs */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setFolder('all')}
+          className={folder === 'all' ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700' : ''}
+          aria-pressed={folder === 'all'}
+        >
+          All ({messages.length})
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setFolder('inbox')}
+          className={folder === 'inbox' ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700' : ''}
+          aria-pressed={folder === 'inbox'}
+          title="Conversations with a reply from our team. Number is unread replies."
+        >
+          Inbox ({unreadAdminResponsesCount()})
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setFolder('sent')}
+          className={folder === 'sent' ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700' : ''}
+          aria-pressed={folder === 'sent'}
+        >
+          Sent ({sentMessages.length})
+        </Button>
+      </div>
+
+      <div className="text-sm text-slate-600">
+        <span className="font-medium text-slate-900">Viewing:</span> {folderLabel} • Showing {displayedMessages.length} conversation{displayedMessages.length === 1 ? '' : 's'}
+      </div>
+
       {/* Messages List */}
-      {messages.length === 0 ? (
+      {displayedMessages.length === 0 ? (
         <Card className="shadow-sm">
           <CardContent className="p-6">
             <div className="text-center py-8">
               <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Messages Yet</h3>
-              <p className="text-gray-500">
-                When you send messages about properties, they'll appear here.
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {folder === 'inbox' ? 'No Replies Yet' : 'No Messages Yet'}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {folder === 'inbox'
+                  ? 'When our team replies to your messages, they’ll appear here.'
+                  : 'When you send messages about properties, they’ll appear here.'}
               </p>
+              <Button
+                onClick={() => setShowNewMessageModal(true)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Message
+              </Button>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {messages.map((message) => (
-            <Card key={message.id} className={`${!message.readByBuyer ? 'border-blue-200 bg-blue-50' : ''} shadow-sm` }>
+          {displayedMessages.map((message) => (
+            <Card key={message.id} className="shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -233,8 +377,11 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                       <Badge className={getMessageTypeColor(message.messageType || 'inquiry')}>
                         {getMessageTypeLabel(message.messageType || 'inquiry')}
                       </Badge>
-                      {!message.readByBuyer && (
-                        <Badge variant="destructive">Unread</Badge>
+                      {!message.adminResponse && (
+                        <Badge variant="secondary">Waiting for reply</Badge>
+                      )}
+                      {message.adminResponse && !message.adminResponseReadByBuyer && (
+                        <Badge variant="destructive">New reply</Badge>
                       )}
                     </div>
                     <div className="flex items-center text-sm text-gray-500 space-x-4">
@@ -248,16 +395,6 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                       </div>
                     </div>
                   </div>
-                  {!message.readByBuyer && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleMarkAsRead(message.id)}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Mark as Read
-                    </Button>
-                  )}
                 </div>
               </CardHeader>
               
@@ -320,11 +457,13 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
 
                 {/* Reply Section */}
                 <div className="border-t pt-4">
-                  {replyingTo === message.id ? (
+                  {/* Only allow follow-up once admin has replied (avoids \"reply to myself\" confusion) */}
+                  {message.adminResponse ? (
+                    replyingTo === message.id ? (
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Reply className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium text-gray-900">Reply to this conversation</span>
+                        <span className="font-medium text-gray-900">Send a follow-up</span>
                       </div>
                       <Textarea
                         placeholder="Type your follow-up message here..."
@@ -357,7 +496,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                         </Button>
                       </div>
                     </div>
-                  ) : (
+                    ) : (
                     <Button
                       variant="outline"
                       size="sm"
@@ -365,8 +504,13 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
                       className="text-blue-600 border-blue-300 hover:bg-blue-50"
                     >
                       <Reply className="w-4 h-4 mr-2" />
-                      Reply
+                      Follow up
                     </Button>
+                    )
+                  ) : (
+                    <div className="text-sm text-slate-500">
+                      You can send another message using <span className="font-medium">New Message</span> above while you wait for a reply.
+                    </div>
                   )}
                 </div>
 
@@ -390,6 +534,12 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
         </div>
       )}
       </div>
+
+      <GeneralInquiryModal
+        isOpen={showNewMessageModal}
+        onClose={() => setShowNewMessageModal(false)}
+        user={user}
+      />
     </div>
   );
 };

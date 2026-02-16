@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User as UserType } from '@/types/auth';
 import { toast } from 'sonner';
+import { useMessageStore } from '@/lib/message-store';
 
 interface GeneralInquiryModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const GeneralInquiryModal: React.FC<GeneralInquiryModalProps> = ({
   onClose,
   user
 }) => {
+  const { addMessage, loadBuyerMessages } = useMessageStore();
   const [subject, setSubject] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -37,9 +39,22 @@ export const GeneralInquiryModal: React.FC<GeneralInquiryModalProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Here you would typically send the inquiry to your backend
-      // For now, we'll just simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await addMessage({
+        // General inquiry: no property context
+        propertyId: null,
+        propertyTitle: subject.trim(),
+        buyerId: user.id,
+        buyerName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Verified Buyer',
+        buyerEmail: user.email,
+        buyerPhone: user.phone,
+        content: message.trim(),
+        messageType: 'general',
+      });
+
+      // Refresh buyer messages list so it appears immediately wherever it's displayed
+      if (user.id) {
+        await loadBuyerMessages(user.id);
+      }
       
       toast.success('Your inquiry has been sent successfully!');
       setSubject('');

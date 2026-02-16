@@ -39,7 +39,7 @@ export interface BuyerMessage {
 }
 
 export interface CreateMessageData {
-  property_id: string;
+  property_id: string | null;
   property_title: string;
   buyer_id: string;
   buyer_name: string;
@@ -96,26 +96,23 @@ export async function getMessages(filters?: {
   };
 }
 
-// Get messages for a specific buyer
+// Get messages for a specific buyer (select only buyer_messages to avoid join/RLS issues)
 export async function getBuyerMessages(buyerId: string): Promise<BuyerMessage[]> {
   const supabase = createClient();
-  
+
   const { data, error } = await supabase
     .from('buyer_messages')
-    .select(`
-      *,
-      property:properties(id, title, city, suburb),
-      buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
-    `)
+    .select('*')
     .eq('buyer_id', buyerId)
     .order('created_at', { ascending: false });
 
   if (error) {
+    const msg = error?.message ?? JSON.stringify(error);
     console.error('Error fetching buyer messages:', error);
-    throw new Error('Failed to fetch buyer messages');
+    throw new Error(`Failed to fetch buyer messages: ${msg}`);
   }
 
-  return data || [];
+  return (data || []) as BuyerMessage[];
 }
 
 // Create a new message
@@ -128,11 +125,7 @@ export async function createMessage(messageData: CreateMessageData): Promise<Buy
       ...messageData,
       message_type: messageData.message_type || 'inquiry'
     })
-    .select(`
-      *,
-      property:properties(id, title, city, suburb),
-      buyer:user_profiles!buyer_messages_buyer_id_fkey(id, first_name, last_name, email, phone)
-    `)
+    .select('*')
     .single();
 
   if (error) {
@@ -140,7 +133,7 @@ export async function createMessage(messageData: CreateMessageData): Promise<Buy
     throw new Error('Failed to create message');
   }
 
-  return data;
+  return data as BuyerMessage;
 }
 
 // Update a message

@@ -88,6 +88,9 @@ export async function PATCH(
     if (validatedData.admin_response) {
       updateData.admin_response_at = new Date().toISOString();
       updateData.admin_response_by = null;
+      // Ensure buyer sees this as a new/unread response
+      updateData.admin_response_read_by_buyer = false;
+      updateData.admin_response_read_at = null;
     }
 
     // If marking admin response as read by buyer
