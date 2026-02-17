@@ -103,6 +103,7 @@ interface ProfileDashboardProps {
   onProfileSettings?: () => void;
   onLogout?: () => void;
   isNewUser?: boolean;
+  hideNavigationBar?: boolean;
 }
 
 // Smart Recommendation System
@@ -1082,7 +1083,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   onBackToHome,
   onProfileSettings,
   onLogout,
-  isNewUser = false
+  isNewUser = false,
+  hideNavigationBar = false,
 }) => {
   const router = useRouter();
   const { user: storeUser, updateUser } = useAuthStore();
@@ -2057,12 +2059,14 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
-      <NavigationBar
-        user={user}
-        onBackToHome={onBackToHome}
-        onProfileSettings={onProfileSettings}
-        onLogout={onLogout}
-      />
+      {!hideNavigationBar && (
+        <NavigationBar
+          user={user}
+          onBackToHome={onBackToHome}
+          onProfileSettings={onProfileSettings}
+          onLogout={onLogout}
+        />
+      )}
 
       {/* Messaging: same experience as verified dashboard */}
       {showBuyerMessages ? (

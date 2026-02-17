@@ -32,7 +32,7 @@ import { GeneralInquiryModal } from '@/components/messaging/GeneralInquiryModal'
 
 interface BuyerMessagesProps {
   user: any;
-  onBack: () => void;
+  onBack?: () => void;
   onViewProperty: (propertyId: string) => void;
 }
 
@@ -256,20 +256,21 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
   }
 
   return (
-    <div className="w-full">
-      <div className="mx-auto px-3 sm:px-4 space-y-6 max-w-3xl sm:max-w-4xl md:max-w-5xl lg:max-w-6xl">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to dashboard
-          </Button>
+          {onBack && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBack}
+              className="shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to dashboard
+            </Button>
+          )}
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Your Messages</h2>
             <p className="text-gray-600">Messages you’ve sent and replies from our team. Each card is one conversation.</p>
@@ -285,7 +286,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
           <Button
             size="sm"
             onClick={() => setShowNewMessageModal(true)}
-            className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-[#800020] hover:bg-[#a00028] text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Message
@@ -309,7 +310,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
           variant="outline"
           size="sm"
           onClick={() => setFolder('all')}
-          className={folder === 'all' ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700' : ''}
+          className={folder === 'all' ? 'bg-[#800020] text-white border-[#800020] hover:bg-[#a00028] hover:border-[#a00028]' : ''}
           aria-pressed={folder === 'all'}
         >
           All ({messages.length})
@@ -319,7 +320,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
           variant="outline"
           size="sm"
           onClick={() => setFolder('inbox')}
-          className={folder === 'inbox' ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700' : ''}
+          className={folder === 'inbox' ? 'bg-[#800020] text-white border-[#800020] hover:bg-[#a00028] hover:border-[#a00028]' : ''}
           aria-pressed={folder === 'inbox'}
           title="Conversations with a reply from our team. Number is unread replies."
         >
@@ -330,7 +331,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
           variant="outline"
           size="sm"
           onClick={() => setFolder('sent')}
-          className={folder === 'sent' ? 'bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700' : ''}
+          className={folder === 'sent' ? 'bg-[#800020] text-white border-[#800020] hover:bg-[#a00028] hover:border-[#a00028]' : ''}
           aria-pressed={folder === 'sent'}
         >
           Sent ({sentMessages.length})
@@ -357,7 +358,7 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
               </p>
               <Button
                 onClick={() => setShowNewMessageModal(true)}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-[#800020] hover:bg-[#a00028] text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Message
@@ -533,7 +534,6 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
           ))}
         </div>
       )}
-      </div>
 
       <GeneralInquiryModal
         isOpen={showNewMessageModal}

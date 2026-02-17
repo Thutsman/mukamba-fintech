@@ -1016,19 +1016,8 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     );
   }
 
-  // Show buyer messages as full page
-  if (showBuyerMessages) {
-    return (
-      <BuyerMessages
-        user={user}
-        onBack={() => {
-          setShowBuyerMessages(false);
-          setActiveSection('overview');
-        }}
-        onViewProperty={onViewProperty}
-      />
-    );
-  }
+  // Messages section is now rendered inline within the dashboard layout
+  // No longer shown as a full page to maintain consistent design
 
   return (
     <div className="flex min-h-screen bg-slate-50 overflow-x-hidden">
@@ -1063,12 +1052,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             const Icon = item.icon;
             return (
               <button key={item.key} onClick={() => {
-                if (item.key === 'messages') {
-                  setActiveSection('messages');
-                  setShowBuyerMessages(true);
-                } else {
-                  setActiveSection(item.key);
-                }
+                setActiveSection(item.key);
               }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection===item.key?'bg-red-100 text-red-800 border border-red-300':'text-slate-700 hover:bg-slate-50'}`}> 
                 <Icon className={activeSection===item.key?'w-4 h-4 text-red-800':'w-4 h-4 text-slate-500'}/>
@@ -1154,12 +1138,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <button
                         key={item.key} 
                         onClick={() => {
-                          if (item.key === 'messages') {
-                            setActiveSection('messages');
-                            setShowBuyerMessages(true);
-                          } else {
-                            setActiveSection(item.key);
-                          }
+                          setActiveSection(item.key);
                           setShowMobileNav(false);
                         }}
                         className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection === item.key ? 'bg-red-100 text-red-800 border border-red-300' : 'text-slate-700 hover:bg-slate-50'}`}
@@ -1265,10 +1244,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
               <Button
                 variant="outline"
                 className="flex items-center gap-2"
-                onClick={() => {
-                  setActiveSection('messages');
-                  setShowBuyerMessages(true);
-                }}
+                onClick={() => setActiveSection('messages')}
               >
                 <MessageCircle className="w-4 h-4"/>Messages
               </Button>
@@ -1760,6 +1736,14 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             // Open payment modal for approved offers
             handleMakePayment(offer);
           }}
+        />
+      )}
+
+      {/* Messages Section */}
+      {activeSection === 'messages' && (
+        <BuyerMessages
+          user={user}
+          onViewProperty={onViewProperty}
         />
       )}
 

@@ -280,7 +280,7 @@ export const AuthSystem: React.FC = () => {
     }
 
     // If authenticated and viewing profile
-    if (isAuthenticated && user && currentView === 'profile') {
+      if (isAuthenticated && user && currentView === 'profile') {
       // If fully verified, redirect to the main view (which will show VerifiedUserDashboard with AuthSystem header)
       if (isFullyVerified(user)) {
         setCurrentView('properties');
@@ -308,6 +308,7 @@ export const AuthSystem: React.FC = () => {
             alert('Profile settings coming soon!');
           }}
           isNewUser={isNewUser}
+          hideNavigationBar={activeSection === 'messages'}
         />
       );
     }
