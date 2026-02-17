@@ -226,8 +226,8 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
 
   const filteredOffers = offers.filter(offer => {
     const matchesSearch = searchQuery === '' || 
-      offer.property?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      offer.property?.location.city.toLowerCase().includes(searchQuery.toLowerCase());
+      offer.property?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      offer.property?.location?.city?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || offer.status === statusFilter;
     
@@ -372,7 +372,20 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="relative"
             >
+              {/* Approved ribbon - top-left corner */}
+              {offer.status === 'approved' && (
+                <div
+                  className="absolute top-0 left-0 z-10 flex items-center justify-center overflow-hidden"
+                  aria-hidden
+                >
+                  <div className="bg-green-600 text-white text-xs font-semibold px-8 py-1 shadow-md -rotate-45 -translate-x-6 translate-y-2 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 shrink-0" />
+                    Approved
+                  </div>
+                </div>
+              )}
               <Card className="hover:shadow-lg transition-shadow duration-200">
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -384,7 +397,10 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                             {offer.property?.title || 'Property Title'}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {offer.property?.location?.city || 'City'}, {offer.property?.location?.country || 'Country'}
+                            {(offer.property?.location?.suburb ? `${offer.property.location.suburb}, ` : '')}{offer.property?.location?.city || 'City'}, {offer.property?.location?.country || 'Country'}
+                          </p>
+                          <p className="text-xs text-gray-500 font-mono mt-1">
+                            Offer #: {offer.offer_reference || '—'}
                           </p>
                         </div>
                         {getStatusBadge(offer.status)}
@@ -439,12 +455,17 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
 
                       <div className="text-xs text-gray-500">
                         Submitted: {formatDate(offer.submitted_at)}
-                        {offer.expires_at && (
+                        {offer.expires_at && paymentStatusByOfferId[offer.id] !== 'completed' && (
                           <span className="ml-4">
                             Expires: {formatDate(offer.expires_at)}
                           </span>
                         )}
-                        {offer.admin_reviewed_at && (
+                        {offer.status === 'approved' && offer.admin_reviewed_at && (
+                          <span className="ml-4 text-green-700 font-medium">
+                            Approved: {formatDate(offer.admin_reviewed_at)}
+                          </span>
+                        )}
+                        {offer.status !== 'approved' && offer.admin_reviewed_at && (
                           <span className="ml-4">
                             Reviewed: {formatDate(offer.admin_reviewed_at)}
                           </span>

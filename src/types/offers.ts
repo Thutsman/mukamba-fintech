@@ -33,6 +33,7 @@ export interface PropertyOffer {
     price: number;
     currency: string;
     location: {
+      suburb?: string;
       city: string;
       country: string;
     };

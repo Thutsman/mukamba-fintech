@@ -1928,7 +1928,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                   <h3 className="font-semibold text-gray-900 mb-2">Property</h3>
                   <p className="text-gray-700">{selectedOffer.property?.title || 'Property Not Found'}</p>
                   <p className="text-sm text-gray-600">
-                    {selectedOffer.property?.location?.city || 'Unknown City'}, {selectedOffer.property?.location?.country || 'Unknown Country'}
+                    {(selectedOffer.property?.location?.suburb ? `${selectedOffer.property.location.suburb}, ` : '')}{selectedOffer.property?.location?.city || 'Unknown City'}, {selectedOffer.property?.location?.country || 'Unknown Country'}
+                  </p>
+                  <p className="text-xs text-gray-500 font-mono mt-2">
+                    Offer #: {selectedOffer.offer_reference || '—'}
                   </p>
                 </div>
 
@@ -2000,7 +2003,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 <div className="text-sm text-gray-500 space-y-1">
                   <p>Submitted: {selectedOffer.submitted_at ? new Date(selectedOffer.submitted_at).toLocaleDateString() : 'N/A'}</p>
                   {selectedOffer.admin_reviewed_at && (
-                    <p>Reviewed: {new Date(selectedOffer.admin_reviewed_at).toLocaleDateString()}</p>
+                    <p className={selectedOffer.status === 'approved' ? 'text-green-700 font-medium' : ''}>
+                      {selectedOffer.status === 'approved' ? 'Approved' : 'Reviewed'}: {new Date(selectedOffer.admin_reviewed_at).toLocaleDateString()}
+                    </p>
                   )}
                 </div>
               </div>

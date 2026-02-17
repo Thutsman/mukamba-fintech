@@ -509,6 +509,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'offers' && (
             <section>
               <OffersPage
+                adminUserId={user.id}
                 onViewOffer={(offerId) => console.log('View offer:', offerId)}
                 onApproveOffer={(offerId) => {
                   console.log('Approve offer:', offerId);

@@ -39,12 +39,15 @@ interface OffersPageProps {
   onViewOffer?: (offerId: string) => void;
   onApproveOffer?: (offerId: string) => void;
   onRejectOffer?: (offerId: string, reason: string) => void;
+  /** Admin user ID – when set, approve/reject will record admin_reviewed_by and admin_reviewed_at */
+  adminUserId?: string;
 }
 
 export const OffersPage: React.FC<OffersPageProps> = ({
   onViewOffer,
   onApproveOffer,
-  onRejectOffer
+  onRejectOffer,
+  adminUserId
 }) => {
   const [offers, setOffers] = useState<PropertyOffer[]>([]);
   const [stats, setStats] = useState<OfferStats>({
@@ -92,7 +95,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({
 
   const handleApproveOffer = async (offerId: string) => {
     try {
-      const success = await updatePropertyOffer(offerId, { status: 'approved' });
+      const success = await updatePropertyOffer(offerId, { status: 'approved' }, adminUserId);
       if (success) {
         // Auto-create invoice for the offer (no seller id included)
         try {
@@ -122,7 +125,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({
       const success = await updatePropertyOffer(offerId, { 
         status: 'rejected', 
         rejection_reason: reason 
-      });
+      }, adminUserId);
       if (success) {
         toast.success('Offer rejected successfully');
         loadOffers();
@@ -331,7 +334,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
-                            {offer.property?.location?.city || 'Unknown City'}, {offer.property?.location?.country || 'Unknown Country'}
+                            {(offer.property?.location?.suburb ? `${offer.property.location.suburb}, ` : '')}{offer.property?.location?.city || 'Unknown City'}, {offer.property?.location?.country || 'Unknown Country'}
                           </p>
                         </div>
                         {getStatusBadge(offer.status)}

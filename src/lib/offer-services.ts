@@ -10,6 +10,28 @@ const supabase = supabaseUrl && supabaseKey
   : null;
 
 /**
+ * Normalize joined property shape from Supabase into the UI-friendly structure.
+ *
+ * Our UI components expect `offer.property.location.{city,country}`, but the DB join
+ * returns `city`/`country` as top-level columns on `properties`.
+ */
+const normalizeJoinedProperty = (property: any): any => {
+  if (!property) return property;
+
+  // If the join already provided a nested location, keep it.
+  if (property.location?.city || property.location?.country) return property;
+
+  return {
+    ...property,
+    location: {
+      suburb: property.suburb ?? '',
+      city: property.city ?? '',
+      country: property.country ?? '',
+    },
+  };
+};
+
+/**
  * Create a new property offer
  */
 export const createPropertyOffer = async (offerData: CreateOfferData): Promise<string | null> => {
@@ -237,7 +259,10 @@ export const getPropertyOffers = async (filters?: {
       return [];
     }
 
-    return data || [];
+    return (data || []).map((row: any) => ({
+      ...row,
+      property: normalizeJoinedProperty(row.property),
+    })) as PropertyOffer[];
   } catch (error) {
     console.error('Error in getPropertyOffers:', error);
     return [];
@@ -450,7 +475,10 @@ export const getPropertyOfferById = async (offerId: string): Promise<PropertyOff
       return null;
     }
 
-    return data;
+    return {
+      ...(data as any),
+      property: normalizeJoinedProperty((data as any)?.property),
+    } as PropertyOffer;
   } catch (error) {
     console.error('Error in getPropertyOfferById:', error);
     return null;
