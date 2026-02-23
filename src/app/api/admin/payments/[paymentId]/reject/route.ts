@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { sendTransactionalTemplateEmail, getAppUrl } from '@/lib/transactional-email-service';
+import { PaymentStatusEmailTemplate } from '@/lib/email-templates/payment-status';
+import * as React from 'react';
 
 /**
  * PATCH /api/admin/payments/[paymentId]/reject
@@ -89,6 +92,52 @@ export async function PATCH(
         },
         created_at: new Date().toISOString(),
       });
+    }
+
+    // Email the buyer (best-effort)
+    if (payment.buyer_id) {
+      const [{ data: buyer }, { data: offer }] = await Promise.all([
+        supabase
+          .from('user_profiles')
+          .select('first_name, email')
+          .eq('id', payment.buyer_id)
+          .single(),
+        payment.offer_id
+          ? supabase
+              .from('property_offers')
+              .select('offer_reference')
+              .eq('id', payment.offer_id)
+              .single()
+          : Promise.resolve({ data: null } as any),
+      ]);
+
+      const buyerEmail = (buyer as any)?.email as string | undefined;
+      const buyerFirstName = ((buyer as any)?.first_name as string | undefined) || 'there';
+      const offerReference = ((offer as any)?.offer_reference as string | undefined) || payment.offer_id || paymentId;
+
+      if (buyerEmail) {
+        let appUrl: string | null = null;
+        try {
+          appUrl = getAppUrl();
+        } catch (e) {
+          console.error('NEXT_PUBLIC_APP_URL missing; skipping CTA links:', e);
+        }
+
+        sendTransactionalTemplateEmail({
+          to: [buyerEmail],
+          subject: 'Payment proof rejected',
+          react: React.createElement(PaymentStatusEmailTemplate, {
+            firstName: buyerFirstName,
+            status: 'rejected',
+            amount: `$${Number(payment.amount).toLocaleString()}`,
+            offerReference,
+            reason: reason || null,
+            cta: appUrl ? { label: 'Resubmit proof of payment', url: `${appUrl}/?section=offers` } : undefined,
+          }),
+          tags: ['payment_rejected'],
+          metadata: { payment_id: String(paymentId), offer_id: String(payment.offer_id || '') },
+        }).catch((e) => console.error('Failed to send payment rejected email:', e));
+      }
     }
 
     return NextResponse.json({

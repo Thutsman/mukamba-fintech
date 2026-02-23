@@ -6,6 +6,36 @@ import { PasswordResetEmailTemplate } from './email-templates/password-reset-ema
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const DEFAULT_FROM = 'Mukamba Gateway <noreply@mukambagateway.com>';
+
+export type SendEmailResult =
+  | { success: true; data: unknown }
+  | { success: false; error: string };
+
+export async function sendEmail(params: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<SendEmailResult> {
+  const to = (params.to || []).map((e) => e?.trim()).filter(Boolean);
+  if (to.length === 0) {
+    return { success: false, error: 'No recipients provided' };
+  }
+  try {
+    const data = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to,
+      subject: params.subject,
+      html: params.html,
+    });
+    return { success: true, data };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Transactional email sending failed:', error);
+    return { success: false, error: msg };
+  }
+}
+
 export async function sendConfirmationEmail(
   email: string,
   firstName: string,
@@ -19,7 +49,7 @@ export async function sendConfirmationEmail(
     );
 
     const data = await resend.emails.send({
-      from: 'Mukamba Gateway <noreply@mukambagateway.com>',
+      from: DEFAULT_FROM,
       to: [email],
       subject: 'Confirm your Mukamba Gateway account',
       html: emailHtml,
@@ -45,7 +75,7 @@ export async function sendPasswordResetEmail(
     );
 
     const data = await resend.emails.send({
-      from: 'Mukamba Gateway <noreply@mukambagateway.com>',
+      from: DEFAULT_FROM,
       to: [email],
       subject: 'Reset your Mukamba Gateway password',
       html: emailHtml,

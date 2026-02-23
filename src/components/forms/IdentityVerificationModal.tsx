@@ -433,6 +433,17 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
       }
 
       // Move to success - validation results determine if user is verified
+      // Send buyer transactional email (best-effort)
+      try {
+        await fetch('/api/notifications/kyc-submitted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ verification_id: verification.id }),
+        });
+      } catch (e) {
+        console.warn('Failed to notify kyc-submitted email:', e);
+      }
+
       setStep('success');
       
       // Show custom notification instead of auto-dismissing

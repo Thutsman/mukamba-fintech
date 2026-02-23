@@ -69,6 +69,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = React.useState<OnboardingStep>('welcome');
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isAdvancing, setIsAdvancing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isResuming, setIsResuming] = React.useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = React.useState<boolean | null>(null);
@@ -451,14 +452,19 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       }
     }
     
-    // Save current step data
-    console.log('Saving data for step:', currentStep, 'with formData:', formData);
-    await saveVerificationData(currentStep, formData);
-    await saveProgress();
-    
-    const currentIndex = steps.findIndex(step => step.id === currentStep);
-    if (currentIndex < steps.length - 1) {
-      setCurrentStep(steps[currentIndex + 1].id as OnboardingStep);
+    setIsAdvancing(true);
+    try {
+      // Save current step data
+      console.log('Saving data for step:', currentStep, 'with formData:', formData);
+      await saveVerificationData(currentStep, formData);
+      await saveProgress();
+      
+      const currentIndex = steps.findIndex(step => step.id === currentStep);
+      if (currentIndex < steps.length - 1) {
+        setCurrentStep(steps[currentIndex + 1].id as OnboardingStep);
+      }
+    } finally {
+      setIsAdvancing(false);
     }
   };
 
@@ -1360,16 +1366,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
               <Button
                 onClick={handleNext}
                 className="bg-red-600 hover:bg-red-700"
-                disabled={currentStep === 'property' && (
-                  !formData.propertyAddress.trim() || 
-                  !formData.propertyType || 
-                  !formData.estimatedValue.trim() ||
-                  (formData.acceptsInstallments && (
-                    !formData.preferredDepositAmount.trim() ||
-                    !formData.installmentDurationMonths ||
-                    !formData.minimumDepositPercentage.trim()
-                  ))
-                )}
+                disabled={isAdvancing}
               >
                 Continue
                 <ArrowRight className="w-4 h-4 ml-2" />

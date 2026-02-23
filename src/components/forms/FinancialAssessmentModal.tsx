@@ -295,6 +295,17 @@ export const FinancialAssessmentModal: React.FC<FinancialAssessmentModalProps> =
       }
 
       // Keep status pending until admin review; still show computed mock results
+      // Send buyer transactional email (best-effort)
+      try {
+        await fetch('/api/notifications/kyc-submitted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ verification_id: verification.id }),
+        });
+      } catch (e) {
+        console.warn('Failed to notify kyc-submitted email:', e);
+      }
+
       const expensesNum = parseInt(formData.monthlyExpenses.replace(/\D/g, ''));
       const income = isNaN(incomeNum) ? 0 : incomeNum;
       const expenses = isNaN(expensesNum) ? 0 : expensesNum;

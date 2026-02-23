@@ -85,10 +85,20 @@ export const AuthSystem: React.FC = () => {
         return;
       }
 
-      // Handle section parameter for offers
-      if (section === 'offers') {
-        setActiveSection('offers');
-        setCurrentView('properties'); // Show dashboard with offers section
+      // Handle section parameter for deep linking into VerifiedUserDashboard
+      const allowedSections = new Set([
+        'overview',
+        'portfolio',
+        'saved',
+        'offers',
+        'messages',
+        'documents',
+        'financing',
+        'settings',
+      ]);
+      if (section && allowedSections.has(section)) {
+        setActiveSection(section as any);
+        setCurrentView('properties');
         // Clean URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, '', cleanUrl);

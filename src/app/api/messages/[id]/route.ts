@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
+import { sendTransactionalTemplateEmail, getAppUrl, safePreview } from '@/lib/transactional-email-service';
+import { AdminMessageReplyEmailTemplate } from '@/lib/email-templates/admin-message-reply';
+import * as React from 'react';
 
 const updateMessageSchema = z.object({
   read_by_buyer: z.boolean().optional(),
@@ -113,6 +116,30 @@ export async function PATCH(
     if (error) {
       console.error('Error updating message:', error);
       return NextResponse.json({ error: 'Failed to update message' }, { status: 500 });
+    }
+
+    // If admin responded, email the buyer (best-effort)
+    if (validatedData.admin_response) {
+      const buyerEmail = message?.buyer?.email;
+      const buyerFirstName = message?.buyer?.first_name || 'there';
+      if (buyerEmail) {
+        const ctaUrl = `${getAppUrl()}/?section=messages`;
+        const preview = safePreview(validatedData.admin_response, 240);
+        sendTransactionalTemplateEmail({
+          to: [buyerEmail],
+          subject: 'New message from Mukamba Gateway',
+          react: React.createElement(AdminMessageReplyEmailTemplate, {
+            firstName: buyerFirstName,
+            propertyTitle: message?.property?.title,
+            preview,
+            cta: { label: 'Open inbox', url: ctaUrl },
+          }),
+          tags: ['message_reply'],
+          metadata: { message_id: String(id) },
+        }).catch((e) => {
+          console.error('Failed to send message reply email:', e);
+        });
+      }
     }
 
     return NextResponse.json({

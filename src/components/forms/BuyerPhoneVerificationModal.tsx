@@ -208,6 +208,17 @@ export const BuyerPhoneVerificationModal: React.FC<BuyerPhoneVerificationModalPr
       }
       
       console.log('Phone verification completed successfully');
+
+      // Notify (best-effort) to send transactional email
+      try {
+        await fetch('/api/notifications/phone-verified', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user.id }),
+        });
+      } catch (e) {
+        console.warn('Failed to notify phone-verified email:', e);
+      }
       
       // Call the completion handler
       onVerificationComplete(getFullPhoneNumber());

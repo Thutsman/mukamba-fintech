@@ -29,7 +29,6 @@ import { Input } from '@/components/ui/input';
 import { PropertyOffer, OfferStats } from '@/types/offers';
 import { 
   getPropertyOffers, 
-  updatePropertyOffer, 
   getOfferStats 
 } from '@/lib/offer-services';
 import { createInvoiceForOffer } from '@/lib/invoice-services';
@@ -95,8 +94,13 @@ export const OffersPage: React.FC<OffersPageProps> = ({
 
   const handleApproveOffer = async (offerId: string) => {
     try {
-      const success = await updatePropertyOffer(offerId, { status: 'approved' }, adminUserId);
-      if (success) {
+      const res = await fetch(`/api/admin/offers/${offerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved', admin_id: adminUserId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.success) {
         // Auto-create invoice for the offer (no seller id included)
         try {
           const invoice = await createInvoiceForOffer(offerId);
@@ -112,7 +116,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({
         loadStats();
         onApproveOffer?.(offerId);
       } else {
-        toast.error('Failed to approve offer');
+        toast.error(json.error || 'Failed to approve offer');
       }
     } catch (error) {
       console.error('Error approving offer:', error);
@@ -122,17 +126,19 @@ export const OffersPage: React.FC<OffersPageProps> = ({
 
   const handleRejectOffer = async (offerId: string, reason: string) => {
     try {
-      const success = await updatePropertyOffer(offerId, { 
-        status: 'rejected', 
-        rejection_reason: reason 
-      }, adminUserId);
-      if (success) {
+      const res = await fetch(`/api/admin/offers/${offerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'rejected', rejection_reason: reason, admin_id: adminUserId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.success) {
         toast.success('Offer rejected successfully');
         loadOffers();
         loadStats();
         onRejectOffer?.(offerId, reason);
       } else {
-        toast.error('Failed to reject offer');
+        toast.error(json.error || 'Failed to reject offer');
       }
     } catch (error) {
       console.error('Error rejecting offer:', error);

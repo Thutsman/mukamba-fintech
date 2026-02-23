@@ -354,6 +354,20 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
       const offerId = await createPropertyOffer(offerData);
 
       if (offerId) {
+        // Send buyer transactional email (best-effort, only for real UUID offers)
+        try {
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          if (uuidRegex.test(offerId)) {
+            await fetch('/api/notifications/offer-submitted', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ offer_id: offerId }),
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to notify offer-submitted email:', e);
+        }
+
         // Call custom onSubmit if provided
         if (onSubmit) {
       await onSubmit(formData);

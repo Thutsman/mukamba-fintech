@@ -84,6 +84,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [pendingPaymentsCount, setPendingPaymentsCount] = useState<number>(0);
   const [pendingOffersCount, setPendingOffersCount] = useState<number>(0);
 
+  // Deep link: set active tab from URL (?tab=payments, ?tab=offers, etc.)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') as AdminTab | null;
+      if (tab) {
+        const allowed: AdminTab[] = ['overview', 'listings', 'offers', 'kyc', 'users', 'messages', 'reports', 'payments', 'settings'];
+        if (allowed.includes(tab)) {
+          setActiveTab(tab);
+        }
+        // Clean URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   // Load real property stats
   useEffect(() => {
     const loadPropertyStats = async () => {
@@ -532,11 +551,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onApproveVerification={async (verificationId) => {
                   try {
                     console.log('Approving verification:', verificationId);
-                    const result = await updateKYCVerification(verificationId, user.id, { status: 'approved' });
-                    
-                    if (result.error) {
-                      console.error('Error from updateKYCVerification:', result.error);
-                      toast.error(`Failed to approve: ${result.error}`);
+                    const res = await fetch(`/api/admin/kyc/${verificationId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: 'approved', admin_id: user.id }),
+                    });
+                    const json = await res.json().catch(() => ({}));
+                    if (!res.ok || !json.success) {
+                      const msg = json.error || 'Failed to approve';
+                      console.error('Error approving via API:', msg, json);
+                      toast.error(`Failed to approve: ${msg}`);
                       return;
                     }
                     
@@ -561,7 +585,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 }}
                 onRejectVerification={async (verificationId, reason) => {
                   try {
-                    await updateKYCVerification(verificationId, user.id, { status: 'rejected', rejection_reason: reason });
+                    const res = await fetch(`/api/admin/kyc/${verificationId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: 'rejected', rejection_reason: reason, admin_id: user.id }),
+                    });
+                    const json = await res.json().catch(() => ({}));
+                    if (!res.ok || !json.success) {
+                      const msg = json.error || 'Failed to reject';
+                      toast.error(msg);
+                      return;
+                    }
                     setKycVerifications(prev => prev.map(v => v.id === verificationId ? { ...v, status: 'rejected', reviewed_by: user.id, reviewed_at: new Date().toISOString() } : v));
                     
                     // Enhanced rejection message
