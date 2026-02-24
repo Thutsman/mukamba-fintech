@@ -4,6 +4,35 @@ import { sendTransactionalTemplateEmail, getAppUrl } from '@/lib/transactional-e
 import { PaymentStatusEmailTemplate } from '@/lib/email-templates/payment-status';
 import * as React from 'react';
 
+async function getBuyerContact(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string
+): Promise<{ firstName: string; email?: string }> {
+  const { data: buyerProfile } = await supabase
+    .from('user_profiles')
+    .select('first_name, email')
+    .eq('id', userId)
+    .single();
+
+  const profileFirstName = (buyerProfile as any)?.first_name as string | undefined;
+  const profileEmail = (buyerProfile as any)?.email as string | undefined;
+
+  if (profileEmail) {
+    return { firstName: profileFirstName || 'there', email: profileEmail };
+  }
+
+  const { data: authData } = await supabase.auth.admin.getUserById(userId);
+  const authUser = authData?.user;
+  const authFirstName =
+    ((authUser?.user_metadata as any)?.first_name as string | undefined) ||
+    ((authUser?.user_metadata as any)?.name as string | undefined);
+
+  return {
+    firstName: profileFirstName || authFirstName || 'there',
+    email: authUser?.email || undefined,
+  };
+}
+
 /**
  * PATCH /api/admin/payments/[paymentId]/reject
  * Marks a pending payment as failed/rejected by admin.
@@ -96,12 +125,8 @@ export async function PATCH(
 
     // Email the buyer (best-effort)
     if (payment.buyer_id) {
-      const [{ data: buyer }, { data: offer }] = await Promise.all([
-        supabase
-          .from('user_profiles')
-          .select('first_name, email')
-          .eq('id', payment.buyer_id)
-          .single(),
+      const [{ firstName: buyerFirstName, email: buyerEmail }, { data: offer }] = await Promise.all([
+        getBuyerContact(supabase, payment.buyer_id),
         payment.offer_id
           ? supabase
               .from('property_offers')
@@ -111,8 +136,6 @@ export async function PATCH(
           : Promise.resolve({ data: null } as any),
       ]);
 
-      const buyerEmail = (buyer as any)?.email as string | undefined;
-      const buyerFirstName = ((buyer as any)?.first_name as string | undefined) || 'there';
       const offerReference = ((offer as any)?.offer_reference as string | undefined) || payment.offer_id || paymentId;
 
       if (buyerEmail) {
@@ -123,7 +146,7 @@ export async function PATCH(
           console.error('NEXT_PUBLIC_APP_URL missing; skipping CTA links:', e);
         }
 
-        sendTransactionalTemplateEmail({
+        const emailResult = await sendTransactionalTemplateEmail({
           to: [buyerEmail],
           subject: 'Payment proof rejected',
           react: React.createElement(PaymentStatusEmailTemplate, {
@@ -136,7 +159,10 @@ export async function PATCH(
           }),
           tags: ['payment_rejected'],
           metadata: { payment_id: String(paymentId), offer_id: String(payment.offer_id || '') },
-        }).catch((e) => console.error('Failed to send payment rejected email:', e));
+        });
+        if (!emailResult.success) {
+          console.error('Failed to send payment rejected email:', emailResult.error);
+        }
       }
     }
 

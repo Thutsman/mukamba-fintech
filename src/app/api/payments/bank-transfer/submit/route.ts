@@ -5,6 +5,36 @@ import { PaymentProofSubmittedEmailTemplate } from '@/lib/email-templates/paymen
 import { AdminActionRequiredEmailTemplate } from '@/lib/email-templates/admin-action-required';
 import * as React from 'react';
 
+async function getBuyerContact(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string
+): Promise<{ firstName: string; email?: string }> {
+  const { data: buyerProfile } = await supabase
+    .from('user_profiles')
+    .select('first_name, email')
+    .eq('id', userId)
+    .single();
+
+  const profileFirstName = (buyerProfile as any)?.first_name as string | undefined;
+  const profileEmail = (buyerProfile as any)?.email as string | undefined;
+
+  if (profileEmail) {
+    return { firstName: profileFirstName || 'there', email: profileEmail };
+  }
+
+  // Fallback to auth email when user_profiles.email is empty/missing
+  const { data: authData } = await supabase.auth.admin.getUserById(userId);
+  const authUser = authData?.user;
+  const authFirstName =
+    ((authUser?.user_metadata as any)?.first_name as string | undefined) ||
+    ((authUser?.user_metadata as any)?.name as string | undefined);
+
+  return {
+    firstName: profileFirstName || authFirstName || 'there',
+    email: authUser?.email || undefined,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -66,12 +96,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch buyer + offer reference for emails/notifications (best-effort)
-    const [{ data: buyerProfile }, { data: offerRow }] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('id, first_name, email')
-        .eq('id', user_id)
-        .single(),
+    const [{ firstName: buyerFirstName, email: buyerEmail }, { data: offerRow }] = await Promise.all([
+      getBuyerContact(supabase, user_id),
       supabase
         .from('property_offers')
         .select('id, offer_reference')
@@ -79,8 +105,6 @@ export async function POST(request: NextRequest) {
         .single()
     ]);
 
-    const buyerEmail = (buyerProfile as any)?.email as string | undefined;
-    const buyerFirstName = ((buyerProfile as any)?.first_name as string | undefined) || 'there';
     const offerReference = ((offerRow as any)?.offer_reference as string | undefined) || offer_id;
 
     // Admin recipients (best-effort)
@@ -147,9 +171,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (buyerEmail) {
-      sendTransactionalTemplateEmail({
+      const buyerEmailResult = await sendTransactionalTemplateEmail({
         to: [buyerEmail],
-        subject: 'Proof of payment submitted',
+        subject: 'Proof of payment submitted to Mukamba Gateway',
         react: React.createElement(PaymentProofSubmittedEmailTemplate, {
           firstName: buyerFirstName,
           offerReference,
@@ -158,7 +182,10 @@ export async function POST(request: NextRequest) {
         }),
         tags: ['payment_proof_submitted'],
         metadata: { payment_id: String(payment_id), offer_id: String(offer_id) },
-      }).catch((e) => console.error('Failed to send buyer proof submitted email:', e));
+      });
+      if (!buyerEmailResult.success) {
+        console.error('Failed to send buyer proof submitted email:', buyerEmailResult.error);
+      }
     }
 
     const adminEmails = (adminProfiles || [])
