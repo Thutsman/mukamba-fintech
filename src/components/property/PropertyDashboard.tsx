@@ -835,16 +835,24 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   router.push('/?view=profile');
                 } else {
                   setShowSigninModal(true);
-                }
-                  // Analytics tracking for signin modal
                   trackEvent('signin_modal_opened', {
                     source: 'hero_section',
                     event_category: 'conversion'
                   });
+                }
                 }}
               >
-                <LogIn className="w-5 h-5 mr-2" />
-                Sign In
+                {user ? (
+                  <>
+                    <User className="w-5 h-5 mr-2" />
+                    My Profile
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-5 h-5 mr-2" />
+                    Sign In
+                  </>
+                )}
               </Button>
               </motion.div>
             </motion.div>
