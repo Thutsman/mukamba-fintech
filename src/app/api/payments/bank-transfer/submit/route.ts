@@ -3,23 +3,32 @@ import { createServiceClient } from '@/lib/supabase';
 import { sendTransactionalTemplateEmail, getAppUrl } from '@/lib/transactional-email-service';
 import { PaymentProofSubmittedEmailTemplate } from '@/lib/email-templates/payment-proof-submitted';
 import { AdminActionRequiredEmailTemplate } from '@/lib/email-templates/admin-action-required';
+import { getAdminNotificationRecipients } from '@/lib/admin-notification-recipients';
 import * as React from 'react';
 
 async function getBuyerContact(
   supabase: ReturnType<typeof createServiceClient>,
   userId: string
-): Promise<{ firstName: string; email?: string }> {
+): Promise<{ firstName: string; fullName: string; email?: string; phone?: string }> {
   const { data: buyerProfile } = await supabase
     .from('user_profiles')
-    .select('first_name, email')
+    .select('first_name, last_name, email, phone')
     .eq('id', userId)
     .single();
 
   const profileFirstName = (buyerProfile as any)?.first_name as string | undefined;
+  const profileLastName = (buyerProfile as any)?.last_name as string | undefined;
   const profileEmail = (buyerProfile as any)?.email as string | undefined;
+  const profilePhone = (buyerProfile as any)?.phone as string | undefined;
+  const profileFullName = `${profileFirstName || ''} ${profileLastName || ''}`.trim();
 
   if (profileEmail) {
-    return { firstName: profileFirstName || 'there', email: profileEmail };
+    return {
+      firstName: profileFirstName || 'there',
+      fullName: profileFullName,
+      email: profileEmail,
+      phone: profilePhone,
+    };
   }
 
   // Fallback to auth email when user_profiles.email is empty/missing
@@ -31,7 +40,9 @@ async function getBuyerContact(
 
   return {
     firstName: profileFirstName || authFirstName || 'there',
+    fullName: profileFullName,
     email: authUser?.email || undefined,
+    phone: profilePhone,
   };
 }
 
@@ -96,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch buyer + offer reference for emails/notifications (best-effort)
-    const [{ firstName: buyerFirstName, email: buyerEmail }, { data: offerRow }] = await Promise.all([
+    const [{ firstName: buyerFirstName, fullName: buyerFullName, email: buyerEmail, phone: buyerPhone }, { data: offerRow }] = await Promise.all([
       getBuyerContact(supabase, user_id),
       supabase
         .from('property_offers')
@@ -188,25 +199,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const adminEmails = (adminProfiles || [])
-      .map((a: any) => a?.email)
-      .filter(Boolean) as string[];
+    const adminEmails = await getAdminNotificationRecipients({ supabase });
 
     if (adminEmails.length > 0) {
-      sendTransactionalTemplateEmail({
-        to: adminEmails,
-        subject: `Payment proof awaiting verification (${offerReference})`,
-        react: React.createElement(AdminActionRequiredEmailTemplate, {
-          title: 'Payment proof awaiting verification',
-          message: `A proof of payment was submitted for offer ${offerReference}.\nAmount: $${Number(amount).toLocaleString()}\n\nOpen the Admin Dashboard → Payment Tracking to review and verify/reject.`,
-          cta: {
-            label: 'Open Admin Dashboard',
-            url: appUrl ? `${appUrl}/?tab=payments` : 'https://mukambagateway.com',
-          },
-        }),
-        tags: ['admin_payment_review'],
-        metadata: { payment_id: String(payment_id), offer_id: String(offer_id) },
-      }).catch((e) => console.error('Failed to send admin payment review email:', e));
+      try {
+        const buyerIdentityParts = [
+          buyerFullName || null,
+          buyerEmail || null,
+          buyerPhone ? `Phone: ${buyerPhone}` : null,
+          `User ID: ${user_id}`,
+        ].filter(Boolean);
+
+        const emailResult = await sendTransactionalTemplateEmail({
+          to: adminEmails,
+          subject: `Payment proof awaiting verification (${offerReference})`,
+          react: React.createElement(AdminActionRequiredEmailTemplate, {
+            title: 'Payment proof awaiting verification',
+            message: [
+              `Buyer: ${buyerIdentityParts.join(' • ')}`,
+              `Offer: ${offerReference}`,
+              `Amount: $${Number(amount).toLocaleString()}`,
+              '',
+              'Open the Admin Dashboard → Payment Tracking to review and verify/reject.',
+            ].join('\n'),
+            cta: {
+              label: 'Open Payment Tracking',
+              url: appUrl ? `${appUrl}/?tab=payments` : 'https://mukambagateway.com',
+            },
+          }),
+          tags: ['admin_payment_review'],
+          metadata: { payment_id: String(payment_id), offer_id: String(offer_id) },
+        });
+        if (!emailResult.success) {
+          console.error('Failed to send admin payment review email:', emailResult.error);
+        }
+      } catch (e) {
+        console.error('Failed to send admin payment review email:', e);
+      }
     }
 
     return NextResponse.json({

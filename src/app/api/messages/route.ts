@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
+import { sendTransactionalTemplateEmail, getAppUrl, safePreview } from '@/lib/transactional-email-service';
+import { AdminActionRequiredEmailTemplate } from '@/lib/email-templates/admin-action-required';
+import { getAdminNotificationRecipients } from '@/lib/admin-notification-recipients';
+import * as React from 'react';
 
 // Validation schemas
 const createMessageSchema = z.object({
@@ -114,6 +118,53 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error creating message:', error);
       return NextResponse.json({ error: 'Failed to create message' }, { status: 500 });
+    }
+
+    // Admin email notification (best-effort)
+    try {
+      const appUrl = (() => {
+        try {
+          return getAppUrl();
+        } catch (e) {
+          console.error('NEXT_PUBLIC_APP_URL missing; using fallback URL:', e);
+          return 'https://mukambagateway.com';
+        }
+      })();
+
+      const adminRecipients = await getAdminNotificationRecipients({ supabase });
+      if (adminRecipients.length > 0) {
+        const preview = safePreview(validatedData.content, 240);
+
+        const buyerIdentityParts = [
+          validatedData.buyer_name,
+          validatedData.buyer_email ? validatedData.buyer_email : null,
+          validatedData.buyer_phone ? `Phone: ${validatedData.buyer_phone}` : null,
+          `Buyer ID: ${validatedData.buyer_id}`,
+        ].filter(Boolean);
+
+        await sendTransactionalTemplateEmail({
+          to: adminRecipients,
+          subject: `New buyer message (${validatedData.property_title})`,
+          react: React.createElement(AdminActionRequiredEmailTemplate, {
+            title: 'New buyer message',
+            message: [
+              `Buyer: ${buyerIdentityParts.join(' • ')}`,
+              `Property: ${validatedData.property_title}`,
+              `Type: ${validatedData.message_type}`,
+              '',
+              'Preview:',
+              preview,
+              '',
+              'Open the Admin Dashboard → Messages to reply.',
+            ].join('\n'),
+            cta: { label: 'Open Messages', url: `${appUrl}/?tab=messages` },
+          }),
+          tags: ['admin_message_received'],
+          metadata: { message_id: String((message as any)?.id || ''), buyer_id: String(validatedData.buyer_id) },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to send admin message notification email:', e);
     }
 
     return NextResponse.json({

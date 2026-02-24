@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase';
 import { sendTransactionalTemplateEmail, getAppUrl } from '@/lib/transactional-email-service';
 import { KycSubmittedEmailTemplate } from '@/lib/email-templates/kyc-submitted';
+import { AdminActionRequiredEmailTemplate } from '@/lib/email-templates/admin-action-required';
+import { getAdminNotificationRecipients } from '@/lib/admin-notification-recipients';
 import * as React from 'react';
 
 const schema = z.object({
@@ -30,12 +32,14 @@ export async function POST(req: NextRequest) {
 
     const { data: user } = await supabase
       .from('user_profiles')
-      .select('first_name, email')
+      .select('first_name, last_name, email, phone')
       .eq('id', userId)
       .single();
 
     const email = (user as any)?.email as string | undefined;
     const firstName = ((user as any)?.first_name as string | undefined) || 'there';
+    const userFullName = `${(user as any)?.first_name || ''} ${(user as any)?.last_name || ''}`.trim();
+    const userPhone = (user as any)?.phone as string | undefined;
 
     if (email) {
       let appUrl: string | null = null;
@@ -56,6 +60,47 @@ export async function POST(req: NextRequest) {
         tags: ['kyc_submitted'],
         metadata: { verification_id, verification_type: String(verificationType) },
       });
+    }
+
+    // Admin email (best-effort)
+    try {
+      const appUrl = (() => {
+        try {
+          return getAppUrl();
+        } catch (e) {
+          console.error('NEXT_PUBLIC_APP_URL missing; using fallback URL:', e);
+          return 'https://mukambagateway.com';
+        }
+      })();
+
+      const adminRecipients = await getAdminNotificationRecipients({ supabase });
+      if (adminRecipients.length > 0) {
+        const identityParts = [
+          userFullName || null,
+          email || null,
+          userPhone ? `Phone: ${userPhone}` : null,
+          `User ID: ${userId}`,
+        ].filter(Boolean);
+
+        await sendTransactionalTemplateEmail({
+          to: adminRecipients,
+          subject: `KYC pending review (${verificationType})`,
+          react: React.createElement(AdminActionRequiredEmailTemplate, {
+            title: 'KYC pending review',
+            message: [
+              `User: ${identityParts.join(' • ')}`,
+              `Verification type: ${verificationType}`,
+              '',
+              'Open the Admin Dashboard → KYC to approve/reject this submission.',
+            ].join('\n'),
+            cta: { label: 'Open KYC queue', url: `${appUrl}/?tab=kyc` },
+          }),
+          tags: ['admin_kyc_review'],
+          metadata: { verification_id, verification_type: String(verificationType), user_id: String(userId) },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to send admin KYC review email:', e);
     }
 
     return NextResponse.json({ success: true });
