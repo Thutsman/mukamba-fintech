@@ -29,9 +29,15 @@ export const PaymentStatusEmailTemplate: React.FC<PaymentStatusEmailTemplateProp
       </p>
 
       {status === 'verified' ? (
-        <p style={{ marginTop: 0 }}>
-          Thank you. Your payment has been confirmed by the Mukamba admin team.
-        </p>
+        <>
+          <p style={{ marginTop: 0 }}>
+            Thank you. Your payment has been confirmed by the Mukamba admin team.
+          </p>
+          <p style={{ marginTop: 0 }}>
+            Please open your Profile Dashboard and go to the <strong>Portfolio</strong> tab to
+            view your portfolio and the <strong>amount paid to date</strong>.
+          </p>
+        </>
       ) : (
         <>
           <p style={{ marginTop: 0 }}>

@@ -172,7 +172,7 @@ export async function PATCH(
             status: 'verified',
             amount: `$${Number(payment.amount).toLocaleString()}`,
             offerReference,
-            cta: appUrl ? { label: 'Open your dashboard', url: `${appUrl}/?section=offers` } : undefined,
+            cta: appUrl ? { label: 'Open your portfolio', url: `${appUrl}/?section=portfolio` } : undefined,
           }),
           tags: ['payment_verified'],
           metadata: { payment_id: String(paymentId), offer_id: String(payment.offer_id || '') },
