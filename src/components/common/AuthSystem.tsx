@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, UserPlus, LogOut, User, Building, Info, BookOpen, Tag, Home } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
@@ -28,6 +28,7 @@ export const AuthSystem: React.FC = () => {
   const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
   
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth, showAuthNotification, authNotificationData, hideAuthNotification } = useAuthStore();
   // Theme is app-controlled (light-only). No toggle here.
 
@@ -68,24 +69,35 @@ export const AuthSystem: React.FC = () => {
       const params = new URLSearchParams(window.location.search);
       const view = params.get('view');
       const section = params.get('section');
-      
+
+      const postAuthView = sessionStorage.getItem('postAuthView');
+      if (postAuthView === 'profile') {
+        setCurrentView('profile');
+        sessionStorage.removeItem('postAuthView');
+      }
+    } catch (_) {}
+  }, []);
+
+  // Sync view with URL so profile/home buttons (e.g. ?view=profile) update currentView
+  React.useEffect(() => {
+    try {
+      const view = searchParams.get('view');
+      const section = searchParams.get('section');
+
       if (view === 'profile') {
         setCurrentView('profile');
-        // Clean URL
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, '', cleanUrl);
-        return;
-      }
-      
-      if (view === 'home') {
-        setCurrentView('home');
-        // Clean URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, '', cleanUrl);
         return;
       }
 
-      // Handle section parameter for deep linking into VerifiedUserDashboard
+      if (view === 'home') {
+        setCurrentView('home');
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+        return;
+      }
+
       const allowedSections = new Set([
         'overview',
         'portfolio',
@@ -99,19 +111,11 @@ export const AuthSystem: React.FC = () => {
       if (section && allowedSections.has(section)) {
         setActiveSection(section as any);
         setCurrentView('properties');
-        // Clean URL
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, '', cleanUrl);
-        return;
-      }
-
-      const postAuthView = sessionStorage.getItem('postAuthView');
-      if (postAuthView === 'profile') {
-        setCurrentView('profile');
-        sessionStorage.removeItem('postAuthView');
       }
     } catch (_) {}
-  }, []);
+  }, [searchParams]);
 
   // Only redirect new users to profile view if they just signed up (not on every load)
   React.useEffect(() => {
@@ -289,15 +293,38 @@ export const AuthSystem: React.FC = () => {
       );
     }
 
-    // If authenticated and viewing profile
-      if (isAuthenticated && user && currentView === 'profile') {
-      // If fully verified, redirect to the main view (which will show VerifiedUserDashboard with AuthSystem header)
+    // If authenticated and viewing profile: show the correct dashboard by verification status
+    if (isAuthenticated && user && currentView === 'profile') {
+      // Verified users → VerifiedUserDashboard
       if (isFullyVerified(user)) {
-        setCurrentView('properties');
-        return null; // This will cause a re-render with the main VerifiedUserDashboard
+        return (
+          <VerifiedUserDashboard
+            user={user}
+            activeSection={activeSection}
+            onViewProperty={(propertyId) => {
+              console.log('View property:', propertyId);
+            }}
+            onViewApplication={(applicationId) => {
+              console.log('View application:', applicationId);
+            }}
+            onStartNewApplication={() => {
+              console.log('Start new application');
+            }}
+            onViewMarketInsights={() => {
+              console.log('View market insights');
+            }}
+            onBackToHome={() => {
+              setCurrentView('home');
+              if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            onLogout={handleLogout}
+          />
+        );
       }
 
-      // Otherwise show the KYC-driven ProfileDashboard
+      // Unverified users → ProfileDashboard (KYC onboarding)
       return (
         <ProfileDashboard 
           user={user} 
@@ -305,11 +332,10 @@ export const AuthSystem: React.FC = () => {
           onLogout={handleLogout}
           onBackToHome={() => {
             setCurrentView('properties');
-            setHasRedirectedToProfile(false); // Reset redirect flag when user manually navigates
+            setHasRedirectedToProfile(false);
             if (isNewUser) {
-              markUserAsReturning(); // Mark user as no longer new when they navigate away from profile
+              markUserAsReturning();
             }
-            // Scroll to top of the page
             if (typeof window !== 'undefined') {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -565,8 +591,14 @@ export const AuthSystem: React.FC = () => {
             }}
             onViewMarketInsights={() => {
               console.log('View market insights');
-              // Navigate to market insights page
             }}
+            onBackToHome={() => {
+              setCurrentView('home');
+              if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            onLogout={handleLogout}
           />
         ) : (
           // Show PropertyDashboard for unauthenticated, non-verified users, or when user wants to see home

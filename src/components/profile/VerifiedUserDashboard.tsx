@@ -6,6 +6,7 @@ import {
   CheckCircle, 
   TrendingUp, 
   Home, 
+  LayoutDashboard,
   Calendar,
   Star,
   Award,
@@ -113,6 +114,10 @@ interface VerifiedUserDashboardProps {
   onViewApplication: (applicationId: string) => void;
   onStartNewApplication: () => void;
   onViewMarketInsights: () => void;
+  /** Called when user clicks "Home" to go back to the main property dashboard */
+  onBackToHome?: () => void;
+  /** Called when user clicks "Sign Out" */
+  onLogout?: () => void;
 }
 
 // Mock data for demonstration
@@ -385,7 +390,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   onViewProperty,
   onViewApplication,
   onStartNewApplication,
-  onViewMarketInsights
+  onViewMarketInsights,
+  onBackToHome,
+  onLogout
 }) => {
   const router = useRouter();
   const isVerified = isFullyVerified(user);
@@ -1022,7 +1029,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   return (
     <div className="flex min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Sidebar */}
-      <aside className="hidden md:block fixed left-6 top-24 z-30 w-72 h-[calc(100vh-8rem)] bg-white border border-slate-200 rounded-2xl shadow-lg overflow-y-auto">
+      <aside className="hidden md:flex md:flex-col fixed left-6 top-24 z-30 w-72 h-[calc(100vh-8rem)] bg-white border border-slate-200 rounded-2xl shadow-lg overflow-y-auto">
         <div className="p-4 border-b border-slate-200 flex flex-col items-center text-center">
           <Avatar className="h-16 w-16">
                 <AvatarImage src="" alt={user.firstName} />
@@ -1039,9 +1046,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         
 
         {/* Navigation */}
-        <nav className="p-2 space-y-1">
+        <nav className="p-2 space-y-1 flex-1">
           {[
-            {key:'overview', label:'Overview', icon:Home},
+            {key:'overview', label:'Overview', icon:LayoutDashboard},
             {key:'portfolio', label:'Portfolio', icon:Folder},
             {key:'saved', label:'Saved Properties', icon:Bookmark, badge: savedPropertiesCount},
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
@@ -1066,6 +1073,32 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             );
           })}
         </nav>
+
+        {/* Home & Sign Out */}
+        <div className="p-2 border-t border-slate-200 space-y-1 mt-auto">
+          {onBackToHome && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              onClick={onBackToHome}
+            >
+              <Home className="w-4 h-4" />
+              <span className="font-medium">Home</span>
+            </Button>
+          )}
+          {onLogout && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-3 text-red-700 hover:bg-red-50 hover:text-red-800"
+              onClick={onLogout}
+            >
+              <LogOutIcon className="w-4 h-4" />
+              <span className="font-medium">Sign Out</span>
+            </Button>
+          )}
+        </div>
       </aside>
 
       {/* Mobile Navigation Drawer */}
@@ -1125,7 +1158,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                 {/* Navigation Items */}
                 <nav className="space-y-1">
                   {[
-                    {key: 'overview', label: 'Overview', icon: Home},
+                    {key: 'overview', label: 'Overview', icon: LayoutDashboard},
                     {key: 'portfolio', label: 'Portfolio', icon: Folder},
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark, badge: savedPropertiesCount},
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
@@ -1154,6 +1187,32 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     );
                   })}
                 </nav>
+
+                {/* Home & Sign Out (mobile) */}
+                <div className="pt-4 mt-4 border-t border-slate-200 space-y-1">
+                  {onBackToHome && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-3 text-slate-700 hover:bg-slate-50"
+                      onClick={() => { onBackToHome(); setShowMobileNav(false); }}
+                    >
+                      <Home className="w-4 h-4" />
+                      <span className="font-medium">Home</span>
+                    </Button>
+                  )}
+                  {onLogout && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-3 text-red-700 hover:bg-red-50 hover:text-red-800"
+                      onClick={() => { onLogout(); setShowMobileNav(false); }}
+                    >
+                      <LogOutIcon className="w-4 h-4" />
+                      <span className="font-medium">Sign Out</span>
+                    </Button>
+                  )}
+                </div>
             </div>
             </motion.div>
           </motion.div>

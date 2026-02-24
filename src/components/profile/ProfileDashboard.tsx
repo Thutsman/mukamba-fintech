@@ -82,7 +82,7 @@ import { useAuthStore } from '@/lib/store';
 import { getPropertiesFromSupabase } from '@/lib/property-services-supabase';
 import { useRouter } from 'next/navigation';
 import { BuyerSignupModal } from '@/components/forms/BuyerSignupModal';
-import { checkPendingIdentityVerification } from '../../lib/check-pending-verification';
+import { checkPendingIdentityVerification, getLatestIdentityVerificationStatus } from '../../lib/check-pending-verification';
 import { supabase } from '@/lib/supabase';
 import { navigateWithScrollToTop } from '@/utils/navigation';
 
@@ -1133,6 +1133,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [isFirstVisit, setIsFirstVisit] = React.useState(false);
   const [isIdentityPending, setIsIdentityPending] = React.useState(false);
+  const [identityRejectionReason, setIdentityRejectionReason] = React.useState<string | null>(null);
 
   // Verification Modal State
   const [activeModal, setActiveModal] = React.useState<'phone' | 'identity' | 'financial' | 'property' | 'listing' | null>(null);
@@ -1154,23 +1155,29 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     }
   }, []);
 
-  // Check for pending identity verification
+  // Check for pending or rejected identity verification
   React.useEffect(() => {
-    const checkPendingVerification = async () => {
-      if (!user?.id || user.isIdentityVerified) return;
-      
+    const checkIdentityStatus = async () => {
+      if (!user?.id) return;
+      if (user.isIdentityVerified) {
+        setIsIdentityPending(false);
+        setIdentityRejectionReason(null);
+        return;
+      }
+
       try {
-        const { hasPending } = await checkPendingIdentityVerification(user.id);
-        setIsIdentityPending(hasPending);
+        const { status, rejection_reason } = await getLatestIdentityVerificationStatus(user.id);
+        setIsIdentityPending(status === 'pending');
+        setIdentityRejectionReason(status === 'rejected' ? (rejection_reason || 'Your submission was rejected.') : null);
       } catch (error) {
-        console.error('Error checking pending identity verification:', error);
+        console.error('Error checking identity verification status:', error);
       }
     };
 
-    checkPendingVerification();
+    checkIdentityStatus();
   }, [user?.id, user?.isIdentityVerified]);
 
-  // Realtime subscription to auto-refresh identity verification status
+  // Realtime subscription to auto-refresh identity verification status (approval on user_profiles, rejection on kyc_verifications)
   React.useEffect(() => {
     const sb = supabase;
     if (!user?.id || !sb) return;
@@ -1194,9 +1201,22 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               level: getUserLevel(updatedUser)
             });
             setIsIdentityPending(false);
+            setIdentityRejectionReason(null);
             setSuccessMessage("Identity verification approved! Premium features unlocked.");
             setShowSuccess(true);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'kyc_verifications', filter: `user_id=eq.${user.id}` },
+        async (payload: any) => {
+          const newRow = payload?.new as any;
+          if (!newRow || newRow.verification_type !== 'identity') return;
+          // Admin approved or rejected identity KYC – refresh status so rejected reason shows
+          const { status, rejection_reason } = await getLatestIdentityVerificationStatus(user.id);
+          setIsIdentityPending(status === 'pending');
+          setIdentityRejectionReason(status === 'rejected' ? (rejection_reason || 'Your submission was rejected.') : null);
         }
       )
       .subscribe();
@@ -1532,9 +1552,13 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       setForceUpdate(prev => prev + 1);
     }, 100);
     
-    // Show success message
+    // Show success message and refresh identity status after resubmit
     if (verificationType === 'identity') {
       setSuccessMessage('Identity verification submitted successfully! You\'ll hear from us within 24-48 hours.');
+      getLatestIdentityVerificationStatus(user.id).then(({ status, rejection_reason }) => {
+        setIsIdentityPending(status === 'pending');
+        setIdentityRejectionReason(status === 'rejected' ? (rejection_reason || null) : null);
+      }).catch(() => {});
     } else {
       setSuccessMessage(`${verificationType.charAt(0).toUpperCase() + verificationType.slice(1)} verification completed successfully!`);
     }
@@ -2327,6 +2351,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 <div className={`p-4 rounded-lg border ${
                   user.isIdentityVerified 
                     ? 'bg-green-50 border-green-200' 
+                    : identityRejectionReason
+                    ? 'bg-red-50 border-red-200'
                     : isIdentityPending
                     ? 'bg-yellow-50 border-yellow-200'
                     : 'bg-slate-50 border-slate-200'
@@ -2336,6 +2362,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                       <div className={`p-2 rounded-full ${
                         user.isIdentityVerified 
                           ? 'bg-green-100 text-green-600' 
+                          : identityRejectionReason
+                          ? 'bg-red-100 text-red-600'
                           : isIdentityPending
                           ? 'bg-yellow-100 text-yellow-600'
                           : 'bg-slate-100 text-slate-600'
@@ -2349,9 +2377,16 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                             ? 'Under Review - You\'ll hear from us within 24-48 hours'
                             : user.isIdentityVerified 
                             ? 'Verified' 
+                            : identityRejectionReason
+                            ? 'Your previous submission was rejected. Please resubmit with corrected details.'
                             : 'Required for installment purchases and property applications'
                           }
                         </p>
+                        {identityRejectionReason && (
+                          <p className="text-xs text-red-700 font-medium mt-1" data-testid="identity-rejection-reason">
+                            Reason: {identityRejectionReason}
+                          </p>
+                        )}
                       </div>
                     </div>
                     {isIdentityPending ? (
@@ -2368,7 +2403,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                         className="bg-[#7F1518] hover:bg-[#8B1A1D] text-white"
                         disabled={!user.is_phone_verified}
                       >
-                        Verify Now
+                        {identityRejectionReason ? 'Resubmit' : 'Verify Now'}
                       </Button>
                     )}
                   </div>
