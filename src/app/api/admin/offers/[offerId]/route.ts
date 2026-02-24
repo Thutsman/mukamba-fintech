@@ -52,13 +52,18 @@ export async function PATCH(
     // Fetch offer + buyer info for email (best-effort)
     const { data: offerRow } = await supabase
       .from('property_offers')
-      .select('id, buyer_id, offer_reference, offer_price, rejection_reason')
+      .select(
+        'id, buyer_id, offer_reference, offer_price, rejection_reason, property:properties(title, suburb, street_address)'
+      )
       .eq('id', offerId)
       .single();
 
     const buyerId = (offerRow as any)?.buyer_id as string | undefined;
     const offerReference = ((offerRow as any)?.offer_reference as string | undefined) || offerId;
     const rejectionReason = (offerRow as any)?.rejection_reason as string | undefined;
+    const propertyTitle = (offerRow as any)?.property?.title as string | undefined;
+    const propertySuburb = (offerRow as any)?.property?.suburb as string | undefined;
+    const propertyStreetAddress = (offerRow as any)?.property?.street_address as string | undefined;
 
     if (buyerId) {
       const { data: buyer } = await supabase
@@ -85,16 +90,19 @@ export async function PATCH(
             ? { label: 'View your offers', url: `${appUrl}/?section=offers` }
             : undefined;
 
-        sendTransactionalTemplateEmail({
+        const emailResult = await sendTransactionalTemplateEmail({
           to: [buyerEmail],
           subject:
             data.status === 'approved'
-              ? `Offer approved (${offerReference})`
+              ? `Offer approved${propertyTitle ? `: ${propertyTitle}` : ''} (${offerReference})`
               : `Offer rejected (${offerReference})`,
           react: React.createElement(OfferStatusEmailTemplate, {
             firstName: buyerFirstName,
             offerReference,
             status: data.status,
+            propertyTitle: propertyTitle || null,
+            propertySuburb: propertySuburb || null,
+            propertyStreetAddress: propertyStreetAddress || null,
             rejectionReason:
               data.status === 'rejected'
                 ? (data.rejection_reason || rejectionReason || null)
@@ -103,7 +111,10 @@ export async function PATCH(
           }),
           tags: [data.status === 'approved' ? 'offer_approved' : 'offer_rejected'],
           metadata: { offer_id: String(offerId), offer_reference: String(offerReference) },
-        }).catch((e) => console.error('Failed to send offer status email:', e));
+        });
+        if (!emailResult.success) {
+          console.error('Failed to send offer status email:', emailResult.error);
+        }
       }
     }
 

@@ -22,13 +22,22 @@ export async function sendEmail(params: {
     return { success: false, error: 'No recipients provided' };
   }
   try {
-    const data = await resend.emails.send({
+    const result = await resend.emails.send({
       from: DEFAULT_FROM,
       to,
       subject: params.subject,
       html: params.html,
     });
-    return { success: true, data };
+    const apiError = (result as any)?.error;
+    if (apiError) {
+      const msg =
+        typeof apiError === 'string'
+          ? apiError
+          : (apiError?.message as string | undefined) || 'Resend API returned an error';
+      console.error('Transactional email sending failed:', apiError);
+      return { success: false, error: msg };
+    }
+    return { success: true, data: result };
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('Transactional email sending failed:', error);
