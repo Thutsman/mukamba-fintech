@@ -20,10 +20,10 @@ export const SuccessPopup: React.FC<SuccessPopupProps> = ({
   isVisible,
   onClose,
   email,
-  title = "Account Created Successfully! 🎉",
+  title = "Account Created Successfully!",
   message = "Your account has been created and you're ready to start exploring!",
   showSpamGuidance = true,
-  autoCloseDelay = 8000
+  autoCloseDelay = 0
 }) => {
   const [timeLeft, setTimeLeft] = React.useState(autoCloseDelay / 1000);
 
@@ -79,7 +79,7 @@ export const SuccessPopup: React.FC<SuccessPopupProps> = ({
         >
           <Card className="bg-white dark:bg-white border-0 shadow-2xl overflow-hidden">
             {/* Header with gradient background */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white">
+            <div className="bg-[#7f1518] p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-white/20 rounded-full">
@@ -87,7 +87,7 @@ export const SuccessPopup: React.FC<SuccessPopupProps> = ({
                   </div>
                   <div>
                     <h3 className="text-xl font-bold">{title}</h3>
-                    <p className="text-green-100 text-sm">Welcome to Mukamba Gateway!</p>
+                    <p className="text-white/90 text-sm">Welcome to Mukamba Gateway!</p>
                   </div>
                 </div>
                 <Button

@@ -122,7 +122,7 @@ function ConfirmEmailContent() {
                 onClick={() => router.push('/')}
                 className="w-full bg-[#7F1518] text-white py-3 px-6 rounded-lg hover:bg-[#6a1214] transition-colors font-medium"
               >
-                Go to Home
+                Go to Login Page
               </button>
             </motion.div>
           )}

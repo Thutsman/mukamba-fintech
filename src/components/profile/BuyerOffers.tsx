@@ -623,7 +623,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
         title={successPopup.title}
         message={successPopup.message}
         showSpamGuidance={false}
-        autoCloseDelay={3000}
+        autoCloseDelay={0}
       />
     </div>
   );

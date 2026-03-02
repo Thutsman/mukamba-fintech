@@ -21,6 +21,8 @@ export const AuthSystem: React.FC = () => {
   const [showRegister, setShowRegister] = React.useState(false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [showResendModal, setShowResendModal] = React.useState(false);
+  const [showPostConfirmationSigninNotice, setShowPostConfirmationSigninNotice] = React.useState(false);
+  const [signinPrefillEmail, setSigninPrefillEmail] = React.useState('');
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile' | 'home'>('properties');
   const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>('overview');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
@@ -29,7 +31,21 @@ export const AuthSystem: React.FC = () => {
   
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isAuthenticated, logout, startVerification, isNewUser, markUserAsReturning, checkAuth, showAuthNotification, authNotificationData, hideAuthNotification } = useAuthStore();
+  const {
+    user,
+    isAuthenticated,
+    logout,
+    startVerification,
+    isNewUser,
+    markUserAsReturning,
+    checkAuth,
+    showAuthNotification,
+    authNotificationData,
+    hideAuthNotification,
+    openSigninAfterSuccessClose,
+    pendingSigninEmail,
+    consumeSigninRedirectAfterSuccess
+  } = useAuthStore();
   // Theme is app-controlled (light-only). No toggle here.
 
   // Check authentication status on component mount
@@ -232,7 +248,23 @@ export const AuthSystem: React.FC = () => {
 
   // Removed: automatic redirect to seller dashboard to prevent navigation loop when returning home
 
+  React.useEffect(() => {
+    if (openSigninAfterSuccessClose) {
+      setShowRegister(false);
+      setShowSigninModal(true);
+      setShowPostConfirmationSigninNotice(true);
+      setSigninPrefillEmail(pendingSigninEmail || '');
+      consumeSigninRedirectAfterSuccess();
+    }
+  }, [
+    openSigninAfterSuccessClose,
+    pendingSigninEmail,
+    consumeSigninRedirectAfterSuccess
+  ]);
+
   const handleSwitchToRegister = () => {
+    setShowPostConfirmationSigninNotice(false);
+    setSigninPrefillEmail('');
     setShowRegister(true);
   };
 
@@ -245,6 +277,8 @@ export const AuthSystem: React.FC = () => {
     setShowRegister(false);
     setShowSigninModal(false);
     setShowResendModal(false);
+    setShowPostConfirmationSigninNotice(false);
+    setSigninPrefillEmail('');
   };
 
   const handleLogout = () => {
@@ -733,8 +767,12 @@ export const AuthSystem: React.FC = () => {
           <BasicSigninModal
             isOpen={showSigninModal}
             onClose={handleCloseModals}
+            showPostConfirmationNotice={showPostConfirmationSigninNotice}
+            prefillEmail={signinPrefillEmail}
             onSwitchToSignup={() => {
               setShowSigninModal(false);
+              setShowPostConfirmationSigninNotice(false);
+              setSigninPrefillEmail('');
               setShowRegister(true);
             }}
           />

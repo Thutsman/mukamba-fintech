@@ -20,6 +20,8 @@ interface BasicSigninModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToSignup: () => void;
+  showPostConfirmationNotice?: boolean;
+  prefillEmail?: string;
 }
 
 // Enhanced validation schema
@@ -34,7 +36,9 @@ type SigninFormData = z.infer<typeof basicSigninSchema>;
 export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
   isOpen,
   onClose,
-  onSwitchToSignup
+  onSwitchToSignup,
+  showPostConfirmationNotice = false,
+  prefillEmail = ''
 }) => {
   const router = useRouter();
   const { login, isLoading, error, setError, isAuthenticated } = useAuthStore();
@@ -80,6 +84,12 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
       rememberMe: false
     }
   });
+
+  React.useEffect(() => {
+    if (isOpen && prefillEmail) {
+      form.setValue('email', prefillEmail);
+    }
+  }, [isOpen, prefillEmail, form]);
 
   const onSubmit = async (data: SigninFormData) => {
     try {
@@ -211,6 +221,12 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
 
         {/* Content */}
         <div className="p-6">
+          {showPostConfirmationNotice && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-sm">
+              If you already clicked your confirmation email, you can now sign in.
+            </div>
+          )}
+
           {/* Signup Link - Prominently placed at the top */}
           <div className="text-center mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <span className="text-sm text-slate-600">
@@ -373,17 +389,6 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
             </Button>
 
           </form>
-
-          {/* Benefits */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-50 dark:to-red-50 rounded-lg border border-blue-200 dark:border-blue-200">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-800 mb-2">
-              🎉 What you get immediately:
-            </h4>
-            <ul className="text-xs text-slate-600 dark:text-slate-600 space-y-1">
-              <li>• Save your favorite listings</li>
-              <li>• Access market insights</li>
-            </ul>
-          </div>
 
         </div>
 

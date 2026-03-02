@@ -662,28 +662,6 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
             </Button>
           </form>
 
-          {/* Benefits */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-red-50 dark:from-blue-50 dark:to-red-50 rounded-lg border border-blue-200 dark:border-blue-200">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-800 mb-2">
-              {sellerIntent ? '🏠 What you get as a seller:' : '🎉 What you get immediately:'}
-            </h4>
-            <ul className="text-xs text-slate-600 dark:text-slate-600 space-y-1">
-              {sellerIntent ? (
-                <>
-                  <li>• List your property for free</li>
-                  <li>• Reach thousands of qualified buyers</li>
-                  <li>• Get competitive offers quickly</li>
-                  <li>• Access seller dashboard & analytics</li>
-                </>
-              ) : (
-                <>
-                  <li>• Save your favorite listings</li>
-                  <li>• Access market insights</li>
-                </>
-              )}
-            </ul>
-          </div>
-
         </div>
       </motion.div>
     </div>

@@ -1927,7 +1927,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
           const { showSuccessMessage } = useAuthStore.getState();
           showSuccessMessage({
             email: email,
-            title: "Account Created Successfully! 🎉",
+            title: "Account Created Successfully!",
             message: "Your account has been created! Please check your email and click the confirmation link to activate your account. You can now view property details."
           });
           

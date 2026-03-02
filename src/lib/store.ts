@@ -16,6 +16,8 @@ interface AuthStore {
   isNewUser: boolean; // Track if user just signed up
   hasHydrated: boolean; // Persist hydration completed
   showSuccessPopup: boolean; // Show success popup after signup
+  openSigninAfterSuccessClose: boolean; // Auto-open sign in after closing signup success popup
+  pendingSigninEmail: string | null; // Prefill email when redirecting to sign in
   successPopupData: {
     email?: string;
     title?: string;
@@ -39,6 +41,8 @@ interface AuthStore {
   markUserAsReturning: () => void; // Mark user as no longer new
   showSuccessMessage: (data: { email?: string; title?: string; message?: string }) => void;
   hideSuccessMessage: () => void;
+  handleSuccessPopupClose: () => void;
+  consumeSigninRedirectAfterSuccess: () => void;
   showAuthNotificationMessage: (type: 'signin' | 'signout', message: string) => void;
   hideAuthNotification: () => void;
 }
@@ -54,6 +58,8 @@ export const useAuthStore = create<AuthStore>()(
       isNewUser: false,
       hasHydrated: false,
       showSuccessPopup: false,
+      openSigninAfterSuccessClose: false,
+      pendingSigninEmail: null,
       successPopupData: null,
       showAuthNotification: false,
       authNotificationData: null,
@@ -139,9 +145,11 @@ export const useAuthStore = create<AuthStore>()(
             console.log('📧 SETTING showSuccessPopup to TRUE in store for email:', data.email);
             set({
               showSuccessPopup: true,
+              openSigninAfterSuccessClose: true,
+              pendingSigninEmail: data.email,
               successPopupData: {
                 email: data.email,
-                title: "Account Created Successfully! 🎉",
+                title: "Account Created Successfully!",
                 message: "Your account has been created! Please check your email and click the confirmation link to activate your account."
               }
             });
@@ -493,6 +501,8 @@ export const useAuthStore = create<AuthStore>()(
       showSuccessMessage: (data) => {
         set({
           showSuccessPopup: true,
+          openSigninAfterSuccessClose: false,
+          pendingSigninEmail: null,
           successPopupData: data
         });
       },
@@ -501,6 +511,20 @@ export const useAuthStore = create<AuthStore>()(
         set({
           showSuccessPopup: false,
           successPopupData: null
+        });
+      },
+
+      handleSuccessPopupClose: () => {
+        set({
+          showSuccessPopup: false,
+          successPopupData: null
+        });
+      },
+
+      consumeSigninRedirectAfterSuccess: () => {
+        set({
+          openSigninAfterSuccessClose: false,
+          pendingSigninEmail: null
         });
       },
 
