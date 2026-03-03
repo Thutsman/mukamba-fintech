@@ -1236,19 +1236,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     
     // Create a unique key for this verification level
     const celebrationKey = `verification-${verificationCount}`;
-    
-    // Only show celebration if we haven't shown it for this level before
+
+    // Only show celebration if we haven't shown it for this level before.
+    // We intentionally skip a celebration for phone-only verification to avoid
+    // overlapping with the solid green success toast.
     if (!shownCelebrations.has(celebrationKey)) {
-    if (verificationCount === 1 && user.is_phone_verified) {
-      setCelebrationData({
-        title: 'Phone Verified! 🎉',
-        description: 'You can now message our team directly',
-        icon: <Phone className="w-6 h-6" />,
-        reward: 'Messaging unlocked'
-      });
-      setShowCelebration(true);
-        setShownCelebrations(prev => new Set([...prev, celebrationKey]));
-    } else if (verificationCount === 2 && user.isIdentityVerified) {
+    if (verificationCount === 2 && user.isIdentityVerified) {
       setCelebrationData({
         title: 'Identity Verified! 🚀',
         description: 'Access to premium features and installment purchase options',
@@ -1372,7 +1365,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     if (completedSteps === 0) {
       return {
         message: "",
-        timeEstimate: "5 minutes to complete phone verification",
+        timeEstimate: "1 minute to complete phone verification",
         nextStep: "Phone verification"
       };
     }
@@ -2116,16 +2109,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         >
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">
           {getWelcomeMessage()}
-            {(isFirstVisit || isNewUser) && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5 }}
-                className="ml-2"
-              >
-                👋
-              </motion.span>
-            )}
         </h1>
         <p className="text-sm sm:text-base text-slate-600 px-4">
           {progressMotivation.message}
