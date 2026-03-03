@@ -85,7 +85,7 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
   onSellerSignupComplete
 }) => {
   const router = useRouter();
-  const { basicSignup, isLoading, error, setError, isAuthenticated } = useAuthStore();
+  const { basicSignup, isLoading, error, setError, setLoading, isAuthenticated } = useAuthStore();
   const [hasStartedSignup, setHasStartedSignup] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
@@ -178,27 +178,10 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
     try {
       setError(null);
       setHasStartedSignup(true);
+      // Set loading immediately so the button reacts on click
+      setLoading(true);
       console.log('Submitting signup form:', data.email);
-      
-      // Double-check email availability before signup
-      try {
-        const response = await fetch('/api/check-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: data.email })
-        });
-        
-        const result = await response.json();
-        if (!result.available) {
-          setError('This email is already registered. Please sign in instead or use a different email.');
-          setHasStartedSignup(false);
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking email availability:', error);
-        // Continue with signup if check fails - better UX
-      }
-      
+
       // Convert to BasicSignupData format
       const signupData: BasicSignupData = {
         firstName: data.firstName,

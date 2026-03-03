@@ -75,61 +75,46 @@ export const useAuthStore = create<AuthStore>()(
             throw new Error('Supabase client not initialized');
           }
 
-          // Real Supabase auth call with email confirmation disabled
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: data.email,
-            password: data.password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/confirm`,
-              data: {
-                first_name: data.firstName,
-                last_name: data.lastName,
-                phone: data.phone,
-                app_type: 'fintech' // Add app metadata to distinguish from early access
-              }
-            }
+          // Use server-side signup flow so account creation is not blocked by Supabase
+          // default confirmation email delivery.
+          const signupResponse = await fetch('/api/auth/basic-signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: data.email,
+              password: data.password,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              phone: data.phone,
+            }),
           });
 
-          if (authError) {
-            console.error('Supabase auth error:', authError);
-            
-            // Handle specific error cases
-            if (authError.message.includes('User already registered') || 
-                authError.message.includes('already exists') ||
-                authError.message.includes('duplicate')) {
-              throw new Error('This email is already registered. Please sign in instead or use a different email.');
+          const signupResult = await signupResponse.json();
+          if (!signupResponse.ok || !signupResult?.success) {
+            const errorMessage =
+              signupResult?.error || 'Signup failed. Please try again.';
+
+            if (
+              String(errorMessage).includes('already registered') ||
+              String(errorMessage).includes('already exists') ||
+              String(errorMessage).includes('duplicate')
+            ) {
+              throw new Error(
+                'This email is already registered. Please sign in instead or use a different email.'
+              );
             }
-            
-            throw new Error(authError.message);
+            throw new Error(errorMessage);
           }
 
-          if (!authData.user) {
+          const authUser = signupResult.user;
+          if (!authUser) {
             throw new Error('No user data returned from signup');
           }
 
-          console.log('Supabase user created:', authData.user);
-
-          // Send custom confirmation email
-          if (authData.user) {
-            try {
-              await fetch('/api/send-confirmation-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  email: data.email,
-                  firstName: data.firstName,
-                  userId: authData.user.id,
-                }),
-              });
-              console.log('Custom confirmation email sent successfully');
-            } catch (emailError) {
-              console.error('Failed to send custom email:', emailError);
-              // Don't fail signup if email sending fails
-            }
-          }
+          console.log('Supabase user created:', authUser);
 
           // Check if email confirmation is required
-          if (authData.user && !authData.user.email_confirmed_at) {
+          if (authUser && !authUser.email_confirmed_at) {
             console.log('Email confirmation required - user not fully authenticated');
             
             // Don't set user as authenticated until email is confirmed
@@ -163,7 +148,7 @@ export const useAuthStore = create<AuthStore>()(
 
                      // Create basic user account for frontend
           const newUser: User = {
-             id: authData.user.id,
+             id: authUser.id,
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email,

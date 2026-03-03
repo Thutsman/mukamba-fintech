@@ -213,6 +213,14 @@ The `SUPABASE_SERVICE_ROLE_KEY` is critical for the email check API to work prop
    - Site URL should match your domain
    - Redirect URLs should include `/auth/confirm`
 
+### Single Confirmation Email Mode
+
+To avoid duplicate confirmation emails during signup:
+
+- Keep custom confirmation flow enabled in app code (`/api/send-confirmation-email`)
+- Disable Supabase "Confirm signup" template delivery in dashboard
+- Use `CUSTOM_EMAIL_CONFIGURATION_GUIDE.md` as the source of truth for SMTP + template settings
+
 ## Security Considerations
 
 1. **No Email Enumeration:** The API endpoint doesn't expose whether an email exists until after proper validation

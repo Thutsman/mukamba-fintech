@@ -37,46 +37,24 @@ export async function POST(request: Request) {
       }
     );
 
-    // Check if email exists in auth.users table
-    const { data: users, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-
-    if (authError) {
-      console.error('Error checking email availability:', authError);
-      return NextResponse.json(
-        { available: false, error: 'Unable to verify email availability' },
-        { status: 500 }
-      );
-    }
-
-    // Check if email already exists
-    const emailExists = users.users.some(
-      user => user.email?.toLowerCase() === email.toLowerCase()
-    );
-
-    if (emailExists) {
-      return NextResponse.json({
-        available: false,
-        message: 'This email is already registered. Please sign in instead.'
-      });
-    }
-
-    // Also check user_profiles table as a backup
+    // Check user_profiles table with a targeted query — avoids expensive listUsers() scan
     const { data: profiles, error: profileError } = await supabaseAdmin
       .from('user_profiles')
-      .select('email')
+      .select('id')
       .ilike('email', email)
       .limit(1);
 
     if (profileError) {
       console.error('Error checking user profiles:', profileError);
-      // Don't fail the request, just log the error
+      // On error, allow signup to proceed — basic-signup API does its own check
+      return NextResponse.json({ available: true, message: 'Email is available' });
     }
 
     const profileExists = profiles && profiles.length > 0;
 
     return NextResponse.json({
-      available: !emailExists && !profileExists,
-      message: emailExists || profileExists 
+      available: !profileExists,
+      message: profileExists
         ? 'This email is already registered. Please sign in instead.'
         : 'Email is available'
     });
