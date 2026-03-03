@@ -43,6 +43,13 @@ export const BasicSigninModal: React.FC<BasicSigninModalProps> = ({
   const router = useRouter();
   const { login, isLoading, error, setError, isAuthenticated } = useAuthStore();
   const [hasStartedLogin, setHasStartedLogin] = React.useState(false);
+  // Clear any stale auth errors (for example from signup) whenever the signin
+  // modal is opened so users only see feedback relevant to their current login.
+  React.useEffect(() => {
+    if (isOpen) {
+      setError(null);
+    }
+  }, [isOpen, setError]);
   const [showPassword, setShowPassword] = React.useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [showForgotPassword, setShowForgotPassword] = React.useState(false);

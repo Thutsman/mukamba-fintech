@@ -286,7 +286,11 @@ export const BasicSignupModal: React.FC<BasicSignupModalProps> = ({
               Already have an account?{' '}
             </span>
             <button
-              onClick={onSwitchToLogin}
+              onClick={() => {
+                // Reset any signup error state before switching to the signin modal
+                setError(null);
+                onSwitchToLogin();
+              }}
               disabled={isLoading || isGoogleLoading}
               className="text-sm font-semibold text-red-600 hover:text-red-700 disabled:opacity-50 inline-flex items-center"
               suppressHydrationWarning

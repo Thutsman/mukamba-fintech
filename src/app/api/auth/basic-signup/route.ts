@@ -75,8 +75,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate token and persist it before responding. The email send is fire-and-forget
-    // so the user sees the success popup immediately — the email arrives seconds later.
+    // Generate token and persist it before sending the confirmation email.
     const confirmationToken = crypto.randomUUID();
     const { error: tokenInsertError } = await supabaseAdmin.from('email_confirmations').insert({
       user_id: createData.user.id,
@@ -93,11 +92,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fire confirmation email in background — do not block the response on it.
-    // The resend-confirmation flow is the safety net if this fails.
-    sendConfirmationEmail(normalizedEmail, firstName, confirmationToken).catch((err) => {
-      console.error('Background confirmation email send failed:', err);
-    });
+    // Send confirmation email and surface any failures back to the client so
+    // signup does not appear successful when no email was actually sent.
+    const emailResult = await sendConfirmationEmail(normalizedEmail, firstName, confirmationToken);
+    if (!emailResult.success) {
+      console.error(
+        'Failed to send custom confirmation email in basic-signup:',
+        (emailResult as { error?: unknown }).error
+      );
+      return NextResponse.json(
+        { success: false, error: 'Account created but failed to send confirmation email. Please try again.' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
