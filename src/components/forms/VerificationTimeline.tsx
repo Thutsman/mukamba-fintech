@@ -21,14 +21,14 @@ export const VerificationTimeline: React.FC<VerificationTimelineProps> = ({ clas
   const timelineSteps = [
     {
       icon: <Shield className="w-5 h-5 text-green-600" />,
-      title: "Documents uploaded and auto-checked immediately",
-      description: "Our system instantly analyzes your photos for quality and face matching",
+      title: "Documents submitted securely",
+      description: "We securely upload your photos and perform basic checks (quality, readability) to speed up review",
       status: "completed"
     },
     {
       icon: <Clock className="w-5 h-5 text-blue-600" />,
-      title: "Admin review: typically within 24-48 hours (if needed)",
-      description: "If auto-approval isn't possible, our team will manually review your documents",
+      title: "Manual admin review: typically within 24-48 hours",
+      description: "Our team will manually review your documents to confirm your identity",
       status: "pending"
     },
     {

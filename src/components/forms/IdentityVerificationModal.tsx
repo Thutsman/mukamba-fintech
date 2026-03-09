@@ -264,6 +264,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
   const handleSubmitSelfie = async () => {
     setIsLoading(true);
+    setProcessingStatus('Uploading your documents securely...');
     setStep('processing');
     try {
       // Create a KYC verification record (buyer identity)
@@ -334,7 +335,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
       // Only proceed with automated validation if ALL uploads succeeded
       if (uploadErrors.length === 0) {
         // Show initial processing message
-        setProcessingStatus('Your documents are being automatically checked...');
+        setProcessingStatus('Submitting your documents for verification review...');
         
         // Run automated validation
         console.log('Running automated document validation...');
@@ -1132,7 +1133,7 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                       <div>
                         <h3 className="font-semibold text-slate-800">Checking Your Documents</h3>
                         <p className="text-sm text-slate-600 mt-1">
-                          {processingStatus || 'Analyzing image quality and face matching...'}
+                          {processingStatus || 'Uploading your documents securely...'}
                         </p>
                       </div>
                       <div className="flex justify-center">
