@@ -24,7 +24,7 @@ export const AuthSystem: React.FC = () => {
   const [showPostConfirmationSigninNotice, setShowPostConfirmationSigninNotice] = React.useState(false);
   const [signinPrefillEmail, setSigninPrefillEmail] = React.useState('');
   const [currentView, setCurrentView] = React.useState<'properties' | 'profile' | 'home'>('properties');
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>('overview');
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'financing' | 'settings'>('overview');
   const [showSignupWidget, setShowSignupWidget] = React.useState(true);
   const mobileMenuRef = React.useRef<HTMLDetailsElement>(null);
   const [hasRedirectedToProfile, setHasRedirectedToProfile] = React.useState(false);
@@ -120,7 +120,6 @@ export const AuthSystem: React.FC = () => {
         'saved',
         'offers',
         'messages',
-        'documents',
         'financing',
         'settings',
       ]);
