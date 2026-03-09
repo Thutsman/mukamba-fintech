@@ -66,7 +66,6 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
   const [processingStatus, setProcessingStatus] = React.useState<string>('');
   const [showNotification, setShowNotification] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const selfieInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUpload, setCurrentUpload] = React.useState<'front' | 'back'>('front');
   
   // Webcam states
@@ -198,43 +197,13 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
     fileInputRef.current?.click();
   };
 
-  const handleSelfieSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelfiePhoto(file);
-    }
-  };
-
-  const triggerSelfieUpload = () => {
-    selfieInputRef.current?.click();
-  };
-
-  const handleSelfieCameraCapture = () => {
-    // Create a hidden file input with proper mobile camera attributes for selfie
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'user'; // Use front camera for selfie
-    input.style.display = 'none';
-    input.setAttribute('data-capture', 'user');
-    
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setSelfiePhoto(file);
-      }
-      // Clean up the input element
-      document.body.removeChild(input);
-    };
-    
-    // Add to DOM temporarily to ensure proper mobile handling
-    document.body.appendChild(input);
-    input.click();
-  };
-
   // Webcam functions
   const startWebcam = async () => {
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        alert('Camera is not supported on this device/browser.');
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'user',
@@ -514,6 +483,15 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
       videoRef.current.play().catch(console.error);
     }
   }, [showWebcam, webcamStream]);
+
+  // Cleanup camera stream on unmount
+  React.useEffect(() => {
+    return () => {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [webcamStream]);
 
   if (!isOpen) return null;
 
@@ -1010,71 +988,42 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
 
                       {!showWebcam ? (
                         <div className="space-y-4">
-                          <div>
-                            <Label className="block mb-2">Selfie Photo</Label>
-                            <div
-                              onClick={triggerSelfieUpload}
-                              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-                                ${selfiePhoto 
-                                  ? 'border-green-300 bg-green-50' 
-                                  : 'border-slate-300 hover:border-purple-400 hover:bg-purple-50'
-                                }`}
-                            >
-                              {selfiePhoto ? (
-                                <>
-                                  <Check className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                                  <p className="text-sm font-medium text-green-700">
-                                    {selfiePhoto.name}
+                          <div className="border rounded-lg p-4 bg-slate-50">
+                            {selfiePhoto ? (
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Check className="w-5 h-5 text-green-600 shrink-0" />
+                                  <p className="text-sm font-medium text-slate-800 truncate">
+                                    Selfie captured
                                   </p>
-                                  <p className="text-xs text-green-600 mt-1">Click to replace</p>
-                                </>
-                              ) : (
-                                <>
-                                  <Camera className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                                  <p className="text-sm font-medium text-slate-600">
-                                    Click to upload a photo
-                                  </p>
-                                  <p className="text-xs text-slate-500 mt-1">JPG, PNG up to 5MB</p>
-                                </>
-                              )}
-                            </div>
-                            
-                            {/* Mobile Camera Options */}
-                            <div className="mt-3 space-y-2">
-                              <div className="flex space-x-2">
+                                </div>
                                 <Button
-                                  onClick={handleSelfieCameraCapture}
+                                  onClick={() => {
+                                    setSelfiePhoto(null);
+                                    startWebcam();
+                                  }}
                                   variant="outline"
                                   size="sm"
-                                  className="flex-1"
                                 >
-                                  <Camera className="w-4 h-4 mr-2" />
-                                  Take Selfie
-                                </Button>
-                                <Button
-                                  onClick={triggerSelfieUpload}
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                >
-                                  <Upload className="w-4 h-4 mr-2" />
-                                  Upload File
+                                  <RefreshCw className="w-4 h-4 mr-2" />
+                                  Retake
                                 </Button>
                               </div>
-                              
-                              <div className="text-center">
-                                <p className="text-sm text-slate-500 mb-2">or</p>
+                            ) : (
+                              <div className="text-center space-y-3">
+                                <Camera className="w-8 h-8 text-slate-500 mx-auto" />
+                                <p className="text-sm text-slate-600">
+                                  For security, selfies must be taken live with your camera.
+                                </p>
                                 <Button
                                   onClick={startWebcam}
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full"
+                                  className="w-full bg-purple-600 hover:bg-purple-700"
                                 >
                                   <Camera className="w-4 h-4 mr-2" />
-                                  Use Webcam
+                                  Open Camera
                                 </Button>
                               </div>
-                            </div>
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -1257,13 +1206,6 @@ export const IdentityVerificationModal: React.FC<IdentityVerificationModalProps>
                 type="file"
                 accept="image/*"
                 onChange={handleFileSelect}
-                className="hidden"
-              />
-              <input
-                ref={selfieInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleSelfieSelect}
                 className="hidden"
               />
             </CardContent>
