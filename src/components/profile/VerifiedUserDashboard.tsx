@@ -106,11 +106,10 @@ import {
   getVerificationStatus,
   isFullyVerified
 } from '@/types/auth';
-import { KYC_DOCUMENT_TYPES, VERIFICATION_STATUS_LABELS } from '@/types/database';
 
 interface VerifiedUserDashboardProps {
   user: UserType;
-  activeSection?: 'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings';
+  activeSection?: 'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'financing' | 'settings';
   onViewProperty: (propertyId: string) => void;
   onViewApplication: (applicationId: string) => void;
   onStartNewApplication: () => void;
@@ -428,7 +427,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   React.useEffect(() => {
     applyTheme(darkModeEnabled);
   }, [darkModeEnabled, applyTheme]);
-  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'documents' | 'financing' | 'settings'>(initialActiveSection);
+  const [activeSection, setActiveSection] = React.useState<'overview' | 'portfolio' | 'saved' | 'offers' | 'messages' | 'financing' | 'settings'>(initialActiveSection);
 
   // Update activeSection when initialActiveSection prop changes
   React.useEffect(() => {
@@ -458,9 +457,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
   const [showGeneralInquiryModal, setShowGeneralInquiryModal] = React.useState(false);
   const [unreadInboxCount, setUnreadInboxCount] = React.useState(0);
-  const [kycDocuments, setKycDocuments] = React.useState<any[]>([]);
-  const [isLoadingDocuments, setIsLoadingDocuments] = React.useState(false);
-  const [documentsError, setDocumentsError] = React.useState<string | null>(null);
 
   const refreshUnreadInboxCount = React.useCallback(async () => {
     if (!user?.id) return;
@@ -716,67 +712,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     fetchRecentActivities();
     fetchSavedProperties();
   }, [fetchLiveProperties, fetchRecentActivities, fetchSavedProperties]);
-
-  // Load read-only KYC documents for the current user
-  React.useEffect(() => {
-    const loadDocuments = async () => {
-      if (!user?.id) return;
-      try {
-        setIsLoadingDocuments(true);
-        setDocumentsError(null);
-
-        const supabaseClient = createClient();
-        const { data, error } = await supabaseClient
-          .from('kyc_verifications')
-          .select(`
-            id,
-            verification_type,
-            status,
-            submitted_at,
-            documents:kyc_documents(
-              id,
-              document_type,
-              file_name,
-              file_url,
-              file_size,
-              mime_type,
-              created_at,
-              verification_status,
-              rejection_reason
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('submitted_at', { ascending: false });
-
-        if (error) {
-          console.error('Error loading user KYC documents:', error);
-          setDocumentsError('Unable to load your documents right now.');
-          setKycDocuments([]);
-          return;
-        }
-
-        const docs =
-          (data || []).flatMap((verification: any) =>
-            (verification.documents || []).map((doc: any) => ({
-              ...doc,
-              verification_type: verification.verification_type,
-              verification_status: verification.status,
-              submitted_at: verification.submitted_at,
-            }))
-          ) || [];
-
-        setKycDocuments(docs);
-      } catch (e) {
-        console.error('Unexpected error loading KYC documents:', e);
-        setDocumentsError('Unable to load your documents right now.');
-        setKycDocuments([]);
-      } finally {
-        setIsLoadingDocuments(false);
-      }
-    };
-
-    loadDocuments();
-  }, [user?.id]);
 
   React.useEffect(() => {
     fetchOffersBadgeCount();
@@ -1118,7 +1053,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             {key:'saved', label:'Saved Properties', icon:Bookmark, badge: savedPropertiesCount},
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
             {key:'messages', label:'Messages', icon:MessageCircle, badge: unreadInboxCount},
-            {key:'documents', label:'Documents', icon:FileText},
             {key:'settings', label:'Settings', icon:SettingsIcon},
           ].map((item:any)=>{
             const Icon = item.icon;
@@ -1228,7 +1162,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark, badge: savedPropertiesCount},
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
                     {key: 'messages', label: 'Messages', icon: MessageCircle, badge: unreadInboxCount},
-                    {key: 'documents', label: 'Documents', icon: FileText},
                     {key: 'settings', label: 'Settings', icon: SettingsIcon},
                   ].map((item: any) => {
                     const Icon = item.icon;
@@ -1872,105 +1805,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       )}
 
 
-
-      {/* Documents Section */}
-      {activeSection === 'documents' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Documents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-slate-500 mb-4">
-              View the verification documents you&rsquo;ve uploaded, such as ID copies, selfies, and financial documents.
-              These files are read-only for your security.
-            </p>
-
-            {isLoadingDocuments ? (
-              <div className="flex items-center justify-center py-8 text-sm text-slate-600">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3" />
-                Loading your documents...
-              </div>
-            ) : documentsError ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                {documentsError}
-              </div>
-            ) : kycDocuments.length === 0 ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
-                You haven&rsquo;t uploaded any verification documents yet. Once you complete identity or financial
-                verification, your documents will appear here.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-slate-900">Uploaded Documents</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {kycDocuments.map((doc) => {
-                    const typeLabel =
-                      (KYC_DOCUMENT_TYPES as any)[doc.document_type] || doc.document_type;
-                    const statusLabel =
-                      (VERIFICATION_STATUS_LABELS as any)[doc.verification_status] || doc.verification_status;
-                    const uploadedAt = doc.created_at || doc.uploaded_at;
-
-                    return (
-                      <div
-                        key={doc.id}
-                        className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-semibold text-slate-900">
-                              {typeLabel}
-                            </h5>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                doc.verification_status === 'approved'
-                                  ? 'bg-green-100 text-green-800'
-                                  : doc.verification_status === 'rejected'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              }`}
-                            >
-                              {statusLabel}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-600 break-all">
-                            {doc.file_name}
-                          </p>
-                          {uploadedAt && (
-                            <p className="text-xs text-slate-500">
-                              Uploaded:&nbsp;
-                              {new Date(uploadedAt).toLocaleDateString()}
-                            </p>
-                          )}
-                          {doc.rejection_reason && (
-                            <p className="mt-1 text-xs text-red-700">
-                              Reason: {doc.rejection_reason}
-                            </p>
-                          )}
-                        </div>
-                        <div className="mt-3">
-                          <a
-                            href={doc.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="w-full"
-                            >
-                              View Document
-                            </Button>
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Financing Section */}
       {activeSection === 'financing' && (
