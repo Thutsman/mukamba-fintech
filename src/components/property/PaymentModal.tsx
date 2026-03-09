@@ -29,6 +29,7 @@ import {
   Info,
   Upload,
   FileText,
+  Download,
   Copy,
   Check
 } from 'lucide-react';
@@ -44,7 +45,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyOffer } from '@/types/offers';
 import type { Invoice } from '@/types/invoices';
-import { getInvoiceByOffer, markInvoicePaid } from '@/lib/invoice-services';
+import { getInvoiceByOffer } from '@/lib/invoice-services';
 import { User as UserType } from '@/types/auth';
 import { createClient } from '@/lib/supabase/client';
 
@@ -89,41 +90,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [copiedField, setCopiedField] = React.useState<string | null>(null);
   const [invoice, setInvoice] = React.useState<Invoice | null>(null);
   const [buyerInfo, setBuyerInfo] = React.useState<{ name: string; email: string; phone: string } | null>(null);
-  
-  const buildInvoiceFromOffer = (o: PropertyOffer, buyerData?: { name: string; email: string; phone: string }): Invoice => {
-    const subtotal = o.payment_method === 'cash' ? o.offer_price : o.deposit_amount;
-    const taxes = 0;
-    const total = subtotal + taxes;
-    const issueDate = new Date();
-    const dueDate = new Date(issueDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const tail = (o.offer_reference || o.id).toString().slice(-6).toUpperCase();
-    return {
-      id: `local-${o.id}`,
-      invoice_number: `INV-${issueDate.getFullYear()}-${tail}`,
-      offer_id: o.id,
-      buyer_id: o.buyer_id,
-      property_id: o.property_id,
-      currency: o.property?.currency || 'USD',
-      subtotal,
-      taxes,
-      total,
-      amount_due: total,
-      status: 'unpaid',
-      issue_date: issueDate.toISOString(),
-      due_date: dueDate.toISOString(),
-      line_items: [{ description: `Deposit for ${o.property?.title || 'Property'}`, quantity: 1, unit_price: subtotal, total: subtotal }],
-      metadata: { 
-        offer_reference: o.offer_reference,
-        buyer_name: buyerData?.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-        buyer_email: buyerData?.email || user.email,
-        buyer_phone: buyerData?.phone || user.phone,
-        buyer_uid: o.buyer_id,
-        property_title: o.property?.title || 'Property',
-        property_address: o.property?.location ? `${o.property.location.city}, ${o.property.location.country}` : '',
-        payment_method: o.payment_method
-      }
-    };
-  };
 
   // Reset form when modal opens/closes and load invoice
   React.useEffect(() => {
@@ -135,7 +101,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       });
       setValidationErrors({});
       (async () => {
-        // Fetch buyer information from user_profiles
         try {
           const supabase = createClient();
           const { data: buyerData, error } = await supabase
@@ -144,39 +109,27 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             .eq('id', offer.buyer_id)
             .single();
 
-          let buyerDetails = null;
           if (!error && buyerData) {
-            buyerDetails = {
+            const buyerDetails = {
               name: `${buyerData.first_name || ''} ${buyerData.last_name || ''}`.trim() || 'Buyer',
               email: buyerData.email || '',
               phone: buyerData.phone || ''
             };
             setBuyerInfo(buyerDetails);
           }
-          
-          // Load or build invoice with buyer info
+
           const inv = await getInvoiceByOffer(offer.id);
-          if (inv) {
+          if (inv && inv.pdf_url) {
             setInvoice(inv);
             setPaymentData(p => ({ ...p, amount: inv.total || offer.deposit_amount }));
           } else {
-            // Fallback: build a local invoice so buyers still see invoice details in dev/mock
-            const local = buildInvoiceFromOffer(offer, buyerDetails || undefined);
-            setInvoice(local);
-            setPaymentData(p => ({ ...p, amount: local.total }));
+            setInvoice(null);
+            setPaymentData(p => ({ ...p, amount: offer.deposit_amount }));
           }
         } catch (error) {
-          console.error('Error fetching buyer info:', error);
-          // Fallback: build invoice without specific buyer data
-          const inv = await getInvoiceByOffer(offer.id);
-          if (inv) {
-            setInvoice(inv);
-            setPaymentData(p => ({ ...p, amount: inv.total || offer.deposit_amount }));
-          } else {
-            const local = buildInvoiceFromOffer(offer);
-            setInvoice(local);
-            setPaymentData(p => ({ ...p, amount: local.total }));
-          }
+          console.error('Error fetching buyer info or invoice:', error);
+          setInvoice(null);
+          setPaymentData(p => ({ ...p, amount: offer.deposit_amount }));
         }
       })();
     }
@@ -210,143 +163,56 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-  const buildInvoiceHtml = (inv: Invoice, autoPrint = false) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const logoSrc = `${origin}/logo.svg`;
-    return `<!DOCTYPE html>
-<html><head><meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${inv.invoice_number}</title>
-<style>
-  :root{--slate:#0f172a;--muted:#475569;--line:#e2e8f0;--brand:#0ea5e9}
-  body{font-family:Arial,Helvetica,sans-serif;color:var(--slate);padding:24px;background:#fff;font-size:13px;line-height:1.45}
-  .card{max-width:900px;margin:0 auto;border:1px solid var(--line);border-radius:12px;padding:28px;background:#fff;box-sizing:border-box}
-  .row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-  h1{font-size:20px;margin:0 0 12px 0}
-  .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table{width:100%;border-collapse:collapse;margin-top:16px;min-width:560px}
-  th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left}
-  thead th{background:#f8fafc;color:var(--muted);font-size:12px}
-  tbody td{font-size:12px}
-  tfoot td{font-size:12px}
-  .total{font-weight:700}
-  .muted{color:var(--muted)}
-  .badge{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}
-  .header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
-  .brand{display:flex;align-items:center;gap:12px}
-  .brand-img{height:36px;width:auto;display:block}
-  .section-title{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:24px 0 8px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .instructions{font-size:12px;line-height:1.6}
-  .instructions p{margin:6px 0}
-  .footer{border-top:1px solid var(--line);margin-top:24px;padding-top:12px;font-size:12px;color:var(--muted)}
+  const [pdfLoading, setPdfLoading] = React.useState(false);
+  const [pdfDownloading, setPdfDownloading] = React.useState(false);
 
-  /* Mobile responsiveness */
-  @media (max-width: 640px) {
-    body{padding:16px;font-size:12px}
-    .card{padding:18px;border-radius:10px}
-    .row{flex-direction:column;gap:8px}
-    .brand-img{height:28px}
-    h1{font-size:18px}
-    .grid{grid-template-columns:1fr;gap:8px}
-    .section-title{margin:16px 0 6px;font-size:12px}
-    thead th,tbody td,tfoot td{font-size:11px;padding:8px}
-  }
-
-  /* Print tweaks */
-  @media print {
-    body{padding:0}
-    .card{border-color:#ddd}
-  }
-</style>
-${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.print();},200)}</script>' : ''}
-</head>
-<body>
-  <div class="card">
-    <div class="header row">
-      <div class="brand">
-        <img src="${logoSrc}" alt="Mukamba Gateway" class="brand-img" />
-        <div><h1>Deposit Invoice</h1></div>
-      </div>
-      <div style="text-align:right">
-        <div><strong>Invoice:</strong> ${inv.invoice_number}</div>
-        <div><strong>Offer Ref:</strong> ${inv.metadata?.offer_reference || ''}</div>
-        <div class="muted">Issued: ${new Date(inv.issue_date).toLocaleDateString()} • Due: ${new Date(inv.due_date).toLocaleDateString()}</div>
-        <div class="badge">${(inv as any).status || 'Pending Payment'}</div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <div class="section-title">Buyer</div>
-        <div><strong>${inv.metadata?.buyer_name || ''}</strong></div>
-        <div class="muted">${inv.metadata?.buyer_email || ''}</div>
-        <div class="muted">${inv.metadata?.buyer_phone || ''}</div>
-      </div>
-      <div>
-        <div class="section-title">Property</div>
-        <div><strong>${inv.metadata?.property_title || 'Property'}</strong></div>
-        <div class="muted">${inv.metadata?.property_address || ''}</div>
-        <div class="muted">Listing Type: ${inv.metadata?.listing_type || ''}</div>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table><thead><tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
-        <tbody>
-          ${(inv.line_items || []).map(li => `<tr><td>${li.description}</td><td>${li.quantity}</td><td>${inv.currency} ${li.unit_price.toLocaleString()}</td><td>${inv.currency} ${li.total.toLocaleString()}</td></tr>`).join('')}
-        </tbody>
-        <tfoot>
-          <tr><td colspan="3" class="total">Subtotal</td><td class="total">${inv.currency} ${(inv.subtotal).toLocaleString()}</td></tr>
-          <tr><td colspan="3">Taxes</td><td>${inv.currency} ${(inv.taxes).toLocaleString()}</td></tr>
-          <tr><td colspan="3" class="total">Total</td><td class="total">${inv.currency} ${(inv.total).toLocaleString()}</td></tr>
-        </tfoot>
-      </table>
-    </div>
-
-    <div class="section-title">Payment Instructions</div>
-    <div class="instructions">
-      <p class="muted">Please complete payment by ${new Date(inv.due_date).toLocaleDateString()}.</p>
-      <p class="muted"><strong>Validity:</strong> This invoice is valid for 7 working days from the date of issue. After this period the offer and invoice will automatically expire.</p>
-      <p class="muted">Upload proof of payment in your Mukamba dashboard after transfer. Your payment will be reviewed and confirmed within 24–48 hours.</p>
-    </div>
-
-    <div class="section-title"><strong>Banking Details</strong></div>
-    <table>
-      <tbody>
-        <tr><td>Bank Name</td><td>NEDBANK</td></tr>
-        <tr><td>Account Name</td><td>JOHN POCOCK AND COMPANY TRUST ACCOUNT</td></tr>
-        <tr><td>Account Number</td><td>11990130215</td></tr>
-        <tr><td>SWIFT / Branch Code</td><td>MBCAZWHX / 18301</td></tr>
-        <tr><td>Reference</td><td>Use <strong>${inv.invoice_number}</strong> as payment reference</td></tr>
-      </tbody>
-    </table>
-
-    <div class="footer">
-      <div>Mukamba Gateway • hello@mukambagateway.com</div>
-      <div class="muted">This invoice is issued for the purpose of property purchase under Mukamba Gateway. All payments are subject to verification. Terms apply.</div>
-    </div>
-  </div>
-</body></html>`;
+  const getInvoiceSignedUrl = async (inv: Invoice): Promise<string | null> => {
+    const res = await fetch(`/api/invoice/view?offer_id=${encodeURIComponent(inv.offer_id)}`);
+    const json = await res.json();
+    if (!res.ok || !json.url) {
+      console.error('Failed to get invoice signed URL:', json.error);
+      return null;
+    }
+    return json.url as string;
   };
 
-  const previewInvoice = (inv: Invoice, autoPrint = false) => {
-    const html = buildInvoiceHtml(inv, autoPrint);
+  const openInvoicePdf = async (inv: Invoice) => {
     try {
-      // Prefer Blob URL to avoid blank rendering in some browsers
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const w = window.open(url, '_blank', 'noopener');
-      if (!w) throw new Error('popup blocked');
-      // Revoke when the tab has had time to load
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setPdfLoading(true);
+      const url = await getInvoiceSignedUrl(inv);
+      if (url) window.open(url, '_blank', 'noopener');
     } catch (e) {
-      // Final fallback
-      const w = window.open('', '_blank', 'noopener');
-      if (!w) return;
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
+      console.error('Failed to open invoice PDF:', e);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const downloadInvoicePdf = async (inv: Invoice) => {
+    try {
+      setPdfDownloading(true);
+      const signedUrl = await getInvoiceSignedUrl(inv);
+      if (!signedUrl) return;
+
+      // Fetch the file as a blob so the browser triggers a save dialog
+      const fileRes = await fetch(signedUrl);
+      if (!fileRes.ok) {
+        console.error('Failed to fetch invoice PDF for download');
+        return;
+      }
+      const blob = await fileRes.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `Invoice-${inv.invoice_number || inv.offer_id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (e) {
+      console.error('Failed to download invoice PDF:', e);
+    } finally {
+      setPdfDownloading(false);
     }
   };
 
@@ -538,9 +404,15 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                       <div className="mt-3 rounded-md border border-blue-200 bg-white p-3 flex items-center justify-between">
                         <div>
                           <div className="text-sm text-blue-700 font-medium">Invoice {invoice.invoice_number}</div>
-                          <div className="text-xs text-blue-600">Due {new Date(invoice.due_date).toLocaleDateString()}</div>
+                          {invoice.due_date && (
+                            <div className="text-xs text-blue-600">
+                              Due {new Date(invoice.due_date).toLocaleDateString()}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm font-semibold text-blue-900">{formatCurrency(invoice.total)}</div>
+                        <div className="text-sm font-semibold text-blue-900">
+                          {formatCurrency(invoice.total || offer.deposit_amount)}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -549,22 +421,48 @@ ${autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.pri
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                     <h3 className="font-semibold text-green-800 mb-2">Amount to Pay</h3>
                     <div className="text-3xl font-bold text-green-900">
-                      {formatCurrency(invoice?.total || offer.deposit_amount)}
+                      {formatCurrency(offer.deposit_amount)}
                     </div>
                     <p className="text-sm text-green-700 mt-1">Deposit for approved offer</p>
                   </div>
 
                   {/* Actions: Invoice */}
-                  {invoice && (
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="outline" onClick={() => previewInvoice(invoice)}>
-                        Preview Invoice
-                      </Button>
-                      <Button variant="outline" onClick={() => previewInvoice(invoice, true)}>
-                        Download / Print
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-end gap-2">
+                    {invoice?.pdf_url ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openInvoicePdf(invoice)}
+                          disabled={pdfLoading || pdfDownloading}
+                        >
+                          {pdfLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4 mr-2" />
+                          )}
+                          {pdfLoading ? 'Opening…' : 'View'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadInvoicePdf(invoice)}
+                          disabled={pdfLoading || pdfDownloading}
+                        >
+                          {pdfDownloading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4 mr-2" />
+                          )}
+                          {pdfDownloading ? 'Downloading…' : 'Download Invoice'}
+                        </Button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        Invoice PDF will be available once uploaded by the admin.
+                      </span>
+                    )}
+                  </div>
 
                   {/* Payment Methods */}
                   <div className="space-y-3">

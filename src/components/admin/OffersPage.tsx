@@ -19,7 +19,8 @@ import {
   X,
   MessageSquare,
   CreditCard,
-  TrendingUp
+  TrendingUp,
+  FileText,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,6 @@ import {
   getPropertyOffers, 
   getOfferStats 
 } from '@/lib/offer-services';
-import { createInvoiceForOffer } from '@/lib/invoice-services';
 import { toast } from 'sonner';
 
 interface OffersPageProps {
@@ -101,17 +101,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({
       });
       const json = await res.json().catch(() => ({}));
       if (res.ok && json.success) {
-        // Auto-create invoice for the offer (no seller id included)
-        try {
-          const invoice = await createInvoiceForOffer(offerId);
-          if (invoice) {
-            toast.success(`Offer approved. Invoice ${invoice.invoice_number} created`);
-          } else {
-            toast.info('Offer approved, but invoice could not be generated');
-          }
-        } catch (_) {
-          toast.info('Offer approved, but invoice generation failed');
-        }
+        toast.success('Offer approved successfully. Please upload the invoice PDF.');
         loadOffers();
         loadStats();
         onApproveOffer?.(offerId);
@@ -121,6 +111,53 @@ export const OffersPage: React.FC<OffersPageProps> = ({
     } catch (error) {
       console.error('Error approving offer:', error);
       toast.error('Failed to approve offer');
+    }
+  };
+
+  const handleUploadInvoice = async (offerId: string) => {
+    try {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'application/pdf';
+
+      fileInput.onchange = async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        const invoiceNumber = window.prompt('Enter the invoice number as shown on the PDF:');
+        if (!invoiceNumber) {
+          toast.info('Invoice upload cancelled (invoice number is required).');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('offer_id', offerId);
+        formData.append('invoice_number', invoiceNumber);
+
+        try {
+          const res = await fetch('/api/admin/invoices/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          const json = await res.json().catch(() => ({}));
+
+          if (res.ok && json.success) {
+            toast.success(`Invoice ${json.data.invoice_number} uploaded successfully.`);
+            await loadOffers();
+          } else {
+            toast.error(json.error || 'Failed to upload invoice.');
+          }
+        } catch (error) {
+          console.error('Error uploading invoice:', error);
+          toast.error('Failed to upload invoice.');
+        }
+      };
+
+      fileInput.click();
+    } catch (error) {
+      console.error('Error starting invoice upload:', error);
+      toast.error('Failed to start invoice upload.');
     }
   };
 
@@ -434,6 +471,18 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                           >
                             <X className="w-4 h-4 mr-2" />
                             Reject
+                          </Button>
+                        </div>
+                      )}
+                      {offer.status === 'approved' && (
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUploadInvoice(offer.id)}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Upload Invoice PDF
                           </Button>
                         </div>
                       )}
