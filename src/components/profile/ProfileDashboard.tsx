@@ -1545,17 +1545,20 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
       setForceUpdate(prev => prev + 1);
     }, 100);
     
-    // Show success message and refresh identity status after resubmit
+    // Show success message and refresh identity status after resubmit.
+    // For phone verification, we rely on the dedicated green banner in the phone modal
+    // to avoid duplicate success messages on the dashboard.
     if (verificationType === 'identity') {
       setSuccessMessage('Identity verification submitted successfully! You\'ll hear from us within 24-48 hours.');
       getLatestIdentityVerificationStatus(user.id).then(({ status, rejection_reason }) => {
         setIsIdentityPending(status === 'pending');
         setIdentityRejectionReason(status === 'rejected' ? (rejection_reason || null) : null);
       }).catch(() => {});
-    } else {
+      setShowSuccess(true);
+    } else if (verificationType !== 'phone') {
       setSuccessMessage(`${verificationType.charAt(0).toUpperCase() + verificationType.slice(1)} verification completed successfully!`);
+      setShowSuccess(true);
     }
-    setShowSuccess(true);
     
     // Only trigger progress celebration for non-identity verifications
     if (verificationType !== 'identity') {
