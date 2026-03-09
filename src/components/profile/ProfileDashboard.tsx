@@ -2177,7 +2177,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
               <CardHeader>
                 <CardTitle className="flex items-center text-green-700">
-                  🎉 Welcome to Mukamba!
+                  Welcome to Mukamba!
                 </CardTitle>
               </CardHeader>
               <CardContent>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Mail, AlertCircle, X, ExternalLink } from 'lucide-react';
+import { CheckCircle, Mail, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -155,20 +155,6 @@ export const SuccessPopup: React.FC<SuccessPopupProps> = ({
                 >
                   Got it! Let's continue
                 </Button>
-                
-                {email && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      // Open email client
-                      window.open(`mailto:${email}`, '_blank');
-                    }}
-                    className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Open Email App
-                  </Button>
-                )}
               </div>
 
               {/* Auto-close indicator */}
