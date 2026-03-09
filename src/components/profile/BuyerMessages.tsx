@@ -57,7 +57,8 @@ export const BuyerMessages: React.FC<BuyerMessagesProps> = ({ user, onBack, onVi
 
   const sentMessages = messages; // every row is a buyer-sent message in this schema
   const inboxMessages = React.useMemo(
-    () => messages.filter((m) => Boolean(m.adminResponse)),
+    // Inbox should only show conversations that have an unread admin reply.
+    () => messages.filter((m) => Boolean(m.adminResponse) && !m.adminResponseReadByBuyer),
     [messages]
   );
 

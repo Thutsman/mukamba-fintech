@@ -106,6 +106,7 @@ import {
   getVerificationStatus,
   isFullyVerified
 } from '@/types/auth';
+import { KYC_DOCUMENT_TYPES, VERIFICATION_STATUS_LABELS } from '@/types/database';
 
 interface VerifiedUserDashboardProps {
   user: UserType;
@@ -457,6 +458,9 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [showBuyerMessages, setShowBuyerMessages] = React.useState(false);
   const [showGeneralInquiryModal, setShowGeneralInquiryModal] = React.useState(false);
   const [unreadInboxCount, setUnreadInboxCount] = React.useState(0);
+  const [kycDocuments, setKycDocuments] = React.useState<any[]>([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = React.useState(false);
+  const [documentsError, setDocumentsError] = React.useState<string | null>(null);
 
   const refreshUnreadInboxCount = React.useCallback(async () => {
     if (!user?.id) return;
@@ -712,6 +716,67 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
     fetchRecentActivities();
     fetchSavedProperties();
   }, [fetchLiveProperties, fetchRecentActivities, fetchSavedProperties]);
+
+  // Load read-only KYC documents for the current user
+  React.useEffect(() => {
+    const loadDocuments = async () => {
+      if (!user?.id) return;
+      try {
+        setIsLoadingDocuments(true);
+        setDocumentsError(null);
+
+        const supabaseClient = createClient();
+        const { data, error } = await supabaseClient
+          .from('kyc_verifications')
+          .select(`
+            id,
+            verification_type,
+            status,
+            submitted_at,
+            documents:kyc_documents(
+              id,
+              document_type,
+              file_name,
+              file_url,
+              file_size,
+              mime_type,
+              created_at,
+              verification_status,
+              rejection_reason
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('submitted_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading user KYC documents:', error);
+          setDocumentsError('Unable to load your documents right now.');
+          setKycDocuments([]);
+          return;
+        }
+
+        const docs =
+          (data || []).flatMap((verification: any) =>
+            (verification.documents || []).map((doc: any) => ({
+              ...doc,
+              verification_type: verification.verification_type,
+              verification_status: verification.status,
+              submitted_at: verification.submitted_at,
+            }))
+          ) || [];
+
+        setKycDocuments(docs);
+      } catch (e) {
+        console.error('Unexpected error loading KYC documents:', e);
+        setDocumentsError('Unable to load your documents right now.');
+        setKycDocuments([]);
+      } finally {
+        setIsLoadingDocuments(false);
+      }
+    };
+
+    loadDocuments();
+  }, [user?.id]);
 
   React.useEffect(() => {
     fetchOffersBadgeCount();
@@ -1815,35 +1880,94 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             <CardTitle>My Documents</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-slate-500">
-              Here you can manage your uploaded documents, such as ID copies, bank statements, and proof of income.
-              This feature is under development.
+            <p className="text-slate-500 mb-4">
+              View the verification documents you&rsquo;ve uploaded, such as ID copies, selfies, and financial documents.
+              These files are read-only for your security.
             </p>
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold text-slate-900 mb-2">Uploaded Documents</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-slate-100 p-4 rounded-lg border border-slate-200">
-                  <h5 className="text-sm font-medium text-slate-900 mb-1">ID Copy</h5>
-                  <p className="text-xs text-slate-500">Uploaded on: 2023-10-20</p>
-                  <p className="text-xs text-slate-500">Status: Verified</p>
-        </div>
-                <div className="bg-slate-100 p-4 rounded-lg border border-slate-200">
-                  <h5 className="text-sm font-medium text-slate-900 mb-1">Bank Statement</h5>
-                  <p className="text-xs text-slate-500">Uploaded on: 2023-10-15</p>
-                  <p className="text-xs text-slate-500">Status: Verified</p>
-      </div>
+
+            {isLoadingDocuments ? (
+              <div className="flex items-center justify-center py-8 text-sm text-slate-600">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3" />
+                Loading your documents...
               </div>
-            </div>
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold text-slate-900 mb-2">Upload New Document</h4>
-              <p className="text-sm text-slate-500">
-                You can upload your documents here to verify your identity and financial status.
-                This will help streamline your property application process.
-              </p>
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
-                Upload Document
-              </Button>
-            </div>
+            ) : documentsError ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {documentsError}
+              </div>
+            ) : kycDocuments.length === 0 ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                You haven&rsquo;t uploaded any verification documents yet. Once you complete identity or financial
+                verification, your documents will appear here.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-slate-900">Uploaded Documents</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {kycDocuments.map((doc) => {
+                    const typeLabel =
+                      (KYC_DOCUMENT_TYPES as any)[doc.document_type] || doc.document_type;
+                    const statusLabel =
+                      (VERIFICATION_STATUS_LABELS as any)[doc.verification_status] || doc.verification_status;
+                    const uploadedAt = doc.created_at || doc.uploaded_at;
+
+                    return (
+                      <div
+                        key={doc.id}
+                        className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-semibold text-slate-900">
+                              {typeLabel}
+                            </h5>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                doc.verification_status === 'approved'
+                                  ? 'bg-green-100 text-green-800'
+                                  : doc.verification_status === 'rejected'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 break-all">
+                            {doc.file_name}
+                          </p>
+                          {uploadedAt && (
+                            <p className="text-xs text-slate-500">
+                              Uploaded:&nbsp;
+                              {new Date(uploadedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                          {doc.rejection_reason && (
+                            <p className="mt-1 text-xs text-red-700">
+                              Reason: {doc.rejection_reason}
+                            </p>
+                          )}
+                        </div>
+                        <div className="mt-3">
+                          <a
+                            href={doc.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                            >
+                              View Document
+                            </Button>
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

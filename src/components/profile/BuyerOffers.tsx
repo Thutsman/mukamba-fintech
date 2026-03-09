@@ -583,6 +583,17 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                           Delete Offer
                         </Button>
                       )}
+                      {offer.status === 'rejected' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onViewProperty?.(offer.property_id)}
+                          className="w-full justify-start border-amber-300 text-amber-800 hover:bg-amber-50"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Submit Counter Offer
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
