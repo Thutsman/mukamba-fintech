@@ -667,15 +667,21 @@ export default function HowToSellPage() {
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
                 {[
-                  'Property Listing Management',
-                  'Property Investment',
-                  'Administration Oversight',
-                  'Concierge Services',
-                  'Secure Transfers'
+                  {
+                    label: 'Property Listing Management',
+                    href: '/property-listing-management',
+                  },
+                  {
+                    label: 'Property Investment',
+                    href: '/property-investment',
+                  },
+                  { label: 'Administration Oversight', href: '#' },
+                  { label: 'Concierge Services', href: '#' },
+                  { label: 'Secure Transfers', href: '#' }
                 ].map((service) => (
-                  <li key={service}>
-                    <a href="#" className="text-white/80 hover:text-white transition-colors text-sm">
-                      {service}
+                  <li key={service.label}>
+                    <a href={service.href} className="text-white/80 hover:text-white transition-colors text-sm">
+                      {service.label}
                     </a>
                   </li>
                 ))}

@@ -1,4 +1,4 @@
- 'use client';
+'use client';
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,46 +12,30 @@ import {
   LogIn,
   ArrowRight,
   CheckCircle,
-  ClipboardList,
-  FileText,
   Shield,
-  Users,
-  Phone,
+  Search,
   Mail,
+  Phone,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
-import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
-import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
-import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal';
-import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import { navigateWithScrollToTop } from '@/utils/navigation';
-import { useAuthStore } from '@/lib/store';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
+import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 
-// Reuse lightweight analytics helper used on marketing pages
 const trackEvent = (eventName: string, parameters: Record<string, any>) => {
   console.log('Analytics Event:', eventName, parameters);
 };
 
-export default function PropertyListingManagementPage() {
+export default function PropertyInvestmentPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
-
-  const [showSignupModal, setShowSignupModal] = React.useState(false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
-  const [showAgentModal, setShowAgentModal] = React.useState(false);
-  const [showSellerModal, setShowSellerModal] = React.useState(false);
-  const [showBuyerPhoneVerificationModal, setShowBuyerPhoneVerificationModal] =
-    React.useState(false);
+  const [showSignupModal, setShowSignupModal] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const [sellerIntent, setSellerIntent] = React.useState(false);
 
-  // Close mobile menu when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isMobileMenuOpen) {
@@ -68,13 +52,81 @@ export default function PropertyListingManagementPage() {
     };
   }, [isMobileMenuOpen]);
 
+  const investmentPathways = [
+    {
+      step: '1',
+      title: 'Buy Outright (Cash)',
+      description:
+        'Complete property ownership with verified documents and immediate possession after transfer.',
+    },
+    {
+      step: '2',
+      title: 'Buy on Instalments',
+      description:
+        'Agreed payment schedule structured in the sale agreement with full visibility in your dashboard.',
+    },
+    {
+      step: '3',
+      title: 'Pipeline Access',
+      description:
+        'Get matched to verified stock that fits your budget and investment timeline.',
+    },
+  ] as const;
+
+  const whatYouGet = [
+    'Access to verified listings with transparent transaction steps.',
+    'Ability to submit offers with custom payment terms.',
+    'Real‑time payment tracking visibility in your dashboard.',
+    'Dedicated admin support for process coordination.',
+    'Priority support for diaspora and remote investors.',
+  ] as const;
+
+  const reduceRisk = [
+    'Identity verification required to bid and submit offers.',
+    'Property verification to reduce fraud risk.',
+    'Escrow handling with controlled fund releases.',
+    'Formal trust account process for all payments.',
+    'Complete audit trail and documentation.',
+  ] as const;
+
+  const simpleSteps = [
+    { step: '1', title: 'Create Account', description: 'Register and set up your investor profile.' },
+    { step: '2', title: 'Verify ID', description: 'Complete KYC verification (local or diaspora documents accepted).' },
+    { step: '3', title: 'Choose Property', description: 'Browse and select from verified listings.' },
+    { step: '4', title: 'Make Offer', description: 'Submit offer with your preferred payment terms.' },
+    { step: '5', title: 'Pay', description: 'Transfer funds via local trust account or diaspora gateway.' },
+    { step: '6', title: 'Track', description: 'Monitor progress in your Mukamba Gateway dashboard.' },
+  ] as const;
+
+  const faqs = [
+    {
+      question: 'Can I invest from outside Zimbabwe?',
+      answer:
+        'Yes. Our KYC process accepts diaspora documentation. You can invest from anywhere with international payment options available.',
+    },
+    {
+      question: 'How do instalments work?',
+      answer:
+        'Payment terms are defined in the sale agreement and visible in your dashboard. Our team provides support if any issues arise.',
+    },
+    {
+      question: 'What if I need to adjust my payment schedule?',
+      answer:
+        'Contact your investment team. We can discuss options within the framework of your sale agreement.',
+    },
+    {
+      question: 'Is my investment protected?',
+      answer:
+        'Yes. Funds are held in escrow with controlled releases per written instructions, protecting both buyer and seller.',
+    },
+  ] as const;
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation Bar - match HowToBuy color theme */}
+      {/* Header – same structure as other marketing pages */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <div className="flex items-center">
               <Image
                 src="/logo.svg"
@@ -86,7 +138,6 @@ export default function PropertyListingManagementPage() {
               />
             </div>
 
-            {/* Center Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <a
                 href="/"
@@ -145,7 +196,26 @@ export default function PropertyListingManagementPage() {
               </a>
             </div>
 
-            {/* Mobile Hamburger Menu */}
+            <div className="hidden md:flex items-center space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowSignupModal(true)}
+              >
+                <UserPlus className="w-4 h-4 mr-1" />
+                Create Account
+              </Button>
+              <Button
+                size="sm"
+                className="bg-[#7f1518] hover:bg-[#6a1215] text-white"
+                onClick={() => setShowSigninModal(true)}
+              >
+                <LogIn className="w-4 h-4 mr-1" />
+                Sign In
+              </Button>
+            </div>
+
             <div className="md:hidden" data-mobile-menu>
               <Button
                 variant="ghost"
@@ -156,43 +226,10 @@ export default function PropertyListingManagementPage() {
                 <Tag className="w-6 h-6" />
               </Button>
             </div>
-
-            {/* Desktop Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-gray-700 border-gray-300 hover:bg-gray-50"
-                onClick={() => {
-                  setShowSignupModal(true);
-                  trackEvent('plm_create_account_clicked', {
-                    source: 'navigation_bar',
-                    event_category: 'conversion',
-                  });
-                }}
-              >
-                <UserPlus className="w-4 h-4 mr-1" />
-                Create Account
-              </Button>
-              <Button
-                size="sm"
-                className="bg-[#7f1518] hover:bg-[#6a1215] text-white"
-                onClick={() => {
-                  setShowSigninModal(true);
-                  trackEvent('plm_sign_in_clicked', {
-                    source: 'navigation_bar',
-                    event_category: 'conversion',
-                  });
-                }}
-              >
-                Sign In
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile menu dropdown */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
@@ -254,6 +291,7 @@ export default function PropertyListingManagementPage() {
                   <Tag className="w-4 h-4 mr-3" />
                   How to Sell
                 </button>
+
                 <div className="pt-3 border-t border-gray-200 space-y-2">
                   <button
                     className="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
@@ -282,238 +320,187 @@ export default function PropertyListingManagementPage() {
         </AnimatePresence>
       </nav>
 
-      {/* Hero Section */}
-      <div className="bg-[#7f1518] py-16 sm:py-20">
+      {/* Hero */}
+      <section className="bg-[#7f1518] py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-            Property Listing Management B2B
+            Property Investment
           </h1>
           <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-            We do not list what we cannot verify. Mukamba Gateway manages your
-            property listings end-to-end so you can focus on closing deals.
+            Built for buyers who want proof, not promises. Invest with verification, transparent
+            steps, and secure payment handling.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
-        {/* Who This Service Is For */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+        {/* Investment Pathways */}
         <section>
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              Who This Service Is For
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Investment Pathways
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card className="border-gray-200 shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <Building className="w-8 h-8 text-[#7f1518] mr-3" />
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    Developers with Inventory
-                  </h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">
-                  Single units or bulk portfolios looking for a structured,
-                  verified way to bring stock onto the market. We handle
-                  documentation, listing structure, and buyer matching so your
-                  projects move faster.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-gray-200 shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <Users className="w-8 h-8 text-[#7f1518] mr-3" />
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    Agents & Mandated Sellers
-                  </h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">
-                  Sales teams and individual mandate holders who need a trusted
-                  process for listing, verification, and managing offers.
-                  Mukamba Gateway provides the back-office engine so you can
-                  focus on selling.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* What's Included */}
-        <section className="bg-[#F9FAFB] px-4 sm:px-8 py-12 rounded-3xl">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              What&apos;s Included
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              'Listing intake with full document verification (title, ownership, IDs, approvals)',
-              'Verification workflow with clear exceptions process',
-              'Professional listing creation with pricing, payment options, and disclosures',
-              'Media standards support (photos, video, 360° tours where available)',
-              'Offer management with submission, review, and acceptance steps',
-              'Payment reference rules and proof-of-payment handling',
-              'Complete audit trail through Mukamba Gateway platform',
-              'Option for private admin dashboard (offline listing management)',
-            ].map((item, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {investmentPathways.map((pathway) => (
               <div
-                key={index}
-                className="flex items-start bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
+                key={pathway.step}
+                className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 text-center"
               >
-                <div className="flex-shrink-0 mt-1">
-                  <CheckCircle className="w-5 h-5 text-[#7f1518]" />
+                <div className="w-10 h-10 rounded-full bg-[#7f1518] text-white flex items-center justify-center font-semibold mx-auto mb-4">
+                  {pathway.step}
                 </div>
-                <p className="ml-3 text-gray-700 leading-relaxed">{item}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {pathway.title}
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {pathway.description}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* How It Works */}
+        {/* What You Get – grey hug */}
+        <section className="bg-[#F9FAFB] px-4 sm:px-8 py-12 rounded-3xl">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              What You Get
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+            {whatYouGet.map((item) => (
+              <div
+                key={item}
+                className="bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex items-start gap-3"
+              >
+                <CheckCircle className="w-5 h-5 text-[#7f1518] mt-0.5" />
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* How We Reduce Risk – separated white card section */}
         <section>
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              How It Works
-            </h2>
-          </div>
-          <div className="space-y-8 max-w-3xl mx-auto">
-            {[
-              {
-                step: '01',
-                title: 'Submit Property + Documents',
-                description:
-                  'Provide property details and upload all required verification documents through a secure intake form.',
-              },
-              {
-                step: '02',
-                title: 'Verification Outcome',
-                description:
-                  'Our team reviews ownership, compliance, and documentation. You receive a verified status or a clear exception report within 5–7 business days.',
-              },
-              {
-                step: '03',
-                title: 'Listing Goes Live',
-                description:
-                  'Verified properties go live on Mukamba Gateway, visible only to vetted buyers with the right access level.',
-              },
-              {
-                step: '04',
-                title: 'Offers Collected',
-                description:
-                  'Receive and review structured offers from verified buyers. All activity is tracked in your dashboard.',
-              },
-              {
-                step: '05',
-                title: 'Buyer Payment Begins',
-                description:
-                  'Accepted offers move into secure payment and transfer workflows with full visibility for you and the buyer.',
-              },
-            ].map((item, index) => (
-              <div
-                key={item.step}
-                className="flex flex-col sm:flex-row items-start gap-4"
-              >
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#7f1518] text-white text-lg font-semibold flex-shrink-0">
-                  {item.step}
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-8 py-8 mt-4 sm:mt-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  How We Reduce Risk
+                </h2>
               </div>
-            ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {reduceRisk.map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3"
+                  >
+                    <Shield className="w-5 h-5 text-[#7f1518] mt-0.5" />
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                      {item}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Seller Protections */}
+        {/* Simple Steps to Invest – grey hug */}
         <section className="bg-[#F9FAFB] px-4 sm:px-8 py-12 rounded-3xl">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              Seller Protections
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Simple Steps to Invest
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              'Only verified buyers can proceed to transactional steps',
-              'Complete transparency throughout the listing lifecycle',
-              'Professional document management and storage',
-              'Clear written instructions and defined milestones',
-              'Secure payment handling through escrow',
-            ].map((item, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {simpleSteps.map((step) => (
               <div
-                key={index}
-                className="flex items-start bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
+                key={step.step}
+                className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col gap-2"
               >
-                <div className="flex-shrink-0 mt-1">
-                  <Shield className="w-5 h-5 text-[#7f1518]" />
+                <div className="w-8 h-8 rounded-full bg-[#7f1518] text-white flex items-center justify-center text-sm font-semibold mb-2">
+                  {step.step}
                 </div>
-                <p className="ml-3 text-gray-700 leading-relaxed">{item}</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {step.description}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="bg-white rounded-2xl border border-gray-200 px-6 sm:px-10 py-10 sm:py-12 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Ready to List Your Property?
+        {/* FAQ */}
+        <section>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Frequently Asked Questions
+            </h2>
+          </div>
+          <div className="space-y-4 max-w-4xl mx-auto">
+            {faqs.map((faq) => (
+              <div
+                key={faq.question}
+                className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm"
+              >
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">
+                  {faq.question}
+                </h3>
+                <p className="text-sm text-gray-700 leading-relaxed">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Ready to Start Investing CTA */}
+        <section className="bg-[#FDF5F5] rounded-2xl px-6 sm:px-10 py-10 sm:py-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+            Ready to Start Investing?
           </h2>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join developers and agents who trust Mukamba Gateway for verified,
-            structured property transactions.
+          <p className="text-sm sm:text-base text-gray-700 mb-8 max-w-2xl mx-auto">
+            Get matched with properties that fit your investment goals.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
               className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-4 text-lg font-semibold"
               onClick={() => {
-                trackEvent('floating_sell_button_clicked', {
-                  source: 'property_listing_management_page',
-                  event_category: 'conversion',
-                  user_status: user ? 'authenticated' : 'guest',
+                navigateWithScrollToTop(router, '/listings');
+                trackEvent('investment_browse_properties_clicked', {
+                  source: 'property_investment_page',
+                  event_category: 'navigation',
                 });
-
-                if (user) {
-                  setShowSellerModal(true);
-                } else {
-                  setSellerIntent(true);
-                  setShowSignupModal(true);
-                }
               }}
             >
-              <ClipboardList className="w-5 h-5 mr-2" />
-              List a Property
+              Browse Properties
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg font-semibold"
               onClick={() => {
-                trackEvent('plm_download_checklist_clicked', {
-                  source: 'cta_section',
+                trackEvent('investment_speak_team_clicked', {
+                  source: 'property_investment_page',
                   event_category: 'engagement',
                 });
-                window.open('/documents/property-listing-checklist', '_blank');
+                // Match WhatsApp contact behaviour
+                window.open('https://wa.me/263787075706', '_blank');
               }}
             >
-              <FileText className="w-5 h-5 mr-2" />
-              View Checklist
+              Speak to Investment Team
             </Button>
           </div>
         </section>
-      </div>
+      </main>
 
-      {/* Footer - copied from PropertyDashboard to stay in sync */}
+      {/* Footer – same as PropertyDashboard / marketing pages */}
       <footer className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Company Info */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -532,11 +519,9 @@ export default function PropertyListingManagementPage() {
                 />
               </div>
               <p className="text-white/90 text-sm leading-relaxed mb-6">
-                Transforming property ownership in Southern Africa through
-                innovative flexible installment plans.
+                Transforming property ownership in Southern Africa through innovative flexible
+                installment plans.
               </p>
-
-              {/* Social Media Icons */}
               <div className="flex space-x-4">
                 <a
                   href="https://www.facebook.com/people/Mukamba-Gateway/61580417286014/"
@@ -551,7 +536,7 @@ export default function PropertyListingManagementPage() {
                   href="https://www.linkedin.com/company/mukamba-gateway/about/?viewAsMember=true"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
+                  className="w-8 h-8 bg.white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
                   aria-label="Follow us on LinkedIn"
                 >
                   <span className="text-xs font-bold">in</span>
@@ -559,7 +544,6 @@ export default function PropertyListingManagementPage() {
               </div>
             </motion.div>
 
-            {/* Quick Links */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -574,8 +558,8 @@ export default function PropertyListingManagementPage() {
                   { name: 'Properties', href: '/listings' },
                   { name: 'How to Buy', href: '/how-to-buy' },
                   { name: 'How to Sell', href: '/how-to-sell' },
-                ].map((link, index) => (
-                  <li key={index}>
+                ].map((link) => (
+                  <li key={link.name}>
                     <a
                       href={link.href}
                       className="text-white/80 hover:text-white transition-colors text-sm"
@@ -587,7 +571,6 @@ export default function PropertyListingManagementPage() {
               </ul>
             </motion.div>
 
-            {/* Our Services */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -601,7 +584,10 @@ export default function PropertyListingManagementPage() {
                     label: 'Property Listing Management',
                     href: '/property-listing-management',
                   },
-                  { label: 'Property Investment', href: '/property-investment' },
+                  {
+                    label: 'Property Investment',
+                    href: '/property-investment',
+                  },
                   { label: 'Administration Oversight', href: '#' },
                   { label: 'Concierge Services', href: '#' },
                   { label: 'Secure Transfers', href: '#' },
@@ -618,7 +604,6 @@ export default function PropertyListingManagementPage() {
               </ul>
             </motion.div>
 
-            {/* Contact Us */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -659,7 +644,6 @@ export default function PropertyListingManagementPage() {
             </motion.div>
           </div>
 
-          {/* Bottom Bar */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -696,27 +680,7 @@ export default function PropertyListingManagementPage() {
         </div>
       </footer>
 
-      {/* Modals */}
-      <BasicSignupModal
-        isOpen={showSignupModal}
-        onClose={() => {
-          setShowSignupModal(false);
-          setSellerIntent(false);
-        }}
-        onSwitchToLogin={() => {
-          setShowSignupModal(false);
-          setSellerIntent(false);
-          setShowSigninModal(true);
-        }}
-        sellerIntent={sellerIntent}
-        onSellerSignupComplete={() => {
-          setSellerIntent(false);
-          setTimeout(() => {
-            setShowSellerModal(true);
-          }, 1000);
-        }}
-      />
-
+      {/* Auth Modals */}
       <BasicSigninModal
         isOpen={showSigninModal}
         onClose={() => setShowSigninModal(false)}
@@ -726,37 +690,14 @@ export default function PropertyListingManagementPage() {
         }}
       />
 
-      <AgentOnboardingModal
-        isOpen={showAgentModal}
-        onClose={() => setShowAgentModal(false)}
-        onComplete={() => setShowAgentModal(false)}
+      <BasicSignupModal
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onSwitchToLogin={() => {
+          setShowSignupModal(false);
+          setShowSigninModal(true);
+        }}
       />
-
-      <SellerOnboardingModal
-        isOpen={showSellerModal}
-        onClose={() => setShowSellerModal(false)}
-        onComplete={() => setShowSellerModal(false)}
-      />
-
-      <BuyerPhoneVerificationModal
-        isOpen={showBuyerPhoneVerificationModal}
-        onClose={() => setShowBuyerPhoneVerificationModal(false)}
-        onVerificationComplete={() => setShowBuyerPhoneVerificationModal(false)}
-        buyerType={undefined}
-        userEmail={user?.email}
-      />
-
-      {/* Success Animation Overlay */}
-      <AnimatePresence>
-        {showSignupModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

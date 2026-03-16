@@ -716,7 +716,7 @@ export default function HowToBuyPage() {
                     label: 'Property Listing Management',
                     href: '/property-listing-management',
                   },
-                  { label: 'Property Investment', href: '#' },
+                  { label: 'Property Investment', href: '/property-investment' },
                   { label: 'Administration Oversight', href: '#' },
                   { label: 'Concierge Services', href: '#' },
                   { label: 'Secure Transfers', href: '#' },
