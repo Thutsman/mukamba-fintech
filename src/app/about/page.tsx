@@ -534,18 +534,21 @@ export default function AboutPage() {
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
                 {[
-                  'Property Listing Management',
-                  'Property Investment',
-                  'Administration Oversight',
-                  'Concierge Services',
-                  'Secure Transfers'
-                ].map((service, index) => (
-                  <li key={index}>
+                  {
+                    label: 'Property Listing Management',
+                    href: '/property-listing-management',
+                  },
+                  { label: 'Property Investment', href: '#' },
+                  { label: 'Administration Oversight', href: '#' },
+                  { label: 'Concierge Services', href: '#' },
+                  { label: 'Secure Transfers', href: '#' },
+                ].map((service) => (
+                  <li key={service.label}>
                     <a
-                      href="#"
+                      href={service.href}
                       className="text-white/80 hover:text-white transition-colors text-sm"
                     >
-                      {service}
+                      {service.label}
                     </a>
                   </li>
                 ))}

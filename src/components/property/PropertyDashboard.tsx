@@ -61,6 +61,7 @@ import { shufflePropertiesByPeriod, getCurrentPeriod } from '@/utils/property-sh
 import { User as UserType } from '@/types/auth';
 import { useAuthStore } from '@/lib/store';
 import { UnifiedSignupModal } from '@/components/forms/UnifiedSignupModal';
+import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
 import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal';
@@ -105,6 +106,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [showAgentModal, setShowAgentModal] = React.useState(false);
   const [showSellerModal, setShowSellerModal] = React.useState(false);
+  const [showBasicSignupModal, setShowBasicSignupModal] = React.useState(false);
   const [sellerIntent, setSellerIntent] = React.useState(false);
   const [isSearchLoading, setIsSearchLoading] = React.useState(false);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
@@ -1791,32 +1793,35 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                 </motion.div>
 
             {/* Our Services */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-                  viewport={{ once: true }}
+              viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
                 {[
-                  'Property Listing Management',
-                  'Property Investment',
-                  'Administration Oversight',
-                  'Concierge Services',
-                  'Secure Transfers'
-                ].map((service, index) => (
-                  <li key={index}>
-                    <a 
-                      href="#" 
+                  {
+                    label: 'Property Listing Management',
+                    href: '/property-listing-management',
+                  },
+                  { label: 'Property Investment', href: '#' },
+                  { label: 'Administration Oversight', href: '#' },
+                  { label: 'Concierge Services', href: '#' },
+                  { label: 'Secure Transfers', href: '#' },
+                ].map((service) => (
+                  <li key={service.label}>
+                    <a
+                      href={service.href}
                       className="text-white/80 hover:text-white transition-colors text-sm"
                     >
-                      {service}
+                      {service.label}
                     </a>
                   </li>
                 ))}
               </ul>
-                </motion.div>
+            </motion.div>
 
             {/* Contact Us */}
                 <motion.div
@@ -1886,6 +1891,27 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
             </motion.div>
           </div>
       </footer>
+
+      {/* Basic Signup Modal for seller intent (floating button) */}
+      <BasicSignupModal
+        isOpen={showBasicSignupModal}
+        onClose={() => {
+          setShowBasicSignupModal(false);
+          setSellerIntent(false);
+        }}
+        onSwitchToLogin={() => {
+          setShowBasicSignupModal(false);
+          setSellerIntent(false);
+          setShowSigninModal(true);
+        }}
+        sellerIntent={sellerIntent}
+        onSellerSignupComplete={() => {
+          setSellerIntent(false);
+          setTimeout(() => {
+            setShowSellerModal(true);
+          }, 1000);
+        }}
+      />
 
       {/* Unified Signup Modal */}
       <UnifiedSignupModal
@@ -2030,9 +2056,9 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
               // Authenticated user: Open seller onboarding
               setShowSellerModal(true);
             } else {
-              // Guest user: Open signup modal with seller intent
+              // Guest user: Open basic signup modal with seller intent
               setSellerIntent(true);
-              setShowSignupModal(true);
+              setShowBasicSignupModal(true);
             }
           }}
         >
