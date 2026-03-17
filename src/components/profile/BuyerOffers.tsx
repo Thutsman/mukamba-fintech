@@ -18,7 +18,7 @@ import {
   Filter,
   Search,
   X,
-  Trash2
+  Trash2,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
     try {
       const { data, error } = await supabase
         .from('offer_payments')
-        .select('offer_id, status, created_at')
+        .select('id, offer_id, status, created_at')
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -74,11 +74,15 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       }
 
       const byOffer: Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'> = {};
-      (data || []).forEach((row: { offer_id: string; status: string }) => {
+
+      // We iterate newest->oldest (because of order desc). For "latest status", pick first seen.
+      // For "first completed payment", track the *oldest* completed payment id; we’ll compute it in a second pass.
+      (data || []).forEach((row: { id: string; offer_id: string; status: string }) => {
         if (byOffer[row.offer_id] === undefined && ['pending', 'completed', 'failed', 'cancelled'].includes(row.status)) {
           byOffer[row.offer_id] = row.status as 'pending' | 'completed' | 'failed' | 'cancelled';
         }
       });
+
       setPaymentStatusByOfferId(byOffer);
     } catch (e) {
       console.warn('Error loading payment status:', e);
@@ -563,7 +567,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                             onClick={() => onMakePayment?.(offer)}
                           >
                             <DollarSign className="w-4 h-4 mr-2" />
-                            Make Payment
+                            Upload Proof of Payment
                           </Button>
                         );
                       })()}

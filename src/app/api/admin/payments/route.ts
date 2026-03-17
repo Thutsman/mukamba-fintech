@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { getFirstPaymentIdByOffer } from '@/lib/payment-first-payment';
 
 /**
  * GET /api/admin/payments
@@ -56,6 +57,17 @@ export async function GET(request: NextRequest) {
     // Collect unique IDs for joins
     const offerIds = [...new Set(payments.map((p: any) => p.offer_id).filter(Boolean))];
     const buyerIds = [...new Set(payments.map((p: any) => p.buyer_id).filter(Boolean))];
+
+    // Determine first payment per offer (server-side, definitive)
+    let firstPaymentIdByOffer: Record<string, string> = {};
+    if (offerIds.length > 0) {
+      const { data: offerPaymentsForOffers } = await supabase
+        .from('offer_payments')
+        .select('id, offer_id, created_at')
+        .in('offer_id', offerIds)
+        .order('created_at', { ascending: true });
+      firstPaymentIdByOffer = getFirstPaymentIdByOffer((offerPaymentsForOffers || []) as any);
+    }
 
     // Fetch related offers with property info
     let offers: any[] = [];
@@ -132,6 +144,11 @@ export async function GET(request: NextRequest) {
 
       return {
         ...payment,
+        is_first_payment: Boolean(
+          payment.offer_id &&
+            payment.id &&
+            firstPaymentIdByOffer[String(payment.offer_id)] === String(payment.id)
+        ),
         offer: offer ? {
           id: offer.id,
           offer_reference: offer.offer_reference,

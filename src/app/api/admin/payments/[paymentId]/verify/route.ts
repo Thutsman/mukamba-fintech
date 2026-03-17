@@ -77,6 +77,22 @@ export async function PATCH(
       );
     }
 
+    // Gate verification on receipt upload (required for all payments)
+    const { data: receiptDoc } = await supabase
+      .from('payment_documents')
+      .select('id')
+      .eq('payment_id', paymentId)
+      .eq('document_type', 'receipt')
+      .limit(1)
+      .maybeSingle();
+
+    if (!receiptDoc?.id) {
+      return NextResponse.json(
+        { error: 'Upload the receipt before verifying this payment.' },
+        { status: 400 }
+      );
+    }
+
     // Build updated gateway_response with admin verification metadata
     const existingGateway = payment.gateway_response || {};
     const updatedGateway = {

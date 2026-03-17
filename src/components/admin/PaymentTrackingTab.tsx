@@ -47,6 +47,7 @@ interface EnrichedPayment {
   gateway_response: any;
   created_at: string;
   updated_at: string;
+  is_first_payment?: boolean;
   offer: {
     id: string;
     offer_reference: string;
@@ -162,6 +163,14 @@ export const PaymentTrackingTab: React.FC = () => {
   // Download proof: separate loading so only Download button shows spinner
   const [downloadProofLoadingUrl, setDownloadProofLoadingUrl] = React.useState<string | null>(null);
 
+  // Post-payment docs (receipt + agreement) upload state
+  const [docStatusByPaymentId, setDocStatusByPaymentId] = React.useState<
+    Record<string, { receipt?: string | null; agreement?: string | null }>
+  >({});
+  const [docUploadByPaymentId, setDocUploadByPaymentId] = React.useState<
+    Record<string, { isUploading: boolean; progress: number; type?: 'receipt' | 'agreement_of_sale' }>
+  >({});
+
   // ─── Data fetching ──────────────────────────────────────────────────────
 
   const fetchPayments = React.useCallback(async () => {
@@ -178,6 +187,31 @@ export const PaymentTrackingTab: React.FC = () => {
 
       if (res.ok && json.data) {
         setPayments(json.data);
+
+        // Best-effort: fetch doc status for payments in this page (at least receipts for gating)
+        try {
+          const ids = (json.data as EnrichedPayment[])
+            .filter((p) => p?.id)
+            .map((p) => p.id);
+          if (ids.length > 0) {
+            const statusPairs = await Promise.all(
+              ids.map(async (pid) => {
+                const r = await fetch(`/api/payments/documents?payment_id=${encodeURIComponent(pid)}`);
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok || !Array.isArray(j.data)) return [pid, { receipt: null, agreement: null }] as const;
+                const receipt = j.data.find((d: any) => d.document_type === 'receipt')?.id ?? null;
+                const agreement = j.data.find((d: any) => d.document_type === 'agreement_of_sale')?.id ?? null;
+                return [pid, { receipt, agreement }] as const;
+              })
+            );
+            setDocStatusByPaymentId(Object.fromEntries(statusPairs));
+          } else {
+            setDocStatusByPaymentId({});
+          }
+        } catch (e) {
+          console.error('Failed to fetch post-payment document status:', e);
+          setDocStatusByPaymentId({});
+        }
       } else {
         console.error('Failed to fetch payments:', json.error);
         toast.error('Failed to load payments');
@@ -189,6 +223,101 @@ export const PaymentTrackingTab: React.FC = () => {
       setIsLoading(false);
     }
   }, [statusFilter, search, startDate, endDate]);
+
+  const uploadPostPaymentDoc = async (payment: EnrichedPayment, docType: 'receipt' | 'agreement_of_sale') => {
+    try {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.pdf,.jpg,.jpeg,.png';
+
+      fileInput.onchange = async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        const toastId = toast.loading(
+          docType === 'receipt' ? 'Uploading receipt…' : 'Uploading signed agreement…'
+        );
+
+        setDocUploadByPaymentId((prev) => ({
+          ...prev,
+          [payment.id]: { isUploading: true, progress: 0, type: docType },
+        }));
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const json: any = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open(
+              'POST',
+              `/api/admin/payments/${encodeURIComponent(payment.id)}/documents/upload?document_type=${encodeURIComponent(
+                docType
+              )}&admin_id=${encodeURIComponent('admin')}`
+            );
+            xhr.responseType = 'json';
+
+            xhr.upload.onprogress = (evt) => {
+              if (!evt.lengthComputable) return;
+              const pct = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
+              setDocUploadByPaymentId((prev) => ({
+                ...prev,
+                [payment.id]: { isUploading: true, progress: pct, type: docType },
+              }));
+            };
+
+            xhr.onload = () => {
+              const resJson =
+                xhr.response ??
+                (() => {
+                  try {
+                    return JSON.parse(xhr.responseText);
+                  } catch {
+                    return {};
+                  }
+                })();
+              if (xhr.status >= 200 && xhr.status < 300) resolve(resJson);
+              else reject(resJson);
+            };
+
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send(formData);
+          });
+
+          if (json?.success && json?.data?.id) {
+            setDocStatusByPaymentId((prev) => {
+              const existing = prev[payment.id] || { receipt: null, agreement: null };
+              return {
+                ...prev,
+                [payment.id]: {
+                  receipt: docType === 'receipt' ? json.data.id : existing.receipt ?? null,
+                  agreement: docType === 'agreement_of_sale' ? json.data.id : existing.agreement ?? null,
+                },
+              };
+            });
+            toast.success(docType === 'receipt' ? 'Receipt uploaded.' : 'Signed agreement uploaded.', {
+              id: toastId,
+            });
+          } else {
+            toast.error(json?.error || 'Upload failed', { id: toastId });
+          }
+        } catch (e: any) {
+          console.error('Post-payment doc upload failed:', e);
+          toast.error(e?.error || e?.message || 'Upload failed', { id: toastId });
+        } finally {
+          setDocUploadByPaymentId((prev) => ({
+            ...prev,
+            [payment.id]: { isUploading: false, progress: 0, type: docType },
+          }));
+        }
+      };
+
+      fileInput.click();
+    } catch (e) {
+      console.error('Failed to start upload:', e);
+      toast.error('Failed to start upload');
+    }
+  };
 
   const fetchStats = React.useCallback(async () => {
     try {
@@ -224,6 +353,10 @@ export const PaymentTrackingTab: React.FC = () => {
 
   const handleVerify = async (paymentId: string) => {
     try {
+      if (!docStatusByPaymentId[paymentId]?.receipt) {
+        toast.error('Upload the receipt first to enable verification.');
+        return;
+      }
       setActionLoadingId(paymentId);
       const res = await fetch(`/api/admin/payments/${paymentId}/verify`, {
         method: 'PATCH',
@@ -749,9 +882,24 @@ export const PaymentTrackingTab: React.FC = () => {
                                   <>
                                     <Button
                                       size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => uploadPostPaymentDoc(p, 'receipt')}
+                                      disabled={docUploadByPaymentId[p.id]?.isUploading}
+                                      title="Upload receipt"
+                                    >
+                                      {docStatusByPaymentId[p.id]?.receipt ? (
+                                        <CheckCircle className="w-3 h-3 mr-1 text-emerald-600" />
+                                      ) : (
+                                        <ArrowDownToLine className="w-3 h-3 mr-1" />
+                                      )}
+                                      Receipt
+                                    </Button>
+                                    <Button
+                                      size="sm"
                                       className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                                       onClick={() => handleVerify(p.id)}
-                                      disabled={isActionLoading}
+                                      disabled={isActionLoading || !docStatusByPaymentId[p.id]?.receipt}
                                       title="Verify payment"
                                     >
                                       {isActionLoading ? (
@@ -763,6 +911,11 @@ export const PaymentTrackingTab: React.FC = () => {
                                         </>
                                       )}
                                     </Button>
+                                    {!docStatusByPaymentId[p.id]?.receipt ? (
+                                      <span className="text-[11px] text-amber-700">
+                                        Upload receipt first.
+                                      </span>
+                                    ) : null}
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -776,7 +929,58 @@ export const PaymentTrackingTab: React.FC = () => {
                                     </Button>
                                   </>
                                 )}
+
+                                {/* Post-payment docs: agreement only after verify + first payment */}
+                                {p.status === 'completed' && p.is_first_payment && (
+                                  <>
+                                    {/* Receipt may already exist; allow re-upload if needed */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => uploadPostPaymentDoc(p, 'receipt')}
+                                      disabled={docUploadByPaymentId[p.id]?.isUploading}
+                                      title="Upload receipt"
+                                    >
+                                      {docStatusByPaymentId[p.id]?.receipt ? (
+                                        <CheckCircle className="w-3 h-3 mr-1 text-emerald-600" />
+                                      ) : (
+                                        <ArrowDownToLine className="w-3 h-3 mr-1" />
+                                      )}
+                                      Receipt
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => uploadPostPaymentDoc(p, 'agreement_of_sale')}
+                                      disabled={docUploadByPaymentId[p.id]?.isUploading}
+                                      title="Upload signed agreement of sale"
+                                    >
+                                      {docStatusByPaymentId[p.id]?.agreement ? (
+                                        <CheckCircle className="w-3 h-3 mr-1 text-emerald-600" />
+                                      ) : (
+                                        <ArrowDownToLine className="w-3 h-3 mr-1" />
+                                      )}
+                                      Agreement
+                                    </Button>
+                                  </>
+                                )}
                               </div>
+                              {docUploadByPaymentId[p.id]?.isUploading ? (
+                                <div className="mt-2">
+                                  <div className="h-2 w-full rounded bg-slate-100 overflow-hidden">
+                                    <div
+                                      className="h-2 bg-blue-600 transition-[width] duration-150"
+                                      style={{ width: `${docUploadByPaymentId[p.id]?.progress ?? 0}%` }}
+                                    />
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 mt-1">
+                                    Uploading {docUploadByPaymentId[p.id]?.type === 'receipt' ? 'receipt' : 'agreement'}…{' '}
+                                    {docUploadByPaymentId[p.id]?.progress ?? 0}%
+                                  </div>
+                                </div>
+                              ) : null}
                             </TableCell>
                           </TableRow>
                         );

@@ -15,7 +15,11 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
-  Building
+  Building,
+  Eye,
+  Download,
+  FileText,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +57,7 @@ interface PortfolioProperty {
   paymentMethod: 'cash' | 'installments';
   offerStatus: string;
   totalPaid: number;
+  firstVerifiedPaymentId: string;
   payments: {
     id: string;
     amount: number;
@@ -107,6 +112,15 @@ const getPaymentMethodLabel = (method: string) => {
   }
 };
 
+type PaymentDocType = 'receipt' | 'agreement_of_sale';
+type PaymentDocumentRow = {
+  id: string;
+  payment_id: string;
+  offer_id: string;
+  document_type: PaymentDocType;
+  uploaded_at?: string | null;
+};
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 
 export const BuyerPortfolio: React.FC<BuyerPortfolioProps> = ({
@@ -117,6 +131,70 @@ export const BuyerPortfolio: React.FC<BuyerPortfolioProps> = ({
   const [properties, setProperties] = useState<PortfolioProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
+  const [docsByPaymentId, setDocsByPaymentId] = useState<
+    Record<string, { receipt?: PaymentDocumentRow | null; agreement?: PaymentDocumentRow | null }>
+  >({});
+  const [docsLoadingByPaymentId, setDocsLoadingByPaymentId] = useState<Record<string, boolean>>({});
+
+  const fetchDocsForPayment = useCallback(
+    async (paymentId: string) => {
+      if (!paymentId) return;
+      setDocsLoadingByPaymentId((prev) => ({ ...prev, [paymentId]: true }));
+      try {
+        const res = await fetch(
+          `/api/payments/documents?payment_id=${encodeURIComponent(paymentId)}&buyer_id=${encodeURIComponent(user.id)}`
+        );
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !Array.isArray(json.data)) return;
+        const receipt = (json.data as any[]).find((d) => d.document_type === 'receipt') || null;
+        const agreement = (json.data as any[]).find((d) => d.document_type === 'agreement_of_sale') || null;
+        setDocsByPaymentId((prev) => ({ ...prev, [paymentId]: { receipt, agreement } }));
+      } finally {
+        setDocsLoadingByPaymentId((prev) => ({ ...prev, [paymentId]: false }));
+      }
+    },
+    [user.id]
+  );
+
+  const openDoc = useCallback(
+    async (docId: string) => {
+      const res = await fetch(
+        `/api/payments/documents/view?doc_id=${encodeURIComponent(docId)}&buyer_id=${encodeURIComponent(user.id)}`
+      );
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.url) {
+        window.open(json.url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      console.warn('Failed to open document:', json.error);
+    },
+    [user.id]
+  );
+
+  const downloadDoc = useCallback(
+    async (docId: string) => {
+      const url = `/api/payments/documents/download?doc_id=${encodeURIComponent(docId)}&buyer_id=${encodeURIComponent(user.id)}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        console.warn('Failed to download document:', json.error);
+        return;
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition');
+      const match = disposition?.match(/filename=\"?([^\";]+)\"?/);
+      const filename = match ? match[1].trim() : 'document';
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    },
+    [user.id]
+  );
 
   const loadPortfolio = useCallback(async () => {
     if (!user.id || !supabase) {
@@ -182,6 +260,14 @@ export const BuyerPortfolio: React.FC<BuyerPortfolioProps> = ({
           const hasVerifiedPayment = offerPayments.some((p: OfferPayment) => p.status === 'completed');
           if (!hasVerifiedPayment) return null;
 
+          // Determine oldest verified payment ID for this offer (used for receipt/agreement)
+          const verifiedAsc = offerPayments
+            .filter((p: OfferPayment) => p.status === 'completed')
+            .slice()
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          const firstVerifiedPaymentId = verifiedAsc[0]?.id;
+          if (!firstVerifiedPaymentId) return null;
+
           const totalPaid = offerPayments
             .filter((p: OfferPayment) => p.status === 'completed')
             .reduce((sum: number, p: OfferPayment) => sum + (p.amount || 0), 0);
@@ -208,18 +294,26 @@ export const BuyerPortfolio: React.FC<BuyerPortfolioProps> = ({
             paymentMethod: offer.payment_method,
             offerStatus: offer.status,
             totalPaid,
+            firstVerifiedPaymentId,
             payments: paymentList,
           };
         })
         .filter((item): item is PortfolioProperty => item !== null);
 
       setProperties(portfolioItems);
+
+      // Best-effort prefetch docs for each portfolio item
+      try {
+        await Promise.all(
+          portfolioItems.map((p) => fetchDocsForPayment(p.firstVerifiedPaymentId))
+        );
+      } catch (_) {}
     } catch (err) {
       console.error('Error loading portfolio:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [user.id]);
+  }, [user.id, fetchDocsForPayment]);
 
   useEffect(() => {
     loadPortfolio();
@@ -431,6 +525,100 @@ export const BuyerPortfolio: React.FC<BuyerPortfolioProps> = ({
                     {/* Transaction History (expanded) */}
                     {isExpanded && prop.payments.length > 0 && (
                       <div className="border-t border-slate-100 bg-slate-50/50 p-4 sm:p-5">
+                        {/* Documents */}
+                        <div className="mb-4 rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-slate-600" />
+                              Documents
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => fetchDocsForPayment(prop.firstVerifiedPaymentId)}
+                              disabled={!!docsLoadingByPaymentId[prop.firstVerifiedPaymentId]}
+                            >
+                              <RefreshCw className={`w-3 h-3 mr-1 ${docsLoadingByPaymentId[prop.firstVerifiedPaymentId] ? 'animate-spin' : ''}`} />
+                              Refresh
+                            </Button>
+                          </div>
+
+                          <div className="mt-2 space-y-2">
+                            {(() => {
+                              const docs = docsByPaymentId[prop.firstVerifiedPaymentId];
+                              const receiptId = docs?.receipt?.id;
+                              const agreementId = docs?.agreement?.id;
+
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between gap-2 text-sm">
+                                    <span className="text-slate-700">Receipt</span>
+                                    {receiptId ? (
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2 text-xs"
+                                          onClick={() => openDoc(receiptId)}
+                                        >
+                                          <Eye className="w-3 h-3 mr-1" />
+                                          View
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2 text-xs"
+                                          onClick={() => downloadDoc(receiptId)}
+                                        >
+                                          <Download className="w-3 h-3 mr-1" />
+                                          Download
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-slate-500">Not yet available</span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center justify-between gap-2 text-sm">
+                                    <span className="text-slate-700">Signed Agreement of Sale</span>
+                                    {agreementId ? (
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2 text-xs"
+                                          onClick={() => openDoc(agreementId)}
+                                        >
+                                          <Eye className="w-3 h-3 mr-1" />
+                                          View
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 px-2 text-xs"
+                                          onClick={() => downloadDoc(agreementId)}
+                                        >
+                                          <Download className="w-3 h-3 mr-1" />
+                                          Download
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-slate-500">Not yet available</span>
+                                    )}
+                                  </div>
+
+                                  {!receiptId && !agreementId ? (
+                                    <p className="text-xs text-slate-500 mt-2">
+                                      Your receipt and agreement will appear here once uploaded by the admin.
+                                    </p>
+                                  ) : null}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+
                         <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
                           <CreditCard className="w-4 h-4" />
                           Transaction History

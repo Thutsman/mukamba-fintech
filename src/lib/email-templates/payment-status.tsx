@@ -34,6 +34,9 @@ export const PaymentStatusEmailTemplate: React.FC<PaymentStatusEmailTemplateProp
             Thank you. Your payment has been confirmed by the Mukamba admin team.
           </p>
           <p style={{ marginTop: 0 }}>
+            You can download your <strong>receipt</strong> from your dashboard’s <strong>Portfolio</strong> tab.
+          </p>
+          <p style={{ marginTop: 0 }}>
             Please open your Profile Dashboard and go to the <strong>Portfolio</strong> tab to
             view your portfolio and the <strong>amount paid to date</strong>.
           </p>

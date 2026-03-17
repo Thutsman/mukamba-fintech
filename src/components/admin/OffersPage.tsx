@@ -49,6 +49,12 @@ export const OffersPage: React.FC<OffersPageProps> = ({
   adminUserId
 }) => {
   const [offers, setOffers] = useState<PropertyOffer[]>([]);
+  const [invoiceStatusByOfferId, setInvoiceStatusByOfferId] = useState<
+    Record<string, { hasInvoice: boolean; invoiceNumber?: string | null }>
+  >({});
+  const [invoiceUploadByOfferId, setInvoiceUploadByOfferId] = useState<
+    Record<string, { isUploading: boolean; progress: number }>
+  >({});
   const [stats, setStats] = useState<OfferStats>({
     total: 0,
     pending: 0,
@@ -75,6 +81,40 @@ export const OffersPage: React.FC<OffersPageProps> = ({
       const filters = statusFilter === 'all' ? {} : { status: statusFilter };
       const data = await getPropertyOffers(filters);
       setOffers(data);
+
+      // Fetch invoice status for gating (best-effort)
+      try {
+        const offerIds = (data || [])
+          .map((o) => o.id)
+          .filter((id): id is string => Boolean(id));
+        if (offerIds.length > 0) {
+          const res = await fetch('/api/admin/invoices/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offer_ids: offerIds }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (res.ok && json?.data) {
+            const next: Record<string, { hasInvoice: boolean; invoiceNumber?: string | null }> = {};
+            for (const id of offerIds) {
+              const row = json.data[id];
+              next[id] = {
+                hasInvoice: Boolean(row?.has_invoice),
+                invoiceNumber: row?.invoice_number ?? null,
+              };
+            }
+            setInvoiceStatusByOfferId(next);
+          } else {
+            // If this fails, keep gating conservative (no invoice)
+            setInvoiceStatusByOfferId({});
+          }
+        } else {
+          setInvoiceStatusByOfferId({});
+        }
+      } catch (e) {
+        console.error('Failed to fetch invoice status:', e);
+        setInvoiceStatusByOfferId({});
+      }
     } catch (error) {
       console.error('Error loading offers:', error);
       toast.error('Failed to load offers');
@@ -94,6 +134,11 @@ export const OffersPage: React.FC<OffersPageProps> = ({
 
   const handleApproveOffer = async (offerId: string) => {
     try {
+      const hasInvoice = Boolean(invoiceStatusByOfferId[offerId]?.hasInvoice);
+      if (!hasInvoice) {
+        toast.error('Upload the invoice PDF first to enable approval.');
+        return;
+      }
       const res = await fetch(`/api/admin/offers/${offerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -101,7 +146,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({
       });
       const json = await res.json().catch(() => ({}));
       if (res.ok && json.success) {
-        toast.success('Offer approved successfully. Please upload the invoice PDF.');
+        toast.success('Offer approved successfully.');
         loadOffers();
         loadStats();
         onApproveOffer?.(offerId);
@@ -136,21 +181,82 @@ export const OffersPage: React.FC<OffersPageProps> = ({
         formData.append('invoice_number', invoiceNumber);
 
         try {
-          const res = await fetch('/api/admin/invoices/upload', {
-            method: 'POST',
-            body: formData,
-          });
-          const json = await res.json().catch(() => ({}));
+          setInvoiceUploadByOfferId((prev) => ({
+            ...prev,
+            [offerId]: { isUploading: true, progress: 0 },
+          }));
 
-          if (res.ok && json.success) {
-            toast.success(`Invoice ${json.data.invoice_number} uploaded successfully.`);
+          const toastId = toast.loading('Uploading invoice…');
+
+          // Use XHR to get upload progress events.
+          const json: any = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/admin/invoices/upload');
+            xhr.responseType = 'json';
+
+            xhr.upload.onprogress = (evt) => {
+              if (!evt.lengthComputable) return;
+              const pct = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
+              setInvoiceUploadByOfferId((prev) => ({
+                ...prev,
+                [offerId]: { isUploading: true, progress: pct },
+              }));
+            };
+
+            xhr.onload = () => {
+              const resJson = xhr.response ?? (() => {
+                try {
+                  return JSON.parse(xhr.responseText);
+                } catch {
+                  return {};
+                }
+              })();
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(resJson);
+              } else {
+                reject(resJson);
+              }
+            };
+
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send(formData);
+          });
+
+          if (json?.success) {
+            setInvoiceUploadByOfferId((prev) => ({
+              ...prev,
+              [offerId]: { isUploading: false, progress: 100 },
+            }));
+            toast.success(`Invoice ${json.data?.invoice_number || invoiceNumber} uploaded successfully.`, {
+              id: toastId,
+            });
+            setInvoiceStatusByOfferId((prev) => ({
+              ...prev,
+              [offerId]: { hasInvoice: true, invoiceNumber: json?.data?.invoice_number ?? invoiceNumber },
+            }));
             await loadOffers();
+            // Reset progress UI after a short delay
+            setTimeout(() => {
+              setInvoiceUploadByOfferId((prev) => {
+                const next = { ...prev };
+                delete next[offerId];
+                return next;
+              });
+            }, 1200);
           } else {
-            toast.error(json.error || 'Failed to upload invoice.');
+            toast.error(json?.error || 'Failed to upload invoice.', { id: toastId });
+            setInvoiceUploadByOfferId((prev) => ({
+              ...prev,
+              [offerId]: { isUploading: false, progress: 0 },
+            }));
           }
         } catch (error) {
           console.error('Error uploading invoice:', error);
           toast.error('Failed to upload invoice.');
+          setInvoiceUploadByOfferId((prev) => ({
+            ...prev,
+            [offerId]: { isUploading: false, progress: 0 },
+          }));
         }
       };
 
@@ -452,12 +558,47 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                         <div className="flex flex-col gap-2">
                           <Button
                             size="sm"
+                            variant="outline"
+                            onClick={() => handleUploadInvoice(offer.id)}
+                            disabled={invoiceUploadByOfferId[offer.id]?.isUploading}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            {invoiceUploadByOfferId[offer.id]?.isUploading
+                              ? `Uploading… ${invoiceUploadByOfferId[offer.id]?.progress ?? 0}%`
+                              : 'Upload Invoice PDF'}
+                          </Button>
+                          {invoiceUploadByOfferId[offer.id]?.isUploading ? (
+                            <div className="w-full">
+                              <div className="h-2 w-full rounded bg-gray-100 overflow-hidden">
+                                <div
+                                  className="h-2 bg-blue-600 transition-[width] duration-150"
+                                  style={{
+                                    width: `${invoiceUploadByOfferId[offer.id]?.progress ?? 0}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ) : null}
+                          <Button
+                            size="sm"
                             className="bg-green-600 hover:bg-green-700"
                             onClick={() => handleApproveOffer(offer.id)}
+                            disabled={!invoiceStatusByOfferId[offer.id]?.hasInvoice}
                           >
                             <Check className="w-4 h-4 mr-2" />
                             Approve
                           </Button>
+                          {!invoiceStatusByOfferId[offer.id]?.hasInvoice ? (
+                            <p className="text-xs text-amber-700 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Upload invoice first to enable approval.
+                            </p>
+                          ) : (
+                            <p className="text-xs text-green-700 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Invoice uploaded{invoiceStatusByOfferId[offer.id]?.invoiceNumber ? ` (${invoiceStatusByOfferId[offer.id]?.invoiceNumber})` : ''}.
+                            </p>
+                          )}
                           <Button
                             size="sm"
                             variant="destructive"
@@ -476,14 +617,38 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                       )}
                       {offer.status === 'approved' && (
                         <div className="flex flex-col gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleUploadInvoice(offer.id)}
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Upload Invoice PDF
-                          </Button>
+                          {!invoiceStatusByOfferId[offer.id]?.hasInvoice ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUploadInvoice(offer.id)}
+                              disabled={invoiceUploadByOfferId[offer.id]?.isUploading}
+                            >
+                              <FileText className="w-4 h-4 mr-2" />
+                              {invoiceUploadByOfferId[offer.id]?.isUploading
+                                ? `Uploading… ${invoiceUploadByOfferId[offer.id]?.progress ?? 0}%`
+                                : 'Upload Invoice PDF'}
+                            </Button>
+                          ) : (
+                            <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2">
+                              <p className="text-xs text-green-800 flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Invoice uploaded
+                                {invoiceStatusByOfferId[offer.id]?.invoiceNumber
+                                  ? ` (${invoiceStatusByOfferId[offer.id]?.invoiceNumber})`
+                                  : ''}
+                              </p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2"
+                                onClick={() => window.open(`/api/invoice/view?offer_id=${offer.id}`, '_blank')}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Invoice
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                       <Button

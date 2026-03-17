@@ -26,6 +26,28 @@ export async function PATCH(
 
     const supabase = createServiceClient();
 
+    // Gate approval on invoice upload (server-side enforcement)
+    if (data.status === 'approved') {
+      const { data: invoice } = await supabase
+        .from('invoices')
+        .select('id, pdf_url, metadata')
+        .eq('offer_id', offerId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const metaPath: string | null = (invoice as any)?.metadata?.storage_path || null;
+      const pdfUrl: string | null = (invoice as any)?.pdf_url || null;
+      const hasInvoice = Boolean(metaPath || pdfUrl);
+
+      if (!hasInvoice) {
+        return NextResponse.json(
+          { error: 'Upload an invoice PDF before approving this offer.' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update offer (service role)
     const updatePayload: any = {
       status: data.status,
