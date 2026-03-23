@@ -8,7 +8,9 @@ import {
   XCircle, 
   AlertCircle,
   Eye,
+  FileText,
   DollarSign,
+  Download,
   Calendar,
   Home,
   MessageSquare,
@@ -58,6 +60,66 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   const [successPopup, setSuccessPopup] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
   // Latest payment status per offer (pending = proof submitted, completed = verified, failed/cancelled = rejected)
   const [paymentStatusByOfferId, setPaymentStatusByOfferId] = useState<Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'>>({});
+
+  const [invoiceLoadingByOfferId, setInvoiceLoadingByOfferId] = useState<Record<string, boolean>>({});
+
+  const getInvoiceSignedUrl = async (offerId: string): Promise<string | null> => {
+    const res = await fetch(`/api/invoice/view?offer_id=${encodeURIComponent(offerId)}`);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json?.url) return null;
+    return json.url as string;
+  };
+
+  const openInvoice = async (offerId: string) => {
+    setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: true }));
+    try {
+      const url = await getInvoiceSignedUrl(offerId);
+      if (!url) {
+        alert('Invoice is not available yet.');
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } finally {
+      setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: false }));
+    }
+  };
+
+  const downloadInvoice = async (offer: PropertyOffer) => {
+    const offerId = offer.id;
+    setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: true }));
+    try {
+      const signedUrl = await getInvoiceSignedUrl(offerId);
+      if (!signedUrl) {
+        alert('Invoice is not available yet.');
+        return;
+      }
+
+      // Fetch the file as a blob so the browser triggers a save dialog.
+      let fileRes: Response;
+      try {
+        fileRes = await fetch(signedUrl);
+      } catch (e) {
+        alert('Failed to download invoice.');
+        return;
+      }
+      if (!fileRes.ok) {
+        alert('Failed to download invoice.');
+        return;
+      }
+
+      const blob = await fileRes.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `Invoice-${offer.offer_reference || offer.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } finally {
+      setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: false }));
+    }
+  };
 
   const loadPaymentStatus = React.useCallback(async () => {
     if (!user.id || !supabase) return;
@@ -533,42 +595,67 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                       )}
                       {offer.status === 'approved' && (() => {
                         const paymentStatus = paymentStatusByOfferId[offer.id];
-                        if (paymentStatus === 'completed') {
-                          return (
-                            <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
-                              <CheckCircle className="w-4 h-4 shrink-0" />
-                              <span>Payment verified</span>
-                            </div>
-                          );
-                        }
-                        if (paymentStatus === 'pending') {
-                          return (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
-                                <Clock className="w-4 h-4 shrink-0" />
-                                <span>Proof submitted — awaiting verification</span>
+                        return (
+                          <div className="flex flex-col gap-2">
+                            {paymentStatus === 'completed' && (
+                              <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
+                                <CheckCircle className="w-4 h-4 shrink-0" />
+                                <span>Payment verified</span>
                               </div>
+                            )}
+
+                            {paymentStatus === 'pending' && (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+                                  <Clock className="w-4 h-4 shrink-0" />
+                                  <span>Proof submitted — awaiting verification</span>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full justify-start border-amber-300 text-amber-800 hover:bg-amber-100"
+                                  onClick={() => onMakePayment?.(offer)}
+                                >
+                                  <DollarSign className="w-4 h-4 mr-2" />
+                                  Submit another proof
+                                </Button>
+                              </div>
+                            )}
+
+                            {paymentStatus !== 'completed' && paymentStatus !== 'pending' && (
                               <Button
                                 size="sm"
-                                variant="outline"
-                                className="w-full justify-start border-amber-300 text-amber-800 hover:bg-amber-100"
+                                className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
                                 onClick={() => onMakePayment?.(offer)}
                               >
                                 <DollarSign className="w-4 h-4 mr-2" />
-                                Submit another proof
+                                Upload Proof of Payment
+                              </Button>
+                            )}
+
+                            <div className="flex flex-col gap-2 pt-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full justify-start border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                                onClick={() => openInvoice(offer.id)}
+                                disabled={invoiceLoadingByOfferId[offer.id]}
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                {invoiceLoadingByOfferId[offer.id] ? 'Preparing…' : 'View Invoice'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full justify-start border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                                onClick={() => downloadInvoice(offer)}
+                                disabled={invoiceLoadingByOfferId[offer.id]}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                {invoiceLoadingByOfferId[offer.id] ? 'Preparing…' : 'Download Invoice'}
                               </Button>
                             </div>
-                          );
-                        }
-                        return (
-                          <Button
-                            size="sm"
-                            className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => onMakePayment?.(offer)}
-                          >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            Upload Proof of Payment
-                          </Button>
+                          </div>
                         );
                       })()}
                       {(offer.status === 'rejected' || offer.status === 'expired') && (

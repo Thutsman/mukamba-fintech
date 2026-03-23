@@ -350,18 +350,18 @@ export default function TermsPage() {
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
                 {[
-                  'Property Listing Management',
-                  'Property Investment',
-                  'Administration Oversight',
-                  'Concierge Services',
-                  'Secure Transfers'
-                ].map((service, index) => (
-                  <li key={index}>
-                    <a 
-                      href="#" 
+                  { label: 'Property Listing Management', href: '/property-listing-management' },
+                  { label: 'Property Investment', href: '/property-investment' },
+                  { label: 'Administration Oversight', href: '/administration-oversight' },
+                  { label: 'Concierge Services', href: '/concierge-services' },
+                  { label: 'Secure Transfers', href: '/secure-transfers' },
+                ].map((service) => (
+                  <li key={service.label}>
+                    <a
+                      href={service.href}
                       className="text-white/80 hover:text-white transition-colors text-sm"
                     >
-                      {service}
+                      {service.label}
                     </a>
                   </li>
                 ))}

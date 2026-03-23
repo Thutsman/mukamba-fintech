@@ -10,10 +10,7 @@ import {
   Tag,
   UserPlus,
   LogIn,
-  ArrowRight,
   CheckCircle,
-  Shield,
-  Search,
   Mail,
   Phone,
 } from 'lucide-react';
@@ -22,15 +19,15 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { navigateWithScrollToTop } from '@/utils/navigation';
-import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
 import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 
 const trackEvent = (eventName: string, parameters: Record<string, any>) => {
   console.log('Analytics Event:', eventName, parameters);
 };
 
-export default function PropertyInvestmentPage() {
+export default function SecureTransfersComingSoonPage() {
   const router = useRouter();
   const [showSigninModal, setShowSigninModal] = React.useState(false);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
@@ -45,85 +42,13 @@ export default function PropertyInvestmentPage() {
         }
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMobileMenuOpen]);
-
-  const investmentPathways = [
-    {
-      step: '1',
-      title: 'Buy Outright (Cash)',
-      description:
-        'Complete property ownership with verified documents and immediate possession after transfer.',
-    },
-    {
-      step: '2',
-      title: 'Buy on Instalments',
-      description:
-        'Agreed payment schedule structured in the sale agreement with full visibility in your dashboard.',
-    },
-    {
-      step: '3',
-      title: 'Pipeline Access',
-      description:
-        'Get matched to verified stock that fits your budget and investment timeline.',
-    },
-  ] as const;
-
-  const whatYouGet = [
-    'Access to verified listings with transparent transaction steps.',
-    'Ability to submit offers with custom payment terms.',
-    'Real‑time payment tracking visibility in your dashboard.',
-    'Dedicated admin support for process coordination.',
-    'Priority support for diaspora and remote investors.',
-  ] as const;
-
-  const reduceRisk = [
-    'Identity verification required to bid and submit offers.',
-    'Property verification to reduce fraud risk.',
-    'Escrow handling with controlled fund releases.',
-    'Formal trust account process for all payments.',
-    'Complete audit trail and documentation.',
-  ] as const;
-
-  const simpleSteps = [
-    { step: '1', title: 'Create Account', description: 'Register and set up your investor profile.' },
-    { step: '2', title: 'Verify ID', description: 'Complete KYC verification (local or diaspora documents accepted).' },
-    { step: '3', title: 'Choose Property', description: 'Browse and select from verified listings.' },
-    { step: '4', title: 'Make Offer', description: 'Submit offer with your preferred payment terms.' },
-    { step: '5', title: 'Pay', description: 'Transfer funds via local trust account or diaspora gateway.' },
-    { step: '6', title: 'Track', description: 'Monitor progress in your Mukamba Gateway dashboard.' },
-  ] as const;
-
-  const faqs = [
-    {
-      question: 'Can I invest from outside Zimbabwe?',
-      answer:
-        'Yes. Our KYC process accepts diaspora documentation. You can invest from anywhere with international payment options available.',
-    },
-    {
-      question: 'How do instalments work?',
-      answer:
-        'Payment terms are defined in the sale agreement and visible in your dashboard. Our team provides support if any issues arise.',
-    },
-    {
-      question: 'What if I need to adjust my payment schedule?',
-      answer:
-        'Contact your investment team. We can discuss options within the framework of your sale agreement.',
-    },
-    {
-      question: 'Is my investment protected?',
-      answer:
-        'Yes. Funds are held in escrow with controlled releases per written instructions, protecting both buyer and seller.',
-    },
-  ] as const;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header – same structure as other marketing pages */}
+      {/* Header */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -229,7 +154,6 @@ export default function PropertyInvestmentPage() {
           </div>
         </div>
 
-        {/* Mobile menu dropdown */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
@@ -324,180 +248,40 @@ export default function PropertyInvestmentPage() {
       <section className="bg-[#7f1518] py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-            Property Investment
+            Secure Transfers
           </h1>
           <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-            Built for buyers who want proof, not promises. Invest with verification, transparent
-            steps, and secure payment handling.
+            Coming soon. A streamlined, escrow-based transfer workflow with transparent milestones.
           </p>
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
-        {/* Investment Pathways */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Investment Pathways
-            </h2>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <div className="mx-auto w-14 h-14 rounded-full bg-[#7f1518] flex items-center justify-center mb-5">
+            <CheckCircle className="w-7 h-7 text-white" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {investmentPathways.map((pathway) => (
-              <div
-                key={pathway.step}
-                className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 text-center"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#7f1518] text-white flex items-center justify-center font-semibold mx-auto mb-4">
-                  {pathway.step}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {pathway.title}
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {pathway.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* What You Get – grey hug */}
-        <section className="bg-[#F9FAFB] px-4 sm:px-8 py-12 rounded-3xl">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              What You Get
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            {whatYouGet.map((item) => (
-              <div
-                key={item}
-                className="bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex items-start gap-3"
-              >
-                <CheckCircle className="w-5 h-5 text-[#7f1518] mt-0.5" />
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{item}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* How We Reduce Risk – separated white card section */}
-        <section>
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 sm:px-8 py-8 mt-4 sm:mt-6">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                  How We Reduce Risk
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {reduceRisk.map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3"
-                  >
-                    <Shield className="w-5 h-5 text-[#7f1518] mt-0.5" />
-                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                      {item}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Simple Steps to Invest – grey hug */}
-        <section className="bg-[#F9FAFB] px-4 sm:px-8 py-12 rounded-3xl">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Simple Steps to Invest
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {simpleSteps.map((step) => (
-              <div
-                key={step.step}
-                className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col gap-2"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#7f1518] text-white flex items-center justify-center text-sm font-semibold mb-2">
-                  {step.step}
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section>
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Frequently Asked Questions
-            </h2>
-          </div>
-          <div className="space-y-4 max-w-4xl mx-auto">
-            {faqs.map((faq) => (
-              <div
-                key={faq.question}
-                className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm"
-              >
-                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">
-                  {faq.question}
-                </h3>
-                <p className="text-sm text-gray-700 leading-relaxed">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Ready to Start Investing CTA */}
-        <section className="bg-[#FDF5F5] rounded-2xl px-6 sm:px-10 py-10 sm:py-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-            Ready to Start Investing?
-          </h2>
-          <p className="text-sm sm:text-base text-gray-700 mb-8 max-w-2xl mx-auto">
-            Get matched with properties that fit your investment goals.
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">Coming Soon</h2>
+          <p className="text-gray-700 mb-8">
+            Subscribe to launch updates or contact our team to learn how secure transfers will work for your transaction.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-4 text-lg font-semibold"
-              onClick={() => {
-                navigateWithScrollToTop(router, '/listings');
-                trackEvent('investment_browse_properties_clicked', {
-                  source: 'property_investment_page',
-                  event_category: 'navigation',
-                });
-              }}
-            >
-              Browse Properties
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 text-lg font-semibold"
-              onClick={() => {
-                trackEvent('investment_speak_team_clicked', {
-                  source: 'property_investment_page',
-                  event_category: 'engagement',
-                });
-                // Match WhatsApp contact behaviour
-                window.open('https://wa.me/263787075706', '_blank');
-              }}
-            >
-              Speak to Investment Team
-            </Button>
-          </div>
-        </section>
+          <Button
+            size="lg"
+            className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-4 text-lg font-semibold"
+            onClick={() => {
+              trackEvent('coming_soon_whatsapp_clicked', {
+                source: 'secure_transfers_page',
+                event_category: 'engagement',
+              });
+              window.open('https://wa.me/263787075706', '_blank');
+            }}
+          >
+            Message on WhatsApp
+          </Button>
+        </div>
       </main>
 
-      {/* Footer – same as PropertyDashboard / marketing pages */}
+      {/* Footer */}
       <footer className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -519,8 +303,7 @@ export default function PropertyInvestmentPage() {
                 />
               </div>
               <p className="text-white/90 text-sm leading-relaxed mb-6">
-                Transforming property ownership in Southern Africa through innovative flexible
-                installment plans.
+                Transforming property ownership in Southern Africa through innovative flexible installment plans.
               </p>
               <div className="flex space-x-4">
                 <a
@@ -533,13 +316,13 @@ export default function PropertyInvestmentPage() {
                   <span className="text-xs font-bold">f</span>
                 </a>
                 <a
-                  href="https://www.linkedin.com/company/mukamba-gateway/about/?viewAsMember=true"
+                  href="https://wa.me/263787075706"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 bg.white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer"
-                  aria-label="Follow us on LinkedIn"
+                  aria-label="Message us on WhatsApp"
+                  className="inline-flex items-center justify-center rounded-full p-1.5 transition-colors group"
                 >
-                  <span className="text-xs font-bold">in</span>
+                  <WhatsAppIcon className="w-4 h-4 text-green-400 group-hover:text-green-300" />
                 </a>
               </div>
             </motion.div>
@@ -560,10 +343,7 @@ export default function PropertyInvestmentPage() {
                   { name: 'How to Sell', href: '/how-to-sell' },
                 ].map((link) => (
                   <li key={link.name}>
-                    <a
-                      href={link.href}
-                      className="text-white/80 hover:text-white transition-colors text-sm"
-                    >
+                    <a href={link.href} className="text-white/80 hover:text-white transition-colors text-sm">
                       {link.name}
                     </a>
                   </li>
@@ -580,23 +360,14 @@ export default function PropertyInvestmentPage() {
               <h3 className="text-lg font-semibold mb-4">Our Services</h3>
               <ul className="space-y-2">
                 {[
-                  {
-                    label: 'Property Listing Management',
-                    href: '/property-listing-management',
-                  },
-                  {
-                    label: 'Property Investment',
-                    href: '/property-investment',
-                  },
+                  { label: 'Property Listing Management', href: '/property-listing-management' },
+                  { label: 'Property Investment', href: '/property-investment' },
                   { label: 'Administration Oversight', href: '/administration-oversight' },
                   { label: 'Concierge Services', href: '/concierge-services' },
                   { label: 'Secure Transfers', href: '/secure-transfers' },
                 ].map((service) => (
                   <li key={service.label}>
-                    <a
-                      href={service.href}
-                      className="text-white/80 hover:text-white transition-colors text-sm"
-                    >
+                    <a href={service.href} className="text-white/80 hover:text-white transition-colors text-sm">
                       {service.label}
                     </a>
                   </li>
@@ -614,10 +385,7 @@ export default function PropertyInvestmentPage() {
               <div className="space-y-3">
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-2 text-white/80" />
-                  <a
-                    href="mailto:hello@mukambagateway.com"
-                    className="text-white/80 hover:text-white transition-colors text-sm"
-                  >
+                  <a href="mailto:hello@mukambagateway.com" className="text-white/80 hover:text-white transition-colors text-sm">
                     hello@mukambagateway.com
                   </a>
                 </div>
@@ -653,34 +421,23 @@ export default function PropertyInvestmentPage() {
           >
             <div className="flex flex-col sm:flex-row justify-between items-center">
               <div className="flex flex-wrap gap-4 mb-4 sm:mb-0">
-                <a
-                  href="/terms"
-                  className="text-white/60 hover:text-white transition-colors text-sm"
-                >
+                <a href="/terms" className="text-white/60 hover:text-white transition-colors text-sm">
                   Terms &amp; Conditions
                 </a>
-                <a
-                  href="/privacy"
-                  className="text-white/60 hover:text-white transition-colors text-sm"
-                >
+                <a href="/privacy" className="text-white/60 hover:text-white transition-colors text-sm">
                   Privacy Policy
                 </a>
-                <a
-                  href="#"
-                  className="text-white/60 hover:text-white transition-colors text-sm"
-                >
+                <a href="#" className="text-white/60 hover:text-white transition-colors text-sm">
                   Insurance
                 </a>
               </div>
-              <p className="text-white/60 text-sm">
-                © 2025 Mukamba Gateway. All rights reserved.
-              </p>
+              <p className="text-white/60 text-sm">© 2025 Mukamba Gateway. All rights reserved.</p>
             </div>
           </motion.div>
         </div>
       </footer>
 
-      {/* Auth Modals */}
+      {/* Modals */}
       <BasicSigninModal
         isOpen={showSigninModal}
         onClose={() => setShowSigninModal(false)}
@@ -689,7 +446,6 @@ export default function PropertyInvestmentPage() {
           setShowSignupModal(true);
         }}
       />
-
       <BasicSignupModal
         isOpen={showSignupModal}
         onClose={() => setShowSignupModal(false)}

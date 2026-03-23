@@ -675,9 +675,9 @@ export default function HowToSellPage() {
                     label: 'Property Investment',
                     href: '/property-investment',
                   },
-                  { label: 'Administration Oversight', href: '#' },
-                  { label: 'Concierge Services', href: '#' },
-                  { label: 'Secure Transfers', href: '#' }
+                  { label: 'Administration Oversight', href: '/administration-oversight' },
+                  { label: 'Concierge Services', href: '/concierge-services' },
+                  { label: 'Secure Transfers', href: '/secure-transfers' }
                 ].map((service) => (
                   <li key={service.label}>
                     <a href={service.href} className="text-white/80 hover:text-white transition-colors text-sm">

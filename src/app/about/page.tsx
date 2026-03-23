@@ -539,9 +539,9 @@ export default function AboutPage() {
                     href: '/property-listing-management',
                   },
                   { label: 'Property Investment', href: '/property-investment' },
-                  { label: 'Administration Oversight', href: '#' },
-                  { label: 'Concierge Services', href: '#' },
-                  { label: 'Secure Transfers', href: '#' },
+                  { label: 'Administration Oversight', href: '/administration-oversight' },
+                  { label: 'Concierge Services', href: '/concierge-services' },
+                  { label: 'Secure Transfers', href: '/secure-transfers' },
                 ].map((service) => (
                   <li key={service.label}>
                     <a
