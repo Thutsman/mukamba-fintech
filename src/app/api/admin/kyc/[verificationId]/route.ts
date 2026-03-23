@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase';
 import { sendTransactionalTemplateEmail, getAppUrl } from '@/lib/transactional-email-service';
 import { KycStatusEmailTemplate } from '@/lib/email-templates/kyc-status';
+import { AdminActionRequiredEmailTemplate } from '@/lib/email-templates/admin-action-required';
+import { getAdminNotificationRecipients } from '@/lib/admin-notification-recipients';
 import * as React from 'react';
 
 const patchSchema = z.object({
@@ -82,32 +84,68 @@ export async function PATCH(
     const email = (userProfile as any)?.email as string | undefined;
     const firstName = ((userProfile as any)?.first_name as string | undefined) || 'there';
 
-    if (email) {
-      let appUrl: string | null = null;
-      try {
-        appUrl = getAppUrl();
-      } catch (e) {
-        console.error('NEXT_PUBLIC_APP_URL missing; skipping CTA links:', e);
-      }
+    let appUrl: string | null = null;
+    try {
+      appUrl = getAppUrl();
+    } catch (e) {
+      console.error('NEXT_PUBLIC_APP_URL missing; skipping CTA links:', e);
+    }
 
+    if (email) {
       const cta = appUrl ? { label: 'Open your dashboard', url: `${appUrl}/?section=overview` } : undefined;
 
-      sendTransactionalTemplateEmail({
-        to: [email],
-        subject:
-          data.status === 'approved'
-            ? 'KYC approved'
-            : 'KYC rejected',
-        react: React.createElement(KycStatusEmailTemplate, {
-          firstName,
-          verificationType,
-          status: data.status,
-          rejectionReason: data.status === 'rejected' ? (data.rejection_reason || null) : null,
-          cta,
-        }),
-        tags: [data.status === 'approved' ? 'kyc_approved' : 'kyc_rejected'],
-        metadata: { verification_id: String(verificationId), verification_type: String(verificationType) },
-      }).catch((e) => console.error('Failed to send KYC decision email:', e));
+      try {
+        await sendTransactionalTemplateEmail({
+          to: [email],
+          subject: data.status === 'approved' ? 'KYC approved' : 'KYC rejected',
+          react: React.createElement(KycStatusEmailTemplate, {
+            firstName,
+            verificationType,
+            status: data.status,
+            rejectionReason: data.status === 'rejected' ? (data.rejection_reason || null) : null,
+            cta,
+          }),
+          tags: [data.status === 'approved' ? 'kyc_approved' : 'kyc_rejected'],
+          metadata: { verification_id: String(verificationId), verification_type: String(verificationType) },
+        });
+      } catch (e) {
+        console.error('Failed to send KYC decision email:', e);
+      }
+    }
+
+    // Notify admins on approval (best-effort)
+    if (data.status === 'approved') {
+      try {
+        const fallbackAppUrl = 'https://mukambagateway.com';
+        const adminAppUrl = appUrl || fallbackAppUrl;
+
+        const adminRecipients = await getAdminNotificationRecipients({ supabase });
+        if (adminRecipients.length > 0) {
+          await sendTransactionalTemplateEmail({
+            to: adminRecipients,
+            subject: 'KYC application approved',
+            react: React.createElement(AdminActionRequiredEmailTemplate, {
+              title: 'KYC application approved',
+              message: [
+                `User ID: ${userId}`,
+                `User: ${firstName}`,
+                `Verification type: ${verificationType}`,
+                '',
+                'You have approved this KYC application.',
+              ].join('\n'),
+              cta: { label: 'Open KYC queue', url: `${adminAppUrl}/?tab=kyc` },
+            }),
+            tags: ['admin_kyc_approved'],
+            metadata: {
+              verification_id: String(verificationId),
+              verification_type: String(verificationType),
+              user_id: String(userId),
+            },
+          });
+        }
+      } catch (e) {
+        console.error('Failed to send admin KYC approval email:', e);
+      }
     }
 
     return NextResponse.json({ success: true });
