@@ -33,7 +33,6 @@ import {
   Gift,
   Zap,
   Info,
-  Play,
   ChevronRight,
   Trophy,
   Sparkles,
@@ -1131,7 +1130,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   });
   const [successMessage, setSuccessMessage] = React.useState('');
   const [showSuccess, setShowSuccess] = React.useState(false);
-  const [isFirstVisit, setIsFirstVisit] = React.useState(false);
   const [isIdentityPending, setIsIdentityPending] = React.useState(false);
   const [identityRejectionReason, setIdentityRejectionReason] = React.useState<string | null>(null);
 
@@ -1149,7 +1147,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   React.useEffect(() => {
     const hasVisited = localStorage.getItem('mukamba-dashboard-visited');
     if (!hasVisited) {
-      setIsFirstVisit(true);
       setShowTour(true);
       localStorage.setItem('mukamba-dashboard-visited', 'true');
     }
@@ -2144,26 +2141,6 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </div>
         </div>
           
-          {/* Take Tour Button for returning users */}
-          {!isFirstVisit && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="mt-4"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowTour(true)}
-                className="text-blue-600 border-blue-300 hover:bg-blue-50 h-10 sm:h-9 px-4 sm:px-3"
-                aria-label="Take a tour of the dashboard"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                <span className="text-sm sm:text-xs">Take Tour</span>
-              </Button>
-            </motion.div>
-          )}
         </motion.div>
       )}
 

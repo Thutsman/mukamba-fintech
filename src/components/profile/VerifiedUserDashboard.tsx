@@ -45,7 +45,8 @@ import {
   Folder,
   Menu,
   Square,
-  TreePine
+  TreePine,
+  Play
 } from 'lucide-react';
 import { Camera as CameraIcon, Sun as SunIcon, LogOut as LogOutIcon, Pencil as PencilIcon } from 'lucide-react';
 
@@ -384,6 +385,187 @@ const FinancialSummaryCard: React.FC<{
   </Card>
 );
 
+const VerifiedDashboardTour: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ isOpen, onClose }) => {
+  const [currentStep, setCurrentStep] = React.useState(0);
+  const [targetRect, setTargetRect] = React.useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+    }
+  }, [isOpen]);
+
+  const steps = [
+    {
+      title: 'Welcome to Your Verified Dashboard',
+      content: 'This dashboard gives you quick access to your saved properties, offers, messages, and key buyer actions in one place.',
+      targetId: null,
+      highlightMode: 'full' as const,
+      positionClass: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-24 md:right-6 md:left-auto md:translate-x-0 md:translate-y-0',
+    },
+    {
+      title: 'Use the Sidebar Navigation',
+      content: 'Use the left sidebar to manage your buyer journey. Overview shows your dashboard summary. Portfolio shows properties you have successfully purchased or completed. Saved Properties keeps homes you bookmarked for later. Offers shows all bids/offers you have submitted and their status (pending, approved, rejected). Messages is where you continue chats with the Mukamba team and track replies.',
+      targetId: 'verified-dashboard-sidebar',
+      highlightMode: 'target' as const,
+      positionClass: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-1/2 md:left-[21rem] md:-translate-y-1/2 md:translate-x-0',
+    },
+    {
+      title: 'Monitor Your Activity',
+      content: 'The overview cards and activity feed help you track saved properties, active offers, and recent platform activity at a glance.',
+      targetId: 'verified-dashboard-metrics',
+      highlightMode: 'target' as const,
+      positionClass: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-40 md:right-6 md:left-auto md:translate-x-0 md:translate-y-0',
+    },
+    {
+      title: 'Take Action Quickly',
+      content: 'Use quick actions like Browse Properties, View Offers, and Messages to continue your buying journey faster.',
+      targetId: 'verified-dashboard-quick-actions',
+      highlightMode: 'target' as const,
+      positionClass: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:top-[19rem] md:right-6 md:left-auto md:translate-x-0 md:translate-y-0',
+    },
+  ];
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const step = steps[currentStep];
+    const updateTargetRect = () => {
+      if (step.highlightMode === 'full') {
+        setTargetRect({
+          top: 0,
+          left: 0,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+        return;
+      }
+
+      if (!step.targetId) {
+        setTargetRect(null);
+        return;
+      }
+
+      const element = document.getElementById(step.targetId);
+      if (!element) {
+        setTargetRect(null);
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      setTargetRect({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      });
+    };
+
+    const target = step.targetId ? document.getElementById(step.targetId) : null;
+    if (target && step.highlightMode !== 'full') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    }
+    updateTargetRect();
+
+    window.addEventListener('resize', updateTargetRect);
+    window.addEventListener('scroll', updateTargetRect, true);
+
+    return () => {
+      window.removeEventListener('resize', updateTargetRect);
+      window.removeEventListener('scroll', updateTargetRect, true);
+    };
+  }, [currentStep, isOpen]);
+
+  if (!isOpen) return null;
+
+  const isLastStep = currentStep === steps.length - 1;
+  const current = steps[currentStep];
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      {targetRect && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed z-40 pointer-events-none rounded-xl border-2 border-blue-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
+          style={{
+            top: Math.max(targetRect.top - 8, 0),
+            left: Math.max(targetRect.left - 8, 0),
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
+          }}
+        />
+      )}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className={`fixed z-50 w-full max-w-lg p-4 ${current.positionClass}`}
+      >
+        <Card className="shadow-2xl">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+                {current.title}
+              </CardTitle>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <p className="text-sm text-slate-600">{current.content}</p>
+
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1">
+                {steps.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-2 w-2 rounded-full ${idx === currentStep ? 'bg-blue-600' : 'bg-slate-300'}`}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentStep === 0}
+                  onClick={() => setCurrentStep((step) => Math.max(0, step - 1))}
+                >
+                  Back
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (isLastStep) {
+                      onClose();
+                      return;
+                    }
+                    setCurrentStep((step) => Math.min(steps.length - 1, step + 1));
+                  }}
+                >
+                  {isLastStep ? 'Finish' : 'Next'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </>
+  );
+};
+
 export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   user,
   activeSection: initialActiveSection = 'overview',
@@ -444,6 +626,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   const [showPaymentModal, setShowPaymentModal] = React.useState(false);
   const [selectedOfferForPayment, setSelectedOfferForPayment] = React.useState<any>(null);
   const [offersRefreshTrigger, setOffersRefreshTrigger] = React.useState(0);
+  const [showTour, setShowTour] = React.useState(false);
 
   // Application management states
   const [showApplicationForm, setShowApplicationForm] = React.useState(false);
@@ -1029,7 +1212,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
   return (
     <div className="flex min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Sidebar */}
-      <aside className="hidden md:flex md:flex-col fixed left-6 top-24 z-30 w-72 h-[calc(100vh-8rem)] bg-white border border-slate-200 rounded-2xl shadow-lg overflow-y-auto">
+      <aside
+        id="verified-dashboard-sidebar"
+        className="hidden md:flex md:flex-col fixed left-6 top-24 z-30 w-72 h-[calc(100vh-8rem)] bg-white border border-slate-200 rounded-2xl shadow-lg overflow-y-auto"
+      >
         <div className="p-4 border-b border-slate-200 flex flex-col items-center text-center">
           <Avatar className="h-16 w-16">
                 <AvatarImage src="" alt={user.firstName} />
@@ -1053,7 +1239,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             {key:'saved', label:'Saved Properties', icon:Bookmark, badge: savedPropertiesCount},
             {key:'offers', label:'Offers', icon:FileText, badge: stats.activeApps},
             {key:'messages', label:'Messages', icon:MessageCircle, badge: unreadInboxCount},
-            {key:'settings', label:'Settings', icon:SettingsIcon},
           ].map((item:any)=>{
             const Icon = item.icon;
             return (
@@ -1162,7 +1347,6 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
                     {key: 'saved', label: 'Saved Properties', icon: Bookmark, badge: savedPropertiesCount},
                     {key: 'offers', label: 'Offers', icon: FileText, badge: stats.activeApps},
                     {key: 'messages', label: 'Messages', icon: MessageCircle, badge: unreadInboxCount},
-                    {key: 'settings', label: 'Settings', icon: SettingsIcon},
                   ].map((item: any) => {
                     const Icon = item.icon;
                     return (
@@ -1220,7 +1404,10 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
       {/* Main */}
       <main className="dashboard-main flex-1 md:ml-[19rem] w-full px-4 md:px-6 lg:px-8 pb-10 space-y-10 overflow-x-hidden">
         {/* Header */}
-        <div className="w-full bg-white border border-slate-200 rounded-2xl px-6 md:px-8 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div
+          id="verified-dashboard-header"
+          className="w-full bg-white border border-slate-200 rounded-2xl px-6 md:px-8 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        >
         <div className="flex items-center gap-3">
             {/* Mobile Menu Button */}
             <Button
@@ -1240,6 +1427,15 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
           </div>
         <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1"/>Verified</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              onClick={() => setShowTour(true)}
+            >
+              <Play className="w-4 h-4 mr-1" />
+              Take Tour
+            </Button>
             <Button className="bg-red-800 hover:bg-red-900 text-white" size="sm" onClick={() => navigateWithScrollToTop(router, '/listings')}>Start New Search</Button>
           </div>
         </div>
@@ -1248,7 +1444,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         {activeSection === 'overview' && (
           <>
             {/* Metric Cards - real data only */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-1 md:px-0">
+            <div id="verified-dashboard-metrics" className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-1 md:px-0">
               <Card className="border-slate-200">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -1286,7 +1482,7 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
             </div>
 
         {/* Quick Actions */}
-        <Card>
+        <Card id="verified-dashboard-quick-actions">
           <CardContent className="p-4">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Button 
@@ -2034,6 +2230,11 @@ export const VerifiedUserDashboard: React.FC<VerifiedUserDashboardProps> = ({
         isOpen={showGeneralInquiryModal}
         onClose={() => setShowGeneralInquiryModal(false)}
         user={user}
+      />
+
+      <VerifiedDashboardTour
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
       />
     </div>
   );
