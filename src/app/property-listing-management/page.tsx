@@ -473,22 +473,16 @@ export default function PropertyListingManagementPage() {
               size="lg"
               className="bg-[#7f1518] hover:bg-[#6a1215] text-white px-8 py-4 text-lg font-semibold"
               onClick={() => {
-                trackEvent('floating_sell_button_clicked', {
+                trackEvent('plm_contact_us_clicked', {
                   source: 'property_listing_management_page',
                   event_category: 'conversion',
                   user_status: user ? 'authenticated' : 'guest',
                 });
-
-                if (user) {
-                  setShowSellerModal(true);
-                } else {
-                  setSellerIntent(true);
-                  setShowSignupModal(true);
-                }
+                window.open('https://wa.me/263787075706', '_blank');
               }}
             >
               <ClipboardList className="w-5 h-5 mr-2" />
-              List a Property
+              Contact Us
             </Button>
             <Button
               size="lg"
