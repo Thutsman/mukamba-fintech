@@ -6,6 +6,16 @@ export const runtime = 'nodejs';
 
 const STORAGE_BUCKET = 'property-documents';
 
+const resolveStoragePath = (invoice: any): string | null => {
+  const metaPath = invoice?.metadata?.storage_path as string | undefined;
+  if (metaPath) return metaPath;
+  const pdfUrl = invoice?.pdf_url as string | undefined;
+  if (!pdfUrl) return null;
+  if (!pdfUrl.startsWith('http')) return pdfUrl;
+  const match = pdfUrl.match(/\/object\/(?:public|sign)\/[^/]+\/(.+?)(?:\?|$)/);
+  return match?.[1] ?? null;
+};
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -172,6 +182,65 @@ export async function POST(request: NextRequest) {
     console.error('Invoice upload handler error:', error);
     return NextResponse.json(
       { error: error?.message || 'Internal server error while uploading invoice.' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const offerId = searchParams.get('offer_id');
+
+    if (!offerId) {
+      return NextResponse.json({ error: 'offer_id query param is required' }, { status: 400 });
+    }
+
+    const supabase = createServiceClient();
+
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .select('id, offer_id, pdf_url, metadata, created_at')
+      .eq('offer_id', offerId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (invoiceError) {
+      console.error('Failed to fetch invoice for deletion:', invoiceError);
+      return NextResponse.json({ error: 'Failed to fetch invoice.' }, { status: 500 });
+    }
+
+    if (!invoice) {
+      return NextResponse.json({ error: 'No uploaded invoice found for this offer.' }, { status: 404 });
+    }
+
+    const storagePath = resolveStoragePath(invoice);
+    if (storagePath) {
+      const { error: removeError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([storagePath]);
+      if (removeError) {
+        console.error('Failed removing invoice file from storage:', removeError);
+        // Continue to delete DB row so admin can re-upload cleanly.
+      }
+    }
+
+    const { error: deleteError } = await supabase
+      .from('invoices')
+      .delete()
+      .eq('id', invoice.id);
+
+    if (deleteError) {
+      console.error('Failed deleting invoice row:', deleteError);
+      return NextResponse.json({ error: 'Failed to delete invoice record.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Invoice delete handler error:', error);
+    return NextResponse.json(
+      { error: error?.message || 'Internal server error while deleting invoice.' },
       { status: 500 }
     );
   }

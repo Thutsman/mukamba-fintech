@@ -21,6 +21,7 @@ import {
   CreditCard,
   TrendingUp,
   FileText,
+  Trash2,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -264,6 +265,52 @@ export const OffersPage: React.FC<OffersPageProps> = ({
     } catch (error) {
       console.error('Error starting invoice upload:', error);
       toast.error('Failed to start invoice upload.');
+    }
+  };
+
+  const handleDeleteInvoice = async (offerId: string) => {
+    const hasInvoice = Boolean(invoiceStatusByOfferId[offerId]?.hasInvoice);
+    if (!hasInvoice) {
+      toast.info('No uploaded invoice found for this offer.');
+      return;
+    }
+
+    const confirmed = window.confirm('Delete the uploaded invoice for this offer? You can upload a new one afterwards.');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/invoices/upload?offer_id=${encodeURIComponent(offerId)}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json?.success) {
+        toast.success('Invoice removed. You can upload a new one.');
+        setInvoiceStatusByOfferId((prev) => ({
+          ...prev,
+          [offerId]: { hasInvoice: false, invoiceNumber: null },
+        }));
+        await loadOffers();
+      } else {
+        toast.error(json?.error || 'Failed to delete invoice.');
+      }
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast.error('Failed to delete invoice.');
+    }
+  };
+
+  const handleViewInvoice = async (offerId: string) => {
+    try {
+      const res = await fetch(`/api/invoice/view?offer_id=${encodeURIComponent(offerId)}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json?.url) {
+        toast.error(json?.error || 'Failed to open invoice.');
+        return;
+      }
+      window.open(json.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Error opening invoice:', error);
+      toast.error('Failed to open invoice.');
     }
   };
 
@@ -565,8 +612,22 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                             <FileText className="w-4 h-4 mr-2" />
                             {invoiceUploadByOfferId[offer.id]?.isUploading
                               ? `Uploading… ${invoiceUploadByOfferId[offer.id]?.progress ?? 0}%`
-                              : 'Upload Invoice PDF'}
+                              : invoiceStatusByOfferId[offer.id]?.hasInvoice
+                                ? 'Replace Invoice PDF'
+                                : 'Upload Invoice PDF'}
                           </Button>
+                          {invoiceStatusByOfferId[offer.id]?.hasInvoice ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-700 border-red-200 hover:bg-red-50"
+                              onClick={() => handleDeleteInvoice(offer.id)}
+                              disabled={invoiceUploadByOfferId[offer.id]?.isUploading}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Invoice
+                            </Button>
+                          ) : null}
                           {invoiceUploadByOfferId[offer.id]?.isUploading ? (
                             <div className="w-full">
                               <div className="h-2 w-full rounded bg-gray-100 overflow-hidden">
@@ -617,19 +678,20 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                       )}
                       {offer.status === 'approved' && (
                         <div className="flex flex-col gap-2">
-                          {!invoiceStatusByOfferId[offer.id]?.hasInvoice ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleUploadInvoice(offer.id)}
-                              disabled={invoiceUploadByOfferId[offer.id]?.isUploading}
-                            >
-                              <FileText className="w-4 h-4 mr-2" />
-                              {invoiceUploadByOfferId[offer.id]?.isUploading
-                                ? `Uploading… ${invoiceUploadByOfferId[offer.id]?.progress ?? 0}%`
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUploadInvoice(offer.id)}
+                            disabled={invoiceUploadByOfferId[offer.id]?.isUploading}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            {invoiceUploadByOfferId[offer.id]?.isUploading
+                              ? `Uploading… ${invoiceUploadByOfferId[offer.id]?.progress ?? 0}%`
+                              : invoiceStatusByOfferId[offer.id]?.hasInvoice
+                                ? 'Replace Invoice PDF'
                                 : 'Upload Invoice PDF'}
-                            </Button>
-                          ) : (
+                          </Button>
+                          {invoiceStatusByOfferId[offer.id]?.hasInvoice ? (
                             <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2">
                               <p className="text-xs text-green-800 flex items-center gap-1">
                                 <CheckCircle className="w-3 h-3" />
@@ -638,27 +700,30 @@ export const OffersPage: React.FC<OffersPageProps> = ({
                                   ? ` (${invoiceStatusByOfferId[offer.id]?.invoiceNumber})`
                                   : ''}
                               </p>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="mt-2"
-                                onClick={() => window.open(`/api/invoice/view?offer_id=${offer.id}`, '_blank')}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Invoice
-                              </Button>
+                              <div className="mt-2 flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleViewInvoice(offer.id)}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-700 border-red-200 hover:bg-red-50"
+                                  onClick={() => handleDeleteInvoice(offer.id)}
+                                  disabled={invoiceUploadByOfferId[offer.id]?.isUploading}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onViewOffer?.(offer.id)}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Details
-                      </Button>
                     </div>
                   </div>
                 </CardContent>

@@ -61,7 +61,20 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   // Latest payment status per offer (pending = proof submitted, completed = verified, failed/cancelled = rejected)
   const [paymentStatusByOfferId, setPaymentStatusByOfferId] = useState<Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'>>({});
 
-  const [invoiceLoadingByOfferId, setInvoiceLoadingByOfferId] = useState<Record<string, boolean>>({});
+  const [invoiceLoadingByOfferId, setInvoiceLoadingByOfferId] = useState<
+    Record<string, { view: boolean; download: boolean }>
+  >({});
+
+  const setInvoiceLoading = (offerId: string, key: 'view' | 'download', value: boolean) => {
+    setInvoiceLoadingByOfferId((prev) => ({
+      ...prev,
+      [offerId]: {
+        view: prev[offerId]?.view ?? false,
+        download: prev[offerId]?.download ?? false,
+        [key]: value,
+      },
+    }));
+  };
 
   const getInvoiceSignedUrl = async (offerId: string): Promise<string | null> => {
     const res = await fetch(`/api/invoice/view?offer_id=${encodeURIComponent(offerId)}`);
@@ -71,7 +84,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   };
 
   const openInvoice = async (offerId: string) => {
-    setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: true }));
+    setInvoiceLoading(offerId, 'view', true);
     try {
       const url = await getInvoiceSignedUrl(offerId);
       if (!url) {
@@ -80,13 +93,13 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       }
       window.open(url, '_blank', 'noopener,noreferrer');
     } finally {
-      setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: false }));
+      setInvoiceLoading(offerId, 'view', false);
     }
   };
 
   const downloadInvoice = async (offer: PropertyOffer) => {
     const offerId = offer.id;
-    setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: true }));
+    setInvoiceLoading(offerId, 'download', true);
     try {
       const signedUrl = await getInvoiceSignedUrl(offerId);
       if (!signedUrl) {
@@ -117,7 +130,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
       document.body.removeChild(link);
       URL.revokeObjectURL(objectUrl);
     } finally {
-      setInvoiceLoadingByOfferId((prev) => ({ ...prev, [offerId]: false }));
+      setInvoiceLoading(offerId, 'download', false);
     }
   };
 
@@ -639,20 +652,20 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                                 variant="outline"
                                 className="w-full justify-start border-emerald-300 text-emerald-800 hover:bg-emerald-50"
                                 onClick={() => openInvoice(offer.id)}
-                                disabled={invoiceLoadingByOfferId[offer.id]}
+                                disabled={invoiceLoadingByOfferId[offer.id]?.view}
                               >
                                 <FileText className="w-4 h-4 mr-2" />
-                                {invoiceLoadingByOfferId[offer.id] ? 'Preparing…' : 'View Invoice'}
+                                {invoiceLoadingByOfferId[offer.id]?.view ? 'Preparing…' : 'View Invoice'}
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="w-full justify-start border-emerald-300 text-emerald-800 hover:bg-emerald-50"
                                 onClick={() => downloadInvoice(offer)}
-                                disabled={invoiceLoadingByOfferId[offer.id]}
+                                disabled={invoiceLoadingByOfferId[offer.id]?.download}
                               >
                                 <Download className="w-4 h-4 mr-2" />
-                                {invoiceLoadingByOfferId[offer.id] ? 'Preparing…' : 'Download Invoice'}
+                                {invoiceLoadingByOfferId[offer.id]?.download ? 'Preparing…' : 'Download Invoice'}
                               </Button>
                             </div>
                           </div>
