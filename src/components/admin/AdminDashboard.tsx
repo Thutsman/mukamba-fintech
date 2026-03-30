@@ -645,7 +645,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </h2>
                   {/* Lazy import to avoid breaking if file missing at first run */}
                   {/* @ts-ignore - We'll add the component next */}
-                  <PaymentTrackingTab />
+                  <PaymentTrackingTab adminUserId={user.id} />
                 </section>
               )}
 

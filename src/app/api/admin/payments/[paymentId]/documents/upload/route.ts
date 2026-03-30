@@ -5,11 +5,13 @@ import { Buffer } from 'buffer';
 
 export const runtime = 'nodejs';
 
-const STORAGE_BUCKET = 'payment-documents';
+// Use an existing bucket to avoid runtime failures when a dedicated bucket is missing.
+const STORAGE_BUCKET = 'property-documents';
 
 const querySchema = z.object({
   document_type: z.enum(['receipt', 'agreement_of_sale']),
-  admin_id: z.string().uuid().optional(),
+  // Admin id is metadata only; do not hard-fail uploads on format.
+  admin_id: z.string().optional(),
 });
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
@@ -20,6 +22,12 @@ function safeName(name: string): string {
     .replace(/[^\w.\-]+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 120);
+}
+
+function asUuidOrNull(value?: string | null): string | null {
+  if (!value) return null;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value) ? value : null;
 }
 
 async function isFirstPaymentForOffer(params: {
@@ -169,16 +177,42 @@ export async function POST(
       path: storagePath,
       mime_type: file.type,
       original_filename: file.name || null,
-      uploaded_by: admin_id || null,
+      uploaded_by: asUuidOrNull(admin_id),
       uploaded_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    const { data: docRow, error: dbError } = await supabase
+    // Avoid relying on a DB unique constraint for upsert.
+    const { data: existingDoc } = await supabase
       .from('payment_documents')
-      .upsert(upsertPayload, { onConflict: 'payment_id,document_type' })
-      .select('*')
-      .single();
+      .select('id')
+      .eq('payment_id', paymentId)
+      .eq('document_type', document_type)
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let docRow: any = null;
+    let dbError: any = null;
+
+    if (existingDoc?.id) {
+      const { data, error } = await supabase
+        .from('payment_documents')
+        .update(upsertPayload)
+        .eq('id', existingDoc.id)
+        .select('*')
+        .single();
+      docRow = data;
+      dbError = error;
+    } else {
+      const { data, error } = await supabase
+        .from('payment_documents')
+        .insert(upsertPayload)
+        .select('*')
+        .single();
+      docRow = data;
+      dbError = error;
+    }
 
     if (dbError) {
       console.error('Payment document DB upsert error:', dbError);

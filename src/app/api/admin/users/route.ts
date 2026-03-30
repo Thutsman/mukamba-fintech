@@ -62,13 +62,42 @@ export async function GET(request: NextRequest) {
     // Sort by created_at descending (most recent first)
     const sortedUsers = users.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+    // Use Supabase's reported total when available.
+    // Fallback to an explicit count across pages to keep pagination accurate.
+    let totalUsers = typeof (data as any)?.total === 'number' ? (data as any).total : undefined;
+    if (typeof totalUsers !== 'number') {
+      let count = 0;
+      let countPage = 1;
+      const countPerPage = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data: countData, error: countError } = await supabase.auth.admin.listUsers({
+          page: countPage,
+          perPage: countPerPage
+        });
+
+        if (countError) {
+          console.error('Error counting users:', countError);
+          break;
+        }
+
+        const pageSize = countData.users.length;
+        count += pageSize;
+        hasMore = pageSize === countPerPage;
+        countPage++;
+      }
+
+      totalUsers = count;
+    }
+
     return NextResponse.json({
       success: true,
       users: sortedUsers,
       pagination: {
         page,
         limit,
-        total: users.length
+        total: totalUsers ?? users.length
       }
     });
 

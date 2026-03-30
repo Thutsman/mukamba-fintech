@@ -141,7 +141,11 @@ const getMethodLabel = (method: string) => {
 
 // ─── Component ──────────────────────────────────────────────────────────────────
 
-export const PaymentTrackingTab: React.FC = () => {
+interface PaymentTrackingTabProps {
+  adminUserId: string;
+}
+
+export const PaymentTrackingTab: React.FC<PaymentTrackingTabProps> = ({ adminUserId }) => {
   const [payments, setPayments] = React.useState<EnrichedPayment[]>([]);
   const [stats, setStats] = React.useState<PaymentStats | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -247,42 +251,39 @@ export const PaymentTrackingTab: React.FC = () => {
         formData.append('file', file);
 
         try {
-          const json: any = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open(
-              'POST',
-              `/api/admin/payments/${encodeURIComponent(payment.id)}/documents/upload?document_type=${encodeURIComponent(
-                docType
-              )}&admin_id=${encodeURIComponent('admin')}`
-            );
-            xhr.responseType = 'json';
+          const endpoint = `/api/admin/payments/${encodeURIComponent(payment.id)}/documents/upload?document_type=${encodeURIComponent(
+            docType
+          )}&admin_id=${encodeURIComponent(adminUserId)}`;
 
-            xhr.upload.onprogress = (evt) => {
-              if (!evt.lengthComputable) return;
-              const pct = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
-              setDocUploadByPaymentId((prev) => ({
-                ...prev,
-                [payment.id]: { isUploading: true, progress: pct, type: docType },
-              }));
-            };
-
-            xhr.onload = () => {
-              const resJson =
-                xhr.response ??
-                (() => {
-                  try {
-                    return JSON.parse(xhr.responseText);
-                  } catch {
-                    return {};
-                  }
-                })();
-              if (xhr.status >= 200 && xhr.status < 300) resolve(resJson);
-              else reject(resJson);
-            };
-
-            xhr.onerror = () => reject(new Error('Network error'));
-            xhr.send(formData);
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            body: formData,
           });
+
+          const raw = await res.text().catch(() => '');
+          const json: any = (() => {
+            if (!raw) return {};
+            try {
+              return JSON.parse(raw);
+            } catch {
+              return {};
+            }
+          })();
+
+          if (!res.ok) {
+            const responseText =
+              typeof json?.error === 'string'
+                ? json.error
+                : typeof json?.message === 'string'
+                  ? json.message
+                  : raw || res.statusText || JSON.stringify(json);
+            throw { status: res.status, responseText };
+          }
+
+          setDocUploadByPaymentId((prev) => ({
+            ...prev,
+            [payment.id]: { isUploading: true, progress: 100, type: docType },
+          }));
 
           if (json?.success && json?.data?.id) {
             setDocStatusByPaymentId((prev) => {
@@ -303,7 +304,12 @@ export const PaymentTrackingTab: React.FC = () => {
           }
         } catch (e: any) {
           console.error('Post-payment doc upload failed:', e);
-          toast.error(e?.error || e?.message || 'Upload failed', { id: toastId });
+          const status = e?.status ? ` (HTTP ${e.status})` : '';
+          const detail =
+            typeof e?.responseText === 'string' && e.responseText.trim()
+              ? e.responseText.trim()
+              : e?.response?.error || e?.response?.message || e?.error || e?.message;
+          toast.error(detail ? `${detail}${status}` : `Upload failed${status}`, { id: toastId });
         } finally {
           setDocUploadByPaymentId((prev) => ({
             ...prev,
@@ -361,7 +367,7 @@ export const PaymentTrackingTab: React.FC = () => {
       const res = await fetch(`/api/admin/payments/${paymentId}/verify`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ admin_id: 'admin' }),
+        body: JSON.stringify({ admin_id: adminUserId }),
       });
       const json = await res.json();
 
@@ -387,10 +393,10 @@ export const PaymentTrackingTab: React.FC = () => {
       const res = await fetch(`/api/admin/payments/${rejectPaymentId}/reject`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          admin_id: 'admin',
-          reason: rejectReason || 'Payment proof rejected',
-        }),
+          body: JSON.stringify({
+            admin_id: adminUserId,
+            reason: rejectReason || 'Payment proof rejected',
+          }),
       });
       const json = await res.json();
 
@@ -1081,15 +1087,21 @@ export const PaymentTrackingTab: React.FC = () => {
                             size="sm"
                             className="text-xs h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                             onClick={() => handleVerify(p.id)}
-                            disabled={actionLoadingId === p.id}
+                            disabled={
+                              actionLoadingId === p.id || !docStatusByPaymentId[p.id]?.receipt
+                            }
                           >
                             {actionLoadingId === p.id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
-                              <>
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Verify
-                              </>
+                              docStatusByPaymentId[p.id]?.receipt ? (
+                                <>
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Verify
+                                </>
+                              ) : (
+                                <>Upload receipt first</>
+                              )
                             )}
                           </Button>
                         </div>
