@@ -58,8 +58,16 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; offerId: string; action: 'cancel' | 'delete' }>({ isOpen: false, offerId: '', action: 'cancel' });
   const [isConfirmProcessing, setIsConfirmProcessing] = useState(false);
   const [successPopup, setSuccessPopup] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
-  // Latest payment status per offer (pending = proof submitted, completed = verified, failed/cancelled = rejected)
-  const [paymentStatusByOfferId, setPaymentStatusByOfferId] = useState<Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'>>({});
+  // Latest payment state per offer (pending = proof submitted, completed = verified, failed/cancelled = rejected)
+  const [paymentStateByOfferId, setPaymentStateByOfferId] = useState<
+    Record<
+      string,
+      {
+        status: 'pending' | 'completed' | 'failed' | 'cancelled';
+        rejectionReason?: string;
+      }
+    >
+  >({});
 
   const [invoiceLoadingByOfferId, setInvoiceLoadingByOfferId] = useState<
     Record<string, { view: boolean; download: boolean }>
@@ -139,7 +147,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
     try {
       const { data, error } = await supabase
         .from('offer_payments')
-        .select('id, offer_id, status, created_at')
+        .select('id, offer_id, status, created_at, gateway_response')
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -148,17 +156,26 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
         return;
       }
 
-      const byOffer: Record<string, 'pending' | 'completed' | 'failed' | 'cancelled'> = {};
+      const byOffer: Record<
+        string,
+        {
+          status: 'pending' | 'completed' | 'failed' | 'cancelled';
+          rejectionReason?: string;
+        }
+      > = {};
 
       // We iterate newest->oldest (because of order desc). For "latest status", pick first seen.
       // For "first completed payment", track the *oldest* completed payment id; we’ll compute it in a second pass.
-      (data || []).forEach((row: { id: string; offer_id: string; status: string }) => {
+      (data || []).forEach((row: { id: string; offer_id: string; status: string; gateway_response?: any }) => {
         if (byOffer[row.offer_id] === undefined && ['pending', 'completed', 'failed', 'cancelled'].includes(row.status)) {
-          byOffer[row.offer_id] = row.status as 'pending' | 'completed' | 'failed' | 'cancelled';
+          byOffer[row.offer_id] = {
+            status: row.status as 'pending' | 'completed' | 'failed' | 'cancelled',
+            rejectionReason: row.gateway_response?.admin_rejection?.reason || undefined,
+          };
         }
       });
 
-      setPaymentStatusByOfferId(byOffer);
+      setPaymentStateByOfferId(byOffer);
     } catch (e) {
       console.warn('Error loading payment status:', e);
     }
@@ -534,7 +551,7 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
 
                       <div className="text-xs text-gray-500">
                         Submitted: {formatDate(offer.submitted_at)}
-                        {offer.expires_at && paymentStatusByOfferId[offer.id] !== 'completed' && (
+                        {offer.expires_at && paymentStateByOfferId[offer.id]?.status !== 'completed' && (
                           <span className="ml-4">
                             Expires: {formatDate(offer.expires_at)}
                           </span>
@@ -607,7 +624,8 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                         </Button>
                       )}
                       {offer.status === 'approved' && (() => {
-                        const paymentStatus = paymentStatusByOfferId[offer.id];
+                        const paymentState = paymentStateByOfferId[offer.id];
+                        const paymentStatus = paymentState?.status;
                         return (
                           <div className="flex flex-col gap-2">
                             {paymentStatus === 'completed' && (
@@ -635,7 +653,32 @@ export const BuyerOffers: React.FC<BuyerOffersProps> = ({
                               </div>
                             )}
 
-                            {paymentStatus !== 'completed' && paymentStatus !== 'pending' && (
+                            {(paymentStatus === 'failed' || paymentStatus === 'cancelled') && (
+                              <div className="space-y-2">
+                                <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+                                  <div className="flex items-center gap-2 text-sm text-red-800">
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                    <span>Proof rejected - resubmission requested</span>
+                                  </div>
+                                  {paymentState?.rejectionReason ? (
+                                    <p className="mt-1 text-xs text-red-700">
+                                      Reason: {paymentState.rejectionReason}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full justify-start border-red-300 text-red-800 hover:bg-red-50"
+                                  onClick={() => onMakePayment?.(offer)}
+                                >
+                                  <RefreshCw className="w-4 h-4 mr-2" />
+                                  Resubmit Proof of Payment
+                                </Button>
+                              </div>
+                            )}
+
+                            {!paymentStatus && (
                               <Button
                                 size="sm"
                                 className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
