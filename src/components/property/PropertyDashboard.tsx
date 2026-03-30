@@ -1809,7 +1809,6 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
                   { label: 'Property Investment', href: '/property-investment' },
                   { label: 'Administration Oversight', href: '/administration-oversight' },
                   { label: 'Concierge Services', href: '/concierge-services' },
-                  { label: 'Secure Transfers', href: '/secure-transfers' },
                 ].map((service) => (
                   <li key={service.label}>
                     <a

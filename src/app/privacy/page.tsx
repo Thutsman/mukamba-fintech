@@ -30,8 +30,13 @@ import {
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
+import { BasicSigninModal } from '@/components/forms/BasicSigninModal';
+import { BasicSignupModal } from '@/components/forms/BasicSignupModal';
 
 export default function PrivacyPage() {
+  const [showSigninModal, setShowSigninModal] = React.useState(false);
+  const [showSignupModal, setShowSignupModal] = React.useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -70,8 +75,7 @@ export default function PrivacyPage() {
                 size="sm"
                 className="hidden sm:inline-flex"
                 onClick={() => {
-                  // Open signin modal logic would go here
-                  console.log('Sign in clicked');
+                  setShowSigninModal(true);
                 }}
               >
                 <LogIn className="w-4 h-4 mr-2" />
@@ -81,8 +85,7 @@ export default function PrivacyPage() {
                 size="sm"
                 className="bg-[#7f1518] hover:bg-[#6a1215] text-white"
                 onClick={() => {
-                  // Open signup modal logic would go here
-                  console.log('Sign up clicked');
+                  setShowSignupModal(true);
                 }}
               >
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -397,6 +400,23 @@ export default function PrivacyPage() {
           </motion.div>
         </div>
       </footer>
+
+      <BasicSigninModal
+        isOpen={showSigninModal}
+        onClose={() => setShowSigninModal(false)}
+        onSwitchToSignup={() => {
+          setShowSigninModal(false);
+          setShowSignupModal(true);
+        }}
+      />
+      <BasicSignupModal
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onSwitchToLogin={() => {
+          setShowSignupModal(false);
+          setShowSigninModal(true);
+        }}
+      />
     </div>
   );
 }
