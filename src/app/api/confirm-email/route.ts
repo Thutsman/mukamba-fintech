@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         success: true, 
         alreadyConfirmed: true,
+        email: confirmationData.email,
         message: 'Email already confirmed' 
       });
     }
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
       success: true, 
       message: 'Email confirmed successfully',
       userId: confirmationData.user_id,
+      email: confirmationData.email,
       accessToken: accessToken,
       refreshToken: refreshToken
     });

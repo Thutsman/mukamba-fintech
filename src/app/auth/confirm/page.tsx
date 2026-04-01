@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 function ConfirmEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Confirming your email...');
+  const [confirmedEmail, setConfirmedEmail] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -47,11 +48,13 @@ function ConfirmEmailContent() {
         if (result.alreadyConfirmed) {
           setStatus('success');
           setMessage('Your email has already been confirmed!');
+          setConfirmedEmail(result.email || '');
           return;
         }
 
         setStatus('success');
         setMessage('Account successfully created! You can now sign in with your email and password.');
+        setConfirmedEmail(result.email || '');
 
       } catch (error) {
         console.error('Confirmation error:', error);
@@ -65,6 +68,17 @@ function ConfirmEmailContent() {
 
   const handleResendEmail = () => {
     router.push('/?action=resend-confirmation');
+  };
+
+  const handleGoToLogin = () => {
+    const encodedEmail = confirmedEmail ? encodeURIComponent(confirmedEmail) : '';
+
+    if (encodedEmail) {
+      router.push(`/?openSignin=true&prefillEmail=${encodedEmail}`);
+      return;
+    }
+
+    router.push('/?openSignin=true');
   };
 
   return (
@@ -119,7 +133,7 @@ function ConfirmEmailContent() {
               transition={{ delay: 0.3 }}
             >
               <button
-                onClick={() => router.push('/')}
+                onClick={handleGoToLogin}
                 className="w-full bg-[#7F1518] text-white py-3 px-6 rounded-lg hover:bg-[#6a1214] transition-colors font-medium"
               >
                 Go to Login Page

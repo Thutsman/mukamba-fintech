@@ -67,7 +67,7 @@ import { AgentOnboardingModal } from '@/components/agent/AgentOnboardingModal';
 import { SellerOnboardingModal } from '@/components/forms/SellerOnboardingModal';
 import { BuyerPhoneVerificationModal } from '@/components/forms/BuyerPhoneVerificationModal';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { navigateWithScrollToTop } from '@/utils/navigation';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 
@@ -91,6 +91,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   onPropertySelect
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState('explore');
   const [selectedProperty, setSelectedProperty] = React.useState<Property | null>(null);
   const [selectedCountry, setSelectedCountry] = React.useState<PropertyCountry>('ZW');
@@ -104,6 +105,7 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   const [selectedPropertyForContact, setSelectedPropertyForContact] = React.useState<Property | null>(null);
   const [userPhoneVerified, setUserPhoneVerified] = React.useState(user?.is_phone_verified || false);
   const [showSigninModal, setShowSigninModal] = React.useState(false);
+  const [signinPrefillEmail, setSigninPrefillEmail] = React.useState('');
   const [showAgentModal, setShowAgentModal] = React.useState(false);
   const [showSellerModal, setShowSellerModal] = React.useState(false);
   const [showBasicSignupModal, setShowBasicSignupModal] = React.useState(false);
@@ -127,6 +129,30 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Supports email-confirmation redirect: /?openSignin=true&prefillEmail=user@example.com
+  React.useEffect(() => {
+    const shouldOpenSignin = searchParams.get('openSignin') === 'true';
+    const prefillEmail = searchParams.get('prefillEmail') || '';
+
+    if (!shouldOpenSignin) return;
+
+    if (prefillEmail) {
+      setSigninPrefillEmail(prefillEmail);
+    }
+
+    setShowSigninModal(true);
+
+    // Prevent reopening modal on refresh/back by cleaning query params
+    try {
+      const params = new URLSearchParams(window.location.search);
+      params.delete('openSignin');
+      params.delete('prefillEmail');
+      const nextQuery = params.toString();
+      const cleanUrl = nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+    } catch (_) {}
+  }, [searchParams]);
 
   // SAFEGUARD: Never show signup modal when authenticated
   React.useEffect(() => {
@@ -1969,11 +1995,16 @@ export const PropertyDashboard: React.FC<PropertyDashboardProps> = React.memo(({
       {/* Basic Signin Modal */}
       <BasicSigninModal
         isOpen={showSigninModal}
-        onClose={() => setShowSigninModal(false)}
+        onClose={() => {
+          setShowSigninModal(false);
+          setSigninPrefillEmail('');
+        }}
         onSwitchToSignup={() => {
           setShowSigninModal(false);
+          setSigninPrefillEmail('');
           setShowSignupModal(true);
         }}
+        prefillEmail={signinPrefillEmail}
       />
 
       {/* Agent Onboarding Modal */}
